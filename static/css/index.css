@@ -30,17 +30,8 @@ header {
     margin: 0;
 }
 
-main {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    /* padding: 20px; */
-    height: 90vh; /* Full height minus header */}
-
-main.horizontal-layout {
-    flex-direction: row;
-    flex: 1;
-    height: 90vh;
+.main-content {
+    overflow: hidden;
 }
 
 .block {
@@ -50,7 +41,7 @@ main.horizontal-layout {
     padding: 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     flex: 1;
-    min-width: 200px;
+    min-width: 300px;
     height: 90vh;
     overflow: auto; /* Add scroll if content exceeds height */
 }

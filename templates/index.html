@@ -26,59 +26,70 @@
         <h1 class="title">需求-代码一致性审查平台</h1>
     </header>
     
-    <div class="layout">
+    <el-splitter>
         <!-- 主内容 -->
-        <main class="horizontal-layout">
-            <!-- 需求文档展示区 -->
-            <section class="block" id="requirements">
-                <div class="section-header">
-                    <h2>需求文档</h2>
-                    <el-upload
-                        class="upload-demo"
-                        action=""
-                        :auto-upload="false"
-                        :on-change="handleRequirementUploadChange"
-                        :on-remove="handleRequirementRemove"
-                        accept=".md"
-                        :file-list="requirementFileList"
-                        :limit="1"
-                        :on-exceed="handleRequirementExceed"
-                    >
-                        <el-button type="info" plain>打开需求文档</el-button>
-                    </el-upload>                
-                </div>
-                <div v-html="requirements"></div>
-            </section>
+        <el-splitter-panel size="70%" :min="600">
+            <el-row class="main-content">
+                <!-- 需求文档展示区 -->
+                <section class="block" id="requirements">
+                    <div class="section-header">
+                        <h2>需求文档</h2>
+                        <el-upload
+                            class="upload-demo"
+                            action=""
+                            :auto-upload="false"
+                            :on-change="handleRequirementUploadChange"
+                            :on-remove="handleRequirementRemove"
+                            accept=".md"
+                            :file-list="requirementFileList"
+                            :limit="1"
+                            :on-exceed="handleRequirementExceed"
+                        >
+                            <el-button type="info" plain>打开需求文档</el-button>
+                        </el-upload>                
+                    </div>
+                    <div v-html="requirements"></div>
+                </section>
+                <!-- 代码展示区 -->
+                <section class="block" id="code">
+                    <div class="section-header">
+                        <h2>代码</h2>
+                        <el-upload
+                            class="upload-demo"
+                            action=""
+                            :auto-upload="false"
+                            :on-change="handleUploadChange"
+                            :on-remove="handleRemove"
+                            multiple
+                            accept=".h,.c,.cpp"
+                            :file-list="fileList"
+                        >
+                            <el-button type="info" plain>打开代码文件</el-button>
+                        </el-upload>
+                    </div>
+                    <el-collapse v-model="activeNames" @change="handleChange">
+                        <el-collapse-item 
+                            v-for="(file, index) in codeFiles" 
+                            :key="index" 
+                            :title="file.name" 
+                            :name="index">
+                            <pre><code class="language-cpp">${file.content}</code></pre>
+                        </el-collapse-item>
+                    </el-collapse>
+                </section>
+            </el-row>
+        </el-splitter-panel>
 
-            <!-- 代码展示区 -->
-            <section class="block" id="code">
-                <div class="section-header">
-                    <h2>代码</h2>
-                    <el-upload
-                        class="upload-demo"
-                        action=""
-                        :auto-upload="false"
-                        :on-change="handleUploadChange"
-                        :on-remove="handleRemove"
-                        multiple
-                        accept=".h,.c,.cpp"
-                        :file-list="fileList"
-                    >
-                        <el-button type="info" plain>打开代码文件</el-button>
-                    </el-upload>
-                </div>
-                <el-collapse v-model="activeNames" @change="handleChange">
-                    <el-collapse-item 
-                        v-for="(file, index) in codeFiles" 
-                        :key="index" 
-                        :title="file.name" 
-                        :name="index">
-                        <pre><code class="language-cpp">${file.content}</code></pre>
-                    </el-collapse-item>
-                </el-collapse>
-            </section>
-        </main>
-    </div>
+        <!-- 侧边栏 -->
+        <el-splitter-panel :min="200">
+            <el-tabs type="border-card">
+                <el-tab-pane label="User">User</el-tab-pane>
+                <el-tab-pane label="Config">Config</el-tab-pane>
+                <el-tab-pane label="Role">Role</el-tab-pane>
+                <el-tab-pane label="Task">Task</el-tab-pane>
+            </el-tabs>
+        </el-splitter-panel>
+    </el-splitter>
 </div>
 
 <script src="../static/js/app.js"></script>
