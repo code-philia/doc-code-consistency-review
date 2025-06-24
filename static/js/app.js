@@ -5,6 +5,7 @@ const app = createApp({
     delimiters: ['${', '}'], // 自定义 Vue 插值语法
     setup() {
         const requirements = ref(marked.parse("#### 未加载需求文档... ####"));
+        const requirementFileList = ref([]); // 用于存储上传的需求文档文件列表
         const codeFiles = ref([]);
         const sidebarExpanded = ref(false);
         const fileList = ref([]); // 用于存储上传的文件列表
@@ -12,7 +13,7 @@ const app = createApp({
         const activeTab = ref('alignment');
 
         // 上传需求文档
-        const handleRequirementUploadChange = (file, fileList) => {
+        const handleRequirementUploadChange = (file, requirementFileList) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const markdownContent = e.target.result;
@@ -70,15 +71,6 @@ const app = createApp({
             activeNames.value = names;
         };
 
-        // 切换侧边栏状态
-        const expandSidebar = () => {
-            sidebarExpanded.value = true;
-        };
-
-        const collapseSidebar = () => {
-            sidebarExpanded.value = false;
-        };
-
         // 对齐选项卡
         const autoAlign = async () => {
             try {
@@ -115,8 +107,8 @@ const app = createApp({
 
         return {
             requirements,
+            requirementFileList,
             codeFiles,
-            sidebarExpanded,
             activeTab,
             fileList,
             activeNames,

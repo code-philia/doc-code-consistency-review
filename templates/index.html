@@ -78,21 +78,6 @@
                 </el-collapse>
             </section>
         </main>
-
-        <!-- 侧边栏 -->
-        <aside class="sidebar" @mouseover="expandSidebar" @mouseleave="collapseSidebar">
-            <el-tabs class="tabs" type="border-card">
-                <el-tab-pane label="对齐" v-if="sidebarExpanded===true">               
-                    <div class="alignment-buttons">
-                        <el-button type="info"  @click="autoAlign">自动对齐</el-button>
-                        <el-button type="info"  @click="importAlignment">导入</el-button>
-                        <el-button type="info"  @click="exportAlignment">导出</el-button>
-                    </div>
-                </el-tab-pane>
-
-                <el-tab-pane label="审查">Config</el-tab-pane>
-            </el-tabs>
-        </aside>
     </div>
 </div>
 

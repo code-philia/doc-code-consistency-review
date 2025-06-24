@@ -131,24 +131,3 @@ pre code {
     display: flex;
     height: 90vh; /* Full height minus header */
 }
-
-.sidebar {
-    width: 40px;
-    transition: width 0.3s ease;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 95vh;
-}
-
-.sidebar:hover {
-    width: 350px;
-}
-
-.tabs {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-}
