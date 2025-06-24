@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求-代码一致性审查平台</title>
+
+    <link rel="stylesheet" href="../static/css/index.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/highlight/default.min.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/katex/katex.min.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/element/index.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/element/index.iife.min.js">
+
+    <script src="../static/js/thirdParty/vue.global.js"></script>
+    <script src="../static/js/thirdParty/katex/katex.min.js"></script>
+    <script src="../static/js/thirdParty/auto-render.min.js"></script>
+    <script src="../static/js/thirdParty/axios.min.js"></script>
+    <script src="../static/js/thirdParty/marked.min.js"></script>
+    <script src="../static/js/thirdParty/highlight/highlight.min.js"></script>
+    <script src="../static/js/thirdParty/element/index.full.js"></script>
+</head>
+<body>
+<div id="app">
+    <header>
+        <img src="../static/assets/Web Development Lineart_Find code.png" alt="Platform Icon" class="header-icon">
+        <h1 class="title">需求-代码一致性审查平台</h1>
+    </header>
+    
+    <div class="layout">
+        <!-- 主内容 -->
+        <main class="horizontal-layout">
+            <!-- 需求文档展示区 -->
+            <section class="block" id="requirements">
+                <div class="section-header">
+                    <h2>需求文档</h2>
+                    <el-upload
+                        class="upload-demo"
+                        action=""
+                        :auto-upload="false"
+                        :on-change="handleRequirementUploadChange"
+                        :on-remove="handleRequirementRemove"
+                        accept=".md"
+                        :file-list="requirementFileList"
+                        limit="1"
+                        :on-exceed="handleRequirementExceed"
+                    >
+                        <el-button type="info" plain>打开需求文档</el-button>
+                    </el-upload>                
+                </div>
+                <div v-html="requirements"></div>
+            </section>
+
+            <!-- 代码展示区 -->
+            <section class="block" id="code">
+                <div class="section-header">
+                    <h2>代码</h2>
+                    <el-upload
+                        class="upload-demo"
+                        action=""
+                        :auto-upload="false"
+                        :on-change="handleUploadChange"
+                        :on-remove="handleRemove"
+                        multiple
+                        accept=".h,.c,.cpp"
+                        :file-list="fileList"
+                    >
+                        <el-button type="info" plain>打开代码文件</el-button>
+                    </el-upload>
+                </div>
+                <el-collapse v-model="activeNames" @change="handleChange">
+                    <el-collapse-item 
+                        v-for="(file, index) in codeFiles" 
+                        :key="index" 
+                        :title="file.name" 
+                        :name="index">
+                        <pre><code class="language-cpp">${file.content}</code></pre>
+                    </el-collapse-item>
+                </el-collapse>
+            </section>
+        </main>
+
+        <!-- 侧边栏 -->
+        <aside class="sidebar" @mouseover="expandSidebar" @mouseleave="collapseSidebar">
+            <el-tabs class="tabs" type="border-card">
+                <el-tab-pane label="对齐" v-if="sidebarExpanded===true">               
+                    <div class="alignment-buttons">
+                        <el-button type="info"  @click="autoAlign">自动对齐</el-button>
+                        <el-button type="info"  @click="importAlignment">导入</el-button>
+                        <el-button type="info"  @click="exportAlignment">导出</el-button>
+                    </div>
+                </el-tab-pane>
+
+                <el-tab-pane label="审查">Config</el-tab-pane>
+            </el-tabs>
+        </aside>
+    </div>
+</div>
+
+<script src="../static/js/app.js"></script>
+</body>
+</html>
+

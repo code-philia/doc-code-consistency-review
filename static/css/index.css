@@ -1,0 +1,154 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    height: 100vh; /* Ensure body takes up full viewport height */
+    overflow: hidden; /* Prevent scrolling */
+}
+
+header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background-color: #333;
+    color: #fff;
+    height: 10px; /* Fixed height for header */
+}
+
+
+.header-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.title {
+    font-weight: bold;
+    font-size: 24px;
+    margin: 0;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* padding: 20px; */
+    height: 90vh; /* Full height minus header */}
+
+main.horizontal-layout {
+    flex-direction: row;
+    flex: 1;
+    height: 90vh;
+}
+
+.block {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    min-width: 200px;
+    height: 90vh;
+    overflow: auto; /* Add scroll if content exceeds height */
+}
+
+.block h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    font-family: monospace;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd; /* Add bottom border */
+    padding-bottom: 10px; /* Add spacing below content */
+}
+
+button {
+    padding: 5px 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #e0e0e0;
+}
+
+.code-container {
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.code-header button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    padding: 3px 7px;
+    font-size: 12px;
+    border-radius: 2px;
+}
+
+.code-header button:hover {
+    background-color: #d32f2f;
+}
+
+details.hoverable-details:hover {
+    cursor: pointer;
+}
+
+pre code {
+    font-size: 14px; /* Increase font size */
+    font-family: Consolas, monospace; /* Use Consolas font */
+}
+
+.layout {
+    display: flex;
+    height: 90vh; /* Full height minus header */
+}
+
+.sidebar {
+    width: 40px;
+    transition: width 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 95vh;
+}
+
+.sidebar:hover {
+    width: 350px;
+}
+
+.tabs {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}

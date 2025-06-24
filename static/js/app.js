@@ -1,0 +1,139 @@
+const { createApp, ref } = Vue;
+const { ElButton, ElMessage } = ElementPlus;
+
+const app = createApp({
+    delimiters: ['${', '}'], // 自定义 Vue 插值语法
+    setup() {
+        const requirements = ref(marked.parse("#### 未加载需求文档... ####"));
+        const codeFiles = ref([]);
+        const sidebarExpanded = ref(false);
+        const fileList = ref([]); // 用于存储上传的文件列表
+        const activeNames = ref([]); // 用于控制展开的 el-collapse-item
+        const activeTab = ref('alignment');
+
+        // 上传需求文档
+        const handleRequirementUploadChange = (file, fileList) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const markdownContent = e.target.result;
+                requirements.value = marked.parse(markdownContent); // 使用 marked.js 渲染 Markdown
+                setTimeout(() => {
+                    renderMathInElement(document.getElementById('requirements'), {
+                        delimiters: [
+                            { left: "$$", right: "$$", display: true },
+                            { left: "$", right: "$", display: false }
+                        ]
+                    });
+                }, 0); // 使用 KaTeX 渲染公式
+            };
+            reader.readAsText(file.raw);
+        };
+
+        const handleRequirementRemove = () => {
+            requirements.value = marked.parse("#### 未加载需求文档... ####"); // 清空需求文档内容
+        };
+
+        const handleRequirementExceed = () => {
+            ElMessage({
+                message: '只能上传一个需求文档文件，请删除后再上传新的文件',
+                type: 'warning',
+                duration:  4000
+            });
+        };
+
+        // 上传代码文件
+        const handleUploadChange = (file, fileList) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                codeFiles.value.push({
+                    name: file.name,
+                    content: e.target.result
+                });
+                setTimeout(() => {
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                }, 0);
+            };
+            reader.readAsText(file.raw);
+        };
+
+        const handleRemove = (file, fileList) => {
+            const index = codeFiles.value.findIndex((item) => item.name === file.name);
+            if (index !== -1) {
+                codeFiles.value.splice(index, 1);
+                activeNames.value = activeNames.value.filter(name => name !== index); // 移除展开状态
+            }
+        };
+
+        const handleChange = (names) => {
+            activeNames.value = names;
+        };
+
+        // 切换侧边栏状态
+        const expandSidebar = () => {
+            sidebarExpanded.value = true;
+        };
+
+        const collapseSidebar = () => {
+            sidebarExpanded.value = false;
+        };
+
+        // 对齐选项卡
+        const autoAlign = async () => {
+            try {
+                const response = await axios.post('/api/auto-align', {
+                    requirements: requirements.value,
+                    codeFiles: codeFiles.value.map(file => ({
+                        name: file.name,
+                        content: file.content
+                    }))
+                });
+                alert('自动对齐完成: ' + response.data.message);
+            } catch (error) {
+                alert('自动对齐失败: ' + error.response.data.error);
+            }
+        };
+
+        const importAlignment = async () => {
+            try {
+                const response = await axios.post('/api/import-alignment', { /* 可传递参数 */ });
+                alert('导入完成: ' + response.data.message);
+            } catch (error) {
+                alert('导入失败: ' + error.response.data.error);
+            }
+        };
+
+        const exportAlignment = async () => {
+            try {
+                const response = await axios.post('/api/export-alignment', { /* 可传递参数 */ });
+                alert('导出完成: ' + response.data.message);
+            } catch (error) {
+                alert('导出失败: ' + error.response.data.error);
+            }
+        };
+
+        return {
+            requirements,
+            codeFiles,
+            sidebarExpanded,
+            activeTab,
+            fileList,
+            activeNames,
+            expandSidebar,
+            collapseSidebar,
+            handleRequirementUploadChange,
+            handleRequirementRemove,
+            handleRequirementExceed,
+            handleUploadChange,
+            handleRemove,
+            handleChange,
+            autoAlign,
+            importAlignment,
+            exportAlignment,
+        };
+    }
+});
+
+app.use(ElementPlus);
+app.mount('#app');
