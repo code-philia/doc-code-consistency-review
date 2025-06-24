@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, json, render_template, request, jsonify
 import os
 from openai import OpenAI
 import socket
@@ -17,12 +17,17 @@ def auto_align():
     data = request.json
     requirements = data.get('requirements', '')
     code_files = data.get('codeFiles', [])
-    # print("Received Requirements:", requirements)
-    # print("Received Code Files:")
-    # for file in code_files:
-    #     print(f"File Name: {file['name']}, Content: {file['content']}")
     
+    # 解析需求文档成为需求点列表
     requirement_point_list = parse_markdown(requirements)
+    
+    # 解析代码文件
+    code_blocks = []
+    for file in code_files:
+        code_block = parse_code(file['name'], file['content'])
+        print(f"Parsed {len(code_block)} code blocks from {file['name']}")
+        print(f"Code blocks: {code_block}")
+        code_blocks.extend(code_block)
 
     return jsonify({"requirementPoints": requirement_point_list})
 
