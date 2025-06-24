@@ -29,6 +29,9 @@ def auto_align():
         print(f"Code blocks: {code_block}")
         code_blocks.extend(code_block)
 
+    with open('code_blocks.json', 'w', encoding='utf-8') as f:
+        json.dump(code_blocks, f, ensure_ascii=False, indent=4)
+
     return jsonify({"requirementPoints": requirement_point_list})
 
 @app.route('/api/import-alignment', methods=['POST'])

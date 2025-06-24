@@ -118,13 +118,7 @@ def parse_code(filename, content):
             "type": "function",
             "name": match.group("name").strip(),
             "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1,
-            "extra": {
-                "return_type": match.group("return_type").strip(),
-                "params": [p.strip() for p in match.group("params").split(',') if p.strip()],
-                "is_template": "<" in match.group("prefix"),
-                "is_const": "const" in match.group("suffix")
-            }
+            "line": content[:match.start()].count('\n') + 1
         })
     
     # 2. 解析类/结构体定义
@@ -143,10 +137,7 @@ def parse_code(filename, content):
             "type": match.group(1),
             "name": match.group("name"),
             "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1,
-            "extra": {
-                "is_template": "template" in match.group(0)
-            }
+            "line": content[:match.start()].count('\n') + 1
         })
     
     # 3. 解析变量声明（含初始化）
@@ -167,12 +158,7 @@ def parse_code(filename, content):
             "type": "variable",
             "name": match.group("name"),
             "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1,
-            "extra": {
-                "var_type": match.group("type").strip(),
-                "is_const": bool(match.group("const")),
-                "value": match.group("value").strip() if match.group("value") else None
-            }
+            "line": content[:match.start()].count('\n') + 1
         })
     
     # 4. 解析宏定义
@@ -190,11 +176,7 @@ def parse_code(filename, content):
             "type": "macro",
             "name": match.group("name"),
             "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1,
-            "extra": {
-                "params": match.group("params").split(',') if match.group("params") else None,
-                "value": match.group("value").strip()
-            }
+            "line": content[:match.start()].count('\n') + 1
         })
     
     # 5. 解析枚举定义
@@ -206,10 +188,7 @@ def parse_code(filename, content):
             "type": "enum",
             "name": match.group(1) or f"anonymous_enum_{len(code_blocks)}",
             "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1,
-            "extra": {
-                "is_scoped": "class" in match.group(0)
-            }
+            "line": content[:match.start()].count('\n') + 1
         })
     
     # 6. 解析类型定义（typedef/using）
@@ -226,10 +205,7 @@ def parse_code(filename, content):
             "type": "typedef",
             "name": match.group("name"),
             "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1,
-            "extra": {
-                "original_type": match.group("type").strip()
-            }
+            "line": content[:match.start()].count('\n') + 1
         })
     
     # 按行号排序所有代码块
