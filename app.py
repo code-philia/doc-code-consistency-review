@@ -23,9 +23,7 @@ def auto_align():
     #     print(f"File Name: {file['name']}, Content: {file['content']}")
     
     requirement_point_list = parse_markdown(requirements)
-    for point in requirement_point_list:
-        print(f"Requirement Point: {point['id']}, Content: {point['content']}, Context: {point['context']}")
-    
+
     return jsonify({"requirementPoints": requirement_point_list})
 
 @app.route('/api/import-alignment', methods=['POST'])

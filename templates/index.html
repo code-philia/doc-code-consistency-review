@@ -88,18 +88,22 @@
                     <div class="requirement-points">
                         <div v-for="(point, index) in requirementPoints" :key="index" class="requirement-point">
                             <div class="requirement-header">
-                                <span class="requirement-type">${ point.type }</span>
                                 <span class="requirement-id">${ point.id }</span>
+                                <span class="requirement-type">${ point.type }</span>
                             </div>
                             <div class="requirement-content">
-                                <p>${ point.content }</p>
+                                <template v-if="point.type === '表格行'">
+                                    <div v-html="renderMarkdownTableLine(point.content)"></div>
+                                </template>
+                                <template v-else>
+                                    <div v-html="renderMarkdown(point.content)"></div>
+                                </template>
                             </div>
                             <div class="requirement-context">
                                 <small>${ point.context }</small>
                             </div>
                             <div class="associated-code">
-                                <h4>关联代码段:</h4>
-                                <pre><code class="language-cpp">// Placeholder code for ${ point.id }</code></pre>
+                                <pre><code class="language-cpp">Placeholder code for ${ point.id }</code></pre>
                             </div>
                         </div>
                     </div>

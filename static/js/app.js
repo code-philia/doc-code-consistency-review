@@ -113,6 +113,29 @@ const app = createApp({
             }
         };
 
+        // 渲染 Markdown
+        const renderMarkdownTableLine = (rowData) => {
+            const headers = Object.keys(rowData).join(' | ');
+            const separator = Object.keys(rowData).map(() => '---').join(' | ');
+            const values = Object.values(rowData).join(' | ');
+            return marked.parse(`| ${headers} |\n| ${separator} |\n| ${values} |`);
+        };
+
+        const renderMarkdown = (markdownContent) => {
+            // Render Markdown
+            const renderedContent = marked.parse(markdownContent);
+            // Render formulas using KaTeX
+            const container = document.createElement('div');
+            container.innerHTML = renderedContent;
+            renderMathInElement(container, {
+                delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false }
+                ]
+            });
+            return container.innerHTML;
+        };
+
         return {
             requirements,
             requirementFileList,
@@ -126,6 +149,8 @@ const app = createApp({
             handleUploadChange,
             handleRemove,
             handleChange,
+            renderMarkdownTableLine,
+            renderMarkdown,
             autoAlign,
             importAlignment,
             exportAlignment,

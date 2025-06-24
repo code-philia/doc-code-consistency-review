@@ -13,8 +13,8 @@ def parse_markdown(md_text):
     current_context = []
     grouped_content = ""
 
-    for element in soup.find_all(['h1', 'h2', 'h3', 'p', 'table']):
-        if element.name in ['h1', 'h2', 'h3']:
+    for element in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'table']):
+        if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6',]:
             # 如果有未处理的内容，添加到需求点
             if grouped_content.strip():
                 requirements.append({
@@ -73,7 +73,7 @@ def parse_markdown(md_text):
         requirements.append({
             "type": "公式",
             "id": f"formula_{k}",
-            "content": formula.strip(),
+            "content": "$$ "+formula.strip()+" $$",
             "context": " > ".join(current_context)
         })
     
