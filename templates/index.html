@@ -107,8 +107,11 @@
                             <div class="requirement-context">
                                 <small>${ point.context }</small>
                             </div>
-                            <div class="associated-code">
-                                <pre><code class="language-cpp">Placeholder code for ${ point.id }</code></pre>
+                            <div v-for="block in point.associated_code" :key="block.name" class="associated-code">
+                                <div class="requirement-context">
+                                    <small>${ block.file }</small>
+                                </div>
+                                <pre><code class="language-cpp">${ block.content }</code></pre>
                             </div>
                         </div>
                     </div>

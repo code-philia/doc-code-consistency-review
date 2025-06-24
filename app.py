@@ -3,6 +3,7 @@ import os
 from openai import OpenAI
 import socket
 from utils import *
+import random
 
 app = Flask(__name__)
 
@@ -28,6 +29,11 @@ def auto_align():
         print(f"Parsed {len(code_block)} code blocks from {file['name']}")
         print(f"Code blocks: {code_block}")
         code_blocks.extend(code_block)
+
+    # 随机为每个需求点附着1~5个代码块
+    for point in requirement_point_list:
+        num_blocks = min(len(code_blocks), max(1, int(5 * (len(code_blocks) / len(requirement_point_list)))))
+        point["associated_code"] = random.sample(code_blocks, num_blocks)
 
     with open('code_blocks.json', 'w', encoding='utf-8') as f:
         json.dump(code_blocks, f, ensure_ascii=False, indent=4)
