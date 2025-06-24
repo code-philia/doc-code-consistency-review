@@ -13,9 +13,8 @@ def parse_markdown(md_text):
     current_context = []
     grouped_content = ""
 
-    for element in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'table']):
-        if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6',]:
-            # 如果有未处理的内容，添加到需求点
+    for element in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'table']):
+        if element.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
             if grouped_content.strip():
                 requirements.append({
                     "type": "描述文本",
@@ -26,8 +25,8 @@ def parse_markdown(md_text):
                 grouped_content = ""
             # 更新标题上下文
             current_context = current_context[:int(element.name[1]) - 1] + [element.get_text()]
-        elif element.name == 'p':
-            # 将段落内容累积到当前上下文
+        elif element.name in ['p', 'li']:
+            # 将段落和列表项内容累积到当前上下文
             grouped_content += element.get_text() + "\n"
         elif element.name == 'table':
             # 如果有未处理的内容，添加到需求点

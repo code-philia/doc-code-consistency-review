@@ -86,7 +86,12 @@
                 <el-tab-pane label="需求-代码对齐">
                     <el-button type="primary" @click="autoAlign">解析需求点并自动对齐</el-button>
                     <div class="requirement-points">
-                        <div v-for="(point, index) in requirementPoints" :key="index" class="requirement-point">
+                        <div 
+                            v-for="(point, index) in requirementPoints" 
+                            :key="index" 
+                            class="requirement-point" 
+                            @click="handleRequirementClick(point)"
+                        >
                             <div class="requirement-header">
                                 <span class="requirement-id">${ point.id }</span>
                                 <span class="requirement-type">${ point.type }</span>

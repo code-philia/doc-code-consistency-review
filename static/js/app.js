@@ -136,6 +136,10 @@ const app = createApp({
             return container.innerHTML;
         };
 
+        const handleRequirementClick = (point) => {
+            console.log(`Requirement ID: ${point.id}`);
+        };
+
         return {
             requirements,
             requirementFileList,
@@ -154,6 +158,7 @@ const app = createApp({
             autoAlign,
             importAlignment,
             exportAlignment,
+            handleRequirementClick,
         };
     }
 });
