@@ -112,8 +112,6 @@ const app = createApp({
             activeTab,
             fileList,
             activeNames,
-            expandSidebar,
-            collapseSidebar,
             handleRequirementUploadChange,
             handleRequirementRemove,
             handleRequirementExceed,
