@@ -125,3 +125,60 @@ pre code {
     overflow: hidden;
 }
 
+/* 需求点展示和代码对齐 */
+.requirement-points {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    overflow-y: auto;
+    max-height: 80vh;
+}
+
+.requirement-point {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+}
+
+.requirement-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.requirement-type {
+    color: #007bff;
+}
+
+.requirement-id {
+    color: #555;
+}
+
+.requirement-content {
+    margin-bottom: 10px;
+}
+
+.requirement-context {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+.associated-code {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.associated-code pre {
+    margin: 0;
+    font-size: 12px;
+    font-family: Consolas, monospace;
+}
+

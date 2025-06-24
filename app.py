@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import os
 from openai import OpenAI
 import socket
+from utils import *
 
 app = Flask(__name__)
 
@@ -16,11 +17,16 @@ def auto_align():
     data = request.json
     requirements = data.get('requirements', '')
     code_files = data.get('codeFiles', [])
-    print("Received Requirements:", requirements)
-    print("Received Code Files:")
-    for file in code_files:
-        print(f"File Name: {file['name']}, Content: {file['content']}")
-    return jsonify({"message": "自动对齐已完成"})
+    # print("Received Requirements:", requirements)
+    # print("Received Code Files:")
+    # for file in code_files:
+    #     print(f"File Name: {file['name']}, Content: {file['content']}")
+    
+    requirement_point_list = parse_markdown(requirements)
+    for point in requirement_point_list:
+        print(f"Requirement Point: {point['id']}, Content: {point['content']}, Context: {point['context']}")
+    
+    return jsonify({"requirementPoints": requirement_point_list})
 
 @app.route('/api/import-alignment', methods=['POST'])
 def import_alignment():
