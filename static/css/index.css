@@ -30,6 +30,7 @@ header {
     margin: 0;
 }
 
+/* 主内容 */
 .main-content {
     overflow: hidden;
 }
@@ -118,7 +119,9 @@ pre code {
     font-family: Consolas, monospace; /* Use Consolas font */
 }
 
-.layout {
-    display: flex;
-    height: 90vh; /* Full height minus header */
+/* 侧边栏 */
+.tab-card {
+    height: 95vh;
+    overflow: hidden;
 }
+
