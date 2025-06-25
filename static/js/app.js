@@ -10,6 +10,7 @@ const app = createApp({
         const fileList = ref([]); // 用于存储上传的文件列表
         const activeNames = ref([]); // 用于控制展开的 el-collapse-item
         const requirementPoints = ref([]); // 用于存储解析后的需求点
+        const showUpload = ref(false); // 控制上传按钮的显示
 
         // 上传需求文档
         const handleRequirementUploadChange = (file, requirementFileList) => {
@@ -147,6 +148,7 @@ const app = createApp({
             fileList,
             activeNames,
             requirementPoints,
+            showUpload,
             handleRequirementUploadChange,
             handleRequirementRemove,
             handleRequirementExceed,
@@ -164,4 +166,8 @@ const app = createApp({
 });
 
 app.use(ElementPlus);
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
 app.mount('#app');
+

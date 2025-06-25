@@ -18,12 +18,16 @@
     <script src="../static/js/thirdParty/marked.min.js"></script>
     <script src="../static/js/thirdParty/highlight/highlight.min.js"></script>
     <script src="../static/js/thirdParty/element/index.full.js"></script>
+    <script src="../static/js/thirdParty/element/icons-vue.js"></script>
 </head>
 <body>
 <div id="app">
     <header>
         <img src="../static/assets/Web Development Lineart_Find code.png" alt="Platform Icon" class="header-icon">
         <h1 class="title">需求-代码一致性审查平台</h1>
+        <button class="upload-button" @click="showUpload=true">
+            <el-icon><Upload /></el-icon>
+        </button>
     </header>
     
     <el-splitter>
@@ -33,39 +37,16 @@
                 <!-- 需求文档展示区 -->
                 <section class="block" id="requirements">
                     <div class="section-header">
-                        <h2>需求文档</h2>
-                        <el-upload
-                            class="upload-demo"
-                            action=""
-                            :auto-upload="false"
-                            :on-change="handleRequirementUploadChange"
-                            :on-remove="handleRequirementRemove"
-                            accept=".md"
-                            :file-list="requirementFileList"
-                            :limit="1"
-                            :on-exceed="handleRequirementExceed"
-                        >
-                            <el-button type="info" plain>打开需求文档</el-button>
-                        </el-upload>                
+                        <el-icon><Document /></el-icon>
+                        需求文档         
                     </div>
                     <div v-html="requirements"></div>
                 </section>
                 <!-- 代码展示区 -->
                 <section class="block" id="code">
                     <div class="section-header">
-                        <h2>代码</h2>
-                        <el-upload
-                            class="upload-demo"
-                            action=""
-                            :auto-upload="false"
-                            :on-change="handleUploadChange"
-                            :on-remove="handleRemove"
-                            multiple
-                            accept=".h,.c,.cpp"
-                            :file-list="fileList"
-                        >
-                            <el-button type="info" plain>打开代码文件</el-button>
-                        </el-upload>
+                        <el-icon><Tickets /></el-icon>
+                        代码
                     </div>
                     <el-collapse v-model="activeNames" @change="handleChange">
                         <el-collapse-item 
@@ -120,6 +101,46 @@
             </el-tabs>
         </el-splitter-panel>
     </el-splitter>
+
+    <!-- 打开文件表单 -->
+    <el-drawer 
+        class="upload-drawer"
+        v-model="showUpload" 
+        :with-header="false" 
+        direction="ltr"
+        size="15%"
+    >
+        <div class="upload-drawer-header">打开文件</div>
+
+        <el-divider></el-divider>
+
+        <el-upload
+            class="upload-demo"
+            action=""
+            :auto-upload="false"
+            :on-change="handleRequirementUploadChange"
+            :on-remove="handleRequirementRemove"
+            accept=".md"
+            :file-list="requirementFileList"
+            :limit="1"
+            :on-exceed="handleRequirementExceed"
+        >
+            <el-button type="info" plain>打开需求文档</el-button>
+        </el-upload>
+        
+        <el-upload
+            class="upload-demo"
+            action=""
+            :auto-upload="false"
+            :on-change="handleUploadChange"
+            :on-remove="handleRemove"
+            multiple
+            accept=".h,.c,.cpp"
+            :file-list="fileList"
+        >
+            <el-button type="info" plain>打开代码文件</el-button>
+        </el-upload>
+    </el-drawer>
 </div>
 
 <script src="../static/js/app.js"></script>
