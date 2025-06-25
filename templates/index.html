@@ -22,6 +22,7 @@
 </head>
 <body>
 <div id="app">
+    <!-- 标头 -->
     <header>
         <img src="../static/assets/Web Development Lineart_Find code.png" alt="Platform Icon" class="header-icon">
         <h1 class="title">需求-代码一致性审查平台</h1>
@@ -30,8 +31,9 @@
         </button>
     </header>
     
+    <!-- 主体 展示+功能 -->
     <el-splitter>
-        <!-- 主内容 -->
+        <!-- 展示区域 -->
         <el-splitter-panel size="70%" :min="600">
             <el-row class="main-content">
                 <!-- 需求文档展示区 -->
@@ -61,11 +63,13 @@
             </el-row>
         </el-splitter-panel>
 
-        <!-- 侧边栏 -->
+        <!-- 功能区域 -->
         <el-splitter-panel :min="200">
             <el-tabs class="tab-card" type="border-card">
                 <el-tab-pane label="需求-代码对齐">
-                    <el-button type="primary" @click="autoAlign">解析需求点并自动对齐</el-button>
+                    <el-button type="primary" @click="autoAlign">解析并自动对齐</el-button>
+                    <el-button type="info" @click="importAlignment">导入对齐</el-button>
+                    <el-button type="info" @click="exportALignment">导出对齐</el-button>
                     <div class="requirement-points">
                         <div 
                             v-for="(point, index) in requirementPoints" 
@@ -102,7 +106,7 @@
         </el-splitter-panel>
     </el-splitter>
 
-
+    <!-- 抽屉 打开文件 -->
     <el-drawer 
         class="upload-drawer"
         v-model="showUpload" 
