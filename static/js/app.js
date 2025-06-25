@@ -11,6 +11,7 @@ const app = createApp({
         const activeNames = ref([]); // 用于控制展开的 el-collapse-item
         const requirementPoints = ref([]); // 用于存储解析后的需求点
         const showUpload = ref(false); // 控制上传按钮的显示
+        const loading = ref(false); // 控制加载状态
 
         // 上传需求文档
         const handleRequirementUploadChange = (file, requirementFileList) => {
@@ -73,6 +74,7 @@ const app = createApp({
 
         // 对齐选项卡
         const autoAlign = async () => {
+            loading.value = true; // 设置加载状态为 true
             try {
                 const response = await axios.post('/api/auto-align', {
                     requirements: requirements.value,
@@ -93,6 +95,8 @@ const app = createApp({
                     type: 'error',
                     duration: 4000
                 });
+            } finally {
+                loading.value = false; // 无论成功或失败都重置加载状态
             }
         };
 
@@ -149,6 +153,7 @@ const app = createApp({
             activeNames,
             requirementPoints,
             showUpload,
+            loading,
             handleRequirementUploadChange,
             handleRequirementRemove,
             handleRequirementExceed,

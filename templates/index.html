@@ -72,7 +72,7 @@
                         <el-button type="primary" disabled="true" @click="importAlignment">导入对齐</el-button>
                         <el-button type="primary" disabled="true" @click="exportALignment">导出对齐</el-button>
                     </el-button-group>
-                    <div class="requirement-points">
+                    <el-scrollbar v-loading="loading" max-height="600px" class="requirement-points">
                         <div 
                             v-for="(point, index) in requirementPoints" 
                             :key="index" 
@@ -101,7 +101,7 @@
                                 <pre><code class="language-cpp">${ block.content }</code></pre>
                             </div>
                         </div>
-                    </div>
+                    </el-scrollbar>
                 </el-tab-pane>
                 <el-tab-pane label="一致性审查">一致性审查</el-tab-pane>
             </el-tabs>

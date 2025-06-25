@@ -101,7 +101,7 @@ pre code {
     border-radius: 5px;
     background-color: #f9f9f9;
     overflow-y: auto;
-    max-height: 80vh;
+    min-height: 60px;
 }
 
 .requirement-point {
