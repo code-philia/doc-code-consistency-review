@@ -67,9 +67,11 @@
         <el-splitter-panel :min="200">
             <el-tabs class="tab-card" type="border-card">
                 <el-tab-pane label="需求-代码对齐">
-                    <el-button type="primary" @click="autoAlign">解析并自动对齐</el-button>
-                    <el-button type="info" @click="importAlignment">导入对齐</el-button>
-                    <el-button type="info" @click="exportALignment">导出对齐</el-button>
+                    <el-button-group class="button-group">
+                        <el-button type="primary" @click="autoAlign">解析并自动对齐</el-button>
+                        <el-button type="primary" disabled="true" @click="importAlignment">导入对齐</el-button>
+                        <el-button type="primary" disabled="true" @click="exportALignment">导出对齐</el-button>
+                    </el-button-group>
                     <div class="requirement-points">
                         <div 
                             v-for="(point, index) in requirementPoints" 
