@@ -102,44 +102,58 @@
         </el-splitter-panel>
     </el-splitter>
 
-    <!-- 打开文件表单 -->
+
     <el-drawer 
         class="upload-drawer"
         v-model="showUpload" 
         :with-header="false" 
-        direction="ltr"
-        size="15%"
+        direction="rtl"
+        size="25%"
     >
-        <div class="upload-drawer-header">打开文件</div>
+        <el-divider><el-icon><star-filled /></el-icon></el-divider>
 
-        <el-divider></el-divider>
-
-        <el-upload
-            class="upload-demo"
-            action=""
-            :auto-upload="false"
-            :on-change="handleRequirementUploadChange"
-            :on-remove="handleRequirementRemove"
-            accept=".md"
-            :file-list="requirementFileList"
-            :limit="1"
-            :on-exceed="handleRequirementExceed"
-        >
-            <el-button type="info" plain>打开需求文档</el-button>
-        </el-upload>
-        
-        <el-upload
-            class="upload-demo"
-            action=""
-            :auto-upload="false"
-            :on-change="handleUploadChange"
-            :on-remove="handleRemove"
-            multiple
-            accept=".h,.c,.cpp"
-            :file-list="fileList"
-        >
-            <el-button type="info" plain>打开代码文件</el-button>
-        </el-upload>
+        <div class="upload-center">
+            <div class="upload-border">
+                <el-upload
+                    class="upload-demo"
+                    action=""
+                    :auto-upload="false"
+                    :on-change="handleRequirementUploadChange"
+                    :on-remove="handleRequirementRemove"
+                    accept=".md"
+                    :file-list="requirementFileList"
+                    :limit="1"
+                    :on-exceed="handleRequirementExceed"
+                >
+                    <button class="upload-file-button">打开需求文档</button>
+                    <template #tip>
+                    <div class="el-upload__tip">
+                        需求文档，支持Markdown格式(.md)
+                    </div>
+                    </template>
+                </el-upload>
+            </div>
+            
+            <div class="upload-border">
+                <el-upload
+                    class="upload-demo"
+                    action=""
+                    :auto-upload="false"
+                    :on-change="handleUploadChange"
+                    :on-remove="handleRemove"
+                    multiple
+                    accept=".h,.c,.cpp"
+                    :file-list="fileList"
+                >
+                    <button class="upload-file-button">打开代码文件</button>
+                    <template #tip>
+                    <div class="el-upload__tip">
+                        代码文件，支持C/C++语言(.h, .c, .cpp)
+                    </div>
+                    </template>
+                </el-upload>
+            </div>
+        </div>
     </el-drawer>
 </div>
 

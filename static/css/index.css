@@ -173,7 +173,6 @@ pre code {
 }
 
 .upload-drawer {
-    align-items: center;
     display: flex;
     flex-direction: column;
     background-color: #fff;
@@ -181,7 +180,29 @@ pre code {
     overflow-y: auto; /* Allow scrolling if content exceeds height */
 }
 
-.upload-drawer-header{
-    font-size: 12px;
-    color: #888;
+.upload-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; /* Add spacing between the buttons */
+    width: 100%;
+}
+
+.upload-border {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 10px;
+    width: 93%;
+    min-height: 150px;
+}
+
+.upload-demo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px; /* Add spacing between the elements */
+}
+
+.upload-file-button {
+    width: 200px;
 }

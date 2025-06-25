@@ -103,7 +103,8 @@ def split_code(filename, content, max_length= 10000):
         - content: 块内容
     """
     lines = content.splitlines(keepends=True)
-    line_token_counts = [estimate_tokens(line) for line in lines]
+    encoder = tiktoken.get_encoding("cl100k_base")
+    line_token_counts = [estimate_tokens(encoder, line) for line in lines]
     
     # 识别完整代码结构
     protected_blocks = identify_protected_blocks(content)
@@ -202,9 +203,9 @@ def find_enclosing_block(line_num, blocks):
             return (start, end)
     return None
 
-def estimate_tokens(line):
-    """估算一行的token数量"""
-    return len(re.findall(r'\b\w+\b|[\{\}\(\)\[\];,<>]|\S', line))
+def estimate_tokens(encoder, line):
+    # return len(re.findall(r'\b\w+\b|[\{\}\(\)\[\];,<>]|\S', line))
+    return len(encoder.encode(line))
 
 def find_matching_brace(content, open_pos):
     """找到匹配的闭括号行号"""
