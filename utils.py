@@ -83,12 +83,13 @@ def parse_markdown(md_text):
     return requirements
 
 
-def split_code(filename, content, max_length= 10000):
+def split_code(filename, content, max_length=10000):
     """
     优化后的代码分块函数：
-    1. 尽可能填充每个块直到接近最大长度
-    2. 不拆分完整代码结构（函数/类等）
-    3. 保持行完整性
+    1. 在分块前为每行代码添加行号
+    2. 尽可能填充每个块直到接近最大长度
+    3. 不拆分完整代码结构（函数/类等）
+    4. 保持行完整性
     
     参数:
         filename: 文件名
@@ -102,9 +103,12 @@ def split_code(filename, content, max_length= 10000):
         - end_line: 结束行号
         - content: 块内容
     """
+    # 添加行号到每行代码
     lines = content.splitlines(keepends=True)
+    numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(lines)]
+    
     encoder = tiktoken.get_encoding("cl100k_base")
-    line_token_counts = [estimate_tokens(encoder, line) for line in lines]
+    line_token_counts = [estimate_tokens(encoder, line) for line in numbered_lines]
     
     # 识别完整代码结构
     protected_blocks = identify_protected_blocks(content)
@@ -115,8 +119,8 @@ def split_code(filename, content, max_length= 10000):
     current_start = 0  # 当前块起始行索引
     
     i = 0
-    while i < len(lines):
-        line = lines[i]
+    while i < len(numbered_lines):
+        line = numbered_lines[i]
         token_count = line_token_counts[i]
         line_num = i + 1
         
@@ -126,7 +130,7 @@ def split_code(filename, content, max_length= 10000):
         # 情况1：遇到受保护块
         if block:
             block_start, block_end = block
-            block_lines = lines[block_start-1:block_end]
+            block_lines = numbered_lines[block_start-1:block_end]
             block_token_count = sum(line_token_counts[block_start-1:block_end])
             
             # 情况1a：当前块为空，直接添加整个受保护块
@@ -165,7 +169,7 @@ def split_code(filename, content, max_length= 10000):
     
     # 添加最后一个块
     if current_chunk:
-        chunks.append(create_chunk(filename, current_start+1, len(lines), current_chunk))
+        chunks.append(create_chunk(filename, current_start+1, len(numbered_lines), current_chunk))
     
     return chunks
 
