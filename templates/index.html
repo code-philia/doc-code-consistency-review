@@ -90,7 +90,7 @@
                             </div>
                             <div v-for="block in point.associated_code" :key="block.name" class="associated-code">
                                 <div class="requirement-context">
-                                    <small>${ block.file }</small>
+                                    <small>${ block.filename }</small>
                                 </div>
                                 <pre><code class="language-cpp">${ block.content }</code></pre>
                             </div>

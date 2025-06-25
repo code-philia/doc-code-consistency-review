@@ -1,8 +1,13 @@
 import markdown
 from bs4 import BeautifulSoup
 import re
+import tiktoken
 
 def parse_markdown(md_text):
+    """
+    解析Markdown文本，提取需求点、表格和公式。
+    """
+    
     # 转换Markdown为HTML
     html = markdown.markdown(md_text, extensions=['tables'])
     soup = BeautifulSoup(html, 'html.parser')
@@ -78,141 +83,146 @@ def parse_markdown(md_text):
     return requirements
 
 
-def parse_code(filename, content):
-    code_blocks = []
+def split_code(filename, content, max_length= 10000):
+    """
+    优化后的代码分块函数：
+    1. 尽可能填充每个块直到接近最大长度
+    2. 不拆分完整代码结构（函数/类等）
+    3. 保持行完整性
     
-    # 预处理：移除单行和多行注释
-    cleaned_content = re.sub(r'//.*?$|/\*.*?\*/', '', content, flags=re.MULTILINE|re.DOTALL)
+    参数:
+        filename: 文件名
+        content: 代码内容
+        max_length: 最大token长度限制
+        
+    返回:
+        分块列表，每个元素包含:
+        - filename: 文件名
+        - start_line: 起始行号
+        - end_line: 结束行号
+        - content: 块内容
+    """
+    lines = content.splitlines(keepends=True)
+    line_token_counts = [estimate_tokens(line) for line in lines]
     
-    # 1. 解析函数定义（支持多行参数、模板、属性等）
-    function_pattern = r'''(?x)
-        (?P<prefix>
-            (?:template\s*<[^>]+>\s*)?          # 模板声明
-            (?:inline\s+|static\s+|virtual\s+)*  # 函数修饰符
-            (?:constexpr\s+)?                    # C++11 constexpr
-            (?:explicit\s+)?                     # 显式构造函数
-        )
-        (?P<return_type>
-            (?:[\w:]|<[^>]+>|\s)+               # 返回类型（含命名空间和模板）
-        )\s*
-        (?P<name>
-            \w+                                 # 函数名
-            (?:\s*::\s*\w+)*                    # 支持操作符重载和成员函数
-        )\s*
-        \(
-            (?P<params>[^)]*)                   # 参数列表
-        \)\s*
-        (?P<suffix>
-            (?:const\s*)*                       # const限定符
-            (?:\s*=\s*0\s*)?                    # 纯虚函数
-            (?:\s*noexcept\s*)?                 # noexcept
-            (?:\s*override\s*)?                # override
-            (?:\s*=\s*(?:default|delete)\s*)?  # 特殊函数
-        )\s*
-        (?P<body>\{[^}]*\})                     # 函数体
-    '''
+    # 识别完整代码结构
+    protected_blocks = identify_protected_blocks(content)
     
-    for match in re.finditer(function_pattern, cleaned_content, re.DOTALL):
-        code_blocks.append({
-            "file": filename,
-            "type": "function",
-            "name": match.group("name").strip(),
-            "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1
-        })
+    chunks = []
+    current_chunk = []
+    current_token_count = 0
+    current_start = 0  # 当前块起始行索引
     
-    # 2. 解析类/结构体定义
-    class_pattern = r'''(?x)
-        (?:template\s*<[^>]+>\s*)?      # 模板声明
-        (class|struct)\s+               # 类型关键字
-        (?P<name>\w+)\s*                # 类名
-        (?::\s*[^\{]+)?                 # 继承列表
-        \s*\{[^}]*\}                    # 类体
-        (?:\s*;\s*)?                    # 可选的分号
-    '''
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        token_count = line_token_counts[i]
+        line_num = i + 1
+        
+        # 检查当前行是否属于某个受保护块
+        block = find_enclosing_block(line_num, protected_blocks)
+        
+        # 情况1：遇到受保护块
+        if block:
+            block_start, block_end = block
+            block_lines = lines[block_start-1:block_end]
+            block_token_count = sum(line_token_counts[block_start-1:block_end])
+            
+            # 情况1a：当前块为空，直接添加整个受保护块
+            if not current_chunk:
+                chunks.append(create_chunk(filename, block_start, block_end, block_lines))
+                i = block_end
+                continue
+            
+            # 情况1b：添加受保护块会超出限制，先提交当前块
+            elif current_token_count + block_token_count > max_length:
+                chunks.append(create_chunk(filename, current_start+1, i, current_chunk))
+                current_chunk = block_lines
+                current_token_count = block_token_count
+                current_start = block_start - 1
+                i = block_end
+            
+            # 情况1c：可以添加到当前块
+            else:
+                current_chunk.extend(block_lines)
+                current_token_count += block_token_count
+                i = block_end
+        
+        # 情况2：普通行，添加后会超出限制
+        elif current_token_count + token_count > max_length and current_chunk:
+            chunks.append(create_chunk(filename, current_start+1, i, current_chunk))
+            current_chunk = [line]
+            current_token_count = token_count
+            current_start = i
+            i += 1
+        
+        # 情况3：可以添加到当前块
+        else:
+            current_chunk.append(line)
+            current_token_count += token_count
+            i += 1
     
-    for match in re.finditer(class_pattern, cleaned_content, re.DOTALL):
-        code_blocks.append({
-            "file": filename,
-            "type": match.group(1),
-            "name": match.group("name"),
-            "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1
-        })
+    # 添加最后一个块
+    if current_chunk:
+        chunks.append(create_chunk(filename, current_start+1, len(lines), current_chunk))
     
-    # 3. 解析变量声明（含初始化）
-    variable_pattern = r'''(?x)
-        (?P<const>const\s+)?           # const修饰符
-        (?P<type>
-            (?:[\w:]|<[^>]+>|\s)+       # 类型（含命名空间和模板）
-        )\s*
-        (?P<name>\w+)                   # 变量名
-        \s*
-        (?:=\s*(?P<value>[^;]+))?       # 初始化值
-        \s*;
-    '''
+    return chunks
+
+def identify_protected_blocks(content):
+    """识别需要保护的代码块范围（起始行，结束行）"""
+    blocks = []
     
-    for match in re.finditer(variable_pattern, cleaned_content):
-        code_blocks.append({
-            "file": filename,
-            "type": "variable",
-            "name": match.group("name"),
-            "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1
-        })
+    # 函数定义
+    for match in re.finditer(r'\b[\w:<>]+\s+\w+\s*\([^)]*\)\s*\{', content):
+        start_line = content[:match.start()].count('\n') + 1
+        end_line = find_matching_brace(content, match.end()-1)
+        if end_line > 0:
+            blocks.append((start_line, end_line))
     
-    # 4. 解析宏定义
-    macro_pattern = r'''(?x)
-        \#define\s+                     # 宏指令
-        (?P<name>\w+)                   # 宏名称
-        (?:\((?P<params>[^)]*)\))?      # 参数列表（可选）
-        \s*
-        (?P<value>[^\n]*)               # 宏值
-    '''
+    # 类/结构体定义
+    for match in re.finditer(r'\b(class|struct)\s+\w+\s*\{', content):
+        start_line = content[:match.start()].count('\n') + 1
+        end_line = find_matching_brace(content, match.end()-1)
+        if end_line > 0:
+            blocks.append((start_line, end_line))
     
-    for match in re.finditer(macro_pattern, cleaned_content):
-        code_blocks.append({
-            "file": filename,
-            "type": "macro",
-            "name": match.group("name"),
-            "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1
-        })
+    # 命名空间
+    for match in re.finditer(r'\bnamespace\s+\w+\s*\{', content):
+        start_line = content[:match.start()].count('\n') + 1
+        end_line = find_matching_brace(content, match.end()-1)
+        if end_line > 0:
+            blocks.append((start_line, end_line))
     
-    # 5. 解析枚举定义
-    enum_pattern = r'enum\s+(?:class\s+)?(\w+)?\s*\{[^}]*\}(?:\s*;\s*)?'
-    
-    for match in re.finditer(enum_pattern, cleaned_content):
-        code_blocks.append({
-            "file": filename,
-            "type": "enum",
-            "name": match.group(1) or f"anonymous_enum_{len(code_blocks)}",
-            "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1
-        })
-    
-    # 6. 解析类型定义（typedef/using）
-    typedef_pattern = r'''(?x)
-        (?:typedef\s+|using\s+)        # 类型定义关键字
-        (?P<type>.+?)                  # 原始类型
-        \s+(?P<name>\w+)               # 类型别名
-        \s*;                           # 结束分号
-    '''
-    
-    for match in re.finditer(typedef_pattern, cleaned_content):
-        code_blocks.append({
-            "file": filename,
-            "type": "typedef",
-            "name": match.group("name"),
-            "content": match.group(0).strip(),
-            "line": content[:match.start()].count('\n') + 1
-        })
-    
-    # 按行号排序所有代码块
-    code_blocks.sort(key=lambda x: x["line"])
-    
-    # 添加文件名信息
-    for block in code_blocks:
-        block["file"] = filename
-    
-    return code_blocks
+    return blocks
+
+def find_enclosing_block(line_num, blocks):
+    """检查行是否属于某个受保护块"""
+    for start, end in blocks:
+        if start <= line_num <= end:
+            return (start, end)
+    return None
+
+def estimate_tokens(line):
+    """估算一行的token数量"""
+    return len(re.findall(r'\b\w+\b|[\{\}\(\)\[\];,<>]|\S', line))
+
+def find_matching_brace(content, open_pos):
+    """找到匹配的闭括号行号"""
+    stack = 1
+    pos = open_pos + 1
+    while pos < len(content) and stack > 0:
+        if content[pos] == '{':
+            stack += 1
+        elif content[pos] == '}':
+            stack -= 1
+        pos += 1
+    return content[:pos].count('\n') + 1 if stack == 0 else -1
+
+def create_chunk(filename, start, end, lines):
+    """创建分块字典"""
+    return {
+        "filename": filename,
+        "start_line": start,
+        "end_line": end,
+        "content": "".join(lines)
+    }

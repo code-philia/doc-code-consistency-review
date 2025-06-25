@@ -25,7 +25,7 @@ def auto_align():
     # 解析代码文件
     code_blocks = []
     for file in code_files:
-        code_block = parse_code(file['name'], file['content'])
+        code_block = split_code(file['name'], file['content'])
         print(f"Parsed {len(code_block)} code blocks from {file['name']}")
         print(f"Code blocks: {code_block}")
         code_blocks.extend(code_block)
