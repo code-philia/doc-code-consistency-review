@@ -11,7 +11,7 @@ const app = createApp({
         const activeNames = ref([]); // 用于控制展开的 el-collapse-item
         const requirementPoints = ref([]); // 用于存储解析后的需求点
         const showUpload = ref(false); // 控制上传按钮的显示
-        const loading = ref(false); // 控制加载状态
+        const alignAllReqLoading = ref(false); // 控制加载状态
 
         // 上传需求文档
         const handleRequirementUploadChange = (file, requirementFileList) => {
@@ -74,7 +74,7 @@ const app = createApp({
 
         // 对齐选项卡
         const autoAlign = async () => {
-            loading.value = true; // 设置加载状态为 true
+            alignAllReqLoading.value = true; // 设置加载状态为 true
             try {
                 const response = await axios.post('/api/auto-align', {
                     requirements: requirements.value,
@@ -96,7 +96,32 @@ const app = createApp({
                     duration: 4000
                 });
             } finally {
-                loading.value = false; // 无论成功或失败都重置加载状态
+                alignAllReqLoading.value = false; // 无论成功或失败都重置加载状态
+            }
+        };
+
+
+        const alignSingleRequirement = async (point) => {
+            try {
+                const response = await axios.post('/api/align-single-requirement', {
+                    requirement: point,
+                    codeFiles: codeFiles.value.map(file => ({
+                        name: file.name,
+                        content: file.content
+                    }))
+                });
+                for (let i = 0; i < requirementPoints.value.length; i++) { 
+                    if (requirementPoints.value[i].id === point.id) {
+                        requirementPoints.value[i] = response.data.requirementPoint; // 更新对应的需求点
+                        break;
+                    }
+                }
+            } catch (error) {
+                ElMessage({
+                    message: '自动对齐失败: ' + error.response.data.error,
+                    type: 'error',
+                    duration: 4000
+                });
             }
         };
 
@@ -153,7 +178,7 @@ const app = createApp({
             activeNames,
             requirementPoints,
             showUpload,
-            loading,
+            alignAllReqLoading,
             handleRequirementUploadChange,
             handleRequirementRemove,
             handleRequirementExceed,
@@ -163,6 +188,7 @@ const app = createApp({
             renderMarkdownTableLine,
             renderMarkdown,
             autoAlign,
+            alignSingleRequirement,
             importAlignment,
             exportAlignment,
             handleRequirementClick,

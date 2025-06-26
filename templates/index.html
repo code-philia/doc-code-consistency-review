@@ -70,9 +70,9 @@
                     <el-button-group class="button-group">
                         <el-button type="primary" @click="autoAlign">解析并自动对齐</el-button>
                         <el-button type="primary" disabled="true" @click="importAlignment">导入对齐</el-button>
-                        <el-button type="primary" disabled="true" @click="exportALignment">导出对齐</el-button>
+                        <el-button type="primary" disabled="true" @click="exportAlignment">导出对齐</el-button>
                     </el-button-group>
-                    <el-scrollbar v-loading="loading" max-height="600px" class="requirement-points">
+                    <el-scrollbar v-loading="alignAllReqLoading" max-height="600px" class="requirement-points">
                         <div 
                             v-for="(point, index) in requirementPoints" 
                             :key="index" 
@@ -80,8 +80,15 @@
                             @click="handleRequirementClick(point)"
                         >
                             <div class="requirement-header">
+                                <!-- <span class="requirement-type">${ point.type }</span> -->
                                 <span class="requirement-id">${ point.id }</span>
-                                <span class="requirement-type">${ point.type }</span>
+                                <el-button 
+                                    type="primary" 
+                                    size="small" 
+                                    @click.stop="alignSingleRequirement(point)"
+                                >
+                                    对齐
+                                </el-button>
                             </div>
                             <div class="requirement-content">
                                 <template v-if="point.type === '表格行'">
@@ -94,6 +101,7 @@
                             <div class="requirement-context">
                                 <small>${ point.context }</small>
                             </div>
+                            <el-divider></el-divider>
                             <div v-for="block in point.associated_code" :key="block.name" class="associated-code">
                                 <div class="requirement-context">
                                     <small>${ block.filename }</small>
