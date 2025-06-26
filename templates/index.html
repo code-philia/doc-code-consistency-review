@@ -37,15 +37,16 @@
         <el-splitter-panel size="70%" :min="600">
             <el-row class="main-content">
                 <!-- 需求文档展示区 -->
-                <section class="block" id="requirements">
+                <el-scrollbar class="block" id="requirements" height="90vh">
                     <div class="section-header">
                         <el-icon><Document /></el-icon>
                         需求文档         
                     </div>
                     <div v-html="requirements"></div>
-                </section>
+                </el-scrollbar>
+
                 <!-- 代码展示区 -->
-                <section class="block" id="code">
+                <el-scrollbar class="block" id="code" height="90vh">
                     <div class="section-header">
                         <el-icon><Tickets /></el-icon>
                         代码
@@ -59,7 +60,7 @@
                             <pre><code class="language-cpp">${file.content}</code></pre>
                         </el-collapse-item>
                     </el-collapse>
-                </section>
+                </el-scrollbar>
             </el-row>
         </el-splitter-panel>
 
