@@ -163,13 +163,18 @@ const app = createApp({
         const reviewSingleRequirement = (point) => {
             for (let i = 0; i < requirementPoints.value.length; i++) { 
                 if (requirementPoints.value[i].id === point.id) {
-                    // TODO
-                    console.log("审查：", point);
+                    // Mock审查结果
+                    requirementPoints.value[i].associated_code.forEach((block) => {
+                        block.reviewResult = Math.random() > 0.5 ? 'pass' : 'fail'; // 随机通过或失败
+                        block.reviewOpinion = block.reviewResult === 'pass' 
+                            ? '代码符合需求点，审查通过。' 
+                            : '代码未完全符合需求点，审查失败。';
+                    });
                     break;
                 }
             }
             ElMessage({
-                message: '一致性审查成功',
+                message: '一致性审查完成',
                 type: 'success',
                 duration: 1000
             });

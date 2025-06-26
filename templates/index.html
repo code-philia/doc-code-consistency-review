@@ -132,7 +132,6 @@
                         <div v-if="requirementPoints.length > 0" class="requirement-point">
                             <div class="requirement-header">
                                 <span class="requirement-id">${ requirementPoints[currentPage - 1].id }</span>
-                                <!-- <span class="requirement-type">${ requirementPoints[currentPage - 1].type }</span> -->
                                 <el-button 
                                     type="primary" 
                                     size="small" 
@@ -155,11 +154,25 @@
                                 <small>${ requirementPoints[currentPage - 1].context }</small>
                             </div>
                             <el-divider></el-divider>
-                            <div v-for="block in requirementPoints[currentPage - 1].associated_code" :key="block.name" class="associated-code">
+                            <div 
+                                v-for="block in requirementPoints[currentPage - 1].associated_code" 
+                                :key="block.name" 
+                                class="associated-code"
+                            >
                                 <div class="requirement-context">
                                     <small>${ block.filename }</small>
                                 </div>
                                 <pre><code class="language-cpp">${ block.content }</code></pre>
+                                
+                                <el-col>
+                                    <el-row class="review-result">
+                                        审查结果：
+                                        <el-tag v-if="block.reviewResult==='pass'" type="success">通过</el-tag>
+                                        <el-tag v-else-if="block.reviewResult==='fail'" type="danger">失败</el-tag>
+                                        <el-tag v-else type="info">未审查</el-tag>
+                                    </el-row>
+                                    <span class="review-opinion">${block.reviewOpinion || '未审查'}</span>
+                                </el-col>
                             </div>
                         </div>
                     </el-scrollbar>

@@ -138,15 +138,16 @@ pre code {
 }
 
 .associated-code {
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
+    background-color: #ffffff;
+    border: 1.5px solid #ddd;
     border-radius: 5px;
     padding: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
 }
 
 .associated-code pre {
-    margin: 0;
+    background-color: #f0f0f0ad;
+    padding: 10px;
     font-size: 12px;
     font-family: Consolas, monospace;
 }
@@ -207,9 +208,20 @@ pre code {
     width: 200px;
 }
 
-/* Pagination styles */
+/* 一致性审查结果 */
 .pagination {
     margin-top: 20px;
     display: flex;
     justify-content: center;
+}
+
+.review-result {
+    font-size: 15px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.review-opinion {
+    font-size: 12px;
+    color: #888;
 }
