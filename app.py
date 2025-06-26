@@ -12,6 +12,19 @@ def index():
     """渲染包含Vue的页面"""
     return render_template('index.html')
 
+@app.route('/api/parse-requirement', methods=['POST'])
+def parse_requirement():
+    data = request.json
+    requirements = data.get('requirements', '')
+    
+    # 解析需求文档成为需求点列表
+    requirement_point_list = parse_markdown(requirements)
+    
+    for point in requirement_point_list:
+        point["associated_code"] = []
+
+    return jsonify({"requirementPoints": requirement_point_list})
+
 @app.route('/api/auto-align', methods=['POST'])
 def auto_align():
     data = request.json
@@ -28,14 +41,8 @@ def auto_align():
         code_blocks.extend(code_block)
 
     for point in requirement_point_list:
-        point["associated_code"] = [
-            # {"filename": "mock.cpp", "content": "int main(){ \n\tprintf(\"Hello World\"); \n\treturn 0; \n}", "start_line": 1, "end_line": 4},
-            # {"filename": "mock.cpp", "content": "int main(){ \n\tprintf(\"Hello World\"); \n\treturn 0; \n}", "start_line": 1, "end_line": 4}
-        ]
-
-    # for point in requirement_point_list:
-    #     related_code = query_related_code(point, code_blocks)
-    #     point["associated_code"] = related_code # [{"filename":, "content":, "start_line":, "end_line":}]
+        related_code = query_related_code(point, code_blocks)
+        point["associated_code"] = related_code # [{"filename":, "content":, "start_line":, "end_line":}]
         
     return jsonify({"requirementPoints": requirement_point_list})
 

@@ -78,6 +78,29 @@ const app = createApp({
         };
 
         // 对齐选项卡
+        const parseRequirement = async () => {
+            alignAllReqLoading.value = true; // 设置加载状态为 true
+            try {
+                const response = await axios.post('/api/parse-requirement', {
+                    requirements: requirements.value
+                });
+                requirementPoints.value = response.data.requirementPoints; // 存储解析后的需求点
+                ElMessage({
+                    message: '需求解析完成',
+                    type: 'success',
+                    duration: 2000
+                });
+            } catch (error) {
+                ElMessage({
+                    message: '需求解析失败: ' + error.response.data.error,
+                    type: 'error',
+                    duration: 4000
+                });
+            } finally {
+                alignAllReqLoading.value = false; // 无论成功或失败都重置加载状态
+            }
+        }
+
         const autoAlign = async () => {
             alignAllReqLoading.value = true; // 设置加载状态为 true
             try {
@@ -256,6 +279,7 @@ const app = createApp({
             handleChange,
             renderMarkdownTableLine,
             renderMarkdown,
+            parseRequirement,
             autoAlign,
             alignSingleRequirement,
             removeSingleRequirement,

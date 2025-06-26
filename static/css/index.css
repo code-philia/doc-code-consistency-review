@@ -112,6 +112,15 @@ pre code {
     background-color: #fff;
 }
 
+.requirement-point-review {
+    margin-top: 20px;
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+}
+
 .requirement-header {
     display: flex;
     justify-content: space-between;
@@ -184,7 +193,6 @@ pre code {
 .upload-center {
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 20px; /* Add spacing between the buttons */
     width: 100%;
 }
@@ -200,12 +208,27 @@ pre code {
 .upload-demo {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px; /* Add spacing between the elements */
 }
 
 .upload-file-button {
-    width: 200px;
+    width: 100%;
+}
+
+.el-upload-list__item {
+    max-width: 100%; /* Allow the file name to take up the full width */
+    white-space: nowrap; /* Prevent wrapping */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Add ellipsis for overflowed text */
+}
+
+.el-upload {
+    width: 100%; /* Ensure the text input takes full width */
+}
+
+.el-upload-list {
+    width: 100%; /* Expand the upload list width */
 }
 
 /* 一致性审查结果 */
