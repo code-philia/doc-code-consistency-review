@@ -87,7 +87,7 @@ const app = createApp({
                 ElMessage({
                     message: '自动对齐完成',
                     type: 'success',
-                    duration: 4000
+                    duration: 2000
                 });
             } catch (error) {
                 ElMessage({
@@ -123,6 +123,20 @@ const app = createApp({
                     duration: 4000
                 });
             }
+        };
+
+        const removeSingleRequirement = (point) => {
+            for (let i = 0; i < requirementPoints.value.length; i++) { 
+                if (requirementPoints.value[i].id === point.id) {
+                    requirementPoints.value.splice(i, 1); // 删除对应的需求点
+                    break;
+                }
+            }
+            ElMessage({
+                message: '删除需求点成功',
+                type: 'success',
+                duration: 1000
+            });
         };
 
         const importAlignment = async () => {
@@ -189,6 +203,7 @@ const app = createApp({
             renderMarkdown,
             autoAlign,
             alignSingleRequirement,
+            removeSingleRequirement,
             importAlignment,
             exportAlignment,
             handleRequirementClick,

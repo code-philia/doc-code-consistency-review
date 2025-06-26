@@ -82,13 +82,22 @@
                             <div class="requirement-header">
                                 <!-- <span class="requirement-type">${ point.type }</span> -->
                                 <span class="requirement-id">${ point.id }</span>
-                                <el-button 
-                                    type="primary" 
-                                    size="small" 
-                                    @click.stop="alignSingleRequirement(point)"
-                                >
-                                    对齐
-                                </el-button>
+                                <el-button-group>
+                                    <el-button 
+                                        type="primary" 
+                                        size="small" 
+                                        @click.stop="alignSingleRequirement(point)"
+                                    >
+                                        对齐
+                                    </el-button>
+                                    <el-button 
+                                        type="danger" 
+                                        size="small" 
+                                        @click.stop="removeSingleRequirement(point)"
+                                    >
+                                        删除
+                                    </el-button>
+                                </el-button-group>
                             </div>
                             <div class="requirement-content">
                                 <template v-if="point.type === '表格行'">
