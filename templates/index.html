@@ -67,6 +67,7 @@
         <!-- 功能区域 -->
         <el-splitter-panel :min="200">
             <el-tabs class="tab-card" type="border-card">
+                <!-- 对齐 滚动条 -->
                 <el-tab-pane label="需求-代码对齐">
                     <el-button-group class="button-group">
                         <el-button type="primary" @click="autoAlign">解析并自动对齐</el-button>
@@ -87,6 +88,8 @@
                                     <el-button 
                                         type="primary" 
                                         size="small" 
+                                        text
+                                        bg
                                         @click.stop="alignSingleRequirement(point)"
                                     >
                                         对齐
@@ -94,6 +97,8 @@
                                     <el-button 
                                         type="danger" 
                                         size="small" 
+                                        text
+                                        bg
                                         @click.stop="removeSingleRequirement(point)"
                                     >
                                         删除
@@ -121,7 +126,53 @@
                         </div>
                     </el-scrollbar>
                 </el-tab-pane>
-                <el-tab-pane label="一致性审查">一致性审查</el-tab-pane>
+                <!-- 审查 分页 -->
+                <el-tab-pane label="一致性审查">
+                    <el-scrollbar height="80vh">
+                        <div v-if="requirementPoints.length > 0" class="requirement-point">
+                            <div class="requirement-header">
+                                <span class="requirement-id">${ requirementPoints[currentPage - 1].id }</span>
+                                <!-- <span class="requirement-type">${ requirementPoints[currentPage - 1].type }</span> -->
+                                <el-button 
+                                    type="primary" 
+                                    size="small" 
+                                    text
+                                    bg
+                                    @click.stop="reviewSingleRequirement(requirementPoints[currentPage - 1])"
+                                >
+                                    审查
+                                </el-button>
+                            </div>
+                            <div class="requirement-content">
+                                <template v-if="requirementPoints[currentPage - 1].type === '表格行'">
+                                    <div v-html="renderMarkdownTableLine(requirementPoints[currentPage - 1].content)"></div>
+                                </template>
+                                <template v-else>
+                                    <div v-html="renderMarkdown(requirementPoints[currentPage - 1].content)"></div>
+                                </template>
+                            </div>
+                            <div class="requirement-context">
+                                <small>${ requirementPoints[currentPage - 1].context }</small>
+                            </div>
+                            <el-divider></el-divider>
+                            <div v-for="block in requirementPoints[currentPage - 1].associated_code" :key="block.name" class="associated-code">
+                                <div class="requirement-context">
+                                    <small>${ block.filename }</small>
+                                </div>
+                                <pre><code class="language-cpp">${ block.content }</code></pre>
+                            </div>
+                        </div>
+                    </el-scrollbar>
+                    <el-pagination
+                        v-model:current-page="currentPage"
+                        size="small"
+                        background
+                        :page-size="1"
+                        :total="requirementPoints.length"
+                        layout="prev, pager, next"
+                        class="pagination"
+                    ></el-pagination>
+                </el-tab-pane>
             </el-tabs>
         </el-splitter-panel>
     </el-splitter>

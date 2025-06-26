@@ -12,6 +12,7 @@ const app = createApp({
         const requirementPoints = ref([]); // 用于存储解析后的需求点
         const showUpload = ref(false); // 控制上传按钮的显示
         const alignAllReqLoading = ref(false); // 控制加载状态
+        const currentPage = ref(1); // 当前页码
 
         // 上传需求文档
         const handleRequirementUploadChange = (file, requirementFileList) => {
@@ -157,6 +158,23 @@ const app = createApp({
             }
         };
 
+
+        // 审查选项卡
+        const reviewSingleRequirement = (point) => {
+            for (let i = 0; i < requirementPoints.value.length; i++) { 
+                if (requirementPoints.value[i].id === point.id) {
+                    // TODO
+                    console.log("审查：", point);
+                    break;
+                }
+            }
+            ElMessage({
+                message: '一致性审查成功',
+                type: 'success',
+                duration: 1000
+            });
+        };
+
         // 渲染 Markdown
         const renderMarkdownTableLine = (rowData) => {
             const headers = Object.keys(rowData).join(' | ');
@@ -193,6 +211,7 @@ const app = createApp({
             requirementPoints,
             showUpload,
             alignAllReqLoading,
+            currentPage,
             handleRequirementUploadChange,
             handleRequirementRemove,
             handleRequirementExceed,
@@ -207,6 +226,7 @@ const app = createApp({
             importAlignment,
             exportAlignment,
             handleRequirementClick,
+            reviewSingleRequirement,
         };
     }
 });
