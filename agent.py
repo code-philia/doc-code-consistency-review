@@ -1,11 +1,27 @@
 import os
 import re
-from flask import json
+import json
 from openai import OpenAI
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000/v1")
 API_KEY = os.environ.get("API_KEY", "0")
 MODEL_NAME = "deepseek-coder-6.7b-instruct"
+
+def query_llm(message, history=None):
+    client = OpenAI(
+        api_key=API_KEY,
+        base_url=API_BASE_URL,
+    )
+    
+    if history is None:
+        messages = []
+    else:
+        messages = history
+        
+    messages.append({"role": "user", "content": message})
+    response = client.chat.completions.create(messages=messages, model=MODEL_NAME)
+    result = response.choices[0].message
+    return result
 
 # ================= 对齐 相关代码 =================
 
@@ -75,22 +91,6 @@ def query_related_code(requirement_point, code_blocks, language: str = "zh"):
     
     return related_code_blocks
 
-
-def query_llm(message, history=None):
-    client = OpenAI(
-        api_key=API_KEY,
-        base_url=API_BASE_URL,
-    )
-    
-    if history is None:
-        messages = []
-    else:
-        messages = history
-        
-    messages.append({"role": "user", "content": message})
-    response = client.chat.completions.create(messages=messages, model=MODEL_NAME)
-    result = response.choices[0].message
-    return result
 
 # TODO 对齐理由
 def parse_llm_output(output):
@@ -175,9 +175,134 @@ Content:
 
 
 # ================= 审查 相关代码 =================
+def query_review_result(requirement_point: dict, language: str = "zh") -> dict:
+    """
+    执行代码一致性审查
+    
+    参数:
+        requirement_point: 包含需求内容和关联代码块
+        language: 提示语言 ('zh' 或 'en')
+        
+    返回:
+        更新后的requirement_point字典，包含审查结果
+    """
+    # 1. 准备输入数据
+    code_blocks = requirement_point.get("associated_code", [])
+    
+    # 构造代码块上下文字符串
+    code_context = "\n\n".join(
+        f"===== Block {idx} =====\n"
+        f"File: {block['filename']}\n"
+        f"Content:\n{block['content']}"
+        for idx, block in enumerate(code_blocks)
+    )
+    
+    # 2. 选择提示模板
+    template = CHINESE_REVIEW_PROMPT if language == "zh" else ENGLISH_REVIEW_PROMPT
+    prompt = template.format(
+        requirement_content=requirement_point["content"],
+        code_blocks_context=code_context
+    )
+    
+    # 3. 调用LLM
+    try:
+        response = query_llm(prompt)
+        print("LLM response:", response.content)
+        review_data = parse_review_response(response.content)
+        
+        # 4. 将结果填充到原始数据结构
+        for result in review_data.get("review_results", []):
+            block_idx = result["block_index"]
+            if 0 <= block_idx < len(code_blocks):
+                code_blocks[block_idx]["reviewResult"] = result["verdict"].lower()
+                code_blocks[block_idx]["reviewOpinion"] = (
+                    f"{result['technical_analysis']}\n"
+                )
+            
+    except Exception as e:
+        # 错误处理
+        print(f"审查过程中出错: {str(e)}")
+        for block in code_blocks:
+            block["reviewResult"] = None
+            block["reviewOpinion"] = f"出错：{str(e)}"
+    
+    return requirement_point
+
+def parse_review_response(response_text: str) -> dict:
+    """
+    解析LLM的审查响应
+    
+    处理情况：
+    1. 标准JSON输出
+    2. Markdown包裹的JSON
+    3. 部分合规JSON
+    """
+    # 提取可能的JSON部分
+    json_str = re.search(r'```(?:json)?\s*({.*?})\s*```', response_text, re.DOTALL)
+    json_str = json_str.group(1) if json_str else response_text
+    
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError:
+        # 尝试修复常见格式问题
+        json_str = re.sub(r'(\w+)\s*:', r'"\1":', json_str)  # 无引号key
+        json_str = re.sub(r'//.*?\n', '', json_str)  # 去除注释
+        return json.loads(json_str)
 
 
+CHINESE_REVIEW_PROMPT = """作为航天软件代码审查专家，请对以下需求与代码实现进行一致性审查：
 
+# 需求内容
+{requirement_content}
+
+# 待审查代码块
+{code_blocks_context}
+
+# 审查要求
+1. 从以下维度进行审查：
+   - 代码与需求功能一致性
+   - 跨代码块逻辑一致性
+2. 对每个代码块单独给出结论
+3. 严格按以下JSON格式返回，以便我能直接使用json.loads解析，不要输出其他多余的揭示：
+```json
+{{
+  "review_results": [
+    {{
+      "block_index": 0,
+      "verdict": "pass"|"fail",
+      "technical_analysis": "技术分析说明",
+    }},
+    // 其他代码块...
+  ],
+}}
+"""
+
+ENGLISH_REVIEW_PROMPT = """As an aerospace software code review expert, conduct consistency verification for the following requirement and implementations:
+
+# Requirement
+{requirement_content}
+
+# Code Blocks Under Review
+{code_blocks_context}
+
+# Review Criteria
+1. Evaluate from these aspects:
+   - Functional alignment with requirement
+   - Cross-block logical consistency
+2. Provide individual verdict for each code block
+3. Strictly use this JSON format so that I can directly use json.loads to parse it, do not output any extra commentary:
+```json
+{{
+  "review_results": [
+    {{
+      "block_index": 0,
+      "verdict": "pass"|"fail",
+      "technical_analysis": "Technical rationale",
+    }},
+    // Other blocks...
+  ],
+}}
+"""
 
 if __name__ == '__main__':
     message = "你好，简单介绍你自己。"

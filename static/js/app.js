@@ -12,6 +12,10 @@ const app = createApp({
         const requirementPoints = ref([]); // 用于存储解析后的需求点
         const showUpload = ref(false); // 控制上传按钮的显示
         const alignAllReqLoading = ref(false); // 控制加载状态
+        const alignSingleReqLoading = ref(false); // 控制单个需求点对齐的加载状态
+        const aligningPoints = ref([]); // 当前正在对齐的需求点 ID
+        const reviewSingleReqLoading = ref(false); // 用于存储单个需求点的审查结果
+        const reviewingPoints = ref([]); // 当前正在审查的需求点 ID
         const currentPage = ref(1); // 当前页码
 
         // 上传需求文档
@@ -103,6 +107,8 @@ const app = createApp({
 
 
         const alignSingleRequirement = async (point) => {
+            aligningPoints.value.push(point.id); // 添加到正在对齐的需求点列表
+            alignSingleReqLoading.value = true; // 设置单个对齐加载状态为 true
             try {
                 const response = await axios.post('/api/align-single-requirement', {
                     requirement: point,
@@ -117,12 +123,20 @@ const app = createApp({
                         break;
                     }
                 }
+                ElMessage({
+                    message: '单个需求点对齐完成',
+                    type: 'success',
+                    duration: 1000
+                });
             } catch (error) {
                 ElMessage({
                     message: '自动对齐失败: ' + error.response.data.error,
                     type: 'error',
                     duration: 4000
                 });
+            } finally {
+                aligningPoints.value = aligningPoints.value.filter(id => id !== point.id); // 从正在对齐的列表中移除
+                alignSingleReqLoading.value = aligningPoints.value.length > 0; // 如果还有正在对齐的需求点，则保持加载状态
             }
         };
 
@@ -130,6 +144,8 @@ const app = createApp({
             for (let i = 0; i < requirementPoints.value.length; i++) { 
                 if (requirementPoints.value[i].id === point.id) {
                     requirementPoints.value.splice(i, 1); // 删除对应的需求点
+                    aligningPoints.value = aligningPoints.value.filter(id => id !== point.id); // 从正在对齐的列表中移除
+                    reviewingPoints.value = reviewingPoints.value.filter(id => id !== point.id); // 从正在
                     break;
                 }
             }
@@ -160,24 +176,35 @@ const app = createApp({
 
 
         // 审查选项卡
-        const reviewSingleRequirement = (point) => {
-            for (let i = 0; i < requirementPoints.value.length; i++) { 
-                if (requirementPoints.value[i].id === point.id) {
-                    // Mock审查结果
-                    requirementPoints.value[i].associated_code.forEach((block) => {
-                        block.reviewResult = Math.random() > 0.5 ? 'pass' : 'fail'; // 随机通过或失败
-                        block.reviewOpinion = block.reviewResult === 'pass' 
-                            ? '代码符合需求点，审查通过。' 
-                            : '代码未完全符合需求点，审查失败。';
-                    });
-                    break;
+        const reviewSingleRequirement = async (point) => {
+            reviewingPoints.value.push(point.id); // 添加到正在审查的需求点列表
+            reviewSingleReqLoading.value = true;
+            try {
+                const response = await axios.post('/api/review-single-requirement', {
+                    requirement: point
+                });
+                for (let i = 0; i < requirementPoints.value.length; i++) { 
+                    if (requirementPoints.value[i].id === point.id) {
+                        requirementPoints.value[i] = response.data.requirementPoint; // 更新对应的需求点
+                        break;
+                    }
                 }
+                ElMessage({
+                    message: '审查完成',
+                    type: 'success',
+                    duration: 1000
+                });
             }
-            ElMessage({
-                message: '一致性审查完成',
-                type: 'success',
-                duration: 1000
-            });
+            catch (error) {
+                ElMessage({
+                    message: '审查失败: ' + error.response.data.error,
+                    type: 'error',
+                    duration: 4000
+                });
+            } finally {
+                reviewingPoints.value = reviewingPoints.value.filter(id => id !== point.id); // 从正在审查的列表中移除
+                reviewSingleReqLoading.value = reviewingPoints.value.length > 0; // 如果还有正在审查的需求点，则保持加载状态
+            }
         };
 
         // 渲染 Markdown
@@ -216,6 +243,10 @@ const app = createApp({
             requirementPoints,
             showUpload,
             alignAllReqLoading,
+            alignSingleReqLoading,
+            reviewSingleReqLoading,
+            aligningPoints,
+            reviewingPoints,
             currentPage,
             handleRequirementUploadChange,
             handleRequirementRemove,

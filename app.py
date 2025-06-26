@@ -1,9 +1,9 @@
 from flask import Flask, json, render_template, request, jsonify
-import os
-from openai import OpenAI
 import socket
-from utils import *
+from utils import parse_markdown, split_code
+from agent import query_related_code, query_review_result
 import random
+import string
 
 app = Flask(__name__)
 
@@ -14,7 +14,6 @@ def index():
 
 @app.route('/api/auto-align', methods=['POST'])
 def auto_align():
-    """临时接口：自动对齐"""
     data = request.json
     requirements = data.get('requirements', '')
     code_files = data.get('codeFiles', [])
@@ -26,19 +25,46 @@ def auto_align():
     code_blocks = []
     for file in code_files:
         code_block = split_code(file['name'], file['content'])
-        print(f"Parsed {len(code_block)} code blocks from {file['name']}")
-        print(f"Code blocks: {code_block}")
         code_blocks.extend(code_block)
 
-    # 随机为每个需求点附着1~5个代码块
     for point in requirement_point_list:
-        num_blocks = min(len(code_blocks), max(1, int(5 * (len(code_blocks) / len(requirement_point_list)))))
-        point["associated_code"] = random.sample(code_blocks, num_blocks)
+        point["associated_code"] = [
+            # {"filename": "mock.cpp", "content": "int main(){ \n\tprintf(\"Hello World\"); \n\treturn 0; \n}", "start_line": 1, "end_line": 4},
+            # {"filename": "mock.cpp", "content": "int main(){ \n\tprintf(\"Hello World\"); \n\treturn 0; \n}", "start_line": 1, "end_line": 4}
+        ]
 
-    with open('code_blocks.json', 'w', encoding='utf-8') as f:
-        json.dump(code_blocks, f, ensure_ascii=False, indent=4)
-
+    # for point in requirement_point_list:
+    #     related_code = query_related_code(point, code_blocks)
+    #     point["associated_code"] = related_code # [{"filename":, "content":, "start_line":, "end_line":}]
+        
     return jsonify({"requirementPoints": requirement_point_list})
+
+@app.route('/api/align-single-requirement', methods=['POST'])
+def align_single_requirement():
+    data = request.json
+    requirement = data.get('requirement')
+    code_files = data.get('codeFiles', [])
+    
+    requirement_point_list = [requirement]
+    
+    # 解析代码文件
+    code_blocks = []
+    for file in code_files:
+        code_block = split_code(file['name'], file['content'])
+        code_blocks.extend(code_block)
+
+    # for point in requirement_point_list:
+    #     def generate_random_string(length=10):
+    #         return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    #     random_string = generate_random_string()
+        
+    #     point["associated_code"] = [{"filename": "mock.cpp", "content": random_string, "start_line": 1, "end_line": 5}]
+
+    for point in requirement_point_list:
+        related_code = query_related_code(point, code_blocks)
+        point["associated_code"] = related_code # [{"filename":, "content":, "start_line":, "end_line":}]
+        
+    return jsonify({"requirementPoint": requirement_point_list[0]})
 
 @app.route('/api/import-alignment', methods=['POST'])
 def import_alignment():
@@ -49,6 +75,16 @@ def import_alignment():
 def export_alignment():
     """临时接口：导出对齐"""
     return jsonify({"message": "导出对齐已完成"})
+
+
+@app.route('/api/review-single-requirement', methods=['POST'])
+def review_single_requirement():
+    data = request.json
+    requirement_point = data.get('requirement')
+    
+    requirement_point_reviewed = query_review_result(requirement_point)
+    
+    return jsonify({"requirementPoint": requirement_point_reviewed})
 
 
 def find_available_port(start_port):

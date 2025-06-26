@@ -77,6 +77,8 @@
                     <el-scrollbar v-loading="alignAllReqLoading" max-height="600px" class="requirement-points">
                         <div 
                             v-for="(point, index) in requirementPoints" 
+                            v-loading="alignSingleReqLoading && aligningPoints.includes(point.id)"
+                            element-loading-text="查找相关代码..."
                             :key="index" 
                             class="requirement-point" 
                             @click="handleRequirementClick(point)"
@@ -129,7 +131,11 @@
                 <!-- 审查 分页 -->
                 <el-tab-pane label="一致性审查">
                     <el-scrollbar height="80vh">
-                        <div v-if="requirementPoints.length > 0" class="requirement-point">
+                        <div 
+                        v-if="requirementPoints.length > 0"
+                        v-loading="reviewSingleReqLoading && reviewingPoints.includes(requirementPoints[currentPage - 1].id)"
+                        class="requirement-point"
+                    >
                             <div class="requirement-header">
                                 <span class="requirement-id">${ requirementPoints[currentPage - 1].id }</span>
                                 <el-button 
