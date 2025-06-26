@@ -6,7 +6,9 @@ from openai import OpenAI
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000/v1")
 API_KEY = os.environ.get("API_KEY", "0")
 MODEL_NAME = "deepseek-coder-6.7b-instruct"
-    
+
+# ================= 对齐 相关代码 =================
+
 def query_related_code(requirement_point, code_blocks, language: str = "zh"):
     """
     查询与需求点最相关的代码行号
@@ -60,7 +62,8 @@ def query_related_code(requirement_point, code_blocks, language: str = "zh"):
             start_line = min(block)
             end_line = max(block)
             block_content = "\n".join(
-                line for line in code_block["content"].splitlines()
+                line.split(":", 1)[1].strip() if ":" in line else line.strip()
+                for line in code_block["content"].splitlines()
                 if int(line.split(":")[0]) in block
             )
             related_code_blocks.append({
@@ -171,6 +174,9 @@ Content:
 """
 
 
+# ================= 审查 相关代码 =================
+
+
 
 
 if __name__ == '__main__':
@@ -179,11 +185,11 @@ if __name__ == '__main__':
     print(response.content)
     
 # from langchain_openai import ChatOpenAI
-# client = ChatOpenAI(
-#     model="deepseek-coder-6.7b-instruct", 
-#     api_key="{}".format(os.environ.get("API_KEY", "0")),
-#     base_url="http://localhost:{}/v1".format(os.environ.get("API_PORT", 8000)),
-# )
+    # client = ChatOpenAI(
+    #     model="deepseek-coder-6.7b-instruct", 
+    #     api_key="{}".format(os.environ.get("API_KEY", "0")),
+    #     base_url="http://localhost:{}/v1".format(os.environ.get("API_PORT", 8000)),
+    # )
 
-# res = client.invoke("你好，简单介绍你自己。")
-# print(res.content)
+    # res = client.invoke("你好，简单介绍你自己。")
+    # print(res.content)
