@@ -16,7 +16,6 @@ header {
     height: 10px; /* Fixed height for header */
 }
 
-
 .header-icon {
     width: 32px;
     height: 32px;
@@ -78,10 +77,6 @@ button:hover {
     background-color: #e0e0e0;
 }
 
-details.hoverable-details:hover {
-    cursor: pointer;
-}
-
 pre code {
     font-size: 14px; /* Increase font size */
     font-family: Consolas, monospace; /* Use Consolas font */
@@ -91,74 +86,6 @@ pre code {
 .tab-card {
     height: 95vh;
     overflow: hidden;
-}
-
-/* 需求点展示和代码对齐 */
-.requirement-points {
-    margin-top: 20px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-    overflow-y: auto;
-    min-height: 60px;
-}
-
-.requirement-point {
-    margin-bottom: 15px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #fff;
-}
-
-.requirement-point-review {
-    margin-top: 20px;
-    margin-bottom: 15px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #fff;
-}
-
-.requirement-header {
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.requirement-type {
-    color: #007bff;
-}
-
-.requirement-id {
-    color: #555;
-}
-
-.requirement-content {
-    margin-bottom: 10px;
-}
-
-.requirement-context {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 10px;
-}
-
-.associated-code {
-    background-color: #ffffff;
-    border: 1.5px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-.associated-code pre {
-    background-color: #f0f0f0ad;
-    padding: 10px;
-    font-size: 12px;
-    font-family: Consolas, monospace;
 }
 
 /* 打开文件侧边栏 */
@@ -229,47 +156,4 @@ pre code {
 
 .el-upload-list {
     width: 100%; /* Expand the upload list width */
-}
-
-/* 一致性审查结果 */
-.pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-}
-
-.review-result {
-    font-size: 15px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
-.review-opinion {
-    font-size: 12px;
-    color: #888;
-}
-
-.custom-confirm-box {
-    z-index: 2000; /* Ensure it appears above other elements */
-    width: 300px; /* Fixed width */
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.custom-confirm-box .selected-text {
-    margin-bottom: 20px;
-    font-size: 14px;
-    font-weight: bold;
-    word-wrap: break-word;
-}
-
-.custom-confirm-box .selected-prompt {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: #888;
 }

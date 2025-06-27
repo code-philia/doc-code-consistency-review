@@ -37,48 +37,27 @@
         <el-splitter-panel size="70%" :min="600">
             <el-row class="main-content">
                 <!-- 需求文档展示区 -->
-                <el-scrollbar class="block" id="requirements" height="90vh">
+                <el-scrollbar class="block" id="requirements" height="89vh">
                     <div class="section-header">
                         <el-icon><Document /></el-icon>
                         需求文档         
                     </div>
-                    <div v-html="requirements" @mouseup="handleTextSelection"></div>
+                    <div v-html="renderMarkdownWithLatex(requirementMarkdown)" @mouseup="handleTextSelection"></div>
                 </el-scrollbar>
 
-                <div 
-                    v-if="showConfirm"
-                    class="custom-confirm-box"
-                    :style="{ 
-                        position: 'absolute', 
-                        top: `${confirmBoxPosition.y}px`, 
-                        left: `${confirmBoxPosition.x}px`, 
-                    }"
-                >
-                    <div class="selected-text">
-                        ${ selectedText }
-                    </div>
-                    <div class="selected-prompt">
-                        <span>是否添加为需求点？</span>
-                        <div>
-                            <el-button type="primary" plain size="small" @click="addRequirementPoint">确认</el-button>
-                            <el-button type="danger" plain size="small" @click="cancelRequirementPoint">取消</el-button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 代码展示区 -->
-                <el-scrollbar class="block" id="code" height="90vh">
+                <el-scrollbar class="block" id="code" height="89vh">
                     <div class="section-header">
                         <el-icon><Tickets /></el-icon>
                         代码
                     </div>
-                    <el-collapse v-model="activeNames" @change="handleChange">
+                    <el-collapse v-model="activeNames" @change="handleCodeSpanChange">
                         <el-collapse-item 
                             v-for="(file, index) in codeFiles" 
                             :key="index" 
                             :title="file.name" 
                             :name="index">
-                            <pre><code class="language-cpp">${file.content}</code></pre>
+                            <pre><code class="language-cpp">${file.numberedContent}</code></pre>
                         </el-collapse-item>
                     </el-collapse>
                 </el-scrollbar>
@@ -88,133 +67,14 @@
         <!-- 功能区域 -->
         <el-splitter-panel :min="200">
             <el-tabs class="tab-card" type="border-card">
-                <!-- 对齐 滚动条 -->
-                <el-tab-pane label="需求-代码对齐">
-                    <el-button-group class="button-group">
-                        <el-button type="primary" @click="parseRequirement">解析需求</el-button>
-                        <el-button type="primary" @click="autoAlign">自动对齐</el-button>
-                    </el-button-group>
-                    <el-scrollbar v-loading="alignAllReqLoading" max-height="75vh" class="requirement-points">
-                        <div 
-                            v-for="(point, index) in requirementPoints" 
-                            v-loading="alignSingleReqLoading && aligningPoints.includes(point.id)"
-                            element-loading-text="查找相关代码..."
-                            :key="index" 
-                            class="requirement-point" 
-                            @click="handleRequirementClick(point)"
-                        >
-                            <div class="requirement-header">
-                                <!-- <span class="requirement-type">${ point.type }</span> -->
-                                <span class="requirement-id">${ point.id }</span>
-                                <el-button-group>
-                                    <el-button 
-                                        type="primary" 
-                                        size="small" 
-                                        text
-                                        bg
-                                        @click.stop="alignSingleRequirement(point)"
-                                    >
-                                        对齐
-                                    </el-button>
-                                    <el-button 
-                                        type="danger" 
-                                        size="small" 
-                                        text
-                                        bg
-                                        @click.stop="removeSingleRequirement(point)"
-                                    >
-                                        删除
-                                    </el-button>
-                                </el-button-group>
-                            </div>
-                            <div class="requirement-content">
-                                <template v-if="point.type === '表格行'">
-                                    <div v-html="renderMarkdownTableLine(point.content)"></div>
-                                </template>
-                                <template v-else>
-                                    <div v-html="renderMarkdown(point.content)"></div>
-                                </template>
-                            </div>
-                            <div class="requirement-context">
-                                <small>${ point.context }</small>
-                            </div>
-                            <el-divider></el-divider>
-                            <div v-for="block in point.associated_code" :key="block.name" class="associated-code">
-                                <div class="requirement-context">
-                                    <small>${ block.filename }</small>
-                                </div>
-                                <pre><code class="language-cpp">${ block.content }</code></pre>
-                            </div>
-                        </div>
+                <!-- 审查 -->
+                <el-tab-pane label="一致性审查">
+                    <el-scrollbar height="75vh">
+
                     </el-scrollbar>
                 </el-tab-pane>
-                <!-- 审查 分页 -->
-                <el-tab-pane label="一致性审查">
-                    <el-button-group class="button-group">
-                        <el-button type="primary" disabled="true">审查全部需求</el-button>
-                        <el-button type="primary" disabled="true">导出问题单</el-button>
-                    </el-button-group>
-                    <el-scrollbar height="75vh">
-                        <div 
-                        v-if="requirementPoints.length > 0"
-                        v-loading="reviewSingleReqLoading && reviewingPoints.includes(requirementPoints[currentPage - 1].id)"
-                        class="requirement-point-review"
-                    >
-                            <div class="requirement-header">
-                                <span class="requirement-id">${ requirementPoints[currentPage - 1].id }</span>
-                                <el-button 
-                                    type="primary" 
-                                    size="small" 
-                                    text
-                                    bg
-                                    @click.stop="reviewSingleRequirement(requirementPoints[currentPage - 1])"
-                                >
-                                    审查
-                                </el-button>
-                            </div>
-                            <div class="requirement-content">
-                                <template v-if="requirementPoints[currentPage - 1].type === '表格行'">
-                                    <div v-html="renderMarkdownTableLine(requirementPoints[currentPage - 1].content)"></div>
-                                </template>
-                                <template v-else>
-                                    <div v-html="renderMarkdown(requirementPoints[currentPage - 1].content)"></div>
-                                </template>
-                            </div>
-                            <div class="requirement-context">
-                                <small>${ requirementPoints[currentPage - 1].context }</small>
-                            </div>
-                            <el-divider></el-divider>
-                            <div 
-                                v-for="block in requirementPoints[currentPage - 1].associated_code" 
-                                :key="block.name" 
-                                class="associated-code"
-                            >
-                                <div class="requirement-context">
-                                    <small>${ block.filename }</small>
-                                </div>
-                                <pre><code class="language-cpp">${ block.content }</code></pre>
-                                
-                                <el-col>
-                                    <el-row class="review-result">
-                                        审查结果：
-                                        <el-tag v-if="block.reviewResult==='pass'" type="success">通过</el-tag>
-                                        <el-tag v-else-if="block.reviewResult==='fail'" type="danger">失败</el-tag>
-                                        <el-tag v-else type="info">未审查</el-tag>
-                                    </el-row>
-                                    <span class="review-opinion">${block.reviewOpinion || '未审查'}</span>
-                                </el-col>
-                            </div>
-                        </div>
-                    </el-scrollbar>
-                    <el-pagination
-                        v-model:current-page="currentPage"
-                        size="small"
-                        background
-                        :page-size="1"
-                        :total="requirementPoints.length"
-                        layout="prev, pager, next"
-                        class="pagination"
-                    ></el-pagination>
+
+                <el-tab-pane label="需求生成">
                 </el-tab-pane>
             </el-tabs>
         </el-splitter-panel>
@@ -239,7 +99,6 @@
                     :on-change="handleRequirementUploadChange"
                     :on-remove="handleRequirementRemove"
                     accept=".md"
-                    :file-list="requirementFileList"
                     :limit="1"
                     :on-exceed="handleRequirementExceed"
                 >
@@ -258,10 +117,9 @@
                     action=""
                     :auto-upload="false"
                     :on-change="handleUploadChange"
-                    :on-remove="handleRemove"
+                    :on-remove="handleCodeFileRemove"
                     multiple
                     accept=".h,.c,.cpp"
-                    :file-list="fileList"
                 >
                     <button class="upload-file-button">打开代码文件</button>
                     <template #tip>
