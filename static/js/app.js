@@ -88,9 +88,17 @@ const app = createApp({
         const handleUploadChange = (file, fileList) => {
             const reader = new FileReader();
             reader.onload = (e) => {
+                // 尝试解码 ANSI 编码文件为 UTF-8
+                let content;
+                try {
+                    content = new TextDecoder("utf-8").decode(new Uint8Array(e.target.result));
+                } catch (error) {
+                    // 如果 UTF-8 解码失败，尝试使用 GBK 编码（常见于 ANSI 中文文件）
+                    content = new TextDecoder("gbk").decode(new Uint8Array(e.target.result));
+                }
                 codeFiles.value.push({
                     name: file.name,
-                    content: e.target.result
+                    content: content
                 });
                 setTimeout(() => {
                     document.querySelectorAll('pre code').forEach((block) => {
@@ -98,7 +106,7 @@ const app = createApp({
                     });
                 }, 0);
             };
-            reader.readAsText(file.raw);
+            reader.readAsArrayBuffer(file.raw); // 使用 ArrayBuffer 读取文件内容
         };
 
         const handleRemove = (file, fileList) => {
