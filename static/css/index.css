@@ -248,3 +248,28 @@ pre code {
     font-size: 12px;
     color: #888;
 }
+
+.custom-confirm-box {
+    z-index: 2000; /* Ensure it appears above other elements */
+    width: 300px; /* Fixed width */
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.custom-confirm-box .selected-text {
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    word-wrap: break-word;
+}
+
+.custom-confirm-box .selected-prompt {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #888;
+}

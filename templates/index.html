@@ -42,8 +42,29 @@
                         <el-icon><Document /></el-icon>
                         需求文档         
                     </div>
-                    <div v-html="requirements"></div>
+                    <div v-html="requirements" @mouseup="handleTextSelection"></div>
                 </el-scrollbar>
+
+                <div 
+                    v-if="showConfirm"
+                    class="custom-confirm-box"
+                    :style="{ 
+                        position: 'absolute', 
+                        top: `${confirmBoxPosition.y}px`, 
+                        left: `${confirmBoxPosition.x}px`, 
+                    }"
+                >
+                    <div class="selected-text">
+                        ${ selectedText }
+                    </div>
+                    <div class="selected-prompt">
+                        <span>是否添加为需求点？</span>
+                        <div>
+                            <el-button type="primary" plain size="small" @click="addRequirementPoint">确认</el-button>
+                            <el-button type="danger" plain size="small" @click="cancelRequirementPoint">取消</el-button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- 代码展示区 -->
                 <el-scrollbar class="block" id="code" height="90vh">

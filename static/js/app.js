@@ -17,6 +17,9 @@ const app = createApp({
         const reviewSingleReqLoading = ref(false); // 用于存储单个需求点的审查结果
         const reviewingPoints = ref([]); // 当前正在审查的需求点 ID
         const currentPage = ref(1); // 当前页码
+        const selectedText = ref(""); // Store selected text
+        const showConfirm = ref(false); // Control visibility of confirmation dialog
+        const confirmBoxPosition = ref({ x: 0, y: 0 }); // Store position of the confirmation box
 
         // 上传需求文档
         const handleRequirementUploadChange = (file, requirementFileList) => {
@@ -46,6 +49,37 @@ const app = createApp({
                 type: 'warning',
                 duration:  4000
             });
+        };
+
+        // 添加需求点
+        const handleTextSelection = () => {
+            const selection = window.getSelection();
+            if (selection && selection.toString().trim()) {
+                selectedText.value = selection.toString().trim();
+                const range = selection.getRangeAt(0).getBoundingClientRect();
+                confirmBoxPosition.value = { x: range.left + window.scrollX, y: range.top + window.scrollY };
+                showConfirm.value = true; // Show confirmation box
+            }
+            console.log('Selected text:', selectedText.value);
+        };
+
+        const addRequirementPoint = () => {
+            requirementPoints.value.push({
+                type: "描述文本",
+                id: `text_${requirementPoints.value.length}`,
+                content: selectedText.value,
+                context: ""
+            });
+            showConfirm.value = false; // Hide confirmation box
+            ElMessage({
+                message: '需求点已添加',
+                type: 'success',
+                duration: 2000
+            });
+        };
+
+        const cancelRequirementPoint = () => {
+            showConfirm.value = false; // Hide confirmation box
         };
 
         // 上传代码文件
@@ -287,6 +321,12 @@ const app = createApp({
             exportAlignment,
             handleRequirementClick,
             reviewSingleRequirement,
+            selectedText,
+            showConfirm,
+            confirmBoxPosition,
+            handleTextSelection,
+            addRequirementPoint,
+            cancelRequirementPoint,
         };
     }
 });
