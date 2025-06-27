@@ -70,13 +70,14 @@ def parse_markdown(md_text):
         })
 
     # 解析公式
-    formula_pattern = r'\$\$(.*?)\$\$'
+    formula_pattern = r'\$(.*?)\$|\$\$(.*?)\$\$'
     formulas = re.findall(formula_pattern, md_text, re.DOTALL)
-    for k, formula in enumerate(formulas):
+    for k, formula_pair in enumerate(formulas):
+        formula = formula_pair[0] if formula_pair[0] else formula_pair[1]
         requirements.append({
             "type": "公式",
             "id": f"formula_{k}",
-            "content": "$$ "+formula.strip()+" $$",
+            "content": f"${formula.strip()}$" if formula_pair[0] else f"$$ {formula.strip()} $$",
             "context": " > ".join(current_context)
         })
     
