@@ -80,6 +80,8 @@ const app = createApp({
 
         const cancelRequirementPoint = () => {
             showConfirm.value = false; // Hide confirmation box
+            selectedText.value = ""; // Clear selected text
+            confirmBoxPosition.value = { x: 0, y: 0 }; // Reset position
         };
 
         // 上传代码文件
