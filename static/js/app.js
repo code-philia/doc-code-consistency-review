@@ -21,20 +21,61 @@ const app = createApp({
         const showConfirm = ref(false); // Control visibility of confirmation dialog
         const confirmBoxPosition = ref({ x: 0, y: 0 }); // Store position of the confirmation box
 
+        // 渲染 Markdown
+        const renderMarkdownTableLine = (rowData) => {
+            const headers = Object.keys(rowData).join(' | ');
+            const separator = Object.keys(rowData).map(() => '---').join(' | ');
+            const values = Object.values(rowData).join(' | ');
+            return marked.parse(`| ${headers} |\n| ${separator} |\n| ${values} |`);
+        };
+
+        const renderMarkdown = (markdownContent) => {
+            const renderedContent = marked.parse(markdownContent);
+            const container = document.createElement('div');
+            container.innerHTML = renderedContent;
+            renderMathInElement(container, {
+                delimiters: [
+                    { left: "$$", right: "$$", display: true },
+                    { left: "$", right: "$", display: false }
+                ]
+            });
+            return container.innerHTML;
+        };
+
+        const renderMarkdownWithLatex = (markdownContent) => {
+            // 正则表达式匹配公式：单行公式 $...$ 或多行公式 $$...$$
+            const latexRegex = /\$\$([\s\S]*?)\$\$|\$([\s\S]*?)\$/g;
+
+            // 替换公式并渲染
+            let renderedContent = markdownContent.replace(latexRegex, (match, displayFormula, inlineFormula) => {
+                try {
+                    // 如果是 $$...$$，渲染为块级公式
+                    if (displayFormula) {
+                        return katex.renderToString(displayFormula, { displayMode: true });
+                    }
+                    // 如果是 $...$，渲染为行内公式
+                    if (inlineFormula) {
+                        return katex.renderToString(inlineFormula, { displayMode: false });
+                    }
+                } catch (error) {
+                    console.error("KaTeX render error:", error.message);
+                    return match; // 如果渲染失败，保留原公式
+                }
+            });
+
+            // 使用 marked 渲染剩余 Markdown
+            const container = document.createElement('div');
+            container.innerHTML = marked.parse(renderedContent);
+
+            return container.innerHTML;
+        };
+
         // 上传需求文档
         const handleRequirementUploadChange = (file, requirementFileList) => {
             const reader = new FileReader();
             reader.onload = (e) => {
-                const markdownContent = e.target.result;
-                requirements.value = marked.parse(markdownContent); // 使用 marked.js 渲染 Markdown
-                setTimeout(() => {
-                    renderMathInElement(document.getElementById('requirements'), {
-                        delimiters: [
-                            { left: "$$", right: "$$", display: true },
-                            { left: "$", right: "$", display: false }
-                        ]
-                    });
-                }, 0); // 使用 KaTeX 渲染公式
+                let markdownContent = e.target.result;
+                requirements.value = renderMarkdownWithLatex(markdownContent); // 直接存储 Markdown 内容
             };
             reader.readAsText(file.raw);
         };
@@ -272,29 +313,6 @@ const app = createApp({
                 reviewingPoints.value = reviewingPoints.value.filter(id => id !== point.id); // 从正在审查的列表中移除
                 reviewSingleReqLoading.value = reviewingPoints.value.length > 0; // 如果还有正在审查的需求点，则保持加载状态
             }
-        };
-
-        // 渲染 Markdown
-        const renderMarkdownTableLine = (rowData) => {
-            const headers = Object.keys(rowData).join(' | ');
-            const separator = Object.keys(rowData).map(() => '---').join(' | ');
-            const values = Object.values(rowData).join(' | ');
-            return marked.parse(`| ${headers} |\n| ${separator} |\n| ${values} |`);
-        };
-
-        const renderMarkdown = (markdownContent) => {
-            // Render Markdown
-            const renderedContent = marked.parse(markdownContent);
-            // Render formulas using KaTeX
-            const container = document.createElement('div');
-            container.innerHTML = renderedContent;
-            renderMathInElement(container, {
-                delimiters: [
-                    { left: "$$", right: "$$", display: true },
-                    { left: "$", right: "$", display: false }
-                ]
-            });
-            return container.innerHTML;
         };
 
         const handleRequirementClick = (point) => {
