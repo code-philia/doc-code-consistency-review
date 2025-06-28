@@ -6,6 +6,7 @@ const app = createApp({
     setup() {
         const requirementFilename = ref(""); // 需求文档文件名
         const requirementMarkdown = ref("#### 未加载需求文档... ####"); // 需求文档原始 Markdown 内容
+        const requirementHtml = ref(""); // 渲染后的 HTML 内容
         const codeFiles = ref([]); // {name: 'file1.cpp', content: '...', numberedContent: '1. ...\n2. ...\n3. ...'} 代码文件列表
 
         const showUpload = ref(false); // 控制上传界面显示
@@ -47,6 +48,7 @@ const app = createApp({
             reader.onload = (e) => {
                 requirementFilename.value = file.name; // 存储需求文件名
                 requirementMarkdown.value = e.target.result; // 直接存储 Markdown 内容
+                requirementHtml.value = renderMarkdownWithLatex(requirementMarkdown.value); // 渲染 Markdown 内容为 HTML
             };
             reader.readAsText(file.raw);
         };
@@ -119,6 +121,7 @@ const app = createApp({
         return {
             requirementFilename,
             requirementMarkdown,
+            requirementHtml,
             codeFiles,
             showUpload,
             activeNames,
