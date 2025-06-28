@@ -33,24 +33,27 @@
     
     <!-- 主体 展示+功能 -->
     <el-splitter>
-        <!-- 展示区域 -->
-        <el-splitter-panel size="70%" :min="600">
-            <el-row class="main-content">
-                <!-- 需求文档展示区 -->
-                <el-scrollbar class="block" id="requirements" height="89vh">
-                    <div class="section-header">
-                        <el-icon><Document /></el-icon>
-                        需求文档         
-                    </div>
+        <!-- 需求文档展示区 -->
+        <el-splitter-panel size="35%" :min="400">
+            <el-col class="block" id="requirements">
+                <div class="section-header">
+                    <el-icon><Document /></el-icon>
+                    需求文档         
+                </div>
+                <el-scrollbar height="89vh">
                     <div v-html="renderMarkdownWithLatex(requirementMarkdown)" @mouseup="handleTextSelection"></div>
                 </el-scrollbar>
+            </el-col>
+        </el-splitter-panel>
 
-                <!-- 代码展示区 -->
-                <el-scrollbar class="block" id="code" height="89vh">
-                    <div class="section-header">
-                        <el-icon><Tickets /></el-icon>
-                        代码
-                    </div>
+        <!-- 代码展示区 -->
+        <el-splitter-panel size="35%" :min="400">
+            <el-col class="block" id="code" >
+                <div class="section-header">
+                    <el-icon><Tickets /></el-icon>
+                    代码
+                </div>
+                <el-scrollbar height="89vh">
                     <el-collapse v-model="activeNames" @change="handleCodeSpanChange">
                         <el-collapse-item 
                             v-for="(file, index) in codeFiles" 
@@ -61,11 +64,11 @@
                         </el-collapse-item>
                     </el-collapse>
                 </el-scrollbar>
-            </el-row>
+            </el-col>
         </el-splitter-panel>
 
         <!-- 功能区域 -->
-        <el-splitter-panel :min="200">
+        <el-splitter-panel :min="300">
             <el-tabs class="tab-card" type="border-card">
                 <!-- 审查 -->
                 <el-tab-pane label="一致性审查">

@@ -30,28 +30,14 @@ header {
 }
 
 /* 主内容 */
-.main-content {
-    overflow: hidden;
-}
-
 .block {
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 5px;
     padding: 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    flex: 1;
-    min-width: 300px;
-    height: 90vh;
-    overflow: auto; /* Add scroll if content exceeds height */
-}
-
-textarea {
-    width: 100%;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    font-family: monospace;
+    height: 94vh;
+    overflow: hidden; /* Add scroll if content exceeds height */
 }
 
 .section-header {
@@ -84,7 +70,7 @@ pre code {
 
 /* 侧边栏 */
 .tab-card {
-    height: 95vh;
+    height: 94vh;
     overflow: hidden;
 }
 
