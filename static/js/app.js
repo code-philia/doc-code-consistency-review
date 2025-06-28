@@ -64,15 +64,6 @@ const app = createApp({
             });
         };
 
-        // 选中需求文本
-        const handleTextSelection = () => {
-            const selection = window.getSelection();
-            if (selection && selection.toString().trim()) {
-                selectedText.value = selection.toString().trim();
-            }
-            console.log('Selected text:', selectedText.value);
-        };
-
         // 上传代码文件
         const handleUploadChange = (file) => {
             const reader = new FileReader();
@@ -136,7 +127,6 @@ const app = createApp({
             handleRequirementUploadChange,
             handleRequirementRemove,
             handleRequirementExceed,
-            handleTextSelection,
             handleUploadChange,
             handleCodeFileRemove,
             handleCodeSpanChange,
