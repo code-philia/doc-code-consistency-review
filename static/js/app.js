@@ -35,10 +35,25 @@ const app = createApp({
 
     const requirementPoints = ref([]); // [{id, text, start, end, align:[{filename, content, start, end},]}]
     const aligningState = ref(false); // 是否正在对齐
-    const selectedRequirementId = ref(null); // Track the currently selected requirement block
-    const currentCodeBlockIndex = ref(0); // Track the current code block index
+    const selectedRequirementId = ref(null); // 选中的需求块ID
+    const currentCodeBlockIndex = ref(0); // 当前聚焦的代码块索引
 
-    // 渲染 Markdown -> HTML（含 parse-start/end）
+    // 需求高亮对齐确认框
+    const confirmationBox = ref(null);
+    const confirmationVisible = ref(false);
+    const confirmationPosition = ref({ x: 0, y: 0 });
+
+    // 代码块取消对齐确认框
+    const codeBlockConfirmationVisible = ref(false);
+    const codeBlockConfirmationPosition = ref({ x: 0, y: 0 });
+    const codeBlockToRemove = ref(null);
+
+
+    /**
+     * 渲染 Markdown -> HTML（含 parse-start/end）
+     * @param {*} markdownContent 
+     * @returns 
+     */
     const renderMarkdownWithLatex = (markdownContent) => {
         const html = md.render(markdownContent);
         const container = document.createElement('div');
@@ -46,7 +61,10 @@ const app = createApp({
         return container.innerHTML;
     };
 
-    // 上传需求文档
+    /**
+     * 上传需求文档处理函数
+     * @param {*} file 
+     */
     const handleRequirementUploadChange = (file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -69,7 +87,10 @@ const app = createApp({
       });
     };
 
-    // 上传代码文件
+    /**
+     * 上传代码文件处理函数
+     * @param {*} file 
+     */
     const handleUploadChange = (file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -97,11 +118,12 @@ const app = createApp({
     };
     const handleCodeSpanChange = names => { activeNames.value = names; };
 
-    const confirmationBox = ref(null); // Reference to the confirmation box element
-    const confirmationVisible = ref(false); // State for confirmation box visibility
-    const confirmationPosition = ref({ x: 0, y: 0 }); // Position of the confirmation box
 
-    // 鼠标抬起：高亮并映射多单元选区到原始 Markdown
+    /**
+     * 鼠标抬起：高亮并映射多单元选区到原始 Markdown
+     * @param {*} event 
+     * @returns 
+     */
     // #TODO: 匹配不成功
     function onMouseUp(event) {
       const sel = window.getSelection();
@@ -130,7 +152,9 @@ const app = createApp({
       confirmationBox.value = { range, sel };
     }
 
-    // 确认高亮并对齐需求
+    /**
+     * 确认高亮并对齐需求
+     */
     async function handleConfirm() {
       const { range } = confirmationBox.value;
 
@@ -220,6 +244,11 @@ const app = createApp({
       confirmationVisible.value = false;
     }
 
+    /**
+     * 滚动到指定代码块
+     * @param {*} index 
+     * @returns 
+     */
     function scrollToCodeBlock(index) {
       const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
       if (!point || index < 0 || index >= point.relatedCode.length) return;
@@ -241,7 +270,11 @@ const app = createApp({
       }
     }
 
-    // 点击需求高亮块
+    /**
+     * 点击选中需求高亮块
+     * @param {*} event 
+     * @returns 
+     */
     function handleRequirementClick(event) {
       const target = event.target.closest('.highlighted-block');
       if (!target) return;
@@ -270,9 +303,6 @@ const app = createApp({
         }
       }
     }
-
-    // Add a click handler for highlighted blocks
-    document.addEventListener('click', handleRequirementClick);
 
     function handleLastButtonClick() {
       if (selectedRequirementId.value) {
@@ -306,6 +336,7 @@ const app = createApp({
         const lines = file.numberedContent.split('\n');
         const highlightedContent = [];
         let currentBlock = null;
+        let currentStart = null;
 
         lines.forEach((line, index) => {
           const lineNumber = index + 1;
@@ -316,12 +347,19 @@ const app = createApp({
           if (isHighlighted) {
             if (!currentBlock) {
               currentBlock = []; // Start a new block
+              currentStart = lineNumber; // Record the start line number
             }
             currentBlock.push(line); // Add line to the current block
           } else {
             if (currentBlock) {
               // Render the current block as a single highlighted block
-              highlightedContent.push(`<div class="highlighted-code">${currentBlock.join('\n')}</div>`);
+              const blockElement = document.createElement('div');
+              blockElement.classList.add('highlighted-code');
+              blockElement.dataset.start = currentStart; // Set start attribute
+              blockElement.dataset.end = lineNumber - 1; // Set end attribute
+              blockElement.dataset.filename = file.name; // Set filename attribute
+              blockElement.innerHTML = currentBlock.join('\n');
+              highlightedContent.push(blockElement.outerHTML);
               currentBlock = null; // Reset the block
             }
             highlightedContent.push(line); // Add non-highlighted line
@@ -330,12 +368,77 @@ const app = createApp({
 
         // Render any remaining block
         if (currentBlock) {
-          highlightedContent.push(`<div class="highlighted-code">${currentBlock.join('\n')}</div>`);
+          const blockElement = document.createElement('div');
+          blockElement.classList.add('highlighted-code');
+          blockElement.dataset.start = currentStart; // Set start attribute
+          blockElement.dataset.end = lines.length; // Set end attribute
+          blockElement.dataset.filename = file.name; // Set filename attribute
+          blockElement.innerHTML = currentBlock.join('\n');
+          highlightedContent.push(blockElement.outerHTML);
         }
 
         file.highlightedContent = highlightedContent.join('\n');
       });
     };
+
+    /**
+     * 点击选中代码块
+     * @param {*} event 
+     * @returns 
+     */
+    function handleCodeBlockClick(event) {
+      const target = event.target.closest('.highlighted-code');
+      if (!target || !selectedRequirementId.value) return;
+
+      // Show confirmation box near the clicked code block
+      codeBlockConfirmationPosition.value = { x: event.clientX, y: event.clientY };
+      codeBlockConfirmationVisible.value = true;
+
+      // Determine the code block to remove
+      const lineStart = parseInt(target.dataset.start, 10);
+      const lineEnd = parseInt(target.dataset.end, 10);
+      const filename = target.dataset.filename; // Retrieve filename from the dataset
+      codeBlockToRemove.value = { start: lineStart, end: lineEnd, filename };
+    }
+
+    function handleCodeBlockRemoveConfirm() {
+      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+      if (!point || !codeBlockToRemove.value) return;
+
+      // Remove the code block from relatedCode
+      point.relatedCode = point.relatedCode.filter(code => 
+        code.start !== codeBlockToRemove.value.start || 
+        code.end !== codeBlockToRemove.value.end || 
+        code.filename !== codeBlockToRemove.value.filename
+      );
+
+      // Refresh code highlights
+      highlightCodeBlocks(point.relatedCode);
+
+      // Hide confirmation box
+      codeBlockConfirmationVisible.value = false;
+      codeBlockToRemove.value = null;
+
+      ElMessage({
+        message: '代码块对齐已取消',
+        type: 'success',
+        duration: 2000
+      });
+    }
+
+    function handleCodeBlockRemoveCancel() {
+      // Hide confirmation box
+      codeBlockConfirmationVisible.value = false;
+      codeBlockToRemove.value = null;
+    }
+
+    /**
+     * 添加点击事件监听器
+     * 1. 点击需求高亮块时，选中该块并高亮相关代码
+     * 2. 点击代码块时，显示确认框以取消对齐
+     */
+    document.addEventListener('click', handleRequirementClick);
+    document.addEventListener('click', handleCodeBlockClick);
 
     return {
       requirementFilename,
@@ -369,6 +472,13 @@ const app = createApp({
       scrollToCodeBlock,
       handleLastButtonClick,
       handleNextButtonClick,
+
+      codeBlockConfirmationVisible,
+      codeBlockConfirmationPosition,
+      codeBlockToRemove,
+      handleCodeBlockClick,
+      handleCodeBlockRemoveConfirm,
+      handleCodeBlockRemoveCancel,
     };
   }
 });
