@@ -18,7 +18,7 @@ injectSourcePos(md);
 
 
 // 4. Vue 应用
-const { createApp, ref} = Vue;
+const { createApp, ref, watch} = Vue;
 const { ElButton, ElMessage } = ElementPlus;
 
 const app = createApp({
@@ -35,6 +35,7 @@ const app = createApp({
 
     const requirementPoints = ref([]); // [{id, text, start, end, align:[{filename, content, start, end},]}]
     const aligningState = ref(false); // 是否正在对齐
+    const selectedRequirementId = ref(null); // Track the currently selected requirement block
 
     // 渲染 Markdown -> HTML（含 parse-start/end）
     const renderMarkdownWithLatex = (markdownContent) => {
@@ -82,9 +83,7 @@ const app = createApp({
           numbered += `${(i+1)+':'}`.padEnd(5,' ') + line + '\n';
         });
         codeFiles.value.push({ name: file.name, content, numberedContent: numbered });
-        setTimeout(() => {
-          document.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
-        }, 0);
+        highlightCodeBlocks([]); // TODO: 已有高亮结果，再次上传代码文件时不清空高亮结果
       };
       reader.readAsArrayBuffer(file.raw);
     };
@@ -134,9 +133,16 @@ const app = createApp({
     async function handleConfirm() {
       const { range } = confirmationBox.value;
 
-      // 高亮
+      // Create a new block to wrap the selected content
       const wrapper = document.createElement('div');
-      wrapper.classList.add('highlighted-block');
+      wrapper.classList.add('highlighted-block', 'selected-requirement'); // Add both states
+      wrapper.dataset.id = `REQ_${requirementPoints.value.length + 1}`; // Assign a unique ID
+
+      document.querySelectorAll('.highlighted-block').forEach(block => {
+        block.classList.remove('selected-requirement'); // Remove selected state from other blocks
+      });
+      selectedRequirementId.value = wrapper.dataset.id; // Set the selected requirement ID
+      wrapper.classList.add('selected-requirement'); // Add selected state
 
       const fragment = range.cloneContents();
       wrapper.appendChild(fragment);
@@ -144,19 +150,17 @@ const app = createApp({
       range.deleteContents();
       range.insertNode(wrapper);
 
-      // 获取原始文本
+      // Extract the original Markdown content
       const originalMarkdown = requirementMarkdown.value;
       let selectedHtml = Array.from(wrapper.childNodes)
         .map(node => node.outerHTML || node.textContent)
         .join('');
-
       selectedHtml = selectedHtml.replace(/\n/g, '');
 
       const selectedMarkdown = originalMarkdown.split('\n').filter(line => {
         if (!line.trim()) return false;
         const renderedLine = md.render(line).trim().replace(/\n/g, '').replace(/<[^>]+>/g, '');
-        const result = selectedHtml.includes(renderedLine);
-        return result;
+        return selectedHtml.includes(renderedLine);
       }).join('\n');
 
       wrapper.dataset.originalMarkdown = selectedMarkdown;
@@ -165,44 +169,47 @@ const app = createApp({
       window.getSelection().removeAllRanges();
       confirmationVisible.value = false;
 
-      // 对齐需求和代码
-      // TODO：写后端
+      // Send alignment request to the backend
       aligningState.value = true;
       try {
         const response = await axios.post('/api/auto-align', {
-            requirement: selectedMarkdown,
-            codeFiles: codeFiles.value.map(file => ({
-                name: file.name,
-                content: file.content
-            }))
-        });
-        const id = requirementPoints.value.length + 1;
-        requirementPoints.value.push({
-            id: `REQ_${id}`,
-            text: selectedMarkdown,
-            relatedCode: response.data.relatedCode || [
-              { filename: 'code.cpp', content: '', start: 1, end: 4 },
-              { filename: 'code.h', content: '', start: 1, end: 3 },
-              { filename: 'code.h', content: '', start: 9, end: 10 }
-            ],
+          requirement: selectedMarkdown,
+          codeFiles: codeFiles.value.map(file => ({
+            name: file.name,
+            content: file.content
+          }))
         });
 
-        // 高亮代码块
-        highlightCodeBlocks();
+        const id = wrapper.dataset.id;
+        const relatedCode = response.data.relatedCode || [
+          { filename: 'code.cpp', start: 1, end: 4 },
+          { filename: 'code.h', start: 1, end: 3 },
+          { filename: 'code.h', start: 9, end: 10 }
+        ];
+
+        // Add or update the requirement point
+        const existingPointIndex = requirementPoints.value.findIndex(point => point.id === id);
+        if (existingPointIndex !== -1) {
+          requirementPoints.value[existingPointIndex].relatedCode = relatedCode;
+        } else {
+          requirementPoints.value.push({ id, text: selectedMarkdown, relatedCode });
+        }
+
+        highlightCodeBlocks(relatedCode); // Update code highlights
 
         ElMessage({
-            message: '自动对齐完成',
-            type: 'success',
-            duration: 2000
+          message: '自动对齐完成',
+          type: 'success',
+          duration: 2000
         });
       } catch (error) {
         ElMessage({
-            message: '自动对齐失败: ' + error.response.data.error,
-            type: 'error',
-            duration: 4000
+          message: '自动对齐失败: ' + error.response.data.error,
+          type: 'error',
+          duration: 4000
         });
       } finally {
-        aligningState.value = false; // 无论成功或失败都重置加载状态
+        aligningState.value = false;
       }
     }
 
@@ -212,21 +219,40 @@ const app = createApp({
       confirmationVisible.value = false;
     }
 
-    // Add a click handler for highlighted blocks
-    document.addEventListener('click', (event) => {
+    // 点击需求高亮块
+    function handleRequirementClick(event) {
       const target = event.target.closest('.highlighted-block');
-      if (target) {
-        event.stopPropagation(); // Prevent event propagation
-        const originalMarkdown = target.dataset.originalMarkdown;
-        console.log('Clicked highlighted block with original Markdown:', originalMarkdown);
-      }
-    });
+      if (!target) return;
 
-    const highlightCodeBlocks = () => {
+      const id = target.dataset.id;
+      if (selectedRequirementId.value === id) {
+        // Deselect the block
+        selectedRequirementId.value = null;
+        target.classList.remove('selected-requirement');
+        highlightCodeBlocks([]); // Clear code highlights
+      } else {
+        // Deselect other requirement blocks
+        document.querySelectorAll('.highlighted-block').forEach(block => {
+          block.classList.remove('selected-requirement');
+        });
+
+        // Select the block
+        selectedRequirementId.value = id;
+        target.classList.add('selected-requirement');
+
+        const point = requirementPoints.value.find(point => point.id === id);
+        if (point) {
+          highlightCodeBlocks(point.relatedCode); // Highlight code based on the alignment results
+        }
+      }
+    }
+
+    // Add a click handler for highlighted blocks
+    document.addEventListener('click', handleRequirementClick);
+
+    const highlightCodeBlocks = (relatedCode) => {
       codeFiles.value.forEach(file => {
-        const relatedResults = requirementPoints.value.flatMap(point => 
-          point.relatedCode.filter(code => code.filename === file.name)
-        );
+        const relatedResults = relatedCode.filter(code => code.filename === file.name);
 
         // Update the file name with the number of results
         file.resultCount = relatedResults.length;
@@ -290,6 +316,8 @@ const app = createApp({
       handleCancel,
 
       aligningState,
+      selectedRequirementId,
+      handleRequirementClick,
       highlightCodeBlocks,
     };
   }

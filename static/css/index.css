@@ -164,5 +164,9 @@ pre code {
 .highlighted-code {
     background-color: rgba(0, 255, 0, 0.3); /* Light green highlight */
     border-left: 3px solid #00cc00; /* Emphasize the block */
-    padding-left: 5px; /* Add padding to the left */
+}
+
+.selected-requirement {
+    border: 2px solid #007bff; /* Blue border for selected requirement */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add shadow for emphasis */
 }
