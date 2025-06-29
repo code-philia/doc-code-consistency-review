@@ -146,7 +146,7 @@ pre code {
 
 .highlighted-block {
     background-color: rgba(255, 255, 0, 0.3); /* Light yellow highlight */
-    border: 1px solid #ffcc00; /* Border to emphasize the block */
+    border: 1px solid #ffcc0080; /* Border to emphasize the block */
     cursor: pointer; /* Indicate clickable block */
     z-index: 9999; /* Ensure it appears above other elements */
 }
@@ -162,7 +162,7 @@ pre code {
 }
 
 .highlighted-code {
-    background-color: rgba(0, 255, 0, 0.3); /* Light green highlight */
+    background-color: rgba(0, 255, 0, 0.2); /* Light green highlight */
     border-left: 3px solid #00cc00; /* Emphasize the block */
 }
 
