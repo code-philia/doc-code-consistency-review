@@ -50,7 +50,7 @@ const app = createApp({
     // 鼠标抬起：高亮并映射多单元选区到原始 Markdown
     function onMouseUp() {
       const sel = window.getSelection();
-      if (!sel.rangeCount) return;
+      if (!sel.rangeCount || sel.toString()==='') return;
       const range = sel.getRangeAt(0);
 
       const commonAncestor = range.commonAncestorContainer;
