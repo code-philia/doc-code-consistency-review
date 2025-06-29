@@ -1,9 +1,4 @@
-// app.js
-
-// --- 1. 在 index.html 中通过 <script> 已加载：
-//     markdown-it, markdown-it-texmath, katex, Vue, ElementPlus, ElementPlusIconsVue
-
-// 2. 初始化 Markdown-It + TeX 插件，并注入 parse-start/end
+// 初始化 Markdown-It + TeX 插件，并注入 parse-start/end
 const md = window.markdownit({
   html: true,
   linkify: true,
@@ -15,81 +10,11 @@ md.use(window.texmath, {
   katexOptions: { "\\RR": "\\mathbb{R}" }
 });
 
-// 重写 renderer，给每个 token.open 标记 parse-start/end
+// 重写 renderer，标记 parse-start/end
 function injectSourcePos(md) {
-  const defaultRender = md.renderer.renderToken.bind(md.renderer);
-  md.renderer.renderToken = (tokens, idx, options) => {
-    const token = tokens[idx];
-    if (token.map && token.type.endsWith('_open')) {
-      const start = token.map[0], end = token.map[1];
-      token.attrSet('parse-start', start);
-      token.attrSet('parse-end',   end);
-    }
-    return defaultRender(tokens, idx, options);
-  };
+
 }
 injectSourcePos(md);
-
-// --- 3. 辅助函数：DOM 选区映射到 Markdown 偏移
-function getCaretCharacterOffsetWithin(container, offset, boundaryNode) {
-  let chars = 0;
-  const walker = document.createTreeWalker(
-    boundaryNode,
-    NodeFilter.SHOW_TEXT,
-    null,
-    false
-  );
-  let node;
-  while (node = walker.nextNode()) {
-    if (node === container) {
-      return chars + offset;
-    }
-    chars += node.textContent.length;
-  }
-  return null;
-}
-
-function getStartOffset(node) {
-  if (node.nodeType === 1 && node.hasAttribute('parse-start')) {
-    return parseInt(node.getAttribute('parse-start'), 10);
-  }
-  return null;
-}
-
-function getEndOffset(node) {
-  if (node.nodeType === 1 && node.hasAttribute('parse-end')) {
-    return parseInt(node.getAttribute('parse-end'), 10);
-  }
-  return null;
-}
-
-// 根据 DOM 位置(container, offset) 映射到原始 Markdown 文本的绝对 offset
-function findOffsetFromPosition(container, offset, rootElement, reduce = null) {
-  let node = container;
-  while (node) {
-    if (node.nodeType === 1) {
-      const start = getStartOffset(node);
-      const end   = getEndOffset(node);
-      if (start != null && end != null) {
-        if (node.classList.contains('parse-math')) {
-          if (reduce === 'start') return start;
-          if (reduce === 'end')   return end;
-        }
-        const inner = getCaretCharacterOffsetWithin(container, offset, node);
-        if (inner != null) {
-          if (inner === 0) return start;
-          const len = node.textContent.length;
-          return end - (len - inner);
-        }
-      }
-    }
-    if (node === rootElement) {
-      return getCaretCharacterOffsetWithin(container, offset, rootElement);
-    }
-    node = node.parentNode;
-  }
-  return null;
-}
 
 
 // 4. Vue 应用
@@ -112,50 +37,10 @@ const app = createApp({
 
     // 渲染 Markdown -> HTML（含 parse-start/end）
     const renderMarkdownWithLatex = (markdownContent) => {
-        // 1) 构建每行的起始字符偏移数组
-        const lines = markdownContent.split('\r\n');
-        console.log('Markdown lines:', lines);
+        const html = md.render(markdownContent);
 
-        const lineOffsets = [];
-        let pos = 0;
-        for (let i = 0; i < lines.length; i++) {
-          lineOffsets.push(pos);
-          pos += lines[i].length + 1; 
-        }
-        lineOffsets.push(pos);
-
-        // 2) Monkey‑patch md.renderer.renderToken，注入基于字符偏移的 parse-start / parse-end
-            const originalRenderToken = md.renderer.renderToken.bind(md.renderer);
-            md.renderer.renderToken = (tokens, idx, options) => {
-                const token = tokens[idx];
-                if (token.map && token.type.endsWith('_open')) {
-                  const [lineBegin, lineEnd] = token.map;
-                  const start = lineOffsets[lineBegin];
-                  const end = lineOffsets[lineEnd] - 1;
-                  token.attrSet('parse-start', start);
-                  token.attrSet('parse-end', end);
-                }
-                return originalRenderToken(tokens, idx, options);
-            };
-
-            // 3) 渲染
-            const html = md.render(markdownContent);
-
-            // 4) 恢复原始 renderer
-            md.renderer.renderToken = originalRenderToken;
-
-            // 5) 为每个带 parse-start 的元素外层包一层 span.parse-unit（可选）
-            const container = document.createElement('div');
-            container.innerHTML = html;
-            container.querySelectorAll('[parse-start]').forEach(el => {
-                const wrapper = document.createElement('span');
-                wrapper.className = 'parse-unit';
-                wrapper.setAttribute('parse-start', el.getAttribute('parse-start'));
-                wrapper.setAttribute('parse-end',   el.getAttribute('parse-end'));
-                el.replaceWith(wrapper);
-                wrapper.appendChild(el);
-            });
-
+        const container = document.createElement('div');
+        container.innerHTML = html;
 
         console.log('渲染前的 Markdown:\n', markdownContent);
         console.log('渲染后的 HTML:\n', container.innerHTML);
@@ -168,25 +53,6 @@ const app = createApp({
       if (!sel.rangeCount) return;
       const range = sel.getRangeAt(0);
 
-      // 遍历所有“渲染单元”并高亮相交的
-      const units = requirementRoot.value.querySelectorAll('[parse-start]');
-      let minStart = Infinity, maxEnd = -Infinity;
-
-      units.forEach(el => {
-        if (range.intersectsNode(el)) {
-          el.classList.add('highlight');
-          const s = parseInt(el.getAttribute('parse-start'), 10);
-          const e = parseInt(el.getAttribute('parse-end'),   10);
-          if (s < minStart) minStart = s;
-          if (e > maxEnd)   maxEnd   = e;
-        }
-      });
-
-      // 从原始 Markdown 中切片
-      if (minStart < maxEnd && minStart !== Infinity) {
-        selectedText.value = requirementMarkdown.value.slice(minStart, maxEnd);
-        console.log(`原文区间 [${minStart},${maxEnd}]`,sel.toString(),'->', selectedText.value);
-      }
     }
 
     // 上传需求文档
