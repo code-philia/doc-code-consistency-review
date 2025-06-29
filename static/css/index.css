@@ -143,3 +143,9 @@ pre code {
 .el-upload-list {
     width: 100%; /* Expand the upload list width */
 }
+
+.highlighted-block {
+    background-color: rgba(255, 255, 0, 0.3); /* Light yellow highlight */
+    border: 1px solid #ffcc00; /* Border to emphasize the block */
+    cursor: pointer; /* Indicate clickable block */
+}

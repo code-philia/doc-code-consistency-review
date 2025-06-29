@@ -53,7 +53,36 @@ const app = createApp({
       if (!sel.rangeCount) return;
       const range = sel.getRangeAt(0);
 
+      const commonAncestor = range.commonAncestorContainer;
+      const parentBlock = commonAncestor.nodeType === 1 // Check if it's an element node
+        ? commonAncestor.closest('div, p, section, table, ul, ol')
+        : commonAncestor.parentElement?.closest('div, p, section, table, ul, ol');
+
+      if (!parentBlock) return;
+
+      // Highlight the selected block
+      parentBlock.classList.add('highlighted-block');
+
+      // Store the original Markdown content for the block
+      const originalMarkdown = requirementMarkdown.value; // Assuming the entire Markdown is stored here
+      const selectedHtml = parentBlock.outerHTML;
+
+      // Map the selected HTML back to Markdown (simplified for demonstration)
+      const selectedMarkdown = originalMarkdown.split('\n').filter(line => selectedHtml.includes(md.render(line))).join('\n');
+
+      parentBlock.dataset.originalMarkdown = selectedMarkdown;
+
+      console.log('Selected Markdown:', selectedMarkdown);
     }
+
+    // Add a click handler for highlighted blocks
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('.highlighted-block');
+      if (target) {
+        const originalMarkdown = target.dataset.originalMarkdown;
+        console.log('Clicked block original Markdown:', originalMarkdown);
+      }
+    });
 
     // 上传需求文档
     const handleRequirementUploadChange = (file) => {
