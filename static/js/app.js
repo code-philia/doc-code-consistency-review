@@ -18,7 +18,7 @@ injectSourcePos(md);
 
 
 // 4. Vue 应用
-const { createApp, ref } = Vue;
+const { createApp, ref} = Vue;
 const { ElButton, ElMessage } = ElementPlus;
 
 const app = createApp({
@@ -33,7 +33,8 @@ const app = createApp({
     const selectedText        = ref('');
     const requirementRoot     = ref(null);
 
-    const requirementPoints   = ref([]); // [{id, text, start, end, align:[{filename, content, start, end},]}]
+    const requirementPoints = ref([]); // [{id, text, start, end, align:[{filename, content, start, end},]}]
+    const aligningState = ref(false); // 是否正在对齐
 
     // 渲染 Markdown -> HTML（含 parse-start/end）
     const renderMarkdownWithLatex = (markdownContent) => {
@@ -105,8 +106,8 @@ const app = createApp({
     function onMouseUp(event) {
       const sel = window.getSelection();
       if (!sel.rangeCount || sel.toString() === '') { 
-        confirmationVisible.value = false; // Clear the confirmation box
-        return; // Ensure selection is valid and not empty
+        confirmationVisible.value = false;
+        return;
       }
       const range = sel.getRangeAt(0);
 
@@ -129,33 +130,31 @@ const app = createApp({
       confirmationBox.value = { range, sel };
     }
 
-    function handleConfirm() {
+    // 确认高亮并对齐需求
+    async function handleConfirm() {
       const { range } = confirmationBox.value;
 
-      // Create a new block to wrap the selected content
+      // 高亮
       const wrapper = document.createElement('div');
       wrapper.classList.add('highlighted-block');
 
-      // Extract the selected content and wrap it
       const fragment = range.cloneContents();
       wrapper.appendChild(fragment);
 
-      // Replace the selected content with the wrapper
       range.deleteContents();
       range.insertNode(wrapper);
 
-      // Store the original Markdown content for the block
-      const originalMarkdown = requirementMarkdown.value; // Assuming the entire Markdown is stored here
+      // 获取原始文本
+      const originalMarkdown = requirementMarkdown.value;
       let selectedHtml = Array.from(wrapper.childNodes)
         .map(node => node.outerHTML || node.textContent)
-        .join(''); // Extract the actual content inside the wrapper
+        .join('');
 
       selectedHtml = selectedHtml.replace(/\n/g, '');
 
-      // Map the selected HTML back to Markdown (simplified for demonstration)
       const selectedMarkdown = originalMarkdown.split('\n').filter(line => {
-        if (!line.trim()) return false; // Skip empty lines
-        const renderedLine = md.render(line).trim().replace(/\n/g, '').replace(/<[^>]+>/g, ''); // Remove HTML tags
+        if (!line.trim()) return false;
+        const renderedLine = md.render(line).trim().replace(/\n/g, '').replace(/<[^>]+>/g, '');
         const result = selectedHtml.includes(renderedLine);
         return result;
       }).join('\n');
@@ -163,9 +162,48 @@ const app = createApp({
       wrapper.dataset.originalMarkdown = selectedMarkdown;
       console.log('Selected Markdown:', selectedMarkdown);
 
-      // Hide confirmation box
-      window.getSelection().removeAllRanges(); // Clear the selection
+      window.getSelection().removeAllRanges();
       confirmationVisible.value = false;
+
+      // 对齐需求和代码
+      // TODO：写后端
+      aligningState.value = true;
+      try {
+        const response = await axios.post('/api/auto-align', {
+            requirement: selectedMarkdown,
+            codeFiles: codeFiles.value.map(file => ({
+                name: file.name,
+                content: file.content
+            }))
+        });
+        const id = requirementPoints.value.length + 1;
+        requirementPoints.value.push({
+            id: `REQ_${id}`,
+            text: selectedMarkdown,
+            relatedCode: response.data.relatedCode || [
+              { filename: 'code.cpp', content: '', start: 1, end: 4 },
+              { filename: 'code.h', content: '', start: 1, end: 3 },
+              { filename: 'code.h', content: '', start: 9, end: 10 }
+            ],
+        });
+
+        // 高亮代码块
+        highlightCodeBlocks();
+
+        ElMessage({
+            message: '自动对齐完成',
+            type: 'success',
+            duration: 2000
+        });
+      } catch (error) {
+        ElMessage({
+            message: '自动对齐失败: ' + error.response.data.error,
+            type: 'error',
+            duration: 4000
+        });
+      } finally {
+        aligningState.value = false; // 无论成功或失败都重置加载状态
+      }
     }
 
     function handleCancel() {
@@ -184,8 +222,48 @@ const app = createApp({
       }
     });
 
-    const alignSingleRequirement = async point => {
-      // TODO: 对齐逻辑
+    const highlightCodeBlocks = () => {
+      codeFiles.value.forEach(file => {
+        const relatedResults = requirementPoints.value.flatMap(point => 
+          point.relatedCode.filter(code => code.filename === file.name)
+        );
+
+        // Update the file name with the number of results
+        file.resultCount = relatedResults.length;
+
+        // Highlight the code blocks
+        const lines = file.numberedContent.split('\n');
+        const highlightedContent = [];
+        let currentBlock = null;
+
+        lines.forEach((line, index) => {
+          const lineNumber = index + 1;
+          const isHighlighted = relatedResults.some(result => 
+            lineNumber >= result.start && lineNumber <= result.end
+          );
+
+          if (isHighlighted) {
+            if (!currentBlock) {
+              currentBlock = []; // Start a new block
+            }
+            currentBlock.push(line); // Add line to the current block
+          } else {
+            if (currentBlock) {
+              // Render the current block as a single highlighted block
+              highlightedContent.push(`<div class="highlighted-code">${currentBlock.join('\n')}</div>`);
+              currentBlock = null; // Reset the block
+            }
+            highlightedContent.push(line); // Add non-highlighted line
+          }
+        });
+
+        // Render any remaining block
+        if (currentBlock) {
+          highlightedContent.push(`<div class="highlighted-code">${currentBlock.join('\n')}</div>`);
+        }
+
+        file.highlightedContent = highlightedContent.join('\n');
+      });
     };
 
     return {
@@ -205,12 +283,14 @@ const app = createApp({
       handleCodeFileRemove,
       handleCodeSpanChange,
       onMouseUp,
-      alignSingleRequirement,
 
       confirmationVisible,
       confirmationPosition,
       handleConfirm,
       handleCancel,
+
+      aligningState,
+      highlightCodeBlocks,
     };
   }
 });

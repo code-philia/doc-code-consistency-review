@@ -50,7 +50,7 @@
 
         <!-- 代码展示区 -->
         <el-splitter-panel size="35%" :min="400">
-            <el-col class="block" id="code" >
+            <el-col class="block" id="code">
                 <div class="section-header">
                     <el-icon><Tickets /></el-icon>
                     代码
@@ -60,9 +60,9 @@
                         <el-collapse-item 
                             v-for="(file, index) in codeFiles" 
                             :key="index" 
-                            :title="file.name" 
+                            :title="`${file.name} (${file.resultCount || 0}个结果)`" 
                             :name="index">
-                            <pre><code class="language-cpp">${file.numberedContent}</code></pre>
+                            <pre v-html="file.highlightedContent"></pre>
                         </el-collapse-item>
                     </el-collapse>
                 </el-scrollbar>
