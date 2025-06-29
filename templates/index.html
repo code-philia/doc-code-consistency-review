@@ -136,6 +136,17 @@
             </div>
         </div>
     </el-drawer>
+
+    <!-- 确认框 -->
+    <div
+      v-if="confirmationVisible"
+      class="confirmation-box"
+      :style="{ top: `${confirmationPosition.y}px`, left: `${confirmationPosition.x}px` }"
+    >
+      <p>高亮并对齐：</p>
+      <el-button type="primary" @click="handleConfirm">是</el-button>
+      <el-button @click="handleCancel">否</el-button>
+    </div>
 </div>
 
 <script src="../static/js/app.js"></script>
