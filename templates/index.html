@@ -56,10 +56,12 @@
                         <el-icon><Tickets /></el-icon>
                         <span style="margin-left: 8px;">代码</span>
                     </div>
-                    <el-button-group>
-                        <el-button plain size="small" @click="handleLastButtonClick"><el-icon><Back /></el-icon></el-button>
-                        <el-button plain size="small" @click="handleNextButtonClick"><el-icon><Right /></el-icon></el-button>
-                    </el-button-group>
+                    <div>
+                        <el-button-group>
+                            <el-button plain size="small" @click="handleLastButtonClick"><el-icon><Back /></el-icon></el-button>
+                            <el-button plain size="small" @click="handleNextButtonClick"><el-icon><Right /></el-icon></el-button>
+                        </el-button-group>
+                    </div>
                 </div>
                 <el-scrollbar height="89vh">
                     <el-collapse v-model="activeNames" @change="handleCodeSpanChange">
@@ -67,7 +69,8 @@
                             v-for="(file, index) in codeFiles" 
                             :key="index" 
                             :title="`${file.name} ( ${file.resultCount || 0} 个结果 )`" 
-                            :name="index">
+                            :name="index"
+                            @mouseup="onCodeMouseUp">
                             <pre v-html="file.highlightedContent"></pre>
                         </el-collapse-item>
                     </el-collapse>
@@ -162,6 +165,16 @@
       <p>是否取消对齐？</p>
       <el-button type="primary" @click="handleCodeBlockRemoveConfirm">是</el-button>
       <el-button @click="handleCodeBlockRemoveCancel">否</el-button>
+    </div>
+
+    <div
+      v-if="codeSelectionConfirmationVisible"
+      class="confirmation-box"
+      :style="{ top: `${codeSelectionConfirmationPosition.y}px`, left: `${codeSelectionConfirmationPosition.x}px` }"
+    >
+      <p>是否选中代码？</p>
+      <el-button type="primary" @click="handleCodeSelectionConfirm">是</el-button>
+      <el-button @click="handleCodeSelectionCancel">否</el-button>
     </div>
 </div>
 

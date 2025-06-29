@@ -48,6 +48,11 @@ const app = createApp({
     const codeBlockConfirmationPosition = ref({ x: 0, y: 0 });
     const codeBlockToRemove = ref(null);
 
+    // 代码选择确认框
+    const codeConfirmationBox = ref(null);
+    const codeSelectionConfirmationVisible = ref(false); // State for code selection confirmation box visibility
+    const codeSelectionConfirmationPosition = ref({ x: 0, y: 0 }); // Position of the code selection confirmation box
+
 
     /**
      * 渲染 Markdown -> HTML（含 parse-start/end）
@@ -100,6 +105,7 @@ const app = createApp({
         } catch {
           content = new TextDecoder('gbk').decode(new Uint8Array(e.target.result));
         }
+        content = content.replace(/\r\n/g, '\n'); // Normalize line endings
         let numbered = '';
         content.split('\n').forEach((line, i) => {
           numbered += `${(i+1)+':'}`.padEnd(5,' ') + line + '\n';
@@ -149,11 +155,13 @@ const app = createApp({
       confirmationVisible.value = true;
 
       // Store the range for later use
-      confirmationBox.value = { range, sel };
+      confirmationBox.value = { range };
     }
 
     /**
      * 确认高亮并对齐需求
+     * @param {*} 
+     * @return
      */
     async function handleConfirm() {
       const { range } = confirmationBox.value;
@@ -189,10 +197,11 @@ const app = createApp({
       }).join('\n');
 
       wrapper.dataset.originalMarkdown = selectedMarkdown;
-      console.log('Selected Markdown:', selectedMarkdown);
 
       window.getSelection().removeAllRanges();
       confirmationVisible.value = false;
+      confirmationBox.value = null; // Reset the confirmation state
+      confirmationPosition.value = { x: 0, y: 0 }; // Reset position
 
       // Send alignment request to the backend
       aligningState.value = true;
@@ -241,7 +250,9 @@ const app = createApp({
     function handleCancel() {
       // Hide confirmation box
       window.getSelection().removeAllRanges(); // Clear the selection
+      confirmationBox.value = null; // Reset the confirmation state
       confirmationVisible.value = false;
+      confirmationPosition.value = { x: 0, y: 0 }; // Reset position
     }
 
     /**
@@ -433,6 +444,99 @@ const app = createApp({
     }
 
     /**
+     * 处理代码选择
+     * @param {*} event 
+     */
+    function onCodeMouseUp(event) {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || sel.toString() === '') {
+        codeSelectionConfirmationVisible.value = false;
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      const target = event.currentTarget; // Get the el-collapse-item element
+      codeSelectionConfirmationPosition.value = { x: event.clientX, y: event.clientY };
+      codeSelectionConfirmationVisible.value = true;
+      codeConfirmationBox.value = { target, range };
+    }
+
+
+    function handleCodeSelectionConfirm() {
+      const { target, range } = codeConfirmationBox.value;
+
+      const fileTitle = target.querySelector('.el-collapse-item__header').textContent.trim(); // Get the title
+      const filenameMatch = fileTitle.match(/^(.*)\s\(/); // Extract filename from title
+      const filename = filenameMatch ? filenameMatch[1] : null;
+      if (!filename) return;
+
+      const file = codeFiles.value.find(f => f.name === filename);
+      if (!file) return;
+
+      const lines = file.numberedContent.split('\n'); // Split the original content into lines
+
+      // Extract the selected content using range.cloneContents()
+      const fragment = range.cloneContents();
+      const selectedText = Array.from(fragment.childNodes)
+        .map(node => node.textContent || '')
+        .join('')
+        .trim();
+
+      console.log('Selected text:', selectedText);
+
+      // Find the start and end line numbers by matching the selected text against the original lines
+      let startLine = null;
+      let endLine = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        if (startLine === null && lines[i].includes(selectedText.split('\n')[0])) {
+          startLine = i + 1; // Line numbers are 1-based
+        }
+        if (lines[i].includes(selectedText.split('\n').slice(-1)[0])) {
+          endLine = i + 1; // Line numbers are 1-based
+        }
+        if (startLine !== null && endLine !== null) break;
+      }
+
+      if (!startLine || !endLine || startLine > endLine) return; // Ensure valid range
+
+      console.log('Selected code lines:', startLine, endLine);
+
+      // Construct the selected code block
+      const selectedContent = lines.slice(startLine - 1, endLine).join('\n');
+      const selectedCodeBlock = { filename, content: selectedContent, start: startLine, end: endLine };
+
+      // Add the selected code block to the relatedCode of the currently selected requirement block
+      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+      if (!point) return;
+
+      point.relatedCode.push(selectedCodeBlock);
+
+      // Refresh code highlights
+      highlightCodeBlocks(point.relatedCode);
+
+      window.getSelection().removeAllRanges();
+      codeSelectionConfirmationVisible.value = false;
+      codeConfirmationBox.value = null; // Reset the confirmation state
+      codeSelectionConfirmationPosition.value = { x: 0, y: 0 }; // Reset position
+
+      // Show success message
+      ElMessage({
+        message: '代码块已选中并对齐',
+        type: 'success',
+        duration: 2000
+      });
+    }
+
+    function handleCodeSelectionCancel() {
+      // Hide confirmation box
+      window.getSelection().removeAllRanges(); // Clear the selection
+      codeSelectionConfirmationPosition.value = { x: 0, y: 0 }; // Reset position
+      codeConfirmationBox.value = null; // Reset the confirmation state
+      codeSelectionConfirmationVisible.value = false;
+    }
+
+
+    /**
      * 添加点击事件监听器
      * 1. 点击需求高亮块时，选中该块并高亮相关代码
      * 2. 点击代码块时，显示确认框以取消对齐
@@ -479,6 +583,13 @@ const app = createApp({
       handleCodeBlockClick,
       handleCodeBlockRemoveConfirm,
       handleCodeBlockRemoveCancel,
+
+      onCodeMouseUp,
+      codeConfirmationBox,
+      codeSelectionConfirmationVisible,
+      codeSelectionConfirmationPosition,
+      handleCodeSelectionConfirm,
+      handleCodeSelectionCancel,
     };
   }
 });
