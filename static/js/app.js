@@ -36,6 +36,7 @@ const app = createApp({
     const requirementPoints = ref([]); // [{id, text, start, end, align:[{filename, content, start, end},]}]
     const aligningState = ref(false); // 是否正在对齐
     const selectedRequirementId = ref(null); // Track the currently selected requirement block
+    const currentCodeBlockIndex = ref(0); // Track the current code block index
 
     // 渲染 Markdown -> HTML（含 parse-start/end）
     const renderMarkdownWithLatex = (markdownContent) => {
@@ -219,6 +220,27 @@ const app = createApp({
       confirmationVisible.value = false;
     }
 
+    function scrollToCodeBlock(index) {
+      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+      if (!point || index < 0 || index >= point.relatedCode.length) return;
+
+      const codeBlock = point.relatedCode[index];
+      const file = codeFiles.value.find(f => f.name === codeBlock.filename);
+      if (!file) return;
+
+      // Expand the file if it is collapsed
+      if (!activeNames.value.includes(codeFiles.value.indexOf(file))) {
+        activeNames.value.push(codeFiles.value.indexOf(file));
+      }
+
+      // Scroll to the code block
+      const codeContainer = document.querySelector(`#code`);
+      const codeElement = codeContainer.querySelector(`pre div.highlighted-code:nth-child(${codeBlock.start})`);
+      if (codeElement) {
+        codeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
     // 点击需求高亮块
     function handleRequirementClick(event) {
       const target = event.target.closest('.highlighted-block');
@@ -243,6 +265,8 @@ const app = createApp({
         const point = requirementPoints.value.find(point => point.id === id);
         if (point) {
           highlightCodeBlocks(point.relatedCode); // Highlight code based on the alignment results
+          currentCodeBlockIndex.value = 0; // Default to the first code block
+          scrollToCodeBlock(currentCodeBlockIndex.value); // Scroll to the first code block
         }
       }
     }
@@ -250,6 +274,27 @@ const app = createApp({
     // Add a click handler for highlighted blocks
     document.addEventListener('click', handleRequirementClick);
 
+    function handleLastButtonClick() {
+      if (selectedRequirementId.value) {
+        currentCodeBlockIndex.value = Math.max(0, currentCodeBlockIndex.value - 1); // Navigate to the previous block
+        scrollToCodeBlock(currentCodeBlockIndex.value);
+      }
+    }
+
+    function handleNextButtonClick() {
+      if (selectedRequirementId.value) {
+        const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+        if (point) {
+          currentCodeBlockIndex.value = Math.min(point.relatedCode.length - 1, currentCodeBlockIndex.value + 1); // Navigate to the next block
+          scrollToCodeBlock(currentCodeBlockIndex.value);
+        }
+      }
+    }
+
+    /**
+     * 根据相关代码高亮代码块
+     * @param {*} relatedCode 
+     */
     const highlightCodeBlocks = (relatedCode) => {
       codeFiles.value.forEach(file => {
         const relatedResults = relatedCode.filter(code => code.filename === file.name);
@@ -319,6 +364,11 @@ const app = createApp({
       selectedRequirementId,
       handleRequirementClick,
       highlightCodeBlocks,
+
+      currentCodeBlockIndex,
+      scrollToCodeBlock,
+      handleLastButtonClick,
+      handleNextButtonClick,
     };
   }
 });

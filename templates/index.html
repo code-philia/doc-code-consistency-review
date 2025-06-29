@@ -51,16 +51,22 @@
         <!-- 代码展示区 -->
         <el-splitter-panel size="35%" :min="400">
             <el-col class="block" id="code">
-                <div class="section-header">
-                    <el-icon><Tickets /></el-icon>
-                    代码
+                <div class="section-header" id="code-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center;">
+                        <el-icon><Tickets /></el-icon>
+                        <span style="margin-left: 8px;">代码</span>
+                    </div>
+                    <el-button-group>
+                        <el-button plain size="small" @click="handleLastButtonClick"><el-icon><Back /></el-icon></el-button>
+                        <el-button plain size="small" @click="handleNextButtonClick"><el-icon><Right /></el-icon></el-button>
+                    </el-button-group>
                 </div>
                 <el-scrollbar height="89vh">
                     <el-collapse v-model="activeNames" @change="handleCodeSpanChange">
                         <el-collapse-item 
                             v-for="(file, index) in codeFiles" 
                             :key="index" 
-                            :title="`${file.name} (${file.resultCount || 0}个结果)`" 
+                            :title="`${file.name} ( ${file.resultCount || 0} 个结果 )`" 
                             :name="index">
                             <pre v-html="file.highlightedContent"></pre>
                         </el-collapse-item>
