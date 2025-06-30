@@ -29,7 +29,7 @@ const app = createApp({
     const requirementHtml     = ref('');
     const codeFiles           = ref([]);
     const showUpload          = ref(false);
-    const activeNames         = ref([]);
+    const activeName          = ref('');
     const selectedText        = ref('');
     const requirementRoot     = ref(null);
 
@@ -38,20 +38,10 @@ const app = createApp({
     const selectedRequirementId = ref(null); // 选中的需求块ID
     const currentCodeBlockIndex = ref(0); // 当前聚焦的代码块索引
 
-    // 需求高亮对齐确认框
-    const confirmationBox = ref(null);
-    const confirmationVisible = ref(false);
-    const confirmationPosition = ref({ x: 0, y: 0 });
-
     // 代码块取消对齐确认框
     const codeBlockConfirmationVisible = ref(false);
     const codeBlockConfirmationPosition = ref({ x: 0, y: 0 });
     const codeBlockToRemove = ref(null);
-
-    // 代码选择确认框
-    const codeConfirmationBox = ref(null);
-    const codeSelectionConfirmationVisible = ref(false); // State for code selection confirmation box visibility
-    const codeSelectionConfirmationPosition = ref({ x: 0, y: 0 }); // Position of the code selection confirmation box
 
     const reviewResults = ref(''); // State for storing review results
 
@@ -121,22 +111,25 @@ const app = createApp({
       const idx = codeFiles.value.findIndex(x => x.name === file.name);
       if (idx !== -1) {
         codeFiles.value.splice(idx, 1);
-        activeNames.value = activeNames.value.filter(n => n !== idx);
+        if(activeName.value === file.name) {
+          activeName.value = '';
+        }
       }
     };
-    const handleCodeSpanChange = names => { activeNames.value = names; };
+    const handleCodeSpanChange = name => {
+      activeName.value = name;
+    };
 
 
     /**
-     * 鼠标抬起：高亮并映射多单元选区到原始 Markdown
-     * @param {*} event 
-     * @returns 
+     * 确认高亮并对齐需求
+     * @param {*} 
+     * @return
      */
     // #TODO: 匹配不成功
-    function onMouseUp(event) {
+    async function handleStartAlign() {
       const sel = window.getSelection();
       if (!sel.rangeCount || sel.toString() === '') { 
-        confirmationVisible.value = false;
         return;
       }
       const range = sel.getRangeAt(0);
@@ -151,22 +144,6 @@ const app = createApp({
         console.log('Selection overlaps with an existing highlighted block. No new block created.');
         return;
       }
-
-      // Show confirmation box near the mouse cursor
-      confirmationPosition.value = { x: event.clientX, y: event.clientY };
-      confirmationVisible.value = true;
-
-      // Store the range for later use
-      confirmationBox.value = { range };
-    }
-
-    /**
-     * 确认高亮并对齐需求
-     * @param {*} 
-     * @return
-     */
-    async function handleConfirm() {
-      const { range } = confirmationBox.value;
 
       // Create a new block to wrap the selected content
       const wrapper = document.createElement('div');
@@ -201,9 +178,6 @@ const app = createApp({
       wrapper.dataset.originalMarkdown = selectedMarkdown;
 
       window.getSelection().removeAllRanges();
-      confirmationVisible.value = false;
-      confirmationBox.value = null; // Reset the confirmation state
-      confirmationPosition.value = { x: 0, y: 0 }; // Reset position
 
       // Send alignment request to the backend
       aligningState.value = true;
@@ -249,13 +223,6 @@ const app = createApp({
       }
     }
 
-    function handleCancel() {
-      // Hide confirmation box
-      window.getSelection().removeAllRanges(); // Clear the selection
-      confirmationBox.value = null; // Reset the confirmation state
-      confirmationVisible.value = false;
-      confirmationPosition.value = { x: 0, y: 0 }; // Reset position
-    }
 
     /**
      * 滚动到指定代码块
@@ -271,8 +238,8 @@ const app = createApp({
       if (!file) return;
 
       // Expand the file if it is collapsed
-      if (!activeNames.value.includes(codeFiles.value.indexOf(file))) {
-        activeNames.value.push(codeFiles.value.indexOf(file));
+      if (!activeName.value=== file.name) {
+        activeName.value = file.name;
       }
 
       // Scroll to the code block
@@ -446,33 +413,21 @@ const app = createApp({
     }
 
     /**
-     * 处理代码选择
-     * @param {*} event 
-     */
-    function onCodeMouseUp(event) {
-      const sel = window.getSelection();
-      if (!sel.rangeCount || sel.toString() === '') {
-        codeSelectionConfirmationVisible.value = false;
-        return;
-      }
-      const range = sel.getRangeAt(0);
-      const target = event.currentTarget; // Get the el-collapse-item element
-      codeSelectionConfirmationPosition.value = { x: event.clientX, y: event.clientY };
-      codeSelectionConfirmationVisible.value = true;
-      codeConfirmationBox.value = { target, range };
-    }
-
-    /**
      * 确认选中代码对齐
      * @returns 
      */
-    function handleCodeSelectionConfirm() {
-      const { target, range } = codeConfirmationBox.value;
+    function handleAddAlign() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount || sel.toString() === '') {
+        return;
+      }
+      const range = sel.getRangeAt(0);
 
-      const fileTitle = target.querySelector('.el-collapse-item__header').textContent.trim(); // Get the title
-      const filenameMatch = fileTitle.match(/^(.*)\s\(/); // Extract filename from title
-      const filename = filenameMatch ? filenameMatch[1] : null;
-      if (!filename) return;
+      const filename = activeName.value;
+      if (!filename || filename==='') {
+        // TODO: 提示用户先选中代码文件和代码块
+        return;
+      }
 
       const file = codeFiles.value.find(f => f.name === filename);
       if (!file) return;
@@ -520,9 +475,6 @@ const app = createApp({
       highlightCodeBlocks(point.relatedCode);
 
       window.getSelection().removeAllRanges();
-      codeSelectionConfirmationVisible.value = false;
-      codeConfirmationBox.value = null; // Reset the confirmation state
-      codeSelectionConfirmationPosition.value = { x: 0, y: 0 }; // Reset position
 
       // Show success message
       ElMessage({
@@ -530,14 +482,6 @@ const app = createApp({
         type: 'success',
         duration: 2000
       });
-    }
-
-    function handleCodeSelectionCancel() {
-      // Hide confirmation box
-      window.getSelection().removeAllRanges(); // Clear the selection
-      codeSelectionConfirmationPosition.value = { x: 0, y: 0 }; // Reset position
-      codeConfirmationBox.value = null; // Reset the confirmation state
-      codeSelectionConfirmationVisible.value = false;
     }
 
 
@@ -604,7 +548,7 @@ const app = createApp({
       requirementHtml,
       codeFiles,
       showUpload,
-      activeNames,
+      activeName,
       selectedText,
       requirementRoot,
       renderMarkdownWithLatex,
@@ -614,13 +558,8 @@ const app = createApp({
       handleUploadChange,
       handleCodeFileRemove,
       handleCodeSpanChange,
-      onMouseUp,
 
-      confirmationVisible,
-      confirmationPosition,
-      handleConfirm,
-      handleCancel,
-
+      handleStartAlign,
       aligningState,
       selectedRequirementId,
       handleRequirementClick,
@@ -638,12 +577,7 @@ const app = createApp({
       handleCodeBlockRemoveConfirm,
       handleCodeBlockRemoveCancel,
 
-      onCodeMouseUp,
-      codeConfirmationBox,
-      codeSelectionConfirmationVisible,
-      codeSelectionConfirmationPosition,
-      handleCodeSelectionConfirm,
-      handleCodeSelectionCancel,
+      handleAddAlign,
 
       reviewResults,
       handleStartReview,

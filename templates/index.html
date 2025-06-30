@@ -38,12 +38,20 @@
         <!-- 需求文档展示区 -->
         <el-splitter-panel size="35%" :min="400">
             <el-col class="block" id="requirements">
-                <div class="section-header">
-                    <el-icon><Document /></el-icon>
-                    需求文档         
+                <div class="section-header" id="requirement-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center;">
+                        <el-icon><Document /></el-icon>
+                        <span style="margin-left: 8px;">需求文档</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <el-button plain size="small" @click="handleStartAlign">
+                            开始对齐
+                        </el-button>
+                    </div>
                 </div>
+
                 <el-scrollbar>
-                    <div ref="requirementRoot" v-html="requirementHtml" @mouseup="onMouseUp"></div>
+                    <div ref="requirementRoot" v-html="requirementHtml"></div>
                 </el-scrollbar>
             </el-col>
         </el-splitter-panel>
@@ -57,9 +65,14 @@
                         <span style="margin-left: 8px;">代码</span>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <el-button plain size="small" @click="handleStartReview">
-                            开始审查
-                        </el-button>
+                        <el-button-group>
+                            <el-button plain size="small" @click="handleAddAlign">
+                                添加对齐
+                            </el-button>
+                            <el-button plain size="small" @click="handleStartReview">
+                                开始审查
+                            </el-button>
+                        </el-button-group>
                         <el-button-group>
                             <el-button plain size="small" @click="handleLastButtonClick"><el-icon><Back /></el-icon></el-button>
                             <el-button plain size="small" @click="handleNextButtonClick"><el-icon><Right /></el-icon></el-button>
@@ -67,13 +80,13 @@
                     </div>
                 </div>
                 <el-scrollbar>
-                    <el-collapse v-model="activeNames" @change="handleCodeSpanChange">
+                    <el-collapse v-model="activeName" @change="handleCodeSpanChange" accordion>
                         <el-collapse-item 
                             v-for="(file, index) in codeFiles" 
                             :key="index" 
                             :title="`${file.name} ( ${file.resultCount || 0} 个结果 )`" 
-                            :name="index"
-                            @mouseup="onCodeMouseUp">
+                            :name= "`${file.name}`"
+                        >
                             <pre v-html="file.highlightedContent"></pre>
                         </el-collapse-item>
                     </el-collapse>
@@ -158,17 +171,6 @@
         </div>
     </el-drawer>
 
-    <!-- 确认框 -->
-    <div
-      v-if="confirmationVisible"
-      class="confirmation-box"
-      :style="{ top: `${confirmationPosition.y}px`, left: `${confirmationPosition.x}px` }"
-    >
-      <p>高亮并对齐？</p>
-      <el-button type="primary" @click="handleConfirm">是</el-button>
-      <el-button @click="handleCancel">否</el-button>
-    </div>
-
     <div
       v-if="codeBlockConfirmationVisible"
       class="confirmation-box"
@@ -177,16 +179,6 @@
       <p>是否取消对齐？</p>
       <el-button type="primary" @click="handleCodeBlockRemoveConfirm">是</el-button>
       <el-button @click="handleCodeBlockRemoveCancel">否</el-button>
-    </div>
-
-    <div
-      v-if="codeSelectionConfirmationVisible"
-      class="confirmation-box"
-      :style="{ top: `${codeSelectionConfirmationPosition.y}px`, left: `${codeSelectionConfirmationPosition.x}px` }"
-    >
-      <p>是否选中代码？</p>
-      <el-button type="primary" @click="handleCodeSelectionConfirm">是</el-button>
-      <el-button @click="handleCodeSelectionCancel">否</el-button>
     </div>
 </div>
 
