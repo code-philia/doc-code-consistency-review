@@ -30,13 +30,27 @@ header {
 }
 
 /* 主内容 */
+.el-splitter-panel {
+    height: 95vh;
+    overflow: hidden;
+}
+
 .block {
     background: #fff;
+    height: 100%;
     border: 1px solid #ddd;
     border-radius: 5px;
     padding: 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    height: 94vh;
+    overflow: hidden; /* Add scroll if content exceeds height */
+}
+
+.functionBlock{
+    background: #fff;
+    height: 100%;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     overflow: hidden; /* Add scroll if content exceeds height */
 }
 
@@ -66,12 +80,6 @@ button:hover {
 pre code {
     font-size: 14px; /* Increase font size */
     font-family: Consolas, monospace; /* Use Consolas font */
-}
-
-/* 侧边栏 */
-.tab-card {
-    height: 94vh;
-    overflow: hidden;
 }
 
 /* 打开文件侧边栏 */
@@ -169,4 +177,36 @@ pre code {
 .selected-requirement {
     border: 2px solid #007bff; /* Blue border for selected requirement */
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add shadow for emphasis */
+}
+
+/* 一致性审查和问题单 */
+.review-results {
+    height: 60vh; /* Fixed height */
+    padding: 10px;
+    overflow-y: auto; /* Allow scrolling if content exceeds height */
+    background-color: transparent; /* Remove background */
+    border: none; /* Remove border */
+    font-family: Arial, sans-serif; /* Ensure consistent font */
+    font-size: 14px; /* Adjust font size */
+    line-height: 1.6; /* Improve readability */
+}
+
+.review-results p {
+    margin: 5px 0; /* Add spacing between paragraphs */
+}
+
+.review-results code {
+    font-family: Consolas, monospace; /* Use monospace font for code */
+    background-color: #f5f5f5; /* Light background for code blocks */
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.issue-list {
+    flex: 1;
+    height: 25vh;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 10px;
+    overflow-y: auto;
 }

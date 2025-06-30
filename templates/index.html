@@ -42,7 +42,7 @@
                     <el-icon><Document /></el-icon>
                     需求文档         
                 </div>
-                <el-scrollbar height="89vh">
+                <el-scrollbar>
                     <div ref="requirementRoot" v-html="requirementHtml" @mouseup="onMouseUp"></div>
                 </el-scrollbar>
             </el-col>
@@ -56,14 +56,17 @@
                         <el-icon><Tickets /></el-icon>
                         <span style="margin-left: 8px;">代码</span>
                     </div>
-                    <div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <el-button plain size="small" @click="handleStartReview">
+                            开始审查
+                        </el-button>
                         <el-button-group>
                             <el-button plain size="small" @click="handleLastButtonClick"><el-icon><Back /></el-icon></el-button>
                             <el-button plain size="small" @click="handleNextButtonClick"><el-icon><Right /></el-icon></el-button>
                         </el-button-group>
                     </div>
                 </div>
-                <el-scrollbar height="89vh">
+                <el-scrollbar>
                     <el-collapse v-model="activeNames" @change="handleCodeSpanChange">
                         <el-collapse-item 
                             v-for="(file, index) in codeFiles" 
@@ -80,12 +83,21 @@
 
         <!-- 功能区域 -->
         <el-splitter-panel :min="300">
-            <el-tabs class="tab-card" type="border-card">
+            <el-tabs class="functionBlock" type="border-card">
                 <!-- 审查 -->
                 <el-tab-pane label="一致性审查">
-                    <el-scrollbar height="75vh">
-
-                    </el-scrollbar>
+                    <!-- 上半部分：审查结果 -->
+                    <div class="review-results">
+                        <el-scrollbar>
+                            <div v-html="reviewResults"></div>
+                        </el-scrollbar>
+                    </div>
+                    <!-- 下半部分：问题单 -->
+                    <div class="issue-list">
+                        <el-scrollbar>
+                            <p>问题单展示区域（暂未实现）</p>
+                        </el-scrollbar>
+                    </div>
                 </el-tab-pane>
 
                 <el-tab-pane label="需求生成">

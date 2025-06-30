@@ -53,6 +53,8 @@ const app = createApp({
     const codeSelectionConfirmationVisible = ref(false); // State for code selection confirmation box visibility
     const codeSelectionConfirmationPosition = ref({ x: 0, y: 0 }); // Position of the code selection confirmation box
 
+    const reviewResults = ref(''); // State for storing review results
+
 
     /**
      * 渲染 Markdown -> HTML（含 parse-start/end）
@@ -460,7 +462,10 @@ const app = createApp({
       codeConfirmationBox.value = { target, range };
     }
 
-
+    /**
+     * 确认选中代码对齐
+     * @returns 
+     */
     function handleCodeSelectionConfirm() {
       const { target, range } = codeConfirmationBox.value;
 
@@ -537,6 +542,55 @@ const app = createApp({
 
 
     /**
+     * 处理开始审查按钮点击事件
+     * @returns
+     */
+    async function handleStartReview() {
+      if (!selectedRequirementId.value) {
+        ElMessage({
+          message: '请先选中一个需求块进行审查',
+          type: 'warning',
+          duration: 3000
+        });
+        return;
+      }
+
+      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+      if (!point) {
+        ElMessage({
+          message: '选中的需求块不存在，请重新选择',
+          type: 'error',
+          duration: 3000
+        });
+        return;
+      }
+
+      try {
+        // Send the selected requirement block to the backend
+        const response = await axios.post('/api/review', { requirement: point});
+
+        // Mock response data for testing
+        const mockResponseData = "### 审查结果";
+
+        // Update the review results
+        reviewResults.value = renderMarkdownWithLatex(mockResponseData);
+
+        ElMessage({
+          message: '审查完成',
+          type: 'success',
+          duration: 3000
+        });
+      } catch (error) {
+        ElMessage({
+          message: '审查失败: ' + (error.response?.data?.error || error.message),
+          type: 'error',
+          duration: 4000
+        });
+      }
+    }
+
+
+    /**
      * 添加点击事件监听器
      * 1. 点击需求高亮块时，选中该块并高亮相关代码
      * 2. 点击代码块时，显示确认框以取消对齐
@@ -590,6 +644,9 @@ const app = createApp({
       codeSelectionConfirmationPosition,
       handleCodeSelectionConfirm,
       handleCodeSelectionCancel,
+
+      reviewResults,
+      handleStartReview,
     };
   }
 });
