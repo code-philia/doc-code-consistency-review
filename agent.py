@@ -1,7 +1,7 @@
 import os
 import re
 import json
-from prompt import ALIGN_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE
+from prompt import ALIGN_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE
 from openai import OpenAI
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000/v1")
@@ -191,8 +191,8 @@ def query_review_result(requirement, related_code):
     """
     # 1. 拼接相关代码
     code_context = "\n\n".join(
-        f"File: {block['filename']}\n"
-        f"Content:\n{block['content']}"
+        f"所属文件: {block['filename']}\n"
+        f"代码:\n{block['content']}"
         for idx, block in enumerate(related_code)
     )
     
@@ -274,6 +274,44 @@ def parse_review_output(response):
         "review_process": response,
         "issues": "未能解析出问题单"
     }
+
+# ================= 需求反生成 =================
+def query_generated_requirement(related_code):
+    """
+    需求反生成
+    
+    参数:
+        related_code: 相关代码块列表，每个代码块包含文件名、内容等信息
+        
+    返回:
+        generated_requirement: 审查过程
+    """
+    # 1. 拼接相关代码
+    code_context = "\n\n".join(
+        f"所属文件: {block['filename']}\n"
+        f"代码:\n{block['content']}"
+        for idx, block in enumerate(related_code)
+    )
+    
+    # 2. 构造提示词
+    template = GENERATE_PROMPT_TEMPLATE
+    prompt = template.format(
+        related_code=code_context
+    )
+    
+    # 3. 调用LLM
+    try:
+        response = query_llm(prompt)
+        print("LLM response:", response.content)
+        output = response.content
+        
+    except Exception as e:
+        print(f"审查过程中出错: {str(e)}")
+        return None, None
+    
+    return output
+    
+
 
 
 if __name__ == '__main__':

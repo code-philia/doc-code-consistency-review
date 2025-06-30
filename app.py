@@ -1,7 +1,7 @@
 from flask import Flask, json, render_template, request, jsonify
 import socket
 from utils import parse_markdown, split_code
-from agent import query_related_code, query_review_result
+from agent import query_generated_requirement, query_related_code, query_review_result
 import random
 import string
 
@@ -35,6 +35,16 @@ def review_consistency_endpoint():
     review_process, issue_list = query_review_result(requirement, related_code)
     
     return jsonify({"reviewProcess":review_process, "issueList": issue_list})
+
+
+@app.route('/api/generate-requirement', methods=['POST'])
+def generate_requirement_endpoint():
+    data = request.json
+    related_code = data.get('relatedCode', [])
+    
+    generate_requirement = query_generated_requirement(related_code)
+    
+    return jsonify({"generatedRequirement":generate_requirement})
 
 
 @app.route('/api/parse-requirement', methods=['POST'])

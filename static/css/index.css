@@ -208,11 +208,11 @@ pre{
     color: #333; /* Dark text color for contrast */
 }
 
-.review-results h3 {
-    color: #333; /* Dark text color for headings */
-    font-size: 18px; /* Larger font for headings */
+.review-results h3,
+.issue-list h3 {
+    font-size: 16px;
     font-weight: bold;
-    margin-bottom: 10px;
+    color: #333; /* Dark text color for headings */
 }
 
 .review-results p {
@@ -228,7 +228,7 @@ pre{
 }
 
 .issue-list {
-    height: 42vh; /* Adjust height for better layout */
+    height: 40vh; /* Adjust height for better layout */
     background-color: #fff; /* Change background to white */
     border: 1px solid #ddd; /* Adjust border for lighter background */
     padding: 15px;
@@ -236,7 +236,7 @@ pre{
 }
 
 .issue-content {
-    height: 37vh;
+    height: 30vh;
     padding: 10px;
     border: 1px solid #ddd; /* Adjust border for lighter background */
     border-radius: 5px;
@@ -273,4 +273,53 @@ pre{
 
 .issue-actions button:hover {
     background-color: #555; /* Slightly lighter background on hover */
+}
+
+.generate-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Add spacing between the sections */
+}
+
+.related-code {
+    height: 40vh; /* Adjust height for better layout */
+    padding: 15px;
+    overflow-y: auto; /* Allow scrolling if content exceeds height */
+    background-color: #fff; /* Change background to white */
+    border: 1px solid #ddd; /* Adjust border for lighter background */
+    border-radius: 5px; /* Rounded corners */
+    font-family: Arial, sans-serif; /* Ensure consistent font */
+    font-size: 14px; /* Adjust font size */
+    line-height: 1.6; /* Improve readability */
+    color: #333; /* Dark text color for contrast */
+}
+
+.related-code h3,
+.generated-requirement h3 {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333; /* Dark text color for headings */
+}
+
+.related-code pre {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.generated-requirement {
+    height: 42vh; /* Adjust height for better layout */
+    padding: 15px;
+    overflow-y: auto; /* Allow scrolling if content exceeds height */
+    background-color: #fff; /* Change background to white */
+    border: 1px solid #ddd; /* Adjust border for lighter background */
+    border-radius: 5px; /* Rounded corners */
+    font-family: Arial, sans-serif; /* Ensure consistent font */
+    font-size: 14px; /* Adjust font size */
+    line-height: 1.6; /* Improve readability */
+    color: #333; /* Dark text color for contrast */
 }

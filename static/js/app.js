@@ -360,6 +360,8 @@ const app = createApp({
         selectedRequirementId.value = null;
         target.classList.remove('selected-requirement');
         highlightCodeBlocks([]); // Clear code highlights
+        reviewProcess.value = ''; // Clear review process content
+        issues.value = '问题单（点击编辑按钮可修改内容）'; // Reset issues content
       } else {
         // Deselect other requirement blocks
         document.querySelectorAll('.highlighted-block').forEach(block => {
@@ -376,7 +378,7 @@ const app = createApp({
           highlightCodeBlocks(point.relatedCode); // Highlight code based on the alignment results
           scrollToCodeBlock(currentCodeBlockIndex.value); // Scroll to the first code block
 
-          reviewProcess.value = renderMarkdownWithLatex(point.reviewProcess);
+          reviewProcess.value = renderMarkdownWithLatex(point.reviewProcess || '');
           issues.value = point.issues;
         }
       }
@@ -655,6 +657,28 @@ const app = createApp({
      * 问题单相关
      */
     function toggleIssueEdit() {
+      // 原来处于编辑状态
+      if (!selectedRequirementId.value) {
+        ElMessage({
+          message: '请先选中一个需求块',
+          type: 'warning',
+          duration: 3000
+        });
+        return;
+      }
+
+      if (isEditingIssue.value) {
+        const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+        if (point) {
+          point.issues = issues.value; // Save the edited content to the selected requirement point
+          ElMessage({
+            message: '问题单已保存',
+            type: 'success',
+            duration: 2000
+          });
+        }
+      }
+
       isEditingIssue.value = !isEditingIssue.value; // Toggle editing mode
     }
 
@@ -676,6 +700,49 @@ const app = createApp({
       link.href = URL.createObjectURL(blob);
       link.download = "问题单.txt";
       link.click();
+    }
+
+
+    /**     * 处理需求反生成按钮点击事件
+     * @returns
+     */
+    async function handleGenerateRequirement() {
+      if (!selectedRequirementId.value) {
+        ElMessage({
+          message: '请先选中一个需求块进行反生成',
+          type: 'warning',
+          duration: 3000
+        });
+        return;
+      }
+      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+      if (!point) {
+        ElMessage({
+          message: '选中的需求块不存在，请重新选择',
+          type: 'error',
+          duration: 3000
+        });
+        return;
+      }
+
+      try {
+        // Send the selected requirement block to the backend
+        const response = await axios.post('/api/generate-requirement', { relatedCode: point.relatedCode });
+
+        point.generatedRequirement = response.data.generatedRequirement || "反生成的需求";
+
+        ElMessage({
+          message: '生成需求完成',
+          type: 'success',
+          duration: 3000
+        });
+      } catch (error) {
+        ElMessage({
+          message: '生成失败: ' + (error.response?.data?.error || error.message),
+          type: 'error',
+          duration: 4000
+        });
+      }
     }
 
     /**

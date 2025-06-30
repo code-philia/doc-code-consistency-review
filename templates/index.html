@@ -72,6 +72,9 @@
                             <el-button plain size="small" @click="handleStartReview">
                                 开始审查
                             </el-button>
+                            <el-button plain size="small" @click="handleGenerateRequirement">
+                                需求反生成
+                            </el-button>
                         </el-button-group>
                         <el-button-group>
                             <el-button plain size="small" @click="handleLastButtonClick"><el-icon><Back /></el-icon></el-button>
@@ -102,19 +105,15 @@
                     <div class="review-container" style="display: flex; flex-direction: column; height: 100%;">
                         <!-- 上半部分：审查结果 -->
                         <div class="review-results">
+                            <h3>审查结果</h3>
                             <el-scrollbar>
-                                <div v-html="reviewProcess"></div>
+                                <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.reviewProcess || '暂无审查结果'"></div>
                             </el-scrollbar>
                         </div>
                         <!-- 下半部分：问题单 -->
                         <div class="issue-list">
-                            <div 
-                                ref="issues" 
-                                :contenteditable="isEditingIssue" 
-                                class="issue-content"
-                            >
-                                问题单展示区域（点击编辑按钮可修改内容）
-                            </div>
+                            <h3>问题单</h3>
+                            <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.issues || '暂无问题单'" class="issue-content"></div>
                             <div class="issue-actions">
                                 <button @click="toggleIssueEdit">
                                     ${ isEditingIssue ? '完成' : '编辑' }
@@ -127,7 +126,27 @@
                     </div>
                 </el-tab-pane>
 
+                <!-- 需求生成 -->
                 <el-tab-pane label="需求生成">
+                    <div class="generate-container" style="display: flex; flex-direction: column; height: 100%;">
+                        <!-- 上半部分：相关代码 -->
+                        <div class="related-code">
+                            <h3>相关代码</h3>
+                            <el-scrollbar>
+                                <div v-for="code in requirementPoints?.find(point => point.id === selectedRequirementId)?.relatedCode || []" 
+                                     class="related-code-block">
+                                    <pre>${ code.content }</pre>
+                                </div>
+                            </el-scrollbar>
+                        </div>
+                        <!-- 下半部分：反生成的需求 -->
+                        <div class="generated-requirement">
+                            <h3>反生成的需求</h3>
+                            <el-scrollbar>
+                                <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.generatedRequirement || '暂无反生成需求'"></div>
+                            </el-scrollbar>
+                        </div>
+                    </div>
                 </el-tab-pane>
             </el-tabs>
         </el-splitter-panel>
