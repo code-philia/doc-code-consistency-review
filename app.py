@@ -18,7 +18,10 @@ def query_related_code_endpoint():
     requirement = data.get('requirement', '')
     code_files = data.get('codeFiles', [])
 
-    related_code = query_related_code(requirement, code_files)
+    # related_code = query_related_code(requirement, code_files)
+    related_code = [{'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 1, 'end': 5},
+                    {'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 10, 'end': 15},
+                    {'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 90, 'end': 95}]
     
     return jsonify({"relatedCode": related_code})
 

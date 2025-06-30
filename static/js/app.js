@@ -1,20 +1,71 @@
-// 初始化 Markdown-It + TeX 插件，并注入 parse-start/end
+let ORIGINAL_MARKDOWN = '';
+let lastPos = 0;
+
+// 初始化 markdown-it
 const md = window.markdownit({
   html: true,
   linkify: true,
   typographer: true
 });
-window.texmath.use(window.katex);
+// 挂载 texmath
 md.use(window.texmath, {
   delimiters: 'dollars',
-  katexOptions: { "\\RR": "\\mathbb{R}" }
+  katexOptions: {}
 });
 
-// 重写 renderer，标记 parse-start/end
-function injectSourcePos(md) {
+// 在 core.ruler 阶段给所有内容 Token 打属性
+md.core.ruler.push('mark_positions', state => {
+  state.tokens.forEach(token => {
+  // 1) 对于行内内容（普通文字 & math_inline）
+    if (token.type === 'inline' && Array.isArray(token.children)) {
+      token.children.forEach(child => {
+        if (child.content && child.content.trim()) {
+          const txt = child.content;
+          const i = ORIGINAL_MARKDOWN.indexOf(txt, lastPos);
+          if (i >= 0) {
+            child.attrSet('data-start', String(i));
+            child.attrSet('data-end',   String(i + txt.length));
+            lastPos = i + txt.length;
+          }
+        }
+      });
+    }
 
-}
-injectSourcePos(md);
+    // 2) 对于块级公式 math_block
+    else if (token.type === 'math_block') {
+      const txt = token.content;
+      const i = ORIGINAL_MARKDOWN.indexOf(txt, lastPos);
+      if (i >= 0) {
+        token.attrSet('data-start', String(i));
+        token.attrSet('data-end',   String(i + txt.length));
+        lastPos = i + txt.length;
+      }
+    }
+  });
+});
+
+// 普通文本
+md.renderer.rules.text = (tokens, idx, options, env, self) => {
+  const t = tokens[idx];
+  return `<span${ self.renderAttrs(t) }>${
+    md.utils.escapeHtml(t.content)
+  }</span>`;
+};
+// 行内公式
+md.renderer.rules.math_inline = (tokens, idx, options, env, self) => {
+  const t = tokens[idx];
+  const html = window.katex.renderToString(t.content, options.katexOptions);
+  return `<span class="math-inline"${ self.renderAttrs(t) }>${ html }</span>`;
+};
+// 块级公式
+md.renderer.rules.math_block = (tokens, idx, options, env, self) => {
+  const t = tokens[idx];
+  const html = window.katex.renderToString(
+    t.content,
+    Object.assign({ displayMode: true }, options.katexOptions)
+  );
+  return `<div class="math-block"${ self.renderAttrs(t) }>${ html }</div>`;
+};
 
 // 4. Vue 应用
 const { createApp, ref, watch} = Vue;
@@ -52,11 +103,54 @@ const app = createApp({
      * @returns 
      */
     const renderMarkdownWithLatex = (markdownContent) => {
-        const html = md.render(markdownContent);
-        const container = document.createElement('div');
-        container.innerHTML = html;
-        return container.innerHTML;
+      const html = md.render(markdownContent);
+      return html;
     };
+
+    const findOriginalMarkdown = (sel) => {
+      const container = requirementRoot.value;
+
+      if (!sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+
+      // 1. 遍历容器中所有带 data-start 的元素
+      const walker = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_ELEMENT,
+        {
+          acceptNode(node) {
+            return node.hasAttribute('data-start') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+          }
+        },
+        false
+      );
+
+      const intervals = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        // 2. 只要元素和选区有任何交集，就算选中了
+        if (range.intersectsNode(node)) {
+          const start = parseInt(node.getAttribute('data-start'), 10);
+          const end   = parseInt(node.getAttribute('data-end'),   10);
+          // 过滤无效或重复
+          if (!isNaN(start) && !isNaN(end) && start < end) {
+            intervals.push([ start, end ]);
+          }
+        }
+      }
+
+      if (!intervals.length) return;
+
+      // 3. 去重 & 排序
+      const merged = Array.from(new Set(intervals.map(JSON.stringify)))
+                          .map(JSON.parse)
+                          .sort((a, b) => a[0] - b[0]);
+
+      // 4. 根据区间从原文里 slice 并拼接
+      const parts = merged.map(([s, e]) => ORIGINAL_MARKDOWN.slice(s, e));
+      const reconstructed = parts.join('\n');
+      return reconstructed;
+    }
 
     /**
      * 上传需求文档处理函数
@@ -67,7 +161,12 @@ const app = createApp({
       reader.onload = (e) => {
         requirementFilename.value = file.name;
         requirementMarkdown.value = e.target.result.replace(/\r\n/g, '\n');
-        requirementHtml.value     = renderMarkdownWithLatex(requirementMarkdown.value);
+
+        // TODO：优化全局变量
+        lastPos = 0;
+        ORIGINAL_MARKDOWN = requirementMarkdown.value;
+
+        requirementHtml.value = renderMarkdownWithLatex(requirementMarkdown.value);
       };
       reader.readAsText(file.raw);
     };
@@ -136,7 +235,6 @@ const app = createApp({
      * @param {*} 
      * @return
      */
-    // #TODO: 匹配不成功
     async function handleStartAlign() {
       const sel = window.getSelection();
       if (!sel.rangeCount || sel.toString() === '') { 
@@ -155,7 +253,7 @@ const app = createApp({
         return;
       }
 
-      // Create a new block to wrap the selected content
+      // 高亮
       const wrapper = document.createElement('div');
       wrapper.classList.add('highlighted-block', 'selected-requirement'); // Add both states
       wrapper.dataset.id = `REQ_${requirementPoints.value.length + 1}`; // Assign a unique ID
@@ -172,19 +270,8 @@ const app = createApp({
       range.deleteContents();
       range.insertNode(wrapper);
 
-      // Extract the original Markdown content
-      const originalMarkdown = requirementMarkdown.value;
-      let selectedHtml = Array.from(wrapper.childNodes)
-        .map(node => node.outerHTML || node.textContent)
-        .join('');
-      selectedHtml = selectedHtml.replace(/\n/g, '');
-
-      const selectedMarkdown = originalMarkdown.split('\n').filter(line => {
-        if (!line.trim()) return false;
-        const renderedLine = md.render(line).trim().replace(/\n/g, '').replace(/<[^>]+>/g, '');
-        return selectedHtml.includes(renderedLine);
-      }).join('\n');
-
+      // 获取选中的 Markdown 内容
+      const selectedMarkdown = findOriginalMarkdown(sel);
       wrapper.dataset.originalMarkdown = selectedMarkdown;
 
       window.getSelection().removeAllRanges();
@@ -211,8 +298,8 @@ const app = createApp({
           requirementPoints.value.push({ id, text: selectedMarkdown, relatedCode });
         }
 
-        highlightCodeBlocks(relatedCode); // Update code highlights
         currentCodeBlockIndex.value = 0; // Default to the first code block
+        highlightCodeBlocks(relatedCode); // Update code highlights
         scrollToCodeBlock(currentCodeBlockIndex.value); // Scroll to the first code block
         
         ElMessage({
@@ -318,10 +405,9 @@ const app = createApp({
      * @param {*} relatedCode 
      */
     const highlightCodeBlocks = (relatedCode) => {
+      console.log(currentCodeBlockIndex.value);
       codeFiles.value.forEach(file => {
         const relatedResults = relatedCode.filter(code => code.filename === file.name);
-
-        // Update the file name with the number of results
         file.resultCount = relatedResults.length;
 
         // Highlight the code blocks
@@ -351,7 +437,7 @@ const app = createApp({
               blockElement.dataset.end = lineNumber - 1; // Set end attribute
               blockElement.dataset.filename = file.name; // Set filename attribute
               if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
-                blockElement.classList.add('current-code-block'); // Add the current block class
+                blockElement.classList.add('selected-requirement'); // Add the current block class
               }
               blockElement.innerHTML = currentBlock.join('\n');
               highlightedContent.push(blockElement.outerHTML);
@@ -369,7 +455,7 @@ const app = createApp({
           blockElement.dataset.end = lines.length; // Set end attribute
           blockElement.dataset.filename = file.name; // Set filename attribute
           if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
-            blockElement.classList.add('current-code-block'); // Add the current block class
+            blockElement.classList.add('selected-requirement'); // Add the current block class
           }
           blockElement.innerHTML = currentBlock.join('\n');
           highlightedContent.push(blockElement.outerHTML);
@@ -644,6 +730,7 @@ const app = createApp({
       issues,
       toggleIssueEdit,
       exportissues,
+
     };
   }
 });
