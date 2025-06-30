@@ -12,6 +12,28 @@ def index():
     """渲染包含Vue的页面"""
     return render_template('index.html')
 
+@app.route('/api/query-related-code', methods=['POST'])
+def query_related_code_endpoint():
+    data = request.json
+    requirement = data.get('requirement', '')
+    code_files = data.get('codeFiles', [])
+
+    related_code = query_related_code(requirement, code_files)
+    
+    return jsonify({"relatedCode": related_code})
+
+
+@app.route('/api/review-consistency')
+def review_consistency_endpoint():
+    data = request.json
+    requirement = data.get('requirement')
+    related_code = data.get('relatedCode', [])
+    
+    review_process, issue_list = query_review_result(requirement, related_code)
+    
+    return jsonify({"reviewProcess":review_process, "issueList": issue_list})
+
+
 @app.route('/api/parse-requirement', methods=['POST'])
 def parse_requirement():
     data = request.json
@@ -73,25 +95,16 @@ def align_single_requirement():
         
     return jsonify({"requirementPoint": requirement_point_list[0]})
 
-@app.route('/api/import-alignment', methods=['POST'])
-def import_alignment():
-    """临时接口：导入对齐"""
-    return jsonify({"message": "导入对齐已完成"})
 
-@app.route('/api/export-alignment', methods=['POST'])
-def export_alignment():
-    """临时接口：导出对齐"""
-    return jsonify({"message": "导出对齐已完成"})
-
-
-@app.route('/api/review-single-requirement', methods=['POST'])
+@app.route('/api/review', methods=['POST'])
 def review_single_requirement():
     data = request.json
     requirement_point = data.get('requirement')
+    print("Received requirement point for review:", requirement_point)
     
-    requirement_point_reviewed = query_review_result(requirement_point)
+    # requirement_point_reviewed = query_review_result(requirement_point)
     
-    return jsonify({"requirementPoint": requirement_point_reviewed})
+    return jsonify({"result": 0})
 
 
 def find_available_port(start_port):
