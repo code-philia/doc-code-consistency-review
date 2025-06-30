@@ -468,8 +468,6 @@ const app = createApp({
         .join('')
         .trim();
 
-      console.log('Selected text:', selectedText);
-
       // Find the start and end line numbers by matching the selected text against the original lines
       let startLine = null;
       let endLine = null;
@@ -485,8 +483,6 @@ const app = createApp({
       }
 
       if (!startLine || !endLine || startLine > endLine) return; // Ensure valid range
-
-      console.log('Selected code lines:', startLine, endLine);
 
       // Construct the selected code block
       const selectedContent = lines.slice(startLine - 1, endLine).join('\n');
