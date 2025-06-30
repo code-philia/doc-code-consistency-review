@@ -214,3 +214,8 @@ pre{
     padding: 10px;
     overflow-y: auto;
 }
+
+.current-code-block {
+    border: 2px solid #007bff; /* Blue border for emphasis */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add shadow for emphasis */
+}

@@ -216,7 +216,9 @@ const app = createApp({
         }
 
         highlightCodeBlocks(relatedCode); // Update code highlights
-
+        currentCodeBlockIndex.value = 0; // Default to the first code block
+        scrollToCodeBlock(currentCodeBlockIndex.value); // Scroll to the first code block
+        
         ElMessage({
           message: '自动对齐完成',
           type: 'success',
@@ -248,8 +250,8 @@ const app = createApp({
       if (!file) return;
 
       // Expand the file if it is collapsed
-      if (!activeName.value=== file.name) {
-        activeName.value = file.name;
+      if (activeName.value !== file.name) {
+        activeName.value = file.name; // Set activeName to the target panel's name
       }
 
       // Scroll to the code block
@@ -287,8 +289,8 @@ const app = createApp({
 
         const point = requirementPoints.value.find(point => point.id === id);
         if (point) {
-          highlightCodeBlocks(point.relatedCode); // Highlight code based on the alignment results
           currentCodeBlockIndex.value = 0; // Default to the first code block
+          highlightCodeBlocks(point.relatedCode); // Highlight code based on the alignment results
           scrollToCodeBlock(currentCodeBlockIndex.value); // Scroll to the first code block
         }
       }
@@ -296,7 +298,9 @@ const app = createApp({
 
     function handleLastButtonClick() {
       if (selectedRequirementId.value) {
+        const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
         currentCodeBlockIndex.value = Math.max(0, currentCodeBlockIndex.value - 1); // Navigate to the previous block
+        highlightCodeBlocks(point.relatedCode);
         scrollToCodeBlock(currentCodeBlockIndex.value);
       }
     }
@@ -304,10 +308,9 @@ const app = createApp({
     function handleNextButtonClick() {
       if (selectedRequirementId.value) {
         const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
-        if (point) {
-          currentCodeBlockIndex.value = Math.min(point.relatedCode.length - 1, currentCodeBlockIndex.value + 1); // Navigate to the next block
-          scrollToCodeBlock(currentCodeBlockIndex.value);
-        }
+        currentCodeBlockIndex.value = Math.min(point.relatedCode.length - 1, currentCodeBlockIndex.value + 1); // Navigate to the next block
+        highlightCodeBlocks(point.relatedCode); // Highlight code based on the alignment results
+        scrollToCodeBlock(currentCodeBlockIndex.value);
       }
     }
 
@@ -348,6 +351,9 @@ const app = createApp({
               blockElement.dataset.start = currentStart; // Set start attribute
               blockElement.dataset.end = lineNumber - 1; // Set end attribute
               blockElement.dataset.filename = file.name; // Set filename attribute
+              if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
+                blockElement.classList.add('current-code-block'); // Add the current block class
+              }
               blockElement.innerHTML = currentBlock.join('\n');
               highlightedContent.push(blockElement.outerHTML);
               currentBlock = null; // Reset the block
@@ -363,6 +369,9 @@ const app = createApp({
           blockElement.dataset.start = currentStart; // Set start attribute
           blockElement.dataset.end = lines.length; // Set end attribute
           blockElement.dataset.filename = file.name; // Set filename attribute
+          if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
+            blockElement.classList.add('current-code-block'); // Add the current block class
+          }
           blockElement.innerHTML = currentBlock.join('\n');
           highlightedContent.push(blockElement.outerHTML);
         }
