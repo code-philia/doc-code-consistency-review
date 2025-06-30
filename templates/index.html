@@ -99,17 +99,31 @@
             <el-tabs class="functionBlock" type="border-card">
                 <!-- 审查 -->
                 <el-tab-pane label="一致性审查">
-                    <!-- 上半部分：审查结果 -->
-                    <div class="review-results">
-                        <el-scrollbar>
-                            <div v-html="reviewResults"></div>
-                        </el-scrollbar>
-                    </div>
-                    <!-- 下半部分：问题单 -->
-                    <div class="issue-list">
-                        <el-scrollbar>
-                            <p>问题单展示区域（暂未实现）</p>
-                        </el-scrollbar>
+                    <div class="review-container" style="display: flex; flex-direction: column; height: 100%;">
+                        <!-- 上半部分：审查结果 -->
+                        <div class="review-results">
+                            <el-scrollbar>
+                                <div v-html="reviewResults"></div>
+                            </el-scrollbar>
+                        </div>
+                        <!-- 下半部分：问题单 -->
+                        <div class="issue-list">
+                            <div 
+                                ref="issueContent" 
+                                :contenteditable="isEditingIssue" 
+                                class="issue-content"
+                            >
+                                问题单展示区域（点击编辑按钮可修改内容）
+                            </div>
+                            <div class="issue-actions">
+                                <button @click="toggleIssueEdit">
+                                    ${ isEditingIssue ? '完成' : '编辑' }
+                                </button>
+                                <button @click="exportIssueContent">
+                                    导出
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </el-tab-pane>
 

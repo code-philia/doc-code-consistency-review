@@ -570,6 +570,36 @@ const app = createApp({
 
 
     /**
+     * 问题单相关
+     */
+    const isEditingIssue = ref(false); // State to track editing mode
+    const issueContent = ref('问题单展示区域（点击编辑按钮可修改内容）'); // Default issue content
+
+    function toggleIssueEdit() {
+      isEditingIssue.value = !isEditingIssue.value; // Toggle editing mode
+    }
+
+    function exportIssueContent() {
+      if (isEditingIssue.value) {
+        ElMessage({
+          message: '请先完成编辑后再导出问题单',
+          type: 'warning',
+          duration: 3000
+        });
+        return;
+      }
+
+      // Extract the inner HTML of the issueContent element
+      const contentToSave = issueContent.value.innerHTML;
+
+      const blob = new Blob([contentToSave], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = "问题单.txt";
+      link.click();
+    }
+
+    /**
      * 添加点击事件监听器
      * 1. 点击需求高亮块时，选中该块并高亮相关代码
      * 2. 点击代码块时，显示确认框以取消对齐
@@ -616,6 +646,11 @@ const app = createApp({
 
       reviewResults,
       handleStartReview,
+
+      isEditingIssue,
+      issueContent,
+      toggleIssueEdit,
+      exportIssueContent,
     };
   }
 });
