@@ -438,13 +438,22 @@ const app = createApp({
     function handleAddAlign() {
       const sel = window.getSelection();
       if (!sel.rangeCount || sel.toString() === '') {
+        ElMessage({
+          message: '请选中一段代码',
+          type: 'warning',
+          duration: 4000
+        });
         return;
       }
       const range = sel.getRangeAt(0);
 
       const filename = activeName.value;
       if (!filename || filename==='') {
-        // TODO: 提示用户先选中代码文件和代码块
+        ElMessage({
+          message: '请选中一段代码',
+          type: 'warning',
+          duration: 4000
+        });
         return;
       }
 
@@ -486,7 +495,14 @@ const app = createApp({
 
       // Add the selected code block to the relatedCode of the currently selected requirement block
       const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
-      if (!point) return;
+      if (!point) {
+        ElMessage({
+          message: '请点击选中一段需求',
+          type: 'warning',
+          duration: 4000
+        });
+        return;
+      }
 
       point.relatedCode.push(selectedCodeBlock);
 
