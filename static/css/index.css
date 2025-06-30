@@ -77,9 +77,13 @@ button:hover {
     background-color: #e0e0e0;
 }
 
-pre code {
+pre{
+    background-color: #f5f5f5;
+    padding: 5px;
     font-size: 14px; /* Increase font size */
     font-family: Consolas, monospace; /* Use Consolas font */
+    white-space: pre-wrap; /* Wrap long lines */
+    word-wrap: break-word; /* Break words if necessary */
 }
 
 /* 打开文件侧边栏 */
@@ -170,7 +174,7 @@ pre code {
 }
 
 .highlighted-code {
-    background-color: rgba(0, 255, 0, 0.2); /* Light green highlight */
+    background-color: rgba(0, 255, 0, 0.1); /* Light green highlight */
     border-left: 3px solid #00cc00; /* Emphasize the block */
 }
 
