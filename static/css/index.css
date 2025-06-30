@@ -183,6 +183,11 @@ pre{
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add shadow for emphasis */
 }
 
+.selected-code{
+    border: 2px solid #007bff; /* Blue border for selected requirement */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add shadow for emphasis */
+}
+
 /* 一致性审查和问题单 */
 .review-container {
     display: flex;

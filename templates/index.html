@@ -59,7 +59,7 @@
         <!-- 代码展示区 -->
         <el-splitter-panel size="35%" :min="400">
             <el-col class="block" id="code">
-                <div class="section-header" id="code-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="section-header" id="code-header" style=" justify-content: space-between; align-items: center;">
                     <div style="display: flex; align-items: center;">
                         <el-icon><Tickets /></el-icon>
                         <span style="margin-left: 8px;">代码</span>
@@ -79,7 +79,7 @@
                         </el-button-group>
                     </div>
                 </div>
-                <el-scrollbar>
+                <el-scrollbar id="code-scrollbar">
                     <el-collapse v-model="activeName" @change="handleCodeSpanChange" accordion>
                         <el-collapse-item 
                             v-for="(file, index) in codeFiles" 

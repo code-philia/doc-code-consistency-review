@@ -338,10 +338,10 @@ const app = createApp({
       }
 
       // Scroll to the code block
-      const codeContainer = document.querySelector(`#code`);
+      const codeContainer = document.querySelector(`#code-scrollbar`);
       const codeElement = codeContainer.querySelector(`pre div.highlighted-code:nth-child(${codeBlock.start})`);
       if (codeElement) {
-        codeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        codeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
 
@@ -437,7 +437,7 @@ const app = createApp({
               blockElement.dataset.end = lineNumber - 1; // Set end attribute
               blockElement.dataset.filename = file.name; // Set filename attribute
               if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
-                blockElement.classList.add('selected-requirement'); // Add the current block class
+                blockElement.classList.add('selected-code'); // Add the current block class
               }
               blockElement.innerHTML = currentBlock.join('\n');
               highlightedContent.push(blockElement.outerHTML);
@@ -455,7 +455,7 @@ const app = createApp({
           blockElement.dataset.end = lines.length; // Set end attribute
           blockElement.dataset.filename = file.name; // Set filename attribute
           if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
-            blockElement.classList.add('selected-requirement'); // Add the current block class
+            blockElement.classList.add('selected-code'); // Add the current block class
           }
           blockElement.innerHTML = currentBlock.join('\n');
           highlightedContent.push(blockElement.outerHTML);
