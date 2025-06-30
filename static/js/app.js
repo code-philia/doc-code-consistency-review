@@ -103,7 +103,17 @@ const app = createApp({
           numbered += `${(i+1)+':'}`.padEnd(5,' ') + line + '\n';
         });
         codeFiles.value.push({ name: file.name, content, numberedContent: numbered });
-        highlightCodeBlocks([]); // TODO: 已有高亮结果，再次上传代码文件时不清空高亮结果
+        if (selectedRequirementId.value === null) { 
+          highlightCodeBlocks([]);
+        }
+        else {
+          for (const point of requirementPoints.value) {
+            if (point.id === selectedRequirementId.value) {
+              highlightCodeBlocks(point.relatedCode);
+              break;
+            }
+          }
+        }
       };
       reader.readAsArrayBuffer(file.raw);
     };
