@@ -16,7 +16,6 @@ function injectSourcePos(md) {
 }
 injectSourcePos(md);
 
-
 // 4. Vue 应用
 const { createApp, ref, watch} = Vue;
 const { ElButton, ElMessage } = ElementPlus;
@@ -33,7 +32,7 @@ const app = createApp({
     const selectedText        = ref('');
     const requirementRoot     = ref(null);
 
-    const requirementPoints = ref([]); // [{id, text, start, end, align:[{filename, content, start, end},]}]
+    const requirementPoints = ref([]); // {id, text, relatedCode:[{filename, content, start, end}, ...],  reviewProcess, issues}
     const aligningState = ref(false); // 是否正在对齐
     const selectedRequirementId = ref(null); // 选中的需求块ID
     const currentCodeBlockIndex = ref(0); // 当前聚焦的代码块索引
@@ -43,8 +42,9 @@ const app = createApp({
     const codeBlockConfirmationPosition = ref({ x: 0, y: 0 });
     const codeBlockToRemove = ref(null);
 
-    const reviewResults = ref(''); // State for storing review results
-
+    const reviewProcess = ref(''); // State for storing review results
+    const isEditingIssue = ref(false); // State to track editing mode
+    const issues = ref('问题单（点击编辑按钮可修改内容）'); // Default issue content
 
     /**
      * 渲染 Markdown -> HTML（含 parse-start/end）
@@ -192,7 +192,7 @@ const app = createApp({
       // Send alignment request to the backend
       aligningState.value = true;
       try {
-        const response = await axios.post('/api/auto-align', {
+        const response = await axios.post('/api/query-related-code', {
           requirement: selectedMarkdown,
           codeFiles: codeFiles.value.map(file => ({
             name: file.name,
@@ -201,11 +201,7 @@ const app = createApp({
         });
 
         const id = wrapper.dataset.id;
-        const relatedCode = response.data.relatedCode || [
-          { filename: 'code.cpp', start: 1, end: 4 },
-          { filename: 'code.h', start: 1, end: 3 },
-          { filename: 'code.h', start: 9, end: 10 }
-        ];
+        const relatedCode = response.data.relatedCode || [];
 
         // Add or update the requirement point
         const existingPointIndex = requirementPoints.value.findIndex(point => point.id === id);
@@ -292,6 +288,9 @@ const app = createApp({
           currentCodeBlockIndex.value = 0; // Default to the first code block
           highlightCodeBlocks(point.relatedCode); // Highlight code based on the alignment results
           scrollToCodeBlock(currentCodeBlockIndex.value); // Scroll to the first code block
+
+          reviewProcess.value = renderMarkdownWithLatex(point.reviewProcess);
+          issues.value = point.issues;
         }
       }
     }
@@ -546,13 +545,15 @@ const app = createApp({
 
       try {
         // Send the selected requirement block to the backend
-        const response = await axios.post('/api/review', { requirement: point});
+        const response = await axios.post('/api/review-consistency', { requirement: point.text, relatedCode: point.relatedCode });
 
         // Mock response data for testing
-        const mockResponseData = "### 审查结果";
+        point.reviewProcess = response.data.reviewProcess || "### 审查结果"; // Update the review result in the requirement point
+        point.issues = response.data.issues || '问题单（点击编辑按钮可修改内容）'; // Update the issue list
 
         // Update the review results
-        reviewResults.value = renderMarkdownWithLatex(mockResponseData);
+        reviewProcess.value = renderMarkdownWithLatex(point.reviewProcess);
+        issues.value = point.issues;
 
         ElMessage({
           message: '审查完成',
@@ -568,18 +569,14 @@ const app = createApp({
       }
     }
 
-
     /**
      * 问题单相关
      */
-    const isEditingIssue = ref(false); // State to track editing mode
-    const issueContent = ref('问题单展示区域（点击编辑按钮可修改内容）'); // Default issue content
-
     function toggleIssueEdit() {
       isEditingIssue.value = !isEditingIssue.value; // Toggle editing mode
     }
 
-    function exportIssueContent() {
+    function exportissues() {
       if (isEditingIssue.value) {
         ElMessage({
           message: '请先完成编辑后再导出问题单',
@@ -589,8 +586,8 @@ const app = createApp({
         return;
       }
 
-      // Extract the inner HTML of the issueContent element
-      const contentToSave = issueContent.value.innerHTML;
+      // Extract the inner HTML of the issues element
+      const contentToSave = issues.value.innerHTML;
 
       const blob = new Blob([contentToSave], { type: 'text/plain' });
       const link = document.createElement('a');
@@ -644,13 +641,13 @@ const app = createApp({
 
       handleAddAlign,
 
-      reviewResults,
+      reviewProcess,
       handleStartReview,
 
       isEditingIssue,
-      issueContent,
+      issues,
       toggleIssueEdit,
-      exportIssueContent,
+      exportissues,
     };
   }
 });

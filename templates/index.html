@@ -103,13 +103,13 @@
                         <!-- 上半部分：审查结果 -->
                         <div class="review-results">
                             <el-scrollbar>
-                                <div v-html="reviewResults"></div>
+                                <div v-html="reviewProcess"></div>
                             </el-scrollbar>
                         </div>
                         <!-- 下半部分：问题单 -->
                         <div class="issue-list">
                             <div 
-                                ref="issueContent" 
+                                ref="issues" 
                                 :contenteditable="isEditingIssue" 
                                 class="issue-content"
                             >
@@ -119,7 +119,7 @@
                                 <button @click="toggleIssueEdit">
                                     ${ isEditingIssue ? '完成' : '编辑' }
                                 </button>
-                                <button @click="exportIssueContent">
+                                <button @click="exportissues">
                                     导出
                                 </button>
                             </div>
