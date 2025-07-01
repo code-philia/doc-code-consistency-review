@@ -86,6 +86,14 @@ pre{
     word-wrap: break-word; /* Break words if necessary */
 }
 
+code{
+    padding: 2px 4px;
+    font-size: 14px; /* Increase font size */
+    font-family: Consolas, monospace; /* Use Consolas font */
+    white-space: pre-wrap; /* Wrap long lines */
+    word-wrap: break-word; /* Break words if necessary */
+}
+
 /* 打开文件侧边栏 */
 .upload-button {
     color:#fff;
@@ -158,7 +166,6 @@ pre{
 
 .highlighted-block {
     background-color: rgba(255, 255, 0, 0.3); /* Light yellow highlight */
-    border: 1px solid #ffcc0080; /* Border to emphasize the block */
     cursor: pointer; /* Indicate clickable block */
     z-index: 9999; /* Ensure it appears above other elements */
 }
@@ -174,18 +181,25 @@ pre{
 }
 
 .highlighted-code {
+    padding: 0;
+    margin: 0;
     background-color: rgba(0, 255, 0, 0.1); /* Light green highlight */
-    border-left: 3px solid #00cc00; /* Emphasize the block */
+    border-left: 3px solid #00cc0040; /* Emphasize the block */
 }
 
-.selected-requirement,
-.selected-code {
-    border: 2px solid #6c757d; /* Gray border for selected requirement */
+.selected-code{
+    border-left: 3px solid #00cc00; /* Emphasize the block */
+    box-shadow: 0 0 5px rgba(108, 117, 125, 0.5); /* Add shadow for emphasis */
+}
+
+.selected-requirement{
+    border-left: 3px solid #ffcc00; /* Emphasize the block */
     box-shadow: 0 0 5px rgba(108, 117, 125, 0.5); /* Add shadow for emphasis */
 }
 
 /* 一致性审查和问题单 */
-.review-container {
+.review-container,
+.generate-container {
     display: flex;
     flex-direction: column;
     gap: 10px; /* Add spacing between the sections */
@@ -204,26 +218,20 @@ pre{
     color: #333; /* Dark text color for contrast */
 }
 
-.review-results h3,
-.issue-list h3,
-.related-code h3,
-.generated-requirement h3  {
-    margin: 2px;
-    font-size: 16px;
+.review-container h4,
+.generate-container h4 {
+    margin: 0;
     font-weight: bold;
     color: #333; /* Dark text color for headings */
 }
 
-.review-results p {
-    margin: 5px 0; /* Add spacing between paragraphs */
-}
-
-.review-results code {
-    font-family: Consolas, monospace; /* Use monospace font for code */
-    background-color: #444; /* Dark background for code blocks */
-    padding: 2px 4px;
-    border-radius: 3px;
-    color: #ddd; /* Light text color */
+#review-results {
+    height: 33vh;
+    font-family: Arial, sans-serif; /* Ensure consistent font */
+    font-size: 14px; /* Adjust font size */
+    line-height: 1.6; /* Improve readability */
+    color: #333; /* Dark text color for contrast */
+    margin-bottom: 10px;
 }
 
 .issue-list {
@@ -238,7 +246,6 @@ pre{
     height: 30vh;
     padding: 10px;
     border: 1px solid #ddd; /* Adjust border for lighter background */
-    border-radius: 5px;
     background-color: #f9f9f9; /* Light gray background for better readability */
     min-height: 150px;
     font-size: 14px;
@@ -249,14 +256,15 @@ pre{
 
 .issue-content[contenteditable="true"] {
     background-color: #fff; /* White background for editing mode */
-    border: 1px dashed #ccc; /* Dashed border for editing mode */
+    border: 2px solid #888; /* Thicker solid gray border for editing mode */
+    box-shadow: 0 0 5px rgba(136, 136, 136, 0.5); /* Add subtle shadow for emphasis */
 }
 
 .issue-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 5px;
 }
 
 .issue-actions button {
@@ -274,42 +282,18 @@ pre{
     background-color: #555; /* Slightly lighter background on hover */
 }
 
-.generate-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Add spacing between the sections */
-}
-
-.related-code {
+#related-code {
     height: 33vh; /* Adjust height for better layout */
-    padding: 15px;
-    overflow-y: auto; /* Allow scrolling if content exceeds height */
     background-color: #fff; /* Change background to white */
-    border: 1px solid #ddd; /* Adjust border for lighter background */
-    border-radius: 5px; /* Rounded corners */
-    font-family: Arial, sans-serif; /* Ensure consistent font */
-    font-size: 14px; /* Adjust font size */
-    line-height: 1.6; /* Improve readability */
     color: #333; /* Dark text color for contrast */
 }
 
-.related-code pre {
-    background-color: #f5f5f5;
-    padding: 10px;
-    border-radius: 5px;
-    font-family: Consolas, monospace;
-    font-size: 14px;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-.generated-requirement {
-    height: 40vh; /* Adjust height for better layout */
-    padding: 15px;
-    overflow-y: auto; /* Allow scrolling if content exceeds height */
+#generated-requirement {
+    height: 33vh; /* Adjust height for better layout */
     background-color: #fff; /* Change background to white */
-    border: 1px solid #ddd; /* Adjust border for lighter background */
-    border-radius: 5px; /* Rounded corners */
+    font-size: 14px; /* Adjust font size */
+    line-height: 1.6; /* Improve readability */
+    color: #333; /* Dark text color for contrast */
     font-family: Arial, sans-serif; /* Ensure consistent font */
     font-size: 14px; /* Adjust font size */
     line-height: 1.6; /* Improve readability */

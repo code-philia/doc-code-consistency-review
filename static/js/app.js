@@ -83,8 +83,7 @@ const app = createApp({
     const selectedText        = ref('');
     const requirementRoot     = ref(null);
 
-    const requirementPoints = ref([]); // {id, text, relatedCode:[{filename, content, start, end}, ...],  reviewProcess, issues}
-    const aligningState = ref(false); // 是否正在对齐
+    const requirementPoints = ref([]); // {id, text, relatedCode:[{filename, content, start, end}, ...],  reviewProcess, issues}    
     const selectedRequirementId = ref(null); // 选中的需求块ID
     const currentCodeBlockIndex = ref(0); // 当前聚焦的代码块索引
 
@@ -93,9 +92,12 @@ const app = createApp({
     const codeBlockConfirmationPosition = ref({ x: 0, y: 0 });
     const codeBlockToRemove = ref(null);
 
-    const reviewProcess = ref(''); // State for storing review results
     const isEditingIssue = ref(false); // State to track editing mode
     const issues = ref('问题单（点击编辑按钮可修改内容）'); // Default issue content
+
+    const isAligning = ref(false); // 是否正在对齐
+    const isReviewing = ref(false); // 是否正在审查
+    const isGenerating = ref(false); // 是否正在反生成
 
     /**
      * 渲染 Markdown -> HTML（含 parse-start/end）
@@ -277,13 +279,14 @@ const app = createApp({
       window.getSelection().removeAllRanges();
 
       // Send alignment request to the backend
-      aligningState.value = true;
+      isAligning.value = true;
       try {
         const response = await axios.post('/api/query-related-code', {
           requirement: selectedMarkdown,
           codeFiles: codeFiles.value.map(file => ({
             name: file.name,
-            content: file.content
+            content: file.content,
+            numberedContent: file.numberedContent
           }))
         });
 
@@ -314,7 +317,7 @@ const app = createApp({
           duration: 4000
         });
       } finally {
-        aligningState.value = false;
+        isAligning.value = false;
       }
     }
 
@@ -360,8 +363,6 @@ const app = createApp({
         selectedRequirementId.value = null;
         target.classList.remove('selected-requirement');
         highlightCodeBlocks([]); // Clear code highlights
-        reviewProcess.value = ''; // Clear review process content
-        issues.value = '问题单（点击编辑按钮可修改内容）'; // Reset issues content
       } else {
         // Deselect other requirement blocks
         document.querySelectorAll('.highlighted-block').forEach(block => {
@@ -377,9 +378,6 @@ const app = createApp({
           currentCodeBlockIndex.value = 0; // Default to the first code block
           highlightCodeBlocks(point.relatedCode); // Highlight code based on the alignment results
           scrollToCodeBlock(currentCodeBlockIndex.value); // Scroll to the first code block
-
-          reviewProcess.value = renderMarkdownWithLatex(point.reviewProcess || '');
-          issues.value = point.issues;
         }
       }
     }
@@ -441,11 +439,13 @@ const app = createApp({
               if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
                 blockElement.classList.add('selected-code'); // Add the current block class
               }
-              blockElement.innerHTML = currentBlock.join('\n');
+              const rawCode = currentBlock.join('\n');
+              blockElement.innerHTML = `<code class="language-cpp">${hljs.highlight(rawCode, { language: 'cpp' }).value}</code>`;
               highlightedContent.push(blockElement.outerHTML);
               currentBlock = null; // Reset the block
             }
-            highlightedContent.push(line); // Add non-highlighted line
+            const rawLine = hljs.highlight(line, { language: 'cpp' }).value; // Highlight individual line
+            highlightedContent.push(`<code class="language-cpp">${rawLine}</code>`); // Add non-highlighted line
           }
         });
 
@@ -459,7 +459,8 @@ const app = createApp({
           if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
             blockElement.classList.add('selected-code'); // Add the current block class
           }
-          blockElement.innerHTML = currentBlock.join('\n');
+          const rawCode = currentBlock.join('\n');
+          blockElement.innerHTML = `<code class="language-cpp">${hljs.highlight(rawCode, { language: 'cpp' }).value}</code>`;
           highlightedContent.push(blockElement.outerHTML);
         }
 
@@ -627,18 +628,14 @@ const app = createApp({
         return;
       }
 
+      isReviewing.value = true; // Set reviewing state
       try {
         // Send the selected requirement block to the backend
         const response = await axios.post('/api/review-consistency', { requirement: point.text, relatedCode: point.relatedCode });
 
-        // Mock response data for testing
-        point.reviewProcess = response.data.reviewProcess || "### 审查结果"; // Update the review result in the requirement point
-        point.issues = response.data.issues || '问题单（点击编辑按钮可修改内容）'; // Update the issue list
-        point.state = '未处理'; // Update state to "已审查"
-
-        // Update the review results
-        reviewProcess.value = renderMarkdownWithLatex(point.reviewProcess);
-        issues.value = point.issues;
+        point.reviewProcess = renderMarkdownWithLatex(response.data.reviewProcess);
+        point.issues = response.data.issues;
+        point.state = '未导出';
 
         ElMessage({
           message: '审查完成',
@@ -651,6 +648,8 @@ const app = createApp({
           type: 'error',
           duration: 4000
         });
+      } finally {
+        isReviewing.value = false; // Reset reviewing state
       }
     }
 
@@ -693,8 +692,24 @@ const app = createApp({
         return;
       }
 
-      // Extract the inner HTML of the issues element
-      const contentToSave = issues.value.innerHTML;
+      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+      if (!point) {
+        ElMessage({
+          message: '请先选中一个需求块',
+          type: 'warning',
+          duration: 3000
+        });
+        return;
+      }
+      else if (point.state === '未审查') {
+        ElMessage({
+          message: '该需求未审查，没有问题单可导出',
+          type: 'warning',
+          duration: 3000
+        });
+        return;
+      }
+      const contentToSave = point.issues || '暂无问题单内容';
 
       const blob = new Blob([contentToSave], { type: 'text/plain' });
       const link = document.createElement('a');
@@ -711,10 +726,7 @@ const app = createApp({
         return;
       }
 
-      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
-      if (point) {
-        point.state = '已导出'; // Update state to "已导出"
-      }
+      point.state = '已导出'; // Update state to "已导出"
     }
 
 
@@ -740,11 +752,12 @@ const app = createApp({
         return;
       }
 
+      isGenerating.value = true; // Set generating state
       try {
         // Send the selected requirement block to the backend
         const response = await axios.post('/api/generate-requirement', { relatedCode: point.relatedCode });
 
-        point.generatedRequirement = response.data.generatedRequirement || "反生成的需求";
+        point.generatedRequirement = renderMarkdownWithLatex(response.data.generatedRequirement);
 
         ElMessage({
           message: '生成需求完成',
@@ -757,6 +770,8 @@ const app = createApp({
           type: 'error',
           duration: 4000
         });
+      } finally {
+        isGenerating.value = false; // Reset generating state
       }
     }
 
@@ -767,6 +782,8 @@ const app = createApp({
      */
     document.addEventListener('click', handleRequirementClick);
     document.addEventListener('click', handleCodeBlockClick);
+
+    hljs.highlightAll(); // Initialize highlight.js globally
 
     return {
       requirementFilename,
@@ -787,7 +804,6 @@ const app = createApp({
       handleCodeSpanChange,
 
       handleStartAlign,
-      aligningState,
       selectedRequirementId,
       handleRequirementClick,
       highlightCodeBlocks,
@@ -806,16 +822,17 @@ const app = createApp({
 
       handleAddAlign,
 
-      reviewProcess,
       handleStartReview,
 
       isEditingIssue,
-      issues,
       toggleIssueEdit,
       exportissues,
 
       handleGenerateRequirement,
 
+      isAligning,
+      isReviewing,
+      isGenerating,
     };
   }
 });

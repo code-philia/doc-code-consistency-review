@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="../static/css/index.css">
     <link rel="stylesheet" href="../static/js/thirdParty/highlight/default.min.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/highlight/styles/default.css">
     <link rel="stylesheet" href="../static/js/thirdParty/katex/katex.min.css">
     <link rel="stylesheet" href="../static/js/thirdParty/element/index.css">
     <link rel="stylesheet" href="../static/js/thirdParty/element/index.iife.min.js">
@@ -21,6 +22,9 @@
     <script src="../static/js/thirdParty/element/icons-vue.js"></script>
     <script src="../static/js/thirdParty/texmath.min.js"></script>
     <script src="../static/js/thirdParty/markdown-it.min.js"></script>
+    <script>
+        hljs.highlightAll(); // Initialize highlight.js
+    </script>
 </head>
 <body>
 <div id="app">
@@ -44,7 +48,12 @@
                         <span style="margin-left: 8px;">需求文档</span>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <el-button plain size="small" @click="handleStartAlign">
+                        <el-button 
+                        v-loading.fullscreen.lock="isAligning"
+                        element-loading-text="正在对齐..."
+                        plain 
+                        size="small" 
+                        @click="handleStartAlign">
                             开始对齐
                         </el-button>
                     </div>
@@ -69,10 +78,21 @@
                             <el-button plain size="small" @click="handleAddAlign">
                                 添加对齐
                             </el-button>
-                            <el-button plain size="small" @click="handleStartReview">
+                            <el-button 
+                                v-loading.fullscreen.lock="isReviewing"
+                                element-loading-text="正在审查..."
+                                plain 
+                                size="small" 
+                                @click="handleStartReview"
+                            >
                                 开始审查
                             </el-button>
-                            <el-button plain size="small" @click="handleGenerateRequirement">
+                            <el-button 
+                                v-loading.fullscreen.lock="isGenerating"
+                                element-loading-text="正在根据代码生成需求..."
+                                plain size="small" 
+                                @click="handleGenerateRequirement"
+                            >
                                 需求反生成
                             </el-button>
                         </el-button-group>
@@ -104,39 +124,36 @@
                 <el-tab-pane label="一致性审查">
                     <div class="review-container" style="display: flex; flex-direction: column; height: 100%;">
                         <!-- 上半部分：审查结果 -->
-                        <div class="review-results">
-                            <h3>审查结果</h3>
-                            <el-scrollbar>
-                                <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.reviewProcess || '暂无审查结果'"></div>
-                            </el-scrollbar>
-                        </div>
+                        <h4>审查结果</h4>
+                        <el-scrollbar id="review-results">
+                            <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.reviewProcess || '暂无审查结果'"></div>
+                        </el-scrollbar>
+
                         <!-- 下半部分：问题单 -->
-                        <div class="issue-list">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <h3>问题单</h3>
-                                <el-tag 
-                                    v-if="selectedRequirementId && requirementPoints?.find(point => point.id === selectedRequirementId)?.state" 
-                                    :type="{
-                                        '未审查': 'info',
-                                        '未处理': 'warning',
-                                        '已导出': 'success'
-                                    }[requirementPoints?.find(point => point.id === selectedRequirementId)?.state]">
-                                    ${ requirementPoints?.find(point => point.id === selectedRequirementId)?.state }
-                                </el-tag>
-                            </div>
-                            <div 
-                                v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.issues || '暂无问题单'" 
-                                class="issue-content" 
-                                :contenteditable="isEditingIssue">
-                            </div>
-                            <div class="issue-actions">
-                                <button @click="toggleIssueEdit">
-                                    ${ isEditingIssue ? '完成' : '编辑' }
-                                </button>
-                                <button @click="exportissues">
-                                    导出
-                                </button>
-                            </div>
+                        <div style="display: flex; align-items: flex-start; gap: 10px">
+                            <h4>问题单</h4>
+                            <el-tag 
+                                v-if="selectedRequirementId && requirementPoints?.find(point => point.id === selectedRequirementId)?.state" 
+                                :type="{
+                                    '未审查': 'info',
+                                    '未导出': 'warning',
+                                    '已导出': 'success'
+                                }[requirementPoints?.find(point => point.id === selectedRequirementId)?.state]">
+                                ${ requirementPoints?.find(point => point.id === selectedRequirementId)?.state }
+                            </el-tag>
+                        </div>
+                        <div 
+                            v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.issues || '暂无问题单'" 
+                            class="issue-content" 
+                            :contenteditable="isEditingIssue">
+                        </div>
+                        <div class="issue-actions">
+                            <button @click="toggleIssueEdit">
+                                ${ isEditingIssue ? '完成' : '编辑' }
+                            </button>
+                            <button @click="exportissues">
+                                导出
+                            </button>
                         </div>
                     </div>
                 </el-tab-pane>
@@ -145,22 +162,20 @@
                 <el-tab-pane label="需求生成">
                     <div class="generate-container" style="display: flex; flex-direction: column; height: 100%;">
                         <!-- 上半部分：相关代码 -->
-                        <div class="related-code">
-                            <h3>相关代码</h3>
-                            <el-scrollbar>
-                                <div v-for="code in requirementPoints?.find(point => point.id === selectedRequirementId)?.relatedCode || []" 
-                                     class="related-code-block">
-                                    <pre>${ code.content }</pre>
-                                </div>
-                            </el-scrollbar>
-                        </div>
+                        <h4>相关代码</h4>
+                        <el-scrollbar id="related-code">
+                            <div v-for="code in requirementPoints?.find(point => point.id === selectedRequirementId)?.relatedCode || []" 
+                                 class="related-code-block">
+                                <small style="color: gray">${ code.filename } (${ code.start } ~ ${ code.end } 行)</small>
+                                <pre><code>${code.content}</code></pre>
+                            </div>
+                        </el-scrollbar>
+
                         <!-- 下半部分：反生成的需求 -->
-                        <div class="generated-requirement">
-                            <h3>反生成的需求</h3>
-                            <el-scrollbar>
-                                <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.generatedRequirement || '暂无反生成需求'"></div>
-                            </el-scrollbar>
-                        </div>
+                        <h4>反生成的需求</h4>
+                        <el-scrollbar id="generated-requirement">
+                            <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.generatedRequirement || '暂无反生成需求'"></div>
+                        </el-scrollbar>
                     </div>
                 </el-tab-pane>
             </el-tabs>
