@@ -4,7 +4,7 @@ import json
 from prompt import ALIGN_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE
 from openai import OpenAI
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000/v1")
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8001/v1")
 API_KEY = os.environ.get("API_KEY", "0")
 MODEL_NAME = "/home/kwy/project/models/deepseek-coder-6.7b-instruct"
 
@@ -22,7 +22,10 @@ def query_llm(message, history=None):
     messages.append({"role": "user", "content": message})
     response = client.chat.completions.create(
         messages=messages, 
-        model=MODEL_NAME
+        model=MODEL_NAME,
+        temperature=0.1,
+        top_p=0.9,
+        n= 1
     )
     result = response.choices[0].message
     return result
@@ -44,12 +47,12 @@ def query_related_code(requirement, code_files, split_code=False):
         # 如果需要对代码进行分块处理
         split_code_files = []
         for code_file in code_files:
-            lines = code_file["content"].splitlines()
+            lines = code_file["numberedContent"].splitlines()
             for i in range(0, len(lines), 1000):
                 chunk_content = "\n".join(lines[i:i + 1000])
                 split_code_files.append({
-                    "name": f"{code_file['name']} (块 {i // 1000 + 1})",
-                    "content": chunk_content
+                    "name": code_file['name'],
+                    "numberedContent": chunk_content
                 })
         code_files = split_code_files  # Replace original code_files with split chunks
 
@@ -59,7 +62,7 @@ def query_related_code(requirement, code_files, split_code=False):
         template = ALIGN_PROMPT_TEMPLATE
         prompt = template.format(
             req_content=requirement,
-            code_content=code_file["content"]
+            code_content=code_file["numberedContent"]
         )
         print("input: ", prompt)
         
@@ -67,6 +70,14 @@ def query_related_code(requirement, code_files, split_code=False):
         response = query_llm(prompt)
         llm_output = response.content
         print("llm output: ", llm_output)
+        parsed_output = parse_alignment_output(llm_output)
+        
+        # Ensure parsed_output contains intervals (e.g., [start, end])
+        if all(isinstance(item, list) and len(item) == 2 for item in parsed_output):
+            # Sort intervals by their starting line number
+            parsed_output = sorted(parsed_output, key=lambda x: x[0])  # 按起始行号排序
+        else:
+            raise ValueError("Parsed output is not in the expected format (list of intervals).")
         
         # 对行号区间进行排序并合并有交集的代码块
         parsed_output = sorted(parsed_output, key=lambda x: x[0])  # 按起始行号排序
@@ -84,15 +95,15 @@ def query_related_code(requirement, code_files, split_code=False):
         for block in merged_blocks:
             start_line, end_line = block
             block_content = "\n".join(
-                line.split(":", 1)[1].strip() if ":" in line else line.strip()  # related_code_block内容不带行号
-                for line in code_file["content"].splitlines()
-                if start_line <= int(line.split(":")[0]) <= end_line
+                line
+                for line in code_file["numberedContent"].splitlines()
+                if line.strip() and ":" in line and start_line <= int(line.split(":")[0]) <= end_line
             )
             related_code_blocks.append({
                 "filename": code_file["name"],
                 "content": block_content,
-                "start_line": start_line,
-                "end_line": end_line
+                "start": start_line,
+                "end": end_line
             })
     
     return related_code_blocks
@@ -246,46 +257,71 @@ def parse_review_output(response):
     """
     # 定义分隔符
     process_end_marker = "===== 审查分析过程结束 ====="
-    issues_end_marker = "===== 问题单结束 ====="
     
     # 尝试按分隔符分割
-    if process_end_marker in response and issues_end_marker in response:
-        # 提取审查分析过程
-        process_start = response.find("## 第一部分：审查分析过程")
-        process_end = response.find(process_end_marker)
-        review_process = response[process_start:process_end].strip() if process_end > process_start else ""
+    if process_end_marker in response:
+        parts = response.split(process_end_marker)
         
-        # 提取问题单
-        issues_start = response.find("## 第二部分：问题单")
-        issues_end = response.find(issues_end_marker)
-        issues = response[issues_start:issues_end].strip() if issues_end > issues_start else ""
+        # 第一部分是审查分析过程
+        review_process = parts[0].strip()
+        
+        # 第二部分是问题单
+        issues_text = parts[1].strip() if len(parts) > 1 else ""
+        
+        # 检查问题单部分是否包含标题
+        issues_title = "问题单"
+        if issues_title in issues_text:
+            # 移除标题
+            issues_text = issues_text.split(issues_title, 1)[-1].strip()
+        
+        return {
+            "review_process": review_process,
+            "issues": issues_text
+        }
+    
+    # 回退方案：尝试识别标题分割
+    review_title = "审查分析过程"
+    issues_title = "问题单"
+    
+    if review_title in response and issues_title in response:
+        # 尝试按标题分割
+        review_parts = response.split(review_title)
+        if len(review_parts) > 1:
+            review_section = review_parts[1]
+            # 在审查部分中查找问题单标题
+            if issues_title in review_section:
+                review_parts2 = review_section.split(issues_title)
+                review_process = review_parts2[0].strip()
+                issues = review_parts2[1].strip() if len(review_parts2) > 1 else ""
+            else:
+                # 如果没有找到问题单标题，整个第二部分作为问题单
+                review_process = review_section
+                issues = ""
+        else:
+            review_process = response
+            issues = ""
         
         return {
             "review_process": review_process,
             "issues": issues
         }
     
-    # 回退方案：使用正则表达式分割
-    process_match = re.search(r'## 第一部分：审查分析过程(.*?)===== 审查分析过程结束 =====', 
-                             response, re.DOTALL)
-    issues_match = re.search(r'## 第二部分：问题单(.*?)===== 问题单结束 =====', 
-                            response, re.DOTALL)
+    # 最后回退：使用正则表达式尝试识别问题单格式
+    issue_pattern = r'在\[.*?\]的\[.*?\]处，程序实现是.*?，而需求是.*?，实现与需求不一致，原因是.*?。'
+    issues_match = re.findall(issue_pattern, response, re.DOTALL)
     
-    if process_match and issues_match:
+    if issues_match:
+        # 假设问题单之前的内容都是审查分析过程
+        issues_start = response.find(issues_match[0])
+        review_process = response[:issues_start].strip()
+        issues = "\n".join(issues_match)
+        
         return {
-            "review_process": process_match.group(1).strip(),
-            "issues": issues_match.group(1).strip()
+            "review_process": review_process,
+            "issues": issues
         }
     
-    # 最后回退：简单分割
-    parts = response.split("## 第二部分：问题单")
-    if len(parts) >= 2:
-        return {
-            "review_process": parts[0].replace("## 第一部分：审查分析过程", "").strip(),
-            "issues": parts[1].strip()
-        }
-    
-    # 如果所有方法都失败，返回原始响应
+    # 如果所有方法都失败，返回原始响应作为审查过程
     return {
         "review_process": response,
         "issues": "未能解析出问题单"
