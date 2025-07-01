@@ -113,7 +113,11 @@
                         <!-- 下半部分：问题单 -->
                         <div class="issue-list">
                             <h3>问题单</h3>
-                            <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.issues || '暂无问题单'" class="issue-content"></div>
+                            <div 
+                                v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.issues || '暂无问题单'" 
+                                class="issue-content" 
+                                :contenteditable="isEditingIssue">
+                            </div>
                             <div class="issue-actions">
                                 <button @click="toggleIssueEdit">
                                     ${ isEditingIssue ? '完成' : '编辑' }

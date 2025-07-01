@@ -670,7 +670,7 @@ const app = createApp({
       if (isEditingIssue.value) {
         const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
         if (point) {
-          point.issues = issues.value; // Save the edited content to the selected requirement point
+          point.issues = document.querySelector('.issue-content').innerHTML; // Save the edited content
           ElMessage({
             message: '问题单已保存',
             type: 'success',
@@ -757,6 +757,7 @@ const app = createApp({
       requirementFilename,
       requirementMarkdown,
       requirementHtml,
+      requirementPoints,
       codeFiles,
       showUpload,
       activeName,
@@ -797,6 +798,8 @@ const app = createApp({
       issues,
       toggleIssueEdit,
       exportissues,
+
+      handleGenerateRequirement,
 
     };
   }
