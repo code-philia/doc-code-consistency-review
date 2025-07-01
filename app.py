@@ -26,15 +26,17 @@ def query_related_code_endpoint():
     return jsonify({"relatedCode": related_code})
 
 
-@app.route('/api/review-consistency')
+@app.route('/api/review-consistency',  methods=['POST'])
 def review_consistency_endpoint():
     data = request.json
     requirement = data.get('requirement')
     related_code = data.get('relatedCode', [])
     
-    review_process, issue_list = query_review_result(requirement, related_code)
+    # review_process, issue_list = query_review_result(requirement, related_code)
+    review_process = "This is a mock review process. The code implementation matches the requirement."
+    issues = "This is a mock issue list. No issues found."
     
-    return jsonify({"reviewProcess":review_process, "issueList": issue_list})
+    return jsonify({"reviewProcess":review_process, "issues": issues})
 
 
 @app.route('/api/generate-requirement', methods=['POST'])
@@ -42,7 +44,8 @@ def generate_requirement_endpoint():
     data = request.json
     related_code = data.get('relatedCode', [])
     
-    generate_requirement = query_generated_requirement(related_code)
+    # generate_requirement = query_generated_requirement(related_code)
+    generate_requirement = "This is a mock generated requirement based on the provided code blocks."
     
     return jsonify({"generatedRequirement":generate_requirement})
 

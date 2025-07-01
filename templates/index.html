@@ -112,7 +112,18 @@
                         </div>
                         <!-- 下半部分：问题单 -->
                         <div class="issue-list">
-                            <h3>问题单</h3>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <h3>问题单</h3>
+                                <el-tag 
+                                    v-if="selectedRequirementId && requirementPoints?.find(point => point.id === selectedRequirementId)?.state" 
+                                    :type="{
+                                        '未审查': 'info',
+                                        '未处理': 'warning',
+                                        '已导出': 'success'
+                                    }[requirementPoints?.find(point => point.id === selectedRequirementId)?.state]">
+                                    ${ requirementPoints?.find(point => point.id === selectedRequirementId)?.state }
+                                </el-tag>
+                            </div>
                             <div 
                                 v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.issues || '暂无问题单'" 
                                 class="issue-content" 

@@ -31,7 +31,7 @@ header {
 
 /* 主内容 */
 .el-splitter-panel {
-    height: 95vh;
+    height: 90vh;
     overflow: hidden;
 }
 
@@ -178,14 +178,10 @@ pre{
     border-left: 3px solid #00cc00; /* Emphasize the block */
 }
 
-.selected-requirement {
-    border: 2px solid #007bff; /* Blue border for selected requirement */
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add shadow for emphasis */
-}
-
-.selected-code{
-    border: 2px solid #007bff; /* Blue border for selected requirement */
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add shadow for emphasis */
+.selected-requirement,
+.selected-code {
+    border: 2px solid #6c757d; /* Gray border for selected requirement */
+    box-shadow: 0 0 5px rgba(108, 117, 125, 0.5); /* Add shadow for emphasis */
 }
 
 /* 一致性审查和问题单 */
@@ -196,7 +192,7 @@ pre{
 }
 
 .review-results {
-    height: 40vh; /* Adjust height for better layout */
+    height: 33vh; /* Adjust height for better layout */
     padding: 15px;
     overflow-y: auto; /* Allow scrolling if content exceeds height */
     background-color: #fff; /* Change background to white */
@@ -209,7 +205,10 @@ pre{
 }
 
 .review-results h3,
-.issue-list h3 {
+.issue-list h3,
+.related-code h3,
+.generated-requirement h3  {
+    margin: 2px;
     font-size: 16px;
     font-weight: bold;
     color: #333; /* Dark text color for headings */
@@ -282,7 +281,7 @@ pre{
 }
 
 .related-code {
-    height: 40vh; /* Adjust height for better layout */
+    height: 33vh; /* Adjust height for better layout */
     padding: 15px;
     overflow-y: auto; /* Allow scrolling if content exceeds height */
     background-color: #fff; /* Change background to white */
@@ -292,13 +291,6 @@ pre{
     font-size: 14px; /* Adjust font size */
     line-height: 1.6; /* Improve readability */
     color: #333; /* Dark text color for contrast */
-}
-
-.related-code h3,
-.generated-requirement h3 {
-    font-size: 16px;
-    font-weight: bold;
-    color: #333; /* Dark text color for headings */
 }
 
 .related-code pre {
@@ -312,7 +304,7 @@ pre{
 }
 
 .generated-requirement {
-    height: 42vh; /* Adjust height for better layout */
+    height: 40vh; /* Adjust height for better layout */
     padding: 15px;
     overflow-y: auto; /* Allow scrolling if content exceeds height */
     background-color: #fff; /* Change background to white */

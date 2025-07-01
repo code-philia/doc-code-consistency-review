@@ -6,7 +6,7 @@ from openai import OpenAI
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000/v1")
 API_KEY = os.environ.get("API_KEY", "0")
-MODEL_NAME = "deepseek-coder-6.7b-instruct"
+MODEL_NAME = "/home/kwy/project/models/deepseek-coder-6.7b-instruct"
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -20,24 +20,40 @@ def query_llm(message, history=None):
         messages = history
         
     messages.append({"role": "user", "content": message})
-    response = client.chat.completions.create(messages=messages, model=MODEL_NAME)
+    response = client.chat.completions.create(
+        messages=messages, 
+        model=MODEL_NAME
+    )
     result = response.choices[0].message
     return result
 
 # ================= 对齐 相关代码 =================
-def query_related_code(requirement, code_files):
+def query_related_code(requirement, code_files, split_code=False):
     """
     查询与需求点最相关的代码行号
     
     参数:
         requirement: 需求文本
         code_files: 代码文件列表，每个文件包含名称和内容
+        split_code: 是否将代码文件拆分为块
         
     返回:
         相关行号列表
     """
+    if split_code:
+        # 如果需要对代码进行分块处理
+        split_code_files = []
+        for code_file in code_files:
+            lines = code_file["content"].splitlines()
+            for i in range(0, len(lines), 1000):
+                chunk_content = "\n".join(lines[i:i + 1000])
+                split_code_files.append({
+                    "name": f"{code_file['name']} (块 {i // 1000 + 1})",
+                    "content": chunk_content
+                })
+        code_files = split_code_files  # Replace original code_files with split chunks
+
     related_code_blocks = []
-    
     for code_file in code_files:
         # 构造提示词
         template = ALIGN_PROMPT_TEMPLATE
@@ -68,7 +84,7 @@ def query_related_code(requirement, code_files):
         for block in merged_blocks:
             start_line, end_line = block
             block_content = "\n".join(
-                line.split(":", 1)[1].strip() if ":" in line else line.strip() # related_code_block内容不带行号
+                line.split(":", 1)[1].strip() if ":" in line else line.strip()  # related_code_block内容不带行号
                 for line in code_file["content"].splitlines()
                 if start_line <= int(line.split(":")[0]) <= end_line
             )

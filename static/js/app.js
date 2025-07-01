@@ -295,7 +295,7 @@ const app = createApp({
         if (existingPointIndex !== -1) {
           requirementPoints.value[existingPointIndex].relatedCode = relatedCode;
         } else {
-          requirementPoints.value.push({ id, text: selectedMarkdown, relatedCode });
+          requirementPoints.value.push({ id, text: selectedMarkdown, relatedCode, state: "未审查" });
         }
 
         currentCodeBlockIndex.value = 0; // Default to the first code block
@@ -634,6 +634,7 @@ const app = createApp({
         // Mock response data for testing
         point.reviewProcess = response.data.reviewProcess || "### 审查结果"; // Update the review result in the requirement point
         point.issues = response.data.issues || '问题单（点击编辑按钮可修改内容）'; // Update the issue list
+        point.state = '未处理'; // Update state to "已审查"
 
         // Update the review results
         reviewProcess.value = renderMarkdownWithLatex(point.reviewProcess);
@@ -700,6 +701,20 @@ const app = createApp({
       link.href = URL.createObjectURL(blob);
       link.download = "问题单.txt";
       link.click();
+
+      if (!selectedRequirementId.value) {
+        ElMessage({
+          message: '请先选中一个需求块',
+          type: 'warning',
+          duration: 3000
+        });
+        return;
+      }
+
+      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+      if (point) {
+        point.state = '已导出'; // Update state to "已导出"
+      }
     }
 
 
