@@ -68,7 +68,7 @@ md.renderer.rules.math_block = (tokens, idx, options, env, self) => {
 };
 
 // 4. Vue 应用
-const { createApp, ref, watch} = Vue;
+const { createApp, ref, watch, nextTick } = Vue;
 const { ElButton, ElMessage } = ElementPlus;
 
 const app = createApp({
@@ -93,11 +93,12 @@ const app = createApp({
     const codeBlockToRemove = ref(null);
 
     const isEditingIssue = ref(false); // State to track editing mode
-    const issues = ref('问题单（点击编辑按钮可修改内容）'); // Default issue content
 
     const isAligning = ref(false); // 是否正在对齐
     const isReviewing = ref(false); // 是否正在审查
     const isGenerating = ref(false); // 是否正在反生成
+
+    const codeScrollbarRef = ref(null); // 用于访问代码滚动条组件
 
     /**
      * 渲染 Markdown -> HTML（含 parse-start/end）
@@ -293,6 +294,11 @@ const app = createApp({
         const id = wrapper.dataset.id;
         const relatedCode = response.data.relatedCode || [];
 
+        for (const code of relatedCode) {
+          // Highlight the code blocks in the files
+          code.highlightedContent = hljs.highlight(code.content, { language: 'cpp' }).value;
+        }
+
         // Add or update the requirement point
         const existingPointIndex = requirementPoints.value.findIndex(point => point.id === id);
         if (existingPointIndex !== -1) {
@@ -327,26 +333,78 @@ const app = createApp({
      * @param {*} index 
      * @returns 
      */
-    function scrollToCodeBlock(index) {
-      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
-      if (!point || index < 0 || index >= point.relatedCode.length) return;
+  async function scrollToCodeBlock(index) {
+    const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+    if (!point || index < 0 || index >= point.relatedCode.length) return;
 
-      const codeBlock = point.relatedCode[index];
-      const file = codeFiles.value.find(f => f.name === codeBlock.filename);
-      if (!file) return;
+    const codeBlock = point.relatedCode[index];
+    const file = codeFiles.value.find(f => f.name === codeBlock.filename);
+    if (!file) return;
 
-      // Expand the file if it is collapsed
-      if (activeName.value !== file.name) {
-        activeName.value = file.name; // Set activeName to the target panel's name
-      }
-
-      // Scroll to the code block
-      const codeContainer = document.querySelector(`#code-scrollbar`);
-      const codeElement = codeContainer.querySelector(`pre div.highlighted-code:nth-child(${codeBlock.start})`);
-      if (codeElement) {
-        codeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // 记录当前需要激活的文件名
+    const targetFileName = file.name;
+    
+    // 展开文件（如果需要）
+    if (activeName.value !== targetFileName) {
+      activeName.value = targetFileName; // 设置目标面板为激活状态
+      
+      // 等待面板展开完成（可能需要更多时间）
+      await nextTick();
+      await new Promise(resolve => setTimeout(resolve, 500)); // 增加延迟确保面板完全展开
+      
+      // 再次检查是否展开成功
+      if (activeName.value !== targetFileName) {
+        console.warn('Panel failed to expand:', targetFileName);
+        return;
       }
     }
+
+    // 查找目标代码元素
+    const codeElement = document.querySelector(
+      `div.highlighted-code[data-start="${codeBlock.start}"][data-filename="${targetFileName}"]`
+    );
+    
+    // 如果第一次找不到，可能是渲染延迟，尝试再次查找
+    if (!codeElement) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const retryElement = document.querySelector(
+        `div.highlighted-code[data-start="${codeBlock.start}"][data-filename="${targetFileName}"]`
+      );
+      if (!retryElement) {
+        console.warn('Code block not found after retry:', {
+          file: targetFileName,
+          start: codeBlock.start,
+          end: codeBlock.end
+        });
+        return;
+      }
+      codeElement = retryElement;
+    }
+
+    // 确保滚动条引用存在
+    if (!codeScrollbarRef.value) {
+      console.error('Scrollbar reference not found');
+      return;
+    }
+
+    const scrollbar = codeScrollbarRef.value;
+    
+    // 获取滚动容器
+    const wrap = scrollbar.$el.querySelector('.el-scrollbar__wrap');
+    if (!wrap) {
+      console.error('Scrollbar wrap element not found');
+      return;
+    }
+
+    // 计算目标位置（添加更大的偏移量）
+    const targetTop = codeElement.offsetTop - wrap.offsetTop - 50;
+
+    // 平滑滚动到目标位置
+    wrap.scrollTo({
+      top: targetTop,
+      behavior: 'smooth'
+    });
+  }
 
     /**
      * 点击选中需求高亮块
@@ -634,7 +692,9 @@ const app = createApp({
         const response = await axios.post('/api/review-consistency', { requirement: point.text, relatedCode: point.relatedCode });
 
         point.reviewProcess = renderMarkdownWithLatex(response.data.reviewProcess);
-        point.issues = response.data.issues;
+
+        let prefix = "在需求文档《" + requirementFilename.value.split('.')[0] + "》中：\n";
+        point.issues = prefix + response.data.issues;
         point.state = '未导出';
 
         ElMessage({
@@ -670,7 +730,8 @@ const app = createApp({
       if (isEditingIssue.value) {
         const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
         if (point) {
-          point.issues = document.querySelector('.issue-content').innerHTML; // Save the edited content
+          const rawContent = document.querySelector('.issue-content').innerText; // Get text with line breaks
+          point.issues = rawContent; // Save the text content with line breaks
           ElMessage({
             message: '问题单已保存',
             type: 'success',
@@ -700,8 +761,7 @@ const app = createApp({
           duration: 3000
         });
         return;
-      }
-      else if (point.state === '未审查') {
+      } else if (point.state === '未审查') {
         ElMessage({
           message: '该需求未审查，没有问题单可导出',
           type: 'warning',
@@ -709,22 +769,19 @@ const app = createApp({
         });
         return;
       }
-      const contentToSave = point.issues || '暂无问题单内容';
 
-      const blob = new Blob([contentToSave], { type: 'text/plain' });
+      const contentToSave = point.issues || '暂无问题单内容';
+      const title = `由文档《${requirementFilename.value.split('.')[0]}》导出的问题单`;
+
+      // Create a .doc file with UTF-8 encoding and include the title
+      const blob = new Blob(
+        [`<html><head><meta charset="utf-8"></head><body><h1>${title}</h1>${contentToSave.replace(/\n/g, '<br>')}</body></html>`],
+        { type: 'application/msword;charset=utf-8' }
+      );
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = "问题单.txt";
+      link.download = "问题单.doc";
       link.click();
-
-      if (!selectedRequirementId.value) {
-        ElMessage({
-          message: '请先选中一个需求块',
-          type: 'warning',
-          duration: 3000
-        });
-        return;
-      }
 
       point.state = '已导出'; // Update state to "已导出"
     }
@@ -833,6 +890,8 @@ const app = createApp({
       isAligning,
       isReviewing,
       isGenerating,
+
+      codeScrollbarRef,
     };
   }
 });

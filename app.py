@@ -22,7 +22,7 @@ def query_related_code_endpoint():
     # related_code = [{'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 1, 'end': 5},
     #                 {'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 10, 'end': 15},
     #                 {'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 90, 'end': 95}]
-    
+    # related_code.append({"filename": "apputils.c", "content": "int main() { return 0; }", "start": 6, "end": 10})
     return jsonify({"relatedCode": related_code})
 
 

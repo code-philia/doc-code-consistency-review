@@ -77,8 +77,8 @@ def query_related_code(requirement, code_files, split_code=False):
             # Sort intervals by their starting line number
             parsed_output = sorted(parsed_output, key=lambda x: x[0])  # 按起始行号排序
         else:
-            raise ValueError("Parsed output is not in the expected format (list of intervals).")
-        
+            return []
+            
         # 对行号区间进行排序并合并有交集的代码块
         parsed_output = sorted(parsed_output, key=lambda x: x[0])  # 按起始行号排序
         merged_blocks = []

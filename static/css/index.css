@@ -31,7 +31,7 @@ header {
 
 /* 主内容 */
 .el-splitter-panel {
-    height: 90vh;
+    height: 93vh;
     overflow: hidden;
 }
 
@@ -47,7 +47,6 @@ header {
 
 .functionBlock{
     background: #fff;
-    height: 100%;
     border: 1px solid #ddd;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -205,19 +204,6 @@ code{
     gap: 10px; /* Add spacing between the sections */
 }
 
-.review-results {
-    height: 33vh; /* Adjust height for better layout */
-    padding: 15px;
-    overflow-y: auto; /* Allow scrolling if content exceeds height */
-    background-color: #fff; /* Change background to white */
-    border: 1px solid #ddd; /* Adjust border for lighter background */
-    border-radius: 5px; /* Rounded corners */
-    font-family: Arial, sans-serif; /* Ensure consistent font */
-    font-size: 14px; /* Adjust font size */
-    line-height: 1.6; /* Improve readability */
-    color: #333; /* Dark text color for contrast */
-}
-
 .review-container h4,
 .generate-container h4 {
     margin: 0;
@@ -243,43 +229,37 @@ code{
 }
 
 .issue-content {
-    height: 30vh;
-    padding: 10px;
-    border: 1px solid #ddd; /* Adjust border for lighter background */
-    background-color: #f9f9f9; /* Light gray background for better readability */
-    min-height: 150px;
-    font-size: 14px;
-    line-height: 1.6;
+    padding: 15px; /* Increase padding for better spacing */
+    border: 1px solid #ccc; /* Use a softer border color */
+    background-color: #fff; /* White background for clean look */
+    height: 80vh;
+    font-size: 16px; /* Slightly larger font for readability */
+    line-height: 1.8; /* Improve line spacing */
     overflow-y: auto;
-    color: #333; /* Dark text color */
+    color: #333; /* Dark text color for contrast */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font for better readability */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    border-radius: 5px; /* Rounded corners for aesthetics */
 }
 
 .issue-content[contenteditable="true"] {
-    background-color: #fff; /* White background for editing mode */
-    border: 2px solid #888; /* Thicker solid gray border for editing mode */
+    background-color: #f9f9f9; /* Light gray background for editing mode */
+    border: 2px solid #888; /* Thicker border for editing mode */
     box-shadow: 0 0 5px rgba(136, 136, 136, 0.5); /* Add subtle shadow for emphasis */
+    outline: none; /* Remove default outline */
 }
 
-.issue-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 5px;
+.issue-content::-webkit-scrollbar {
+    width: 8px; /* Narrow scrollbar */
 }
 
-.issue-actions button {
-    padding: 5px 15px;
-    font-size: 14px;
-    border: none;
-    border-radius: 3px;
-    background-color: #444; /* Dark button background */
-    color: #ddd; /* Light text color */
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+.issue-content::-webkit-scrollbar-thumb {
+    background-color: #ccc; /* Gray scrollbar thumb */
+    border-radius: 4px; /* Rounded scrollbar thumb */
 }
 
-.issue-actions button:hover {
-    background-color: #555; /* Slightly lighter background on hover */
+.issue-content::-webkit-scrollbar-track {
+    background-color: #f0f0f0; /* Light gray scrollbar track */
 }
 
 #related-code {
@@ -289,7 +269,7 @@ code{
 }
 
 #generated-requirement {
-    height: 33vh; /* Adjust height for better layout */
+    height: 45vh; /* Adjust height for better layout */
     background-color: #fff; /* Change background to white */
     font-size: 14px; /* Adjust font size */
     line-height: 1.6; /* Improve readability */

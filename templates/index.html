@@ -40,7 +40,7 @@
     <!-- 主体 展示+功能 -->
     <el-splitter>
         <!-- 需求文档展示区 -->
-        <el-splitter-panel size="35%" :min="400">
+        <el-splitter-panel size="35%" :min="200">
             <el-col class="block" id="requirements">
                 <div class="section-header" id="requirement-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <div style="display: flex; align-items: center;">
@@ -66,7 +66,7 @@
         </el-splitter-panel>
 
         <!-- 代码展示区 -->
-        <el-splitter-panel size="35%" :min="400">
+        <el-splitter-panel size="35%" :min="200">
             <el-col class="block" id="code">
                 <div class="section-header" id="code-header" style=" justify-content: space-between; align-items: center;">
                     <div style="display: flex; align-items: center;">
@@ -102,7 +102,7 @@
                         </el-button-group>
                     </div>
                 </div>
-                <el-scrollbar id="code-scrollbar">
+                <el-scrollbar ref="codeScrollbarRef" id="code-scrollbar">
                     <el-collapse v-model="activeName" @change="handleCodeSpanChange" accordion>
                         <el-collapse-item 
                             v-for="(file, index) in codeFiles" 
@@ -117,43 +117,55 @@
             </el-col>
         </el-splitter-panel>
 
-        <!-- 功能区域 -->
+        <!-- 结果展示区域 -->
         <el-splitter-panel :min="300">
             <el-tabs class="functionBlock" type="border-card">
                 <!-- 审查 -->
-                <el-tab-pane label="一致性审查">
+                <el-tab-pane label="审查结果">
                     <div class="review-container" style="display: flex; flex-direction: column; height: 100%;">
-                        <!-- 上半部分：审查结果 -->
-                        <h4>审查结果</h4>
-                        <el-scrollbar id="review-results">
-                            <div v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.reviewProcess || '暂无审查结果'"></div>
-                        </el-scrollbar>
+                        <div style="display: flex; align-items: center; justify-content: space-between">
+                            <div style="display: flex; align-items: flex-start; gap: 10px">
+                                <el-popover
+                                    class="box-item"
+                                    title="分析过程"
+                                    placement="left-start"
+                                    trigger="click"
+                                    :offset=23
+                                    :width=400
+                                >
+                                    <template #default>
+                                        <div style="max-height: 60vh; overflow: auto;" v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.reviewProcess || '暂无分析过程'"></div>
+                                    </template>
+                                    <template #reference>
+                                        <el-button plain size="small">···</el-button>
+                                    </template>
+                                </el-popover>
+                                <h4>问题单</h4>
+                                <el-tag 
+                                    v-if="selectedRequirementId && requirementPoints?.find(point => point.id === selectedRequirementId)?.state" 
+                                    :type="{
+                                        '未审查': 'info',
+                                        '未导出': 'warning',
+                                        '已导出': 'success'
+                                    }[requirementPoints?.find(point => point.id === selectedRequirementId)?.state]">
+                                    ${ requirementPoints?.find(point => point.id === selectedRequirementId)?.state }
+                                </el-tag>
+                            </div>
 
-                        <!-- 下半部分：问题单 -->
-                        <div style="display: flex; align-items: flex-start; gap: 10px">
-                            <h4>问题单</h4>
-                            <el-tag 
-                                v-if="selectedRequirementId && requirementPoints?.find(point => point.id === selectedRequirementId)?.state" 
-                                :type="{
-                                    '未审查': 'info',
-                                    '未导出': 'warning',
-                                    '已导出': 'success'
-                                }[requirementPoints?.find(point => point.id === selectedRequirementId)?.state]">
-                                ${ requirementPoints?.find(point => point.id === selectedRequirementId)?.state }
-                            </el-tag>
+                            <el-button-group>
+                                <el-button plain @click="toggleIssueEdit">
+                                    ${ isEditingIssue ? '完成' : '编辑' }
+                                </el-button>
+                                <el-button plain @click="exportissues">
+                                    导出
+                                </el-button>
+                            </el-button-group>
                         </div>
                         <div 
-                            v-html="requirementPoints?.find(point => point.id === selectedRequirementId)?.issues || '暂无问题单'" 
                             class="issue-content" 
-                            :contenteditable="isEditingIssue">
-                        </div>
-                        <div class="issue-actions">
-                            <button @click="toggleIssueEdit">
-                                ${ isEditingIssue ? '完成' : '编辑' }
-                            </button>
-                            <button @click="exportissues">
-                                导出
-                            </button>
+                            :contenteditable="isEditingIssue"
+                            style="white-space: pre-line;">
+                            ${requirementPoints?.find(point => point.id === selectedRequirementId)?.issues || '暂无问题单'}
                         </div>
                     </div>
                 </el-tab-pane>
@@ -167,7 +179,7 @@
                             <div v-for="code in requirementPoints?.find(point => point.id === selectedRequirementId)?.relatedCode || []" 
                                  class="related-code-block">
                                 <small style="color: gray">${ code.filename } (${ code.start } ~ ${ code.end } 行)</small>
-                                <pre><code>${code.content}</code></pre>
+                                <pre><code class="language-cpp" v-html="code.highlightedContent"></code></pre>
                             </div>
                         </el-scrollbar>
 
