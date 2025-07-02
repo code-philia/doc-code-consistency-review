@@ -75,9 +75,6 @@
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <el-button-group>
-                            <el-button plain size="small" @click="handleAddAlign">
-                                添加对齐
-                            </el-button>
                             <el-button 
                                 v-loading.fullscreen.lock="isReviewing"
                                 element-loading-text="正在审查..."
@@ -97,6 +94,8 @@
                             </el-button>
                         </el-button-group>
                         <el-button-group>
+                            <el-button plain size="small" @click="handleAddAlign"><el-icon><Plus /></el-icon></el-button>
+                            <el-button plain size="small" @click="handleCodeBlockRemove"><el-icon><Minus /></el-icon></el-button>
                             <el-button plain size="small" @click="handleLastButtonClick"><el-icon><Back /></el-icon></el-button>
                             <el-button plain size="small" @click="handleNextButtonClick"><el-icon><Right /></el-icon></el-button>
                         </el-button-group>
@@ -153,10 +152,10 @@
                             </div>
 
                             <el-button-group>
-                                <el-button plain @click="toggleIssueEdit">
+                                <el-button plain size="small" @click="toggleIssueEdit">
                                     ${ isEditingIssue ? '完成' : '编辑' }
                                 </el-button>
-                                <el-button plain @click="exportissues">
+                                <el-button plain size="small" @click="exportissues">
                                     导出
                                 </el-button>
                             </el-button-group>
@@ -245,16 +244,6 @@
             </div>
         </div>
     </el-drawer>
-
-    <div
-      v-if="codeBlockConfirmationVisible"
-      class="confirmation-box"
-      :style="{ top: `${codeBlockConfirmationPosition.y}px`, left: `${codeBlockConfirmationPosition.x}px` }"
-    >
-      <p>是否取消对齐？</p>
-      <el-button type="primary" @click="handleCodeBlockRemoveConfirm">是</el-button>
-      <el-button @click="handleCodeBlockRemoveCancel">否</el-button>
-    </div>
 </div>
 
 <script src="../static/js/app.js"></script>

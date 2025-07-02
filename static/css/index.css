@@ -211,15 +211,6 @@ code{
     color: #333; /* Dark text color for headings */
 }
 
-#review-results {
-    height: 33vh;
-    font-family: Arial, sans-serif; /* Ensure consistent font */
-    font-size: 14px; /* Adjust font size */
-    line-height: 1.6; /* Improve readability */
-    color: #333; /* Dark text color for contrast */
-    margin-bottom: 10px;
-}
-
 .issue-list {
     height: 40vh; /* Adjust height for better layout */
     background-color: #fff; /* Change background to white */
@@ -232,7 +223,7 @@ code{
     padding: 15px; /* Increase padding for better spacing */
     border: 1px solid #ccc; /* Use a softer border color */
     background-color: #fff; /* White background for clean look */
-    height: 80vh;
+    height: 73vh;
     font-size: 16px; /* Slightly larger font for readability */
     line-height: 1.8; /* Improve line spacing */
     overflow-y: auto;
@@ -269,7 +260,7 @@ code{
 }
 
 #generated-requirement {
-    height: 45vh; /* Adjust height for better layout */
+    height: 40vh; /* Adjust height for better layout */
     background-color: #fff; /* Change background to white */
     font-size: 14px; /* Adjust font size */
     line-height: 1.6; /* Improve readability */

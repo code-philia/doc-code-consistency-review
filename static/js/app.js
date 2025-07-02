@@ -87,11 +87,6 @@ const app = createApp({
     const selectedRequirementId = ref(null); // 选中的需求块ID
     const currentCodeBlockIndex = ref(0); // 当前聚焦的代码块索引
 
-    // 代码块取消对齐确认框
-    const codeBlockConfirmationVisible = ref(false);
-    const codeBlockConfirmationPosition = ref({ x: 0, y: 0 });
-    const codeBlockToRemove = ref(null);
-
     const isEditingIssue = ref(false); // State to track editing mode
 
     const isAligning = ref(false); // 是否正在对齐
@@ -360,13 +355,13 @@ const app = createApp({
     }
 
     // 查找目标代码元素
-    const codeElement = document.querySelector(
+    let codeElement = document.querySelector(
       `div.highlighted-code[data-start="${codeBlock.start}"][data-filename="${targetFileName}"]`
     );
     
     // 如果第一次找不到，可能是渲染延迟，尝试再次查找
     if (!codeElement) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 500));
       const retryElement = document.querySelector(
         `div.highlighted-code[data-start="${codeBlock.start}"][data-filename="${targetFileName}"]`
       );
@@ -463,7 +458,6 @@ const app = createApp({
      * @param {*} relatedCode 
      */
     const highlightCodeBlocks = (relatedCode) => {
-      console.log(currentCodeBlockIndex.value);
       codeFiles.value.forEach(file => {
         const relatedResults = relatedCode.filter(code => code.filename === file.name);
         file.resultCount = relatedResults.length;
@@ -535,46 +529,36 @@ const app = createApp({
       const target = event.target.closest('.highlighted-code');
       if (!target || !selectedRequirementId.value) return;
 
-      // Show confirmation box near the clicked code block
-      codeBlockConfirmationPosition.value = { x: event.clientX, y: event.clientY };
-      codeBlockConfirmationVisible.value = true;
-
-      // Determine the code block to remove
       const lineStart = parseInt(target.dataset.start, 10);
       const lineEnd = parseInt(target.dataset.end, 10);
       const filename = target.dataset.filename; // Retrieve filename from the dataset
-      codeBlockToRemove.value = { start: lineStart, end: lineEnd, filename };
+        
+      const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
+      const codeIndex = point.relatedCode.findIndex(code =>
+        code.start === lineStart &&
+        code.end === lineEnd &&
+        code.filename === filename
+      );
+      if (codeIndex === -1) return;
+      currentCodeBlockIndex.value = codeIndex;
+      highlightCodeBlocks(point.relatedCode);
+      scrollToCodeBlock(currentCodeBlockIndex.value);
     }
 
-    function handleCodeBlockRemoveConfirm() {
+    function handleCodeBlockRemove() {
       const point = requirementPoints.value.find(point => point.id === selectedRequirementId.value);
-      if (!point || !codeBlockToRemove.value) return;
-
-      // Remove the code block from relatedCode
-      point.relatedCode = point.relatedCode.filter(code => 
-        code.start !== codeBlockToRemove.value.start || 
-        code.end !== codeBlockToRemove.value.end || 
-        code.filename !== codeBlockToRemove.value.filename
-      );
-
-      // Refresh code highlights
+      if (!point) return;
+      if (currentCodeBlockIndex.value < 0 || currentCodeBlockIndex.value >= point.relatedCode.length) return;
+      const codeBlockToRemove = point.relatedCode[currentCodeBlockIndex.value];
+      if (!codeBlockToRemove) return;
+      point.relatedCode.splice(currentCodeBlockIndex.value, 1);
+      currentCodeBlockIndex.value = Math.min(currentCodeBlockIndex.value, point.relatedCode.length - 1); // Adjust index after removal
       highlightCodeBlocks(point.relatedCode);
-
-      // Hide confirmation box
-      codeBlockConfirmationVisible.value = false;
-      codeBlockToRemove.value = null;
-
       ElMessage({
         message: '代码块对齐已取消',
         type: 'success',
         duration: 2000
       });
-    }
-
-    function handleCodeBlockRemoveCancel() {
-      // Hide confirmation box
-      codeBlockConfirmationVisible.value = false;
-      codeBlockToRemove.value = null;
     }
 
     /**
@@ -647,6 +631,12 @@ const app = createApp({
       }
 
       point.relatedCode.push(selectedCodeBlock);
+      point.relatedCode.sort((a, b) => {
+        if (a.filename === b.filename) {
+          return a.start - b.start; // Sort by start line if filenames are the same
+        }
+        return a.filename.localeCompare(b.filename); // Otherwise, sort by filename
+      });
 
       // Refresh code highlights
       highlightCodeBlocks(point.relatedCode);
@@ -870,13 +860,8 @@ const app = createApp({
       handleLastButtonClick,
       handleNextButtonClick,
 
-      codeBlockConfirmationVisible,
-      codeBlockConfirmationPosition,
-      codeBlockToRemove,
       handleCodeBlockClick,
-      handleCodeBlockRemoveConfirm,
-      handleCodeBlockRemoveCancel,
-
+      handleCodeBlockRemove,
       handleAddAlign,
 
       handleStartReview,
