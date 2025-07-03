@@ -158,7 +158,7 @@ const app = createApp({
       const reader = new FileReader();
       reader.onload = (e) => {
         requirementFilename.value = file.name;
-        requirementMarkdown.value = e.target.result.replace(/\r\n/g, '\n');
+        requirementMarkdown.value = e.target.result.replace(/\r\n/g, '\n').replace(/kern{2pt}/g, '');
 
         // TODO：优化全局变量
         lastPos = 0;
