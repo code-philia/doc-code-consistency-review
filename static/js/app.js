@@ -323,6 +323,41 @@ const app = createApp({
     }
 
 
+    function handleCancelAlign() {
+      if (!selectedRequirementId.value) {
+        return;
+      }
+    
+      // 找到对应的需求点索引
+      const index = requirementPoints.value.findIndex(point => point.id === selectedRequirementId.value);
+      if (index !== -1) {
+        // 获取对应的高亮块
+        const highlightedBlock = document.querySelector(`.highlighted-block[data-id="${selectedRequirementId.value}"]`);
+        if (highlightedBlock) {
+          // 替换高亮块为普通文本
+          const parent = highlightedBlock.parentNode;
+          const fragment = document.createDocumentFragment();
+          Array.from(highlightedBlock.childNodes).forEach(child => {
+            fragment.appendChild(child);
+          });
+          parent.replaceChild(fragment, highlightedBlock);
+        }
+    
+        // 删除需求点
+        requirementPoints.value.splice(index, 1);
+      }
+    
+      selectedRequirementId.value = null; // 清除选中的需求点 ID
+      highlightCodeBlocks([]); // 清除代码高亮
+      ElMessage({
+        message: '需求点已取消对齐',
+        type: 'success',
+        duration: 2000
+      });
+    }
+
+
+
     /**
      * 滚动到指定代码块
      * @param {*} index 
@@ -878,6 +913,7 @@ const app = createApp({
       handleCodeSpanChange,
 
       handleStartAlign,
+      handleCancelAlign,
       selectedRequirementId,
       handleRequirementClick,
       highlightCodeBlocks,

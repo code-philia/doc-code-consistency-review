@@ -48,14 +48,22 @@
                         <span style="margin-left: 8px;">需求文档</span>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <el-button 
-                        v-loading.fullscreen.lock="isAligning"
-                        element-loading-text="正在对齐..."
-                        plain 
-                        size="small" 
-                        @click="handleStartAlign">
-                            开始对齐
-                        </el-button>
+                        <el-button-group>
+                            <el-button 
+                            v-loading.fullscreen.lock="isAligning"
+                            element-loading-text="正在对齐..."
+                            plain 
+                            size="small" 
+                            @click="handleStartAlign">
+                                开始对齐
+                            </el-button>
+                            <el-button 
+                            plain 
+                            size="small" 
+                            @click="handleCancelAlign">
+                                取消对齐
+                            </el-button>
+                        </el-button-group>
                     </div>
                 </div>
 
