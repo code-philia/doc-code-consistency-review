@@ -271,7 +271,7 @@ code{
 }
 
 #generated-requirement {
-    height: 40vh; /* Adjust height for better layout */
+    height:33vh; /* Adjust height for better layout */
     background-color: #fff; /* Change background to white */
     font-size: 14px; /* Adjust font size */
     line-height: 1.6; /* Improve readability */
