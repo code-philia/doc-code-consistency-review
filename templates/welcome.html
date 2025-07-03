@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎 - 需求-代码一致性审查平台</title>
+    <link rel="stylesheet" href="static/fontawesome/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #f3f3f3;
+            --sidebar-bg: #f9f9f9;
+            --card-bg: #ffffff;
+            --card-border: #e1e1e1;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent-color: #0078d4;
+            --accent-hover: #0086f0;
+            --button-bg: #f0f0f0;
+            --button-hover: #e5e5e5;
+            --divider-color: #eaeaea;
+            --header-height: 60px;
+            --sidebar-width: 50px;
+            --content-padding: 20px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 顶部标题栏 */
+        header {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            background-color: var(--card-bg);
+            height: var(--header-height);
+            border-bottom: 1px solid var(--divider-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-icon {
+            width: 32px;
+            height: 32px;
+            margin-right: 12px;
+        }
+        
+        .title {
+            font-weight: 600;
+            font-size: 18px;
+            flex-grow: 1;
+        }
+        
+        /* 主内容区 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        /* 左侧导航栏 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+        
+        .nav-item {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0;
+            cursor: pointer;
+            position: relative;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        
+        .nav-item.active {
+            color: var(--accent-color);
+        }
+        
+        .nav-item.active::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: var(--accent-color);
+        }
+        
+        .nav-item:hover {
+            background-color: var(--button-hover);
+        }
+        
+        .nav-item i {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-item span {
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        /* 内容区域 */
+        .content {
+            flex: 1;
+            padding: var(--content-padding);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            color: var(--accent-color);
+        }
+        
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-icon {
+            font-size: 24px;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .card-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+        
+        .card-button {
+            background-color: var(--button-bg);
+            color: var(--text-primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            align-self: flex-start;
+        }
+        
+        .card-button:hover {
+            background-color: var(--button-hover);
+        }
+        
+        /* 最近项目列表 */
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .recent-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--divider-color);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .recent-item:hover {
+            background-color: var(--button-hover);
+        }
+        
+        .recent-icon {
+            color: var(--text-secondary);
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .recent-details {
+            flex-grow: 1;
+        }
+        
+        .recent-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .recent-path {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .recent-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* 半自动模式卡片 */
+        .semi-auto-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 25px;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .semi-auto-title {
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .semi-auto-title i {
+            color: var(--accent-color);
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .semi-auto-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .semi-auto-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            align-self: flex-start;
+        }
+        
+        .semi-auto-button:hover {
+            background-color: var(--accent-hover);
+        }
+        
+        /* 底部区域 */
+        .footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--divider-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题栏 -->
+    <header>
+        <img src="../static/assets/header-icon.png" alt="Platform Icon" class="header-icon">
+        <h1 class="title">需求与代码一致性审查平台</h1>
+    </header>
+    
+    <div class="main-container">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar">
+            <div class="nav-item active" data-section="start">
+                <i class="fas fa-home"></i>
+                <span>开始</span>
+            </div>
+            <div class="nav-item" data-section="open">
+                <i class="fas fa-folder-open"></i>
+                <span>打开</span>
+            </div>
+            <div class="nav-item" data-section="semi-auto">
+                <i class="fas fa-bolt"></i>
+                <span>半自动</span>
+            </div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 开始区域 -->
+            <div class="section" id="start-section">
+                <h2 class="section-title"><i class="fas fa-rocket"></i> 开始使用</h2>
+                
+                <div class="cards-container">
+                    <div class="card" onclick="handleNewProject()">
+                        <div class="card-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <h3 class="card-title">新建项目</h3>
+                        <p class="card-description">创建一个新的项目，导入需求文档和相关代码，开始进行一致性审查。</p>
+                        <button class="card-button">创建项目</button>
+                    </div>
+                    
+                    <div class="card" onclick="window.location.href='/project'">
+                        <div class="card-icon">
+                            <i class="fas fa-file-import"></i>
+                        </div>
+                        <h3 class="card-title">导入项目</h3>
+                        <p class="card-description">导入一个已存在的项目，继续之前的工作。</p>
+                        <button class="card-button">导入项目</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 打开项目区域 -->
+            <div class="section" id="open-section" style="display: none;">
+                <h2 class="section-title"><i class="fas fa-history"></i> 最近项目</h2>
+                
+                <div class="recent-list">
+                    <div class="recent-item">
+                        <i class="recent-icon fas fa-folder"></i>
+                        <div class="recent-details">
+                            <div class="recent-name">运载火箭接口控制文件（ICD）</div>
+                            <div class="recent-path">/projects/ICD-proj</div>
+                        </div>
+                        <div class="recent-time">昨天</div>
+                    </div>
+                    
+                    <div class="recent-item">
+                        <i class="recent-icon fas fa-folder"></i>
+                        <div class="recent-details">
+                            <div class="recent-name">航天器测试计划（STP）</div>
+                            <div class="recent-path">/projects/STP-proj</div>
+                        </div>
+                        <div class="recent-time">3天前</div>
+                    </div>
+                    
+                    <div class="recent-item">
+                        <i class="recent-icon fas fa-folder"></i>
+                        <div class="recent-details">
+                            <div class="recent-name">推进系统性能分析（PSPA）</div>
+                            <div class="recent-path">/projects/PSPA-proj</div>
+                        </div>
+                        <div class="recent-time">2025-6-15</div>
+                    </div>
+                    
+                    <div class="recent-item">
+                        <i class="recent-icon fas fa-folder"></i>
+                        <div class="recent-details">
+                            <div class="recent-name">遥测、跟踪与指令（TT&C）手册</div>
+                            <div class="recent-path">/projects/TT&C-proj</div>
+                        </div>
+                        <div class="recent-time">2025-6-10</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 半自动模式区域 -->
+            <div class="section" id="semi-auto-section" style="display: none;">
+                <h2 class="section-title"><i class="fas fa-bolt"></i> 半自动模式</h2>
+                
+                <div class="semi-auto-card">
+                    <div class="semi-auto-title">
+                        <i class="fas fa-cogs"></i> 交互式代码审查
+                    </div>
+                    <p class="semi-auto-description">
+                        半自动模式将对齐、审查、和反生需求功能集成到一个交互界面中，可以手动选择从哪一段需求开始，分别观察对齐、审查和反生的效果。
+                        可以用来比较模型、优化提示词、补充数据集。在此模式下，您可以交互式地审查代码与需求文档的一致性，系统会提供智能建议和自动化检测功能。
+                    </p>
+                    <button class="semi-auto-button" onclick="window.location.href='/semi-automatic'">
+                        <i class="fas fa-play-circle"></i> 进入半自动模式
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 底部区域 -->
+            <div class="footer">
+                <div class="footer-version">版本 1.0.0</div>
+                <div class="footer-links">
+                    <a href="#"><i class="fas fa-question-circle"></i> 帮助</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 导航切换功能
+        const navItems = document.querySelectorAll('.nav-item');
+        const sections = {
+            'start': document.getElementById('start-section'),
+            'open': document.getElementById('open-section'),
+            'semi-auto': document.getElementById('semi-auto-section')
+        };
+        
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const sectionId = item.getAttribute('data-section');
+                
+                // 更新活动导航项
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                
+                // 显示对应内容区域
+                Object.values(sections).forEach(section => {
+                    section.style.display = 'none';
+                });
+                sections[sectionId].style.display = 'block';
+            });
+        });
+        
+        // 项目功能
+        function handleNewProject() {
+            alert('新建项目功能：开始导入需求文档和代码');
+            // 实际实现中，这里应该跳转到新建项目页面
+        }
+        
+        // 初始化：设置第一个导航项为活动状态
+        document.querySelector('.nav-item').click();
+    </script>
+</body>
+</html>

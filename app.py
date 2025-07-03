@@ -9,8 +9,23 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    """渲染包含Vue的页面"""
-    return render_template('index.html')
+    """Render the welcome page"""
+    return render_template('welcome.html')
+
+@app.route('/welcome')
+def welcome():
+    """Render the welcome page"""
+    return render_template('welcome.html')
+
+@app.route('/semi-automatic')
+def semi_automatic():
+    """Render the semi-automatic mode page"""
+    return render_template('semi-automatic.html')
+
+@app.route('/project')
+def project():
+    """Render the project page"""
+    return render_template('project.html')
 
 @app.route('/api/query-related-code', methods=['POST'])
 def query_related_code_endpoint():
