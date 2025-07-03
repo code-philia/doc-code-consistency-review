@@ -196,6 +196,12 @@ code{
     box-shadow: 0 0 5px rgba(108, 117, 125, 0.5); /* Add shadow for emphasis */
 }
 
+.previously-highlighted-code {
+    display: inline-block;
+    background-color: #f0f0f0; /* Light gray background for previously highlighted blocks */
+    border-left: 3px solid #d3d3d3; /* Subtle border for differentiation */
+}
+
 .selected-requirement{
     border-left: 3px solid #ffcc00; /* Emphasize the block */
     box-shadow: 0 0 5px rgba(108, 117, 125, 0.5); /* Add shadow for emphasis */

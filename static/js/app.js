@@ -458,68 +458,95 @@ const app = createApp({
      * @param {*} relatedCode 
      */
     const highlightCodeBlocks = (relatedCode) => {
+      // Step 1: Collect all previously highlighted code blocks
+      const previouslyHighlighted = new Map();
+      requirementPoints.value.forEach(point => {
+        point.relatedCode.forEach(code => {
+          const key = `${code.filename}:${code.start}-${code.end}`;
+          previouslyHighlighted.set(key, code);
+        });
+      });
+    
+      // Step 2: Highlight code blocks in each file
       codeFiles.value.forEach(file => {
-        const relatedResults = relatedCode.filter(code => code.filename === file.name);
-        file.resultCount = relatedResults.length;
-
-        // Highlight the code blocks
         const lines = file.numberedContent.split('\n');
         const highlightedContent = [];
         let currentBlock = null;
         let currentStart = null;
-
+    
         lines.forEach((line, index) => {
           const lineNumber = index + 1;
-          const isHighlighted = relatedResults.some(result => 
-            lineNumber >= result.start && lineNumber <= result.end
+          const isPreviouslyHighlighted = Array.from(previouslyHighlighted.values()).some(code =>
+            code.filename === file.name && lineNumber >= code.start && lineNumber <= code.end
           );
-
-          if (isHighlighted) {
+          const isCurrentlyHighlighted = relatedCode.some(code =>
+            code.filename === file.name && lineNumber >= code.start && lineNumber <= code.end
+          );
+    
+          if (isCurrentlyHighlighted) {
+            // Highlight current relatedCode blocks
             if (!currentBlock) {
-              currentBlock = []; // Start a new block
-              currentStart = lineNumber; // Record the start line number
+              currentBlock = [];
+              currentStart = lineNumber;
             }
-            currentBlock.push(line); // Add line to the current block
+            currentBlock.push(line);
           } else {
             if (currentBlock) {
-              // Render the current block as a single highlighted block
+              // Render the current block as a highlighted block
               const blockElement = document.createElement('div');
               blockElement.classList.add('highlighted-code');
-              blockElement.dataset.start = currentStart; // Set start attribute
-              blockElement.dataset.end = lineNumber - 1; // Set end attribute
-              blockElement.dataset.filename = file.name; // Set filename attribute
-              if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
-                blockElement.classList.add('selected-code'); // Add the current block class
+              blockElement.dataset.start = currentStart;
+              blockElement.dataset.end = lineNumber - 1;
+              blockElement.dataset.filename = file.name;
+              if (currentCodeBlockIndex.value === relatedCode.findIndex(code =>
+                code.start === currentStart && code.filename === file.name
+              )) {
+                blockElement.classList.add('selected-code');
               }
               const rawCode = currentBlock.join('\n');
               blockElement.innerHTML = `<code class="language-cpp">${hljs.highlight(rawCode, { language: 'cpp' }).value}</code>`;
               highlightedContent.push(blockElement.outerHTML);
-              currentBlock = null; // Reset the block
+              currentBlock = null;
             }
-            const rawLine = hljs.highlight(line, { language: 'cpp' }).value; // Highlight individual line
-            highlightedContent.push(`<code class="language-cpp">${rawLine}</code>`); // Add non-highlighted line
+    
+            if (isPreviouslyHighlighted) {
+              // Render previously highlighted blocks with a light gray background
+              const blockElement = document.createElement('div');
+              blockElement.classList.add('previously-highlighted-code');
+              blockElement.dataset.start = lineNumber;
+              blockElement.dataset.end = lineNumber;
+              blockElement.dataset.filename = file.name;
+              const rawLine = hljs.highlight(line, { language: 'cpp' }).value;
+              blockElement.innerHTML = `<code class="language-cpp">${rawLine}</code>`;
+              highlightedContent.push(blockElement.outerHTML);
+            } else {
+              // Render non-highlighted lines
+              const rawLine = hljs.highlight(line, { language: 'cpp' }).value;
+              highlightedContent.push(`<code class="language-cpp">${rawLine}</code>`);
+            }
           }
         });
-
+    
         // Render any remaining block
         if (currentBlock) {
           const blockElement = document.createElement('div');
           blockElement.classList.add('highlighted-code');
-          blockElement.dataset.start = currentStart; // Set start attribute
-          blockElement.dataset.end = lines.length; // Set end attribute
-          blockElement.dataset.filename = file.name; // Set filename attribute
-          if (currentCodeBlockIndex.value === relatedCode.findIndex(result => ((result.start === currentStart) && (result.filename === file.name)))) {
-            blockElement.classList.add('selected-code'); // Add the current block class
+          blockElement.dataset.start = currentStart;
+          blockElement.dataset.end = lines.length;
+          blockElement.dataset.filename = file.name;
+          if (currentCodeBlockIndex.value === relatedCode.findIndex(code =>
+            code.start === currentStart && code.filename === file.name
+          )) {
+            blockElement.classList.add('selected-code');
           }
           const rawCode = currentBlock.join('\n');
           blockElement.innerHTML = `<code class="language-cpp">${hljs.highlight(rawCode, { language: 'cpp' }).value}</code>`;
           highlightedContent.push(blockElement.outerHTML);
         }
-
+    
         file.highlightedContent = highlightedContent.join('\n');
       });
     };
-
     /**
      * 点击选中代码块
      * @param {*} event 
