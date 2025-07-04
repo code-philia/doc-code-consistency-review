@@ -131,19 +131,19 @@
         .content {
             flex: 1;
             padding: var(--content-padding);
-            overflow-y: auto;
+            overflow-y: hidden;
             display: flex;
             flex-direction: column;
         }
         
         .section {
-            margin-bottom: 30px;
+            margin-bottom: 18px;
         }
         
         .section-title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
         }
@@ -156,7 +156,7 @@
         /* 新的开始区域布局 */
         .welcome-container {
             display: flex;
-            gap: 30px;
+            gap: 25px;
             height: calc(100vh - 180px);
         }
         
@@ -167,7 +167,7 @@
             flex-direction: column;
             background: var(--history-bg);
             border-radius: 8px;
-            padding: 20px;
+            padding: 18px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         
@@ -175,18 +175,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
             border-bottom: 1px solid var(--divider-color);
         }
         
         .history-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         
         .history-title i {
@@ -195,15 +195,15 @@
         
         .history-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
         
         .history-btn {
             background: var(--button-bg);
             border: none;
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 4px;
-            font-size: 13px;
+            font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -219,17 +219,17 @@
         
         /* 操作区域 */
         .actions-section {
-            width: 320px;
+            width: 300px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
         }
         
         .action-card {
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 8px;
-            padding: 25px;
+            padding: 20px;
             transition: all 0.2s;
             cursor: pointer;
             height: 100%;
@@ -245,12 +245,12 @@
         }
         
         .card-icon {
-            font-size: 32px;
+            font-size: 28px;
             color: var(--accent-color);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             background: rgba(0, 120, 212, 0.1);
-            width: 60px;
-            height: 60px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -258,33 +258,33 @@
         }
         
         .card-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         
         .card-description {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             flex-grow: 1;
-            line-height: 1.6;
+            line-height: 1.5;
         }
         
         .card-button {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s;
             align-self: flex-start;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         
         .card-button:hover {
@@ -300,11 +300,11 @@
         .recent-item {
             display: flex;
             align-items: center;
-            padding: 15px;
+            padding: 12px 14px;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         
         .recent-item:hover {
@@ -314,11 +314,11 @@
         
         .recent-icon {
             color: var(--accent-color);
-            margin-right: 15px;
-            font-size: 18px;
+            margin-right: 14px;
+            font-size: 16px;
             background: rgba(0, 120, 212, 0.1);
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -331,22 +331,23 @@
         
         .recent-name {
             font-weight: 500;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
+            font-size: 14px;
         }
         
         .recent-path {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 300px;
+            max-width: 260px;
         }
         
         .recent-time {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-secondary);
-            min-width: 70px;
+            min-width: 60px;
             text-align: right;
         }
         
@@ -355,7 +356,7 @@
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 6px;
-            padding: 25px;
+            padding: 22px;
             margin-top: 10px;
             display: flex;
             flex-direction: column;
@@ -364,38 +365,38 @@
         .semi-auto-title {
             display: flex;
             align-items: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         
         .semi-auto-title i {
             color: var(--accent-color);
             margin-right: 10px;
-            font-size: 20px;
+            font-size: 18px;
         }
         
         .semi-auto-description {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 20px;
-            line-height: 1.6;
+            margin-bottom: 18px;
+            line-height: 1.5;
         }
         
         .semi-auto-button {
             background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s;
             align-self: flex-start;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         
         .semi-auto-button:hover {
@@ -405,18 +406,19 @@
         /* 底部区域 */
         .footer {
             margin-top: auto;
-            padding-top: 20px;
+            padding-top: 0px;
             border-top: 1px solid var(--divider-color);
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
         }
         
         .footer-links a {
             color: var(--text-secondary);
             text-decoration: none;
-            margin-right: 15px;
+            margin-right: 12px;
+            font-size: 12px;
         }
         
         .footer-links a:hover {
@@ -437,14 +439,15 @@
         }
         
         .empty-state i {
-            font-size: 48px;
-            margin-bottom: 15px;
+            font-size: 40px;
+            margin-bottom: 12px;
             color: #ccc;
         }
         
         .empty-state p {
-            max-width: 300px;
-            line-height: 1.6;
+            max-width: 280px;
+            line-height: 1.5;
+            font-size: 13px;
         }
         
         @media (max-width: 992px) {
@@ -525,7 +528,7 @@
                         
                         <div class="history-list">
                             <div class="recent-list">
-                                <div class="recent-item">
+                                <div class="recent-item" onclick="openProject('ICD-proj')">
                                     <div class="recent-icon">
                                         <i class="fas fa-folder"></i>
                                     </div>
@@ -536,7 +539,7 @@
                                     <div class="recent-time">昨天</div>
                                 </div>
                                 
-                                <div class="recent-item">
+                                <div class="recent-item" onclick="openProject('STP-proj')">
                                     <div class="recent-icon">
                                         <i class="fas fa-folder"></i>
                                     </div>
@@ -547,7 +550,7 @@
                                     <div class="recent-time">3天前</div>
                                 </div>
                                 
-                                <div class="recent-item">
+                                <div class="recent-item" onclick="openProject('PSPA-proj')">
                                     <div class="recent-icon">
                                         <i class="fas fa-folder"></i>
                                     </div>
@@ -558,7 +561,7 @@
                                     <div class="recent-time">2025-6-15</div>
                                 </div>
                                 
-                                <div class="recent-item">
+                                <div class="recent-item" onclick="openProject('TT&C-proj')">
                                     <div class="recent-icon">
                                         <i class="fas fa-folder"></i>
                                     </div>
@@ -569,7 +572,7 @@
                                     <div class="recent-time">2025-6-10</div>
                                 </div>
                                 
-                                <div class="recent-item">
+                                <div class="recent-item" onclick="openProject('SRS-proj')">
                                     <div class="recent-icon">
                                         <i class="fas fa-folder"></i>
                                     </div>
@@ -580,7 +583,7 @@
                                     <div class="recent-time">2025-6-5</div>
                                 </div>
                                 
-                                <div class="recent-item">
+                                <div class="recent-item" onclick="openProject('TSD-proj')">
                                     <div class="recent-icon">
                                         <i class="fas fa-folder"></i>
                                     </div>
@@ -601,7 +604,7 @@
                                 <i class="fas fa-plus-circle"></i>
                             </div>
                             <h3 class="card-title">新建项目</h3>
-                            <p class="card-description">创建一个新的项目，导入需求文档和相关代码，开始进行一致性审查。支持多种文档格式和代码仓库。</p>
+                            <p class="card-description">创建一个新的项目，选择需求文档和相关代码，开始进行一致性审查。</p>
                             <button class="card-button">
                                 <i class="fas fa-plus"></i> 创建项目
                             </button>
@@ -612,7 +615,7 @@
                                 <i class="fas fa-file-import"></i>
                             </div>
                             <h3 class="card-title">导入项目</h3>
-                            <p class="card-description">导入一个已存在的项目，继续之前的工作。支持从本地文件系统或版本控制系统导入。</p>
+                            <p class="card-description">导入一个已存在的项目，继续自己之前的工作，或打开他人的项目。</p>
                             <button class="card-button">
                                 <i class="fas fa-upload"></i> 导入项目
                             </button>
@@ -631,7 +634,7 @@
                     </div>
                     <p class="semi-auto-description">
                         半自动模式将对齐、审查、和反生需求功能集成到一个交互界面中，可以手动选择从哪一段需求开始，分别观察对齐、审查和反生的效果。
-                        可以用来比较模型、优化提示词、补充数据集。在此模式下，您可以交互式地审查代码与需求文档的一致性，系统会提供智能建议和自动化检测功能。
+                        可以用来比较模型、优化提示词、补充数据集。
                     </p>
                     <button class="semi-auto-button" onclick="window.location.href='/semi-automatic'">
                         <i class="fas fa-play-circle"></i> 进入半自动模式
@@ -641,7 +644,7 @@
             
             <!-- 底部区域 -->
             <div class="footer">
-                <div class="footer-version">版本 1.2.0</div>
+                <div class="footer-version">版本 1.2.1</div>
                 <div class="footer-links">
                     <a href="#"><i class="fas fa-question-circle"></i> 帮助</a>
                     <a href="#"><i class="fas fa-book"></i> 文档</a>
@@ -681,16 +684,14 @@
             // 实际实现中，这里应该跳转到新建项目页面
         }
         
+        // 打开项目功能
+        function openProject(projectId) {
+            // 模拟跳转到项目视图
+            window.location.href = `/project?id=${projectId}`;
+        }
+        
         // 初始化：设置第一个导航项为活动状态
         document.querySelector('.nav-item').click();
-        
-        // 添加项目点击效果
-        document.querySelectorAll('.recent-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const projectName = this.querySelector('.recent-name').textContent;
-                alert(`打开项目: ${projectName}`);
-            });
-        });
     </script>
 </body>
 </html>
