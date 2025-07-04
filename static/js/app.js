@@ -319,6 +319,12 @@ const app = createApp({
         });
       } finally {
         isAligning.value = false;
+        const existingPointIndex = requirementPoints.value.findIndex(point => point.id === selectedRequirementId.value);
+        if (existingPointIndex !== -1) {
+          requirementPoints.value[existingPointIndex].relatedCode = [];
+        } else {
+          requirementPoints.value.push({ id:selectedRequirementId.value, text: selectedMarkdown, relatedCode:[], state: "未审查" });
+        }
       }
     }
 
