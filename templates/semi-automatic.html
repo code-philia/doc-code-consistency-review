@@ -32,6 +32,12 @@
     <header>
         <img src="../static/assets/header-icon.png" alt="Platform Icon" class="header-icon">
         <h1 class="title">需求与代码一致性审查平台</h1>
+        <button style="margin-right: 10px;" @click="exportRequirementPointsToJson">
+            导出
+        </button>
+        <button style="margin-right:10px" @click="importRequirementPointsFromJson">
+            导入
+        </button>
         <button class="upload-button" @click="showUpload=true">
             <el-icon><Upload /></el-icon>
         </button>

@@ -268,6 +268,8 @@ const app = createApp({
       range.deleteContents();
       range.insertNode(wrapper);
 
+      requirementHtml.value = requirementRoot.value.innerHTML;
+
       // 获取选中的 Markdown 内容
       const selectedMarkdown = findOriginalMarkdown(sel);
       wrapper.dataset.originalMarkdown = selectedMarkdown;
@@ -319,12 +321,6 @@ const app = createApp({
         });
       } finally {
         isAligning.value = false;
-        const existingPointIndex = requirementPoints.value.findIndex(point => point.id === selectedRequirementId.value);
-        if (existingPointIndex !== -1) {
-          requirementPoints.value[existingPointIndex].relatedCode = [];
-        } else {
-          requirementPoints.value.push({ id:selectedRequirementId.value, text: selectedMarkdown, relatedCode:[], state: "未审查" });
-        }
       }
     }
 
@@ -890,6 +886,71 @@ const app = createApp({
       }
     }
 
+    // 修改导出函数
+    function exportRequirementPointsToJson() {
+      if (!requirementPoints.value.length) {
+        ElMessage.warning('没有需求点可导出');
+        return;
+      }
+      
+      // 创建一个包含所有必要状态的对象
+      const exportData = {
+        requirementFilename: requirementFilename.value,
+        requirementMarkdown: requirementMarkdown.value,
+        requirementHtml: requirementHtml.value, // 包含所有高亮状态的HTML
+        requirementPoints: requirementPoints.value
+      };
+      
+      const jsonContent = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'requirement_export.json';
+      link.click();
+      
+      ElMessage.success('需求点及文档状态已成功导出');
+    }
+
+    // 修改导入函数
+    function importRequirementPointsFromJson() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      
+      input.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+          ElMessage.warning('未选择文件');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // 检查数据格式
+            if (importedData.requirementPoints && Array.isArray(importedData.requirementPoints)) {
+              // 恢复整个需求文档状态
+              requirementFilename.value = importedData.requirementFilename;
+              requirementMarkdown.value = importedData.requirementMarkdown;
+              requirementHtml.value = importedData.requirementHtml; // 直接使用保存的HTML
+              requirementPoints.value = importedData.requirementPoints;
+              
+              ElMessage.success('需求点及文档状态已成功导入');
+            } else {
+              throw new Error('文件格式不正确');
+            }
+          } catch (error) {
+            ElMessage.error(`导入失败: ${error.message}`);
+          }
+        };
+        reader.readAsText(file);
+      });
+      
+      input.click();
+    }
+
     /**
      * 添加点击事件监听器
      * 1. 点击需求高亮块时，选中该块并高亮相关代码
@@ -946,6 +1007,8 @@ const app = createApp({
       isGenerating,
 
       codeScrollbarRef,
+      exportRequirementPointsToJson,
+      importRequirementPointsFromJson,
     };
   }
 });
