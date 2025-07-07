@@ -79,6 +79,83 @@
             display: block;
         }
         
+        .mode-badge {
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .mode-badge i {
+            margin-right: 5px;
+        }
+
+        .auto-mode .mode-badge {
+            background-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .semi-auto-mode .mode-badge {
+            background-color: rgba(241, 196, 15, 0.3);
+        }
+
+        /* 子菜单样式 */
+        .submenu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: 0;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 0 4px 4px 4px;
+            z-index: 1001;
+        }
+
+        .dropdown-item:hover .submenu {
+            display: block;
+        }
+
+        .submenu-item {
+            padding: 8px 15px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .submenu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+            color: var(--accent-color);
+        }
+
+        .submenu-item:hover {
+            background-color: var(--menu-hover);
+            color: var(--accent-hover);
+        }
+
+        /* 活动模式指示 */
+        .dropdown-item.active {
+            background-color: #f0f7ff;
+            position: relative;
+        }
+
+        .dropdown-item.active::after {
+            content: "✓";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-color);
+        }
+
         .dropdown {
             display: none;
             position: absolute;
@@ -760,9 +837,29 @@
                     <div class="dropdown-item" data-view="regen"><i class="fas fa-cogs"></i> 需求生成视图</div>
                 </div>
             </div>
+
+            <div class="menu-item">
+                模式
+                <div class="dropdown">
+                    <div class="dropdown-item auto-mode active">
+                        <i class="fas fa-robot"></i> 自动模式
+                        <div class="submenu">
+                            <div class="submenu-item"><i class="fas fa-sitemap"></i> 需求分解</div>
+                            <div class="submenu-item"><i class="fas fa-link"></i> 开始对齐</div>
+                            <div class="submenu-item"><i class="fas fa-search"></i> 开始审查</div>
+                            <div class="submenu-item"><i class="fas fa-cogs"></i> 需求生成</div>
+                        </div>
+                    </div>
+                    <div class="dropdown-item semi-auto-mode">
+                        <i class="fas fa-bolt"></i> 半自动模式
+                    </div>
+                </div>
+            </div>
         </div>
-        
         <div class="project-title">
+            <span class="mode-badge auto-mode">
+                <i class="fas fa-robot"></i> 自动模式
+            </span>
             <i class="fas fa-rocket"></i> 运载火箭接口控制文件（ICD）项目
         </div>
     </div>
@@ -851,7 +948,7 @@
                         <div class="stat-title">
                             <i class="fas fa-file-alt"></i> 需求文档
                         </div>
-                        <div class="stat-value">3</div>
+                        <div class="stat-value">1</div>
                         <div class="stat-description">当前项目中的需求文档总数</div>
                     </div>
                     
@@ -1239,6 +1336,35 @@
             item.addEventListener('click', () => {
                 const viewName = item.getAttribute('data-view');
                 switchView(viewName);
+            });
+        });
+
+        // 模式切换功能
+        document.querySelectorAll('.dropdown-item.auto-mode, .dropdown-item.semi-auto-mode').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // 更新模式选择状态
+                document.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 更新顶部模式标签
+                const modeBadge = document.querySelector('.mode-badge');
+                if (this.classList.contains('auto-mode')) {
+                    modeBadge.className = 'mode-badge auto-mode';
+                    modeBadge.innerHTML = '<i class="fas fa-robot"></i> 自动模式';
+                } else {
+                    modeBadge.className = 'mode-badge semi-auto-mode';
+                    modeBadge.innerHTML = '<i class="fas fa-bolt"></i> 半自动模式';
+                }
+            });
+        });
+
+        // 防止子菜单点击时关闭菜单
+        document.querySelectorAll('.submenu-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                alert('功能将在后续实现: ' + this.textContent.trim());
             });
         });
         
