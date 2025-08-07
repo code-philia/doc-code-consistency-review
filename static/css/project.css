@@ -17,6 +17,8 @@
     --success-color: #2ecc71;
     --warning-color: #f39c12;
     --danger-color: #e74c3c;
+    --bg-code: #ffffff;
+    --bg-code-line-number: #ebebeb;
 }
 
 * {
@@ -292,9 +294,6 @@ body {
     background-color: var(--item-hover);
 }
 
-.file-item.active {
-    background-color: var(--item-hover);
-}
 
 .file-item.active::before {
     content: "";
@@ -548,11 +547,20 @@ body {
 }
 
 /* 内容样式 */
-.content-card {
+.content-card-doc {
     background-color: white;
     border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding-top: 5px;
+    padding-left: 25px;
+    margin-bottom: 20px;
+}
+
+.content-card-code{
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 2px;
     margin-bottom: 20px;
 }
 
@@ -570,21 +578,10 @@ body {
 }
 
 .content-text {
-    line-height: 1.6;
+    line-height: 2;
     color: var(--text-secondary);
     font-size: 14px;
-}
-
-.code-block {
-    background-color: #2d2d2d;
-    color: #f8f8f2;
-    border-radius: 4px;
-    padding: 15px;
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 13px;
-    margin: 15px 0;
-    overflow: auto;
-    line-height: 1.5;
+    position: relative;
 }
 
 .issue-item {
@@ -755,4 +752,55 @@ body {
     overflow-y: auto;
     background-color: var(--bg-color);
     color: var(--text-primary);
+}
+
+/* 侧边栏文件选中状态 */
+.file-item.active {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
+.code-block {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    background-color: var(--bg-code);
+    border-radius: 4px;
+    overflow-x: auto; /* 允许水平滚动 */
+    height: 100%;
+    white-space: pre;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.code-line {
+    display: flex; /* 使用 flex 布局，使行号和代码对齐 */
+    white-space: pre-wrap; /* 允许代码换行 */
+    word-break: break-all;
+}
+
+.line-number {
+    flex-shrink: 0; /* 防止行号被压缩 */
+    width: 40px; /* 固定宽度，可以根据需要调整 */
+    padding-left: 2px;
+    text-align: left;
+    color: var(--text-secondary);
+    user-select: none; /* 防止选中行号 */
+    background-color: var(--bg-code-line-number); /* 行号背景色，与代码块背景色稍作区分 */
+    position: sticky; /* 使行号在水平滚动时固定 */
+    left: 0;
+    z-index: 1; /* 确保行号在代码内容之上 */
+    border-right: 1px solid var(--border-color); /* 增加分割线 */
+}
+
+.code-content {
+    font-family: Consolas, monospace;
+    flex-grow: 1; /* 占据剩余空间 */
+    padding-left: 10px; /* 增加代码和行号之间的间距 */
+}
+
+.empty-message {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 20px;
 }

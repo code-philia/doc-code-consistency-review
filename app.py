@@ -260,6 +260,51 @@ def get_project_metadata():
     except (json.JSONDecodeError, Exception) as e:
         return jsonify({"status": "error", "message": f"读取元数据文件失败: {e}"}), 500
 
+@app.route('/project/file-content', methods=['GET'])
+def get_file_content():
+    """根据项目路径、文件名和文件类型获取文件内容"""
+    project_path = request.args.get('path')
+    filename = request.args.get('filename')
+    file_type = request.args.get('type') # 'doc' or 'code'
+
+    if not project_path or not filename or not file_type:
+        return jsonify({"status": "error", "message": "缺少必要的参数"}), 400
+
+    repo_map = {
+        'doc': 'doc_repo',
+        'code': 'code_repo'
+    }
+
+    if file_type not in repo_map:
+        return jsonify({"status": "error", "message": "无效的文件类型"}), 400
+
+    try:
+        # 获取项目元数据以确定文件仓库路径
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        if not os.path.exists(metadata_file):
+            return jsonify({"status": "error", "message": "项目元数据文件不存在"}), 404
+
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+
+        repo_path = metadata.get(repo_map[file_type])
+        if not repo_path:
+            return jsonify({"status": "error", "message": "项目仓库路径未定义"}), 500
+
+        file_path = os.path.join(repo_path, filename)
+
+        if not os.path.exists(file_path):
+            return jsonify({"status": "error", "message": "文件未找到"}), 404
+        
+        # 读取文件内容
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        return jsonify({"status": "success", "content": content}), 200
+    
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"读取文件内容时出错: {e}"}), 500
+
 # alignment and review
 @app.route('/api/query-related-code', methods=['POST'])
 def query_related_code_endpoint():

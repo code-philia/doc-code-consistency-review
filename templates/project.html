@@ -4,15 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>项目管理系统 - 需求-代码一致性审查平台</title>
-    <link rel="stylesheet" href="/static/css/project.css">
+    <link rel="stylesheet" href="../static/css/project.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/highlight/default.min.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/katex/katex.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../static/js/thirdParty/element/index.css">
     <link rel="stylesheet" href="../static/js/thirdParty/element/index.iife.min.js">
+
 
     <script src="../static/js/thirdParty/vue.global.js"></script>
     <script src="../static/js/thirdParty/axios.min.js"></script>
     <script src="../static/js/thirdParty/element/index.full.js"></script>
     <script src="../static/js/thirdParty/element/icons-vue.js"></script>
+    <script src="../static/js/thirdParty/katex/katex.min.js"></script>
+    <script src="../static/js/thirdParty/auto-render.min.js"></script>
+    <script src="../static/js/thirdParty/axios.min.js"></script>
+    <script src="../static/js/thirdParty/highlight/highlight.min.js"></script>
+    <script src="../static/js/thirdParty/texmath.min.js"></script>
+    <script src="../static/js/thirdParty/markdown-it.min.js"></script>
 </head>
 <body id="app">
     <!-- 顶部菜单栏 -->
@@ -36,32 +45,6 @@
                     <div class="dropdown-item"><i class="fas fa-file-code"></i> 添加代码文件</div>
                 </div>
             </div>
-
-            <!-- <div class="menu-item">
-                视图
-                <div class="dropdown">
-                    <div class="dropdown-item" onclick="toggleBottomBar(true)"><i class="fas fa-search"></i> 问题单视图</div>
-                    <div class="dropdown-item"><i class="fas fa-cogs"></i> 需求生成视图</div>
-                </div>
-            </div> -->
-
-            <!-- <div class="menu-item">
-                模式
-                <div class="dropdown">
-                    <div class="dropdown-item auto-mode active">
-                        <i class="fas fa-robot"></i> 自动模式
-                        <div class="submenu">
-                            <div class="submenu-item"><i class="fas fa-sitemap"></i> 需求分解</div>
-                            <div class="submenu-item"><i class="fas fa-link"></i> 开始对齐</div>
-                            <div class="submenu-item"><i class="fas fa-search"></i> 开始审查</div>
-                            <div class="submenu-item"><i class="fas fa-cogs"></i> 需求生成</div>
-                        </div>
-                    </div>
-                    <div class="dropdown-item semi-auto-mode">
-                        <i class="fas fa-bolt"></i> 半自动模式
-                    </div>
-                </div>
-            </div> -->
         </div>
         <div class="view-switcher">
             <button id="statsButton" class="view-btn active" onclick="switchView('stats')">统计视图</button>
@@ -89,10 +72,13 @@
                             <div v-if="projectFiles.doc_files.length === 0" class="file-item empty-item">
                                 暂无需求文档
                             </div>
-                            <div v-else v-for="file in projectFiles.doc_files" :key="file" class="file-item req-file">
+                            <!-- 动态渲染需求文档列表，并添加点击事件 -->
+                            <div v-else v-for="file in projectFiles.doc_files" :key="file" class="file-item req-file" 
+                                :class="{ 'selected': file === selectedDocFile }" 
+                                @click="fetchFileContent(file, 'doc')">
                                 <i class="fas fa-file-word"></i>
                                 <span class="file-name">${ file }</span>
-                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -105,7 +91,10 @@
                             <div v-if="projectFiles.code_files.length === 0" class="file-item empty-item">
                                 暂无代码文件
                             </div>
-                            <div v-else v-for="file in projectFiles.code_files" :key="file" class="file-item code-file">
+                            <!-- 动态渲染代码文件列表，并添加点击事件 -->
+                            <div v-else v-for="file in projectFiles.code_files" :key="file" class="file-item code-file"
+                                :class="{ 'selected': file === selectedCodeFile }" 
+                                @click="fetchFileContent(file, 'code')">
                                 <i class="fas fa-file-code"></i>
                                 <span class="file-name">${ file }</span>
                             </div>
@@ -118,7 +107,8 @@
                             <span class="file-count">(${projectFiles.meta_files.length})</span>
                         </div>
                         <div class="file-items">
-                            <div v-for="file in projectFiles.meta_files" :key="file" class="file-item proj-file">
+                            <div v-for="file in projectFiles.meta_files" :key="file" class="file-item proj-file"
+                                :class="{ 'selected': file === selectedMetaFile }" >
                                 <i class="fas fa-project-diagram"></i>
                                 <span class="file-name">${ file }</span>
                             </div>
@@ -246,24 +236,18 @@
                             <el-splitter>
                                 <el-splitter-panel class="split-panel req-panel" :min="200" size="50%">
                                     <div class="panel-title">
-                                        <i class="fas fa-file-word"></i> 运载火箭ICD规范_v2.1.md
+                                        <i class="fas fa-file-word"></i> <span>${ selectedDocFile || '请选择需求文档' }</span>
                                     </div>
-                                    <div class="content-card">
-                                        <div class="content-text">
-                                            <!-- 这里显示完整的需求文档内容 -->
-                                            [需求文档内容区域]
-                                        </div>
+                                    <div class="content-card-doc">
+                                        <div class="content-text" v-html="selectedDocContent"></div>
                                     </div>
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel code-panel" :min="200" size="50%">
                                     <div class="panel-title">
-                                        <i class="fas fa-file-code"></i> rocket_interface.cpp
+                                        <i class="fas fa-file-code"></i> <span>${ selectedCodeFile || '请选择代码文件' }</span>
                                     </div>
-                                    <div class="content-card">
-                                        <div class="content-text">
-                                            <!-- 这里显示完整的代码文件内容 -->
-                                            [代码文件内容区域]
-                                        </div>
+                                    <div class="content-card-code">
+                                        <pre class="content-text code-block" v-html="selectedCodeContent"></pre>
                                     </div>
                                 </el-splitter-panel>
                             </el-splitter>

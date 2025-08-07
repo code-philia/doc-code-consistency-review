@@ -40,6 +40,19 @@ function exportPanel() {
 // 初始化
 window.addEventListener('DOMContentLoaded', initViews);
 
+// 初始化 markdown-it
+const md = window.markdownit({
+  html: true,
+  linkify: true,
+  typographer: true
+});
+
+// 挂载 texmath
+md.use(window.texmath, {
+  delimiters: 'dollars',
+  katexOptions: {}
+});
+
 const { createApp, ref, watch, nextTick, onMounted } = Vue; 
 const { ElButton, ElMessage } = ElementPlus;
 const app = createApp({
@@ -84,10 +97,73 @@ const app = createApp({
         onMounted(() => {
             fetchProjectMetadata();
         });
+        
+        const selectedDocFile = ref(''); // 当前选中的需求文档文件名
+        const selectedCodeFile = ref(''); // 当前选中的代码文件名
+        const selectedDocContent = ref(''); // 当前选中的需求文档内容
+        const selectedCodeContent = ref(''); // 当前选中的代码文件内容
+
+        // 渲染 Markdown -> HTML
+        const renderMarkdown = (markdownContent) => {
+            return md.render(markdownContent);
+        };
+
+        // 格式化代码内容，添加行号
+        const formatCodeWithLineNumbers = (codeContent) => {
+            if (!codeContent) return '';
+            codeContent = codeContent.replace(/\r\n/g, '\n');
+            const lines = codeContent.split('\n');
+            let numberedCode = '';
+            lines.forEach((line, index) => {
+                // 使用新的结构：一个容器 div，内部包含行号和代码内容
+                numberedCode += `
+                    <div class="code-line">
+                        <span class="line-number">${`${index + 1}`.padStart(3, ' ')}</span>
+                        <span class="code-content">${line}</span>
+                    </div>
+                `;
+            });
+            return numberedCode;
+        };
+
+        // 获取文件内容并更新视图
+        const fetchFileContent = async (fileName, fileType) => {
+            if (!projectPath.value) {
+                ElMessage.error("项目路径不存在，无法加载文件内容。");
+                return;
+            }
+            try {
+                // 确保对齐视图被激活
+                if (activeView !== 'alignmentView') {
+                    switchView('alignment');
+                }
+
+                const response = await axios.get(`/project/file-content?path=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(fileName)}&type=${fileType}`);
+                if (response.data.status === 'success') {
+                    if (fileType === 'doc') {
+                        selectedDocFile.value = fileName;
+                        selectedDocContent.value = renderMarkdown(response.data.content);
+                    } else if (fileType === 'code') {
+                        selectedCodeFile.value = fileName;
+                        selectedCodeContent.value = formatCodeWithLineNumbers(response.data.content);
+                    }
+                } else {
+                    ElMessage.error(`加载文件内容失败: ${response.data.message}`);
+                }
+            } catch (error) {
+                console.error("Error fetching file content:", error);
+                ElMessage.error(`加载文件内容失败: ${error.message}`);
+            }
+        };
 
         return {
             projectName,
-            projectFiles 
+            projectFiles,
+            selectedDocFile,
+            selectedCodeFile,
+            selectedDocContent,
+            selectedCodeContent,
+            fetchFileContent
         };
   }
 });
