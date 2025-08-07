@@ -256,8 +256,48 @@
                         <!-- 底部问题单 -->
                         <el-splitter-panel  class="bottom-bar" id="bottomBar" collapsible>
                             <div class="bottom-bar-content">
-                                <!-- 这里显示问题单的详细内容 -->
-                                [问题单详细内容区域]
+                                <div class="issue-header-bar">
+                                    <div class="issue-title-bar">
+                                        <h3><i class="fas fa-exclamation-triangle"></i> 问题单列表 (${issues.length})</h3>
+                                        <span v-if="issues.length === 0" class="no-issues-text">
+                                            当前对齐视图中暂无问题。
+                                        </span>
+                                    </div>
+                                    <div class="issue-actions">
+                                        <button class="action-btn" @click="confirmIssue">
+                                            <i class="fas fa-check"></i> 确认
+                                        </button>
+                                        <button class="action-btn secondary" @click="ignoreIssue">
+                                            <i class="fas fa-times"></i> 忽略
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="issue-table" v-if="issues.length > 0">
+                                    <div class="issue-row issue-header-row">
+                                        <div class="issue-cell issue-level-cell">等级</div>
+                                        <div class="issue-cell issue-description-cell">问题描述</div>
+                                        <div class="issue-cell issue-req-cell">相关需求</div>
+                                        <div class="issue-cell issue-code-cell">相关代码</div>
+                                        <div class="issue-cell issue-status-cell">状态</div>
+                                    </div>
+                                    <div
+                                        v-for="(issue, index) in issues"
+                                        :key="index"
+                                        class="issue-row"
+                                        :class="{ 'selected': issue === selectedIssue }"
+                                        @click="selectIssue(issue)"
+                                    >
+                                        <div class="issue-cell issue-level-cell">
+                                            <span class="issue-level" :class="issue.level">${ issue.level }</span>
+                                        </div>
+                                        <div class="issue-cell issue-description-cell">${ issue.description }</div>
+                                        <div class="issue-cell issue-req-cell">${ issue.relatedReq }</div>
+                                        <div class="issue-cell issue-code-cell">${ issue.relatedCode }</div>
+                                        <div class="issue-cell issue-status-cell">
+                                            <span class="issue-status" :class="issue.status">${ issue.status === 'confirmed' ? '已确认' : '未确认' }</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </el-splitter-panel>
                     </el-splitter>

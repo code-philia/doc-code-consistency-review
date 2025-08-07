@@ -156,6 +156,72 @@ const app = createApp({
             }
         };
 
+        const issues = ref([
+            {
+                level: 'high',
+                description: '需求“用户登录功能”未在代码中实现。',
+                relatedReq: '用户登录功能.md:L5-L10',
+                relatedCode: 'auth.js:L20-L45',
+                status: 'unconfirmed'
+            },
+            {
+                level: 'medium',
+                description: '函数`calculate_tax`的计算逻辑与需求文档不一致。',
+                relatedReq: '税务计算需求.md:L15-L20',
+                relatedCode: 'tax_calculator.py:L100',
+                status: 'unconfirmed'
+            },
+            {
+                level: 'low',
+                description: '代码注释不完整，不符合规范。',
+                relatedReq: '无',
+                relatedCode: 'main.c:L30-L35',
+                status: 'unconfirmed'
+            },
+            {
+                level: 'high',
+                description: 'SQL注入漏洞风险，参数未正确清理。',
+                relatedReq: '安全规范.md:L25',
+                relatedCode: 'database.php:L50',
+                status: 'unconfirmed'
+            },
+            {
+                level: 'high',
+                description: 'SQL注入漏洞风险，参数未正确清理。',
+                relatedReq: '安全规范.md:L25',
+                relatedCode: 'database.php:L50',
+                status: 'confirmed'
+            }
+        ]);
+        const selectedIssue = ref(null);
+
+        const selectIssue = (issue) => {
+            selectedIssue.value = issue;
+        };
+
+        const confirmIssue = () => {
+            if (selectedIssue.value) {
+                selectedIssue.value.status = 'confirmed';
+                ElMessage.success('问题单已确认。');
+            } else {
+                ElMessage.warning('请先选择一个问题单。');
+            }
+        };
+
+        const ignoreIssue = () => {
+            if (selectedIssue.value) {
+                // Remove the issue from the list or mark it as ignored
+                const index = issues.value.indexOf(selectedIssue.value);
+                if (index > -1) {
+                    issues.value.splice(index, 1);
+                    selectedIssue.value = null; // Deselect after removal
+                    ElMessage.info('问题单已忽略。');
+                }
+            } else {
+                ElMessage.warning('请先选择一个问题单。');
+            }
+        };
+
         return {
             projectName,
             projectFiles,
@@ -163,7 +229,12 @@ const app = createApp({
             selectedCodeFile,
             selectedDocContent,
             selectedCodeContent,
-            fetchFileContent
+            fetchFileContent,
+            issues,
+            selectedIssue,
+            selectIssue,
+            confirmIssue,
+            ignoreIssue,
         };
   }
 });

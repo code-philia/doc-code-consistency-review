@@ -746,14 +746,6 @@ body {
     flex-direction: column;
 }
 
-.bottom-bar-content {
-    flex: 1;
-    padding: 15px;
-    overflow-y: auto;
-    background-color: var(--bg-color);
-    color: var(--text-primary);
-}
-
 /* 侧边栏文件选中状态 */
 .file-item.active {
     background-color: var(--color-primary-light);
@@ -803,4 +795,150 @@ body {
     text-align: center;
     color: var(--text-secondary);
     padding: 20px;
+}
+
+/* Bottom bar issue table styles */
+.bottom-bar-content {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+.issue-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.issue-title-bar h3 {
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    color: var(--text-primary);
+}
+
+.issue-title-bar h3 i {
+    margin-right: 8px;
+    color: var(--warning-color);
+}
+
+.no-issues-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-left: 20px;
+}
+
+.issue-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.issue-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    flex: 1;
+}
+
+.issue-row {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.issue-row:hover {
+    background-color: #f8f9fa;
+}
+
+.issue-row.selected {
+    background-color: #e6f7ff;
+    border-left: 3px solid var(--accent-color);
+}
+
+.issue-header-row {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    cursor: default;
+}
+
+.issue-cell {
+    padding: 12px 15px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.issue-level-cell {
+    width: 80px;
+    flex-shrink: 0;
+}
+
+.issue-description-cell {
+    flex: 3;
+}
+
+.issue-req-cell {
+    flex: 2;
+}
+
+.issue-code-cell {
+    flex: 2;
+}
+
+.issue-status-cell {
+    width: 100px;
+    flex-shrink: 0;
+    justify-content: center;
+}
+
+.issue-level {
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+}
+
+.issue-level.high {
+    background-color: var(--danger-color);
+}
+
+.issue-level.medium {
+    background-color: var(--warning-color);
+}
+
+.issue-level.low {
+    background-color: var(--success-color);
+}
+
+.issue-status {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.issue-status.confirmed {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.issue-status.unconfirmed {
+    background-color: #e0e0e0;
 }
