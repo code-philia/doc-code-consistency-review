@@ -40,17 +40,54 @@ function exportPanel() {
 // 初始化
 window.addEventListener('DOMContentLoaded', initViews);
 
-const { createApp, ref, watch, nextTick } = Vue;
+const { createApp, ref, watch, nextTick, onMounted } = Vue; 
 const { ElButton, ElMessage } = ElementPlus;
 const app = createApp({
   delimiters: ['${', '}'],
     setup() {
         const urlParams = new URLSearchParams(window.location.search);
         const projectName = ref('');
+        const projectPath = ref('');
         projectName.value = urlParams.get('name') || '未命名项目';
+        projectPath.value = urlParams.get('path') || '未知路径';
+
+        const projectFiles = ref({
+            code_files: [],
+            doc_files: [],
+            meta_files: ['metadata.json'] // 假设这些是固定的元数据文件
+        });
+
+        const fetchProjectMetadata = async () => {
+            if (!projectPath.value) {
+                ElMessage.error("项目路径不存在，无法加载文件列表。");
+                return;
+            }
+            try {
+                const response = await axios.get(`/project/metadata?path=${encodeURIComponent(projectPath.value)}`);
+                if (response.data.status === 'success') {
+                    const metadata = response.data.metadata;
+                    // 更新文件列表数据
+                    projectFiles.value.code_files = metadata.code_files || [];
+                    projectFiles.value.doc_files = metadata.doc_files || [];
+
+                    // 你也可以在这里更新 projectName, projectLocation 等
+                    projectName.value = metadata.project_name || projectName.value;
+                } else {
+                    ElMessage.error(`加载项目元数据失败: ${response.data.message}`);
+                }
+            } catch (error) {
+                console.error("Error fetching project metadata:", error);
+                ElMessage.error(`加载项目元数据失败: ${error.message}`);
+            }
+        };
+
+        onMounted(() => {
+            fetchProjectMetadata();
+        });
 
         return {
-            projectName
+            projectName,
+            projectFiles 
         };
   }
 });

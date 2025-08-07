@@ -231,6 +231,35 @@ def import_project():
     except (json.JSONDecodeError, Exception) as e:
         return jsonify({"status": "error", "message": f"读取 'metadata.json' 文件失败: {e}"}), 500
 
+@app.route('/project/metadata', methods=['GET'])
+def get_project_metadata():
+    """根据项目路径获取元数据"""
+    project_path = request.args.get('path')
+    if not project_path or not os.path.isdir(project_path):
+        return jsonify({"status": "error", "message": "无效的项目路径。"}), 400
+
+    metadata_file = os.path.join(project_path, 'metadata.json')
+    if not os.path.isfile(metadata_file):
+        return jsonify({"status": "error", "message": "项目元数据文件不存在。"}), 404
+
+    try:
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+
+        # 动态更新文件列表，确保与磁盘状态同步
+        code_repo_path = metadata.get('code_repo')
+        doc_repo_path = metadata.get('doc_repo')
+        
+        if os.path.isdir(code_repo_path):
+            metadata['code_files'] = [f for f in os.listdir(code_repo_path) if os.path.isfile(os.path.join(code_repo_path, f))]
+        if os.path.isdir(doc_repo_path):
+            metadata['doc_files'] = [f for f in os.listdir(doc_repo_path) if os.path.isfile(os.path.join(doc_repo_path, f))]
+
+        return jsonify({"status": "success", "metadata": metadata}), 200
+
+    except (json.JSONDecodeError, Exception) as e:
+        return jsonify({"status": "error", "message": f"读取元数据文件失败: {e}"}), 500
+
 # alignment and review
 @app.route('/api/query-related-code', methods=['POST'])
 def query_related_code_endpoint():
