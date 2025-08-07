@@ -553,3 +553,25 @@ header {
     padding: 12px 24px;
     border-top: 1px solid var(--divider-color);
 }
+
+/* 导入项目 */
+.action-card {
+    justify-content: space-between;
+}
+
+.dialog-description {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-top: -10px;
+    background-color: #f5f7fa;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.dialog-description code {
+    background-color: #e9eaf0;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: 'Courier New', Courier, monospace;
+}

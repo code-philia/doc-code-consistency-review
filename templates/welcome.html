@@ -144,16 +144,36 @@
                             </template>
                         </el-dialog>
 
-                        <div class="action-card" onclick="window.location.href='/project'">
+                        <div class="action-card" @click="openImportDialog">
                             <div class="card-icon">
                                 <i class="fas fa-file-import"></i>
                             </div>
                             <h3 class="card-title">导入项目</h3>
                             <p class="card-description">导入一个已存在的项目，继续自己之前的工作，或打开他人的项目。</p>
-                            <button class="card-button">
-                                <i class="fas fa-upload"></i> 导入项目
-                            </button>
+                            <div class="card-button-placeholder"> 
+                                <button class="card-button">
+                                    <i class="fas fa-upload"></i> 导入项目
+                                </button>
+                            </div>
                         </div>
+                        <el-dialog v-model="showImportDialog" title="导入现有项目" width="500px" :show-close="false">
+                            <el-form label-position="top">
+                                <el-form-item label="项目文件夹路径">
+                                    <el-input v-model="importPath" placeholder="请粘贴或输入项目文件夹的完整路径"></el-input>
+                                </el-form-item>
+                            </el-form>
+                            <p class="dialog-description">
+                                请确保所选文件夹是一个有效的项目，即根目录下必须包含 
+                                <code>metadata.json</code> 文件以及 <code>code_repo</code> 和 <code>doc_repo</code> 子目录。
+                            </p>
+
+                            <template #footer>
+                                <div class="dialog-footer">
+                                    <el-button @click="showImportDialog = false">取 消</el-button>
+                                    <el-button type="primary" @click="handleImportProject" :loading="isImporting">导 入</el-button>
+                                </div>
+                            </template>
+                        </el-dialog>
                     </div>
                 </div>
             </div>

@@ -63,6 +63,9 @@ const app = createApp({
         });
         
         const recentProjects = ref([]);
+        const showImportDialog = ref(false);
+        const importPath = ref('');
+        const isImporting = ref(false);
 
         const fetchRecentProjects = async () => {
             try {
@@ -149,6 +152,36 @@ const app = createApp({
             showNewProjForm.value = true;
         };
 
+        // 导入项目对话框相关逻辑
+        const openImportDialog = () => {
+            importPath.value = ''; // 清空上次输入
+            showImportDialog.value = true;
+        };
+
+        const handleImportProject = () => {
+            if (!importPath.value) {
+                ElMessage.error('项目文件夹路径不能为空！');
+                return;
+            }
+            isImporting.value = true;
+            
+            axios.post('/project/import', { path: importPath.value })
+                .then(response => {
+                    if (response.data.status === 'success') {
+                        showImportDialog.value = false;
+                        ElMessage.success('项目验证成功，正在打开...');
+                        // 直接调用现有的 openProject 函数，它会处理历史记录更新和页面跳转
+                        openProject(response.data.project);
+                    }
+                })
+                .catch(error => {
+                    ElMessage.error(`导入失败: ${error.response?.data?.message || error.message}`);
+                })
+                .finally(() => {
+                    isImporting.value = false;
+                });
+        };
+
         // --- 页面加载时执行 ---
         fetchRecentProjects();
 
@@ -162,6 +195,11 @@ const app = createApp({
             openNewProjectDialog,
             formatRelativeTime,
             openProject,
+            showImportDialog,
+            importPath,
+            isImporting,
+            openImportDialog,
+            handleImportProject,
         };
     }
 });

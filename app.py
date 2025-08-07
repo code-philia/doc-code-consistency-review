@@ -192,6 +192,45 @@ def open_project():
     return jsonify({"status": "success"})
 
 
+@app.route('/project/import', methods=['POST'])
+def import_project():
+    """验证一个现有项目文件夹的结构是否有效"""
+    data = request.json
+    project_path = data.get('path')
+
+    if not project_path or not os.path.isdir(project_path):
+        return jsonify({"status": "error", "message": f"提供的路径不是一个有效的文件夹。"}), 400
+    
+    # 检查必需的文件和文件夹
+    code_repo_path = os.path.join(project_path, 'code_repo')
+    doc_repo_path = os.path.join(project_path, 'doc_repo')
+    metadata_file = os.path.join(project_path, 'metadata.json')
+
+    if not os.path.isdir(code_repo_path):
+        return jsonify({"status": "error", "message": "文件夹内缺少 'code_repo' 子目录。"}), 400
+    if not os.path.isdir(doc_repo_path):
+        return jsonify({"status": "error", "message": "文件夹内缺少 'doc_repo' 子目录。"}), 400
+    if not os.path.isfile(metadata_file):
+        return jsonify({"status": "error", "message": "文件夹内缺少 'metadata.json' 文件。"}), 400
+    
+    # 读取 metadata.json 以获取项目名称
+    try:
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+        project_name = metadata.get('project_name')
+        if not project_name:
+            return jsonify({"status": "error", "message": "'metadata.json' 文件中缺少 'project_name' 字段。"}), 400
+        
+        # 验证成功，返回项目信息
+        project_data = {
+            "name": project_name,
+            "path": project_path
+        }
+        return jsonify({"status": "success", "project": project_data})
+
+    except (json.JSONDecodeError, Exception) as e:
+        return jsonify({"status": "error", "message": f"读取 'metadata.json' 文件失败: {e}"}), 500
+
 # alignment and review
 @app.route('/api/query-related-code', methods=['POST'])
 def query_related_code_endpoint():
