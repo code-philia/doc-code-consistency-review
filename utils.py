@@ -3,6 +3,15 @@ from bs4 import BeautifulSoup
 import re
 import tiktoken
 
+def count_lines_of_code(filepath):
+    """一个简单的代码行数统计函数，忽略空行"""
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return len([line for line in f if line.strip()])
+    except (IOError, UnicodeDecodeError):
+        # 如果文件无法读取或解码，则计为0
+        return 0
+
 def parse_markdown(md_text):
     """
     解析Markdown文本，提取需求点、表格和公式。
