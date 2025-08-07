@@ -1,3 +1,65 @@
+// Vue 和 ElementPlus 相关代码
+const { createApp, ref, watch } = Vue;
+const { ElButton, ElMessage } = ElementPlus;
+
+const app = createApp({
+  delimiters: ['${', '}'],
+  setup() {
+      const showNewProjForm = ref(false);
+      const projectName = ref('');
+      const projectPath = ref(null);
+
+      const handleNewProject = () => {
+          showNewProjForm.value = false;
+          payload = {
+              projectName: projectName.value,
+              projectLocation: projectPath.value
+          };
+          axios.post('/project/create', payload)
+              .then(response => {
+                  if (response.data.status === 'success') {
+                      ElMessage({
+                          message: '创建项目成功！',
+                          type: 'success',
+                          duration: 3000
+                      });
+                      window.location.href = `/project?name=${projectName.value}`;
+                  }
+              })
+              .catch(error => {
+                  ElMessage({
+                      message: '创建项目失败: ' + (error.response?.data?.message || error.message),
+                      type: 'error',
+                      duration: 3000
+                  });
+              });
+      };
+
+      const handleOpenProject = () => { 
+            // 这里可以实现打开项目的逻辑
+            ElMessage({
+                message: '打开项目功能将在后续实现',
+                type: 'info',
+                duration: 3000
+            });
+      }
+
+    return {
+        showNewProjForm,
+        projectName,
+        projectPath,
+        handleNewProject,
+        handleOpenProject
+    };
+  }
+});
+
+app.use(ElementPlus);
+for (const [key, comp] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, comp);
+}
+app.mount('#app');
+
 // 导航切换功能
 const navItems = document.querySelectorAll('.nav-item');
 const sections = {
@@ -20,18 +82,6 @@ navItems.forEach(item => {
         sections[sectionId].style.display = 'block';
     });
 });
-
-// 项目功能
-function handleNewProject() {
-    alert('新建项目功能：开始导入需求文档和代码');
-    // 实际实现中，这里应该跳转到新建项目页面
-}
-
-// 打开项目功能
-function openProject(projectId) {
-    // 模拟跳转到项目视图
-    window.location.href = `/project?id=${projectId}`;
-}
 
 // 初始化：设置第一个导航项为活动状态
 document.querySelector('.nav-item').click();

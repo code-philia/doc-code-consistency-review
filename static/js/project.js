@@ -45,7 +45,12 @@ const { ElButton, ElMessage } = ElementPlus;
 const app = createApp({
   delimiters: ['${', '}'],
     setup() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectName = ref('');
+        projectName.value = urlParams.get('name') || '未命名项目';
+
         return {
+            projectName
         };
   }
 });

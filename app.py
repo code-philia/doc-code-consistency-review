@@ -1,3 +1,5 @@
+import os
+import time
 from flask import Flask, json, render_template, request, jsonify
 import socket
 from utils import parse_markdown, split_code
@@ -7,6 +9,7 @@ import string
 
 app = Flask(__name__)
 
+# templates
 @app.route('/')
 def index():
     """Render the welcome page"""
@@ -27,6 +30,46 @@ def project():
     """Render the project page"""
     return render_template('project.html')
 
+# project
+@app.route('/project/create', methods=['POST'])
+def create_project():
+    data = request.json
+    project_name = data.get('projectName','')
+    project_location = data.get('projectLocation','')
+    
+    project_path = os.path.join(project_location, project_name)
+
+    if project_name=='' or project_location=='':
+        return jsonify({"status": "error", "message": "Project name and path cannot be empty."}), 400
+    
+    # create project folder
+    os.makedirs(project_path, exist_ok=True)
+    os.makedirs(os.path.join(project_path, 'code_repo'), exist_ok=True)
+    os.makedirs(os.path.join(project_path, 'doc_repo'), exist_ok=True)
+    
+    # create metadata file
+    create_time = time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime())
+    project_id = f"{project_name}-{create_time}"
+    metadata = {
+        "project_id": project_id,
+        "create_time": create_time,
+        "project_name": project_name,
+        "project_location": project_location,
+        "code_repo": os.path.join(project_path, 'code_repo'),
+        "doc_repo": os.path.join(project_path, 'doc_repo'),
+        "code_files": [],
+        "code_scale": 0,
+        "doc_files": [],
+    }
+    metadata_file = os.path.join(project_path, 'metadata.json')
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=4)
+        
+    return jsonify({"status": "success"}), 200
+    
+
+
+# alignment and review
 @app.route('/api/query-related-code', methods=['POST'])
 def query_related_code_endpoint():
     data = request.json
