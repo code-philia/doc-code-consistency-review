@@ -1,75 +1,107 @@
-// 当前活动视图
-let activeView = 'statsView';
+/****************************
+ * 全局状态与配置
+ ****************************/
 
-// 初始化视图
-function initViews() {
-    console.log('Initializing views...');
-    document.getElementById('statsView').style.display = 'block';
-}
+let activeView = 'statsView'; // 当前活动视图
 
-// 切换视图
+// 初始化 markdown-it + texmath
+const md = window.markdownit({
+    html: true,
+    linkify: true,
+    typographer: true
+}).use(window.texmath, {
+    delimiters: 'dollars',
+    katexOptions: {}
+});
+
+const { createApp, ref, onMounted } = Vue;
+const { ElButton, ElMessage } = ElementPlus;
+
+
+/****************************
+ * 工具函数
+ ****************************/
+
+/**
+ * 切换视图
+ * @param {string} viewName - 'stats' 或 'alignment'
+ */
 function switchView(viewName) {
-    // Hide all views
+    // 隐藏所有视图
     document.getElementById('statsView').style.display = 'none';
     document.getElementById('alignmentView').style.display = 'none';
 
-    // Show the selected view
+    // 显示当前视图
     const viewElement = document.getElementById(viewName + 'View');
-    if (viewName === 'stats') {
-        viewElement.style.display = 'block'; // 项目视图 uses block
-    } else {
-        viewElement.style.display = 'flex'; // Other views use flex
-    }
+    viewElement.style.display = (viewName === 'stats') ? 'block' : 'flex';
     activeView = viewName + 'View';
 
-    // Update button active state
+    // 更新按钮状态
     document.getElementById('statsButton').classList.remove('active');
     document.getElementById('alignmentButton').classList.remove('active');
     document.getElementById(viewName + 'Button').classList.add('active');
 }
 
-// 预览和导出功能（占位实现）
+/** 占位功能：预览 */
 function previewPanel() {
     alert('预览功能将在后续实现');
 }
 
+/** 占位功能：导出 */
 function exportPanel() {
     alert('导出功能将在后续实现');
 }
 
-// 初始化
-window.addEventListener('DOMContentLoaded', initViews);
+/**
+ * 渲染 Markdown -> HTML
+ */
+function renderMarkdown(content) {
+    return md.render(content);
+}
 
-// 初始化 markdown-it
-const md = window.markdownit({
-  html: true,
-  linkify: true,
-  typographer: true
-});
+/**
+ * 格式化代码并添加行号
+ */
+function formatCodeWithLineNumbers(codeContent) {
+    if (!codeContent) return '';
+    codeContent = codeContent.replace(/\r\n/g, '\n');
+    return codeContent.split('\n').map((line, idx) => `
+        <div class="code-line">
+            <span class="line-number">${String(idx + 1).padStart(3, ' ')}</span>
+            <span class="code-content">${line}</span>
+        </div>
+    `).join('');
+}
 
-// 挂载 texmath
-md.use(window.texmath, {
-  delimiters: 'dollars',
-  katexOptions: {}
-});
 
-const { createApp, ref, watch, nextTick, onMounted } = Vue; 
-const { ElButton, ElMessage } = ElementPlus;
+/****************************
+ * Vue 应用
+ ****************************/
+
 const app = createApp({
-  delimiters: ['${', '}'],
+    delimiters: ['${', '}'],
     setup() {
+        /***********************
+         * 基础状态
+         ***********************/
         const urlParams = new URLSearchParams(window.location.search);
-        const projectName = ref('');
-        const projectPath = ref('');
-        projectName.value = urlParams.get('name') || '未命名项目';
-        projectPath.value = urlParams.get('path') || '未知路径';
+        const projectName = ref(urlParams.get('name') || '未命名项目');
+        const projectPath = ref(urlParams.get('path') || '未知路径');
 
         const projectFiles = ref({
             code_files: [],
             doc_files: [],
-            meta_files: ['metadata.json'] // 假设这些是固定的元数据文件
+            meta_files: ['metadata.json']
         });
 
+        const selectedDocFile = ref('');
+        const selectedCodeFile = ref('');
+        const selectedDocContent = ref('');
+        const selectedCodeContent = ref('');
+
+        /***********************
+         * 文件加载相关方法
+         ***********************/
         const fetchProjectMetadata = async () => {
             if (!projectPath.value) {
                 ElMessage.error("项目路径不存在，无法加载文件列表。");
@@ -79,54 +111,18 @@ const app = createApp({
                 const response = await axios.get(`/project/metadata?path=${encodeURIComponent(projectPath.value)}`);
                 if (response.data.status === 'success') {
                     const metadata = response.data.metadata;
-                    // 更新文件列表数据
                     projectFiles.value.code_files = metadata.code_files || [];
                     projectFiles.value.doc_files = metadata.doc_files || [];
-
-                    // 你也可以在这里更新 projectName, projectLocation 等
                     projectName.value = metadata.project_name || projectName.value;
                 } else {
                     ElMessage.error(`加载项目元数据失败: ${response.data.message}`);
                 }
-            } catch (error) {
-                console.error("Error fetching project metadata:", error);
-                ElMessage.error(`加载项目元数据失败: ${error.message}`);
+            } catch (err) {
+                console.error("Error fetching project metadata:", err);
+                ElMessage.error(`加载项目元数据失败: ${err.message}`);
             }
         };
 
-        onMounted(() => {
-            fetchProjectMetadata();
-        });
-        
-        const selectedDocFile = ref(''); // 当前选中的需求文档文件名
-        const selectedCodeFile = ref(''); // 当前选中的代码文件名
-        const selectedDocContent = ref(''); // 当前选中的需求文档内容
-        const selectedCodeContent = ref(''); // 当前选中的代码文件内容
-
-        // 渲染 Markdown -> HTML
-        const renderMarkdown = (markdownContent) => {
-            return md.render(markdownContent);
-        };
-
-        // 格式化代码内容，添加行号
-        const formatCodeWithLineNumbers = (codeContent) => {
-            if (!codeContent) return '';
-            codeContent = codeContent.replace(/\r\n/g, '\n');
-            const lines = codeContent.split('\n');
-            let numberedCode = '';
-            lines.forEach((line, index) => {
-                // 使用新的结构：一个容器 div，内部包含行号和代码内容
-                numberedCode += `
-                    <div class="code-line">
-                        <span class="line-number">${`${index + 1}`.padStart(3, ' ')}</span>
-                        <span class="code-content">${line}</span>
-                    </div>
-                `;
-            });
-            return numberedCode;
-        };
-
-        // 获取文件内容并更新视图
         const fetchFileContent = async (fileName, fileType) => {
             if (!projectPath.value) {
                 ElMessage.error("项目路径不存在，无法加载文件内容。");
@@ -137,7 +133,6 @@ const app = createApp({
                 if (activeView !== 'alignmentView') {
                     switchView('alignment');
                 }
-
                 const response = await axios.get(`/project/file-content?path=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(fileName)}&type=${fileType}`);
                 if (response.data.status === 'success') {
                     if (fileType === 'doc') {
@@ -150,12 +145,15 @@ const app = createApp({
                 } else {
                     ElMessage.error(`加载文件内容失败: ${response.data.message}`);
                 }
-            } catch (error) {
-                console.error("Error fetching file content:", error);
-                ElMessage.error(`加载文件内容失败: ${error.message}`);
+            } catch (err) {
+                console.error("Error fetching file content:", err);
+                ElMessage.error(`加载文件内容失败: ${err.message}`);
             }
         };
 
+        /***********************
+         * 问题单管理
+         ***********************/
         const issues = ref([
             {
                 level: 'high',
@@ -200,28 +198,35 @@ const app = createApp({
         };
 
         const confirmIssue = () => {
-            if (selectedIssue.value) {
-                selectedIssue.value.status = 'confirmed';
-                ElMessage.success('问题单已确认。');
-            } else {
+            if (!selectedIssue.value) {
                 ElMessage.warning('请先选择一个问题单。');
+                return;
             }
+            selectedIssue.value.status = 'confirmed';
+            ElMessage.success('问题单已确认。');
         };
 
         const ignoreIssue = () => {
-            if (selectedIssue.value) {
-                // Remove the issue from the list or mark it as ignored
-                const index = issues.value.indexOf(selectedIssue.value);
-                if (index > -1) {
-                    issues.value.splice(index, 1);
-                    selectedIssue.value = null; // Deselect after removal
-                    ElMessage.info('问题单已忽略。');
-                }
-            } else {
+            if (!selectedIssue.value) {
                 ElMessage.warning('请先选择一个问题单。');
+                return;
+            }
+            const index = issues.value.indexOf(selectedIssue.value);
+            if (index > -1) {
+                issues.value.splice(index, 1);
+                selectedIssue.value = null;
+                ElMessage.info('问题单已忽略。');
             }
         };
 
+        /***********************
+         * 生命周期
+         ***********************/
+        onMounted(fetchProjectMetadata);
+
+        /***********************
+         * 暴露到模板
+         ***********************/
         return {
             projectName,
             projectFiles,
@@ -234,10 +239,14 @@ const app = createApp({
             selectedIssue,
             selectIssue,
             confirmIssue,
-            ignoreIssue,
+            ignoreIssue
         };
-  }
+    }
 });
 
+
+/****************************
+ * 应用挂载
+ ****************************/
 app.use(ElementPlus);
 app.mount('#app');
