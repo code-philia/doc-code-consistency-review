@@ -28,7 +28,7 @@
     font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
 }
 
-body {
+#app {
     background-color: var(--bg-color);
     color: var(--text-primary);
     height: 100vh;
