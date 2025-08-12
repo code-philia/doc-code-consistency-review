@@ -200,6 +200,7 @@
     flex-direction: column;
     position: relative;
     overflow: auto;
+    border-right: 2px solid var(--border-color);
 }
 
 .sidebar-header {
@@ -207,7 +208,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 2px solid var(--border-color);
 }
 
 .sidebar-title {
