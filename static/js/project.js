@@ -1,18 +1,8 @@
 /****************************
  * 全局状态与配置
  ****************************/
-
 let activeView = 'statsView'; // 当前活动视图
 
-// 初始化 markdown-it + texmath
-const md = window.markdownit({
-    html: true,
-    linkify: true,
-    typographer: true
-}).use(window.texmath, {
-    delimiters: 'dollars',
-    katexOptions: {}
-});
 
 const { createApp, ref, onMounted, computed } = Vue;
 const { ElButton, ElMessage } = ElementPlus;
@@ -21,7 +11,6 @@ const { ElButton, ElMessage } = ElementPlus;
 /****************************
  * 工具函数
  ****************************/
-
 /**
  * 切换视图
  * @param {string} viewName - 'stats' 或 'alignment'
@@ -56,7 +45,24 @@ function exportPanel() {
  * 渲染 Markdown -> HTML
  */
 function renderMarkdown(content) {
-    return md.render(content);
+    // 实例化 markdown-it，并添加 texmath 插件
+    // 这里的 window.markdownit 和 window.texmath 是因为你在 HTML 中通过 <script> 标签全局引入了它们
+    const md = window.markdownit({
+        html: true,         // 允许输出原始 HTML
+        linkify: true,      // 自动将链接文本转换为链接
+        typographer: true,  // 启用一些排版替换（例如引号）
+    })
+        .use(window.texmath, {
+            engine: window.katex,
+            delimiters: 'dollars',
+            macros: { "\\RR": "\\mathbb{R}" }
+        });
+
+    // 使用 markdown-it 渲染 Markdown 文本
+    const renderedHtml = md.render(content);
+
+    // 返回渲染后的 HTML 字符串
+    return renderedHtml;
 }
 
 /**

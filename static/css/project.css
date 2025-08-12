@@ -546,6 +546,7 @@
     padding-left: 25px;
     margin-bottom: 20px;
     overflow-y: scroll;
+    overflow-x: auto;
 }
 
 .content-card-code{
@@ -573,7 +574,6 @@
 
 .content-text {
     line-height: 2;
-    color: var(--text-secondary);
     font-size: 14px;
     position: relative;
 }
