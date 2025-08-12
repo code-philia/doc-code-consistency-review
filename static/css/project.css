@@ -196,16 +196,10 @@
 /* 左侧侧边栏 */
 .sidebar {
     width: var(--sidebar-width);
-    background-color: var(--sidebar-bg);
-    color: var(--text-light);
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: auto;
-}
-
-.sidebar-resizer {
-    display: none;
 }
 
 .sidebar-header {
@@ -248,10 +242,6 @@
     min-height: 50px; /* 确保有足够高度 */
 }
 
-.toggle-btn:hover {
-    background-color: rgba(255,255,255,0.1);
-}
-
 .file-tree {
     flex: 1;
     overflow-y: auto;
@@ -289,11 +279,6 @@
     transition: background-color 0.2s;
     position: relative;
 }
-
-.file-item:hover {
-    background-color: var(--item-hover);
-}
-
 
 .file-item.active::before {
     content: "";
@@ -746,10 +731,15 @@
     flex-direction: column;
 }
 
-/* 侧边栏文件选中状态 */
-.file-item.active {
-    background-color: var(--color-primary-light);
-    color: var(--color-primary);
+.file-item.selected::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 60%;
+    width: 3px;
+    background-color: #3498db;
 }
 
 .code-block {

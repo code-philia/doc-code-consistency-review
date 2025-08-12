@@ -73,16 +73,24 @@
                             <div v-if="projectFiles.doc_files.length === 0" class="file-item empty-item">
                                 暂无需求文档
                             </div>
-                            <!-- 动态渲染需求文档列表，并添加点击事件 -->
-                            <div v-else v-for="file in projectFiles.doc_files" :key="file" class="file-item req-file" 
-                                :class="{ 'selected': file === selectedDocFile }" 
-                                @click="fetchFileContent(file, 'doc')">
-                                <i class="fas fa-file-word"></i>
-                                <span class="file-name">${ file }</span>
-                            </div>
+                            <el-tree
+                                v-else
+                                :data="docFileTree"
+                                :props="{ label: 'label', children: 'children' }"
+                                @node-click="handleNodeClick"
+                                :expand-on-click-node="false"
+                                node-key="path"
+                                empty-text="">
+                                <template #default="{ node, data }">
+                                    <span class="file-item req-file" :class="{ 'selected': data.path === selectedDocFile && data.type === 'file' }">
+                                        <i :class="data.icon"></i>
+                                        <span class="file-name">${ node.label }</span>
+                                    </span>
+                                </template>
+                            </el-tree>
                         </div>
-                    </div>
-                    
+                        </div>
+
                     <div class="file-category">
                         <div class="category-header">
                             <i class="fas fa-code"></i> <span>代码文件</span>
@@ -92,13 +100,21 @@
                             <div v-if="projectFiles.code_files.length === 0" class="file-item empty-item">
                                 暂无代码文件
                             </div>
-                            <!-- 动态渲染代码文件列表，并添加点击事件 -->
-                            <div v-else v-for="file in projectFiles.code_files" :key="file" class="file-item code-file"
-                                :class="{ 'selected': file === selectedCodeFile }" 
-                                @click="fetchFileContent(file, 'code')">
-                                <i class="fas fa-file-code"></i>
-                                <span class="file-name">${ file }</span>
-                            </div>
+                            <el-tree
+                                v-else
+                                :data="codeFileTree"
+                                :props="{ label: 'label', children: 'children' }"
+                                @node-click="handleNodeClick"
+                                :expand-on-click-node="false"
+                                node-key="path"
+                                empty-text="">
+                                <template #default="{ node, data }">
+                                    <span class="file-item code-file" :class="{ 'selected': data.path === selectedCodeFile && data.type === 'file' }">
+                                        <i :class="data.icon"></i>
+                                        <span class="file-name">${ node.label }</span>
+                                    </span>
+                                </template>
+                            </el-tree>
                         </div>
                     </div>
                     

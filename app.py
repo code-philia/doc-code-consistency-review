@@ -2,7 +2,7 @@ import os
 import time
 from flask import Flask, json, render_template, request, jsonify
 import socket
-from utils import parse_markdown, split_code, count_lines_of_code
+from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code
 from agent import query_generated_requirement, query_related_code, query_review_result
 import random
 import string
@@ -103,9 +103,8 @@ def create_project_from_folder(project_name, folder_path):
         return jsonify({"status": "error", "message": "该文件夹已包含 'metadata.json'，似乎已是一个项目。"}), 400
 
     try:
-        # 统计元数据
-        code_files = [f for f in os.listdir(code_repo_path) if os.path.isfile(os.path.join(code_repo_path, f))]
-        doc_files = [f for f in os.listdir(doc_repo_path) if os.path.isfile(os.path.join(doc_repo_path, f))]
+        code_files = get_all_files_with_relative_paths(code_repo_path)
+        doc_files = get_all_files_with_relative_paths(doc_repo_path)
         
         total_loc = 0
         for file in code_files:
@@ -245,15 +244,6 @@ def get_project_metadata():
     try:
         with open(metadata_file, 'r', encoding='utf-8') as f:
             metadata = json.load(f)
-
-        # 动态更新文件列表，确保与磁盘状态同步
-        code_repo_path = metadata.get('code_repo')
-        doc_repo_path = metadata.get('doc_repo')
-        
-        if os.path.isdir(code_repo_path):
-            metadata['code_files'] = [f for f in os.listdir(code_repo_path) if os.path.isfile(os.path.join(code_repo_path, f))]
-        if os.path.isdir(doc_repo_path):
-            metadata['doc_files'] = [f for f in os.listdir(doc_repo_path) if os.path.isfile(os.path.join(doc_repo_path, f))]
 
         return jsonify({"status": "success", "metadata": metadata}), 200
 

@@ -1,3 +1,4 @@
+import os
 import markdown
 from bs4 import BeautifulSoup
 import re
@@ -241,3 +242,13 @@ def create_chunk(filename, start, end, lines):
         "end_line": end,
         "content": "".join(lines)
     }
+    
+
+def get_all_files_with_relative_paths(base_path):
+    """递归遍历目录，获取所有文件的相对路径"""
+    all_files = []
+    for root, _, files in os.walk(base_path):
+        for file in files:
+            relative_path = os.path.relpath(os.path.join(root, file), base_path)
+            all_files.append(relative_path)
+    return all_files

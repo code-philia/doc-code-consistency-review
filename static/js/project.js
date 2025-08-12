@@ -14,7 +14,7 @@ const md = window.markdownit({
     katexOptions: {}
 });
 
-const { createApp, ref, onMounted } = Vue;
+const { createApp, ref, onMounted, computed } = Vue;
 const { ElButton, ElMessage } = ElementPlus;
 
 
@@ -151,6 +151,68 @@ const app = createApp({
             }
         };
 
+        const buildFileTree = (files, fileType) => {
+            const tree = [];
+            const root = {};
+
+            files.forEach(path => {
+                // 兼容'\'和'/'两种路径分隔符
+                const parts = path.replace(/\\/g, '/').split('/');
+                let currentLevel = root;
+
+                parts.forEach((part, index) => {
+                    if (!currentLevel[part]) {
+                        currentLevel[part] = {};
+                    }
+
+                    if (index === parts.length - 1) {
+                        // 这是文件节点
+                        currentLevel[part].__isFile = true;
+                        currentLevel[part].__path = path;
+                        currentLevel[part].__fileType = fileType;
+                    }
+                    currentLevel = currentLevel[part];
+                });
+            });
+
+            const convertToTreeNodes = (node, pathPrefix = '') => {
+                return Object.keys(node).map(key => {
+                    const currentPath = pathPrefix ? `${pathPrefix}/${key}` : key;
+                    if (key.startsWith('__')) return null;
+
+                    const childNode = node[key];
+                    if (childNode.__isFile) {
+                        return {
+                            label: key,
+                            path: childNode.__path,
+                            type: 'file',
+                            fileType: childNode.__fileType,
+                            icon: childNode.__fileType === 'doc' ? 'fas fa-file-word' : 'fas fa-file-code'
+                        };
+                    } else {
+                        return {
+                            label: key,
+                            path: currentPath,
+                            type: 'directory',
+                            icon: 'fas fa-folder',
+                            children: convertToTreeNodes(childNode, currentPath).filter(n => n)
+                        };
+                    }
+                }).filter(n => n);
+            };
+
+            return convertToTreeNodes(root);
+        };
+
+        const docFileTree = computed(() => buildFileTree(projectFiles.value.doc_files, 'doc'));
+        const codeFileTree = computed(() => buildFileTree(projectFiles.value.code_files, 'code'));
+        
+        const handleNodeClick = (data) => {
+            if (data.type === 'file') {
+                fetchFileContent(data.path, data.fileType);
+            }
+        };
+      
         /***********************
          * 问题单管理
          ***********************/
@@ -239,7 +301,10 @@ const app = createApp({
             selectedIssue,
             selectIssue,
             confirmIssue,
-            ignoreIssue
+            ignoreIssue,
+            docFileTree,
+            codeFileTree,
+            handleNodeClick
         };
     }
 });
