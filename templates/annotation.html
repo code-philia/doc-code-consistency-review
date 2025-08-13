@@ -175,7 +175,7 @@
                                                             @click="removeRange(anno, 'doc', rIndex)"
                                                         >×</el-button>
                                                     </div>
-                                                    <div class="range-content">
+                                                    <div class="range-content" @click="gotoRange(range, 'doc')">
                                                         <el-tooltip effect="light" :content="range.content" placement="top">
                                                             <div class="truncated-text">${ range.content }</div>
                                                         </el-tooltip>
@@ -196,7 +196,7 @@
                                                             @click="removeRange(anno, 'code', rIndex)"
                                                         >×</el-button>
                                                     </div>
-                                                    <div class="range-content">
+                                                    <div class="range-content" @click="gotoRange(range, 'code')">
                                                         <el-tooltip effect="light" :content="range.content" placement="top">
                                                             <pre class="truncated-code">${ range.content }</pre>
                                                         </el-tooltip>

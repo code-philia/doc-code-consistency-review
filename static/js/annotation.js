@@ -11,7 +11,7 @@ import {trimLines} from 'https://esm.sh/trim-lines@3.0.1';
 /****************************
  * 全局状态与配置
  ****************************/
-const { createApp, ref , onMounted} = Vue;
+const { createApp, ref , onMounted, nextTick} = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 
 /****************************
@@ -444,6 +444,63 @@ function getSourceDocumentContent(start, end, rawContent) {
 }
 
 /****************************
+ * 滚动定位工具函数
+ ****************************/
+
+// 滚动到文档中的指定偏移量
+function scrollDocToOffset(offset) {
+    const docPanel = document.querySelector('.content-text-doc');
+    if (!docPanel) return;
+    
+    // 查找包含偏移量的元素
+    const elements = docPanel.querySelectorAll('[parse-start][parse-end]');
+    for (const el of elements) {
+        const start = parseInt(el.getAttribute('parse-start'));
+        const end = parseInt(el.getAttribute('parse-end'));
+        
+        if (offset >= start && offset <= end) {
+            // 滚动到元素位置
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 高亮显示
+            const originalBg = el.style.backgroundColor;
+            el.style.backgroundColor = 'rgba(255,255,0,0.3)';
+            setTimeout(() => {
+                el.style.backgroundColor = originalBg;
+            }, 2000);
+            break;
+        }
+    }
+}
+
+// 滚动到代码中的指定偏移量
+function scrollCodeToOffset(offset) {
+    const codePanel = document.querySelector('.content-text-code');
+    if (!codePanel) return;
+    
+    // 查找包含偏移量的代码行
+    const lines = codePanel.querySelectorAll('.code-line');
+    for (const line of lines) {
+        const start = parseInt(line.getAttribute('parse-start'));
+        const end = parseInt(line.getAttribute('parse-end'));
+        
+        if (offset >= start && offset <= end) {
+            console.log("scroll to", start, end);
+            // 滚动到代码行位置
+            line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 高亮显示
+            const originalBg = line.style.backgroundColor;
+            line.style.backgroundColor = 'rgba(255,255,0,0.3)';
+            setTimeout(() => {
+                line.style.backgroundColor = originalBg;
+            }, 5000);
+            break;
+        }
+    }
+}
+
+/****************************
  * Vue 应用
  ****************************/
 
@@ -730,6 +787,41 @@ const app = createApp({
             }
         };
         
+        /***********************
+         * 滚动定位方法
+         ***********************/
+        
+        // 跳转到标注范围
+        const gotoRange = (range, type) => {
+            if (type === 'doc') {
+                // 切换到对应的文档
+                const docFile = docFiles.value.find(f => f.name === range.documentId);
+                if (docFile) {
+                    if (selectedDocFile.value !== docFile.name) {
+                        selectDocFile(docFile);
+                    }
+                    
+                    // 滚动到指定位置
+                    nextTick(() => {
+                        scrollDocToOffset(range.start);
+                    });
+                }
+            } else if (type === 'code') {
+                // 切换到对应的代码文件
+                const codeFile = codeFiles.value.find(f => f.name === range.documentId);
+                if (codeFile) {
+                    if (selectedCodeFile.value !== codeFile.name) {
+                        selectCodeFile(codeFile);
+                    }
+                    
+                    // 滚动到指定位置
+                    nextTick(() => {
+                        scrollCodeToOffset(range.start);
+                    });
+                }
+            }
+        };
+
         // 初始化事件监听
         onMounted(() => {
             const docPanel = document.querySelector('.content-text-doc');
@@ -770,7 +862,8 @@ const app = createApp({
             formatDate: (dateStr) => {
                 const date = new Date(dateStr);
                 return date.toLocaleString();
-            }
+            },
+            gotoRange
         };
     }
 });
