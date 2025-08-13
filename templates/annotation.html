@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>需求-代码一致性标注平台</title>
+    <link rel="stylesheet" href="../static/css/annotation.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/highlight/default.min.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/katex/katex.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/element/index.css">
+    <link rel="stylesheet" href="../static/js/thirdParty/element/index.iife.min.js">
+
+    <script src="../static/js/thirdParty/vue.global.js"></script>
+    <script src="../static/js/thirdParty/axios.min.js"></script>
+    <script src="../static/js/thirdParty/element/index.full.js"></script>
+    <script src="../static/js/thirdParty/element/icons-vue.js"></script>
+    <script src="../static/js/thirdParty/katex/katex.min.js"></script>
+    <script src="../static/js/thirdParty/auto-render.min.js"></script>
+    <script src="../static/js/thirdParty/highlight/highlight.min.js"></script>
+    <script src="../static/js/thirdParty/texmath.min.js"></script>
+    <script src="../static/js/thirdParty/markdown-it.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 顶部菜单栏 -->
+    <div class="header">
+    </div>
+    
+    <div class="main-container">
+        <el-splitter>
+            <!-- 侧边栏 -->
+            <el-splitter-panel class="sidebar" collapsible size="200px">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">
+                        <span>标注项目</span>
+                    </div>
+                </div>
+                
+                <div class="file-tree">
+                    <div class="file-category">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-file-alt"></i> 
+                                <span>需求文档</span>
+                                <span class="file-count">(${docFiles.length})</span>
+                            </div>
+                            <div class="category-actions">
+                                <button class="action-btn" @click="triggerDocUpload">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="file-items">
+                            <div v-if="docFiles.length === 0" class="file-item empty-item">
+                                暂无需求文档
+                            </div>
+                            <div v-for="(file, index) in docFiles" 
+                                :key="'doc-'+index" 
+                                class="file-item"
+                                :class="{ 'selected': selectedDocFile === file.name }">
+                                <div class="file-info" @click="selectDocFile(file)">
+                                    <i class="fas fa-file-word"></i>
+                                    <span class="file-name">${ file.name }</span>
+                                </div>
+                                <div class="file-actions">
+                                    <button class="action-btn delete" @click.stop="removeDocFile(index)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="file-category">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-code"></i> 
+                                <span>代码文件</span>
+                                <span class="file-count">(${codeFiles.length})</span>
+                            </div>
+                            <div class="category-actions">
+                                <button class="action-btn" @click="triggerCodeUpload">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="file-items">
+                            <div v-if="codeFiles.length === 0" class="file-item empty-item">
+                                暂无代码文件
+                            </div>
+                            <div v-for="(file, index) in codeFiles" 
+                                :key="'code-'+index" 
+                                class="file-item"
+                                :class="{ 'selected': selectedCodeFile === file.name }">
+                                <div class="file-info" @click="selectCodeFile(file)">
+                                    <i class="fas fa-file-code"></i>
+                                    <span class="file-name">${ file.name }</span>
+                                </div>
+                                <div class="file-actions">
+                                    <button class="action-btn delete" @click.stop="removeCodeFile(index)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </el-splitter-panel>
+
+            <el-splitter-panel class="main-content">
+                <el-splitter>
+                    <el-splitter-panel class="split-panel req-panel" :min="200" size="50%">
+                        <div class="panel-title">
+                            <i class="fas fa-file-word"></i> <span>${ selectedDocFile || '请选择需求文档' }</span>
+                        </div>
+                        <div class="content-card">
+                            <div v-if="renderError" class="render-error-message">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                渲染错误: ${ renderError }
+                            </div>
+                            <div class="content-text-doc" v-html="selectedDocContent"></div>
+                        </div>
+                    </el-splitter-panel>
+                    <el-splitter-panel class="split-panel code-panel" :min="200" size="50%">
+                        <div class="panel-title">
+                            <i class="fas fa-file-code"></i> <span>${ selectedCodeFile || '请选择代码文件' }</span>
+                        </div>
+                        <div class="content-card">
+                            <pre class="content-text-code" v-html="selectedCodeContent"></pre>
+                        </div>
+                    </el-splitter-panel>
+                </el-splitter>
+            </el-splitter-panel>
+        </el-splitter>
+    </div>
+    
+    <!-- 隐藏的文件上传输入 -->
+    <input type="file" ref="docUpload" style="display: none" accept=".md,.txt,.docx" @change="handleDocUpload">
+    <input type="file" ref="codeUpload" style="display: none" accept=".js,.py,.java,.c,.cpp,.cs,.html,.css" @change="handleCodeUpload">
+</div>
+
+<script src="/static/js/annotation.js"></script>
+</body>
+</html>

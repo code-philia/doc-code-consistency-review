@@ -35,6 +35,11 @@ def project():
     """Render the project page"""
     return render_template('project.html')
 
+@app.route('/annotation')
+def annotation():
+    """Render the project page"""
+    return render_template('annotation.html')
+
 # project
 @app.route('/project/create', methods=['POST'])
 def create_project():

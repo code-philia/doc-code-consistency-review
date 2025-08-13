@@ -37,6 +37,10 @@
                 <i class="fas fa-bolt"></i>
                 <span>半自动</span>
             </div>
+            <div class="nav-item" data-section="annotation">
+                <i class="fas fa-pencil-alt"></i>
+                <span>标注</span>
+            </div>
         </div>
         
         <!-- 内容区域 -->
@@ -192,6 +196,23 @@
                     </p>
                     <button class="semi-auto-button" onclick="window.location.href='/semi-automatic'">
                         <i class="fas fa-play-circle"></i> 进入半自动模式
+                    </button>
+                </div>
+            </div>
+
+            <!-- 标注区域 -->
+            <div class="section" id="annotation-section" style="display: none;">
+                <h2 class="section-title"><i class="fas fa-pencil-alt"></i> 标注</h2>
+                <div class="semi-auto-card">
+                    <div class="semi-auto-title">
+                        <i class="fas fa-edit"></i> 需求代码对齐人工标注
+                    </div>
+                    <p class="semi-auto-description">
+                        在标注模式下，您可以手动标注需求和代码之间的对齐关系。系统将提供一个直观的界面，帮助您快速选择和标注对齐关系。
+                        这对于训练和优化模型非常重要，可以帮助我们改进需求和代码之间的对齐效果。
+                    </p>
+                    <button class="semi-auto-button" onclick="window.location.href='/annotation'">
+                        <i class="fas fa-play-circle"></i> 进入标注模式
                     </button>
                 </div>
             </div>
