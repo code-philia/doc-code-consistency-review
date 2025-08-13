@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>项目管理系统 - 需求-代码一致性审查平台</title>
+    <title>需求-代码一致性审查平台</title>
     <link rel="stylesheet" href="../static/css/project.css">
     <link rel="stylesheet" href="../static/js/thirdParty/highlight/default.min.css">
     <link rel="stylesheet" href="../static/js/thirdParty/katex/katex.min.css">
@@ -255,16 +255,16 @@
                                     <div class="panel-title">
                                         <i class="fas fa-file-word"></i> <span>${ selectedDocFile || '请选择需求文档' }</span>
                                     </div>
-                                    <div class="content-card-doc">
-                                        <div class="content-text" v-html="selectedDocContent"></div>
+                                    <div class="content-card">
+                                        <div class="content-text-doc" v-html="selectedDocContent"></div>
                                     </div>
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel code-panel" :min="200" size="50%">
                                     <div class="panel-title">
                                         <i class="fas fa-file-code"></i> <span>${ selectedCodeFile || '请选择代码文件' }</span>
                                     </div>
-                                    <div class="content-card-code">
-                                        <pre class="content-text code-block" v-html="selectedCodeContent"></pre>
+                                    <div class="content-card">
+                                        <pre class="content-text-code" v-html="selectedCodeContent"></pre>
                                     </div>
                                 </el-splitter-panel>
                             </el-splitter>

@@ -537,26 +537,14 @@
 }
 
 /* 内容样式 */
-.content-card-doc {
+.content-card {
     height: 90%;
     background-color: white;
     border-radius: 6px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    padding-top: 5px;
-    padding-left: 25px;
+    padding: 5px;
     margin-bottom: 20px;
-    overflow-y: scroll;
-    overflow-x: auto;
-}
-
-.content-card-code{
-    height: 90%;
-    background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    padding: 2px;
-    margin-bottom: 20px;
-    overflow-y: scroll;
+    overflow: hidden;
 }
 
 .content-header {
@@ -572,10 +560,31 @@
     color: var(--accent-color);
 }
 
-.content-text {
+.content-text-doc {
     line-height: 2;
     font-size: 14px;
     position: relative;
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll; /* 允许垂直滚动 */
+    overflow-x: auto; /* 允许水平滚动 */
+}
+
+.content-text-code {
+    line-height: 2;
+    font-size: 14px;
+    position: relative;
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: var(--bg-code);
+    height: 100%;
+    white-space: pre;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll; /* 允许垂直滚动 */
+    overflow-x: auto; /* 允许水平滚动 */
 }
 
 .issue-item {
@@ -751,19 +760,6 @@
     background-color: #3498db;
 }
 
-.code-block {
-    font-family: 'Consolas', 'Courier New', monospace;
-    font-size: 14px;
-    background-color: var(--bg-code);
-    border-radius: 4px;
-    overflow-x: auto; /* 允许水平滚动 */
-    height: 100%;
-    white-space: pre;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-}
-
 .code-line {
     display: flex; /* 使用 flex 布局，使行号和代码对齐 */
     white-space: pre-wrap; /* 允许代码换行 */
@@ -794,6 +790,13 @@
     text-align: center;
     color: var(--text-secondary);
     padding: 20px;
+}
+
+.empty-item {
+    padding: 20px;
+    text-align: start;
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 
 /* Bottom bar issue table styles */

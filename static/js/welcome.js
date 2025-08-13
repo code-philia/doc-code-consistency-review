@@ -5,36 +5,6 @@ const { createApp, ref, reactive, watch } = Vue;
 const { ElMessage } = ElementPlus;
 
 // ========================
-// DOM 相关（导航切换）
-// ========================
-const navItems = document.querySelectorAll('.nav-item');
-const sections = {
-    start: document.getElementById('start-section'),
-    'semi-auto': document.getElementById('semi-auto-section')
-};
-
-navItems.forEach(item => {
-    item.addEventListener('click', () => {
-        const sectionId = item.getAttribute('data-section');
-        
-        // 更新导航状态
-        navItems.forEach(nav => nav.classList.remove('active'));
-        item.classList.add('active');
-        
-        // 切换内容区
-        Object.values(sections).forEach(section => {
-            section.style.display = 'none';
-        });
-        if (sections[sectionId]) {
-            sections[sectionId].style.display = 'block';
-        }
-    });
-});
-
-// 默认点击第一个
-document.querySelector('.nav-item')?.click();
-
-// ========================
 // 工具函数
 // ========================
 const formatRelativeTime = (isoString) => {
@@ -210,3 +180,38 @@ for (const [key, comp] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, comp);
 }
 app.mount('#app');
+
+
+// ========================
+// DOM 相关（导航切换）
+// ========================
+const navItems = document.querySelectorAll('.nav-item');
+const sections = {
+    'start': document.getElementById('start-section'),
+    'semi-auto': document.getElementById('semi-auto-section'),
+    'annotation': document.getElementById('annotation-section'),
+};
+
+navItems.forEach(item => {
+    console.log(`注册导航项: ${item.textContent.trim()}`);
+    item.addEventListener('click', () => {
+        console.log(`切换到 ${item.textContent.trim()} 区域`);
+
+        const sectionId = item.getAttribute('data-section');
+        
+        // 更新导航状态
+        navItems.forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        
+        // 切换内容区
+        Object.values(sections).forEach(section => {
+            section.style.display = 'none';
+        });
+        if (sections[sectionId]) {
+            sections[sectionId].style.display = 'block';
+        }
+    });
+});
+
+// 默认点击第一个
+document.querySelector('.nav-item')?.click();
