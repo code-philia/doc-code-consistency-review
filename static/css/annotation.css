@@ -99,18 +99,19 @@
 }
 
 .category-header {
-    padding: 6px 16px;
+    padding: 6px 10px;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 13px;
     color: #95a5a6;
     display: flex;
     align-items: center;
     cursor: pointer;
+    justify-content: space-between;
 }
 
 .category-header i {
     margin-right: 6px;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .file-items {
@@ -465,7 +466,6 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    padding: 5px 0;
 }
 
 .dropdown-annotation-name {
