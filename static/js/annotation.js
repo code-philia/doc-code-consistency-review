@@ -11,7 +11,7 @@ import {trimLines} from 'https://esm.sh/trim-lines@3.0.1';
 /****************************
  * 全局状态与配置
  ****************************/
-const { createApp, ref } = Vue;
+const { createApp, ref , onMounted} = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 
 /****************************
@@ -292,6 +292,148 @@ function formatCodeWithLineNumbers(codeContent) {
 }
 
 /****************************
+ * 标注数据结构
+ ****************************/
+class Annotation {
+    constructor() {
+        this.id = crypto.randomUUID();
+        this.category = "新标注";
+        this.docRanges = [];
+        this.codeRanges = [];
+        this.updateTime = new Date().toISOString();
+    }
+}
+
+class DocumentRange {
+    constructor(documentId, start, end, content) {
+        this.documentId = documentId;
+        this.start = start;
+        this.end = end;
+        this.content = content;
+    }
+}
+
+class CodeRange {
+    constructor(documentId, start, end, content) {
+        this.documentId = documentId;
+        this.start = start;
+        this.end = end;
+        this.content = content;
+    }
+}
+
+/****************************
+ * 标注工具函数
+ ****************************/
+
+// 查找带有位置属性的祖先元素
+function findPositionElement(node, rootElement) {
+    while (node && node !== rootElement) {
+        if (node.nodeType === 1 && 
+            node.hasAttribute('parse-start') && 
+            node.hasAttribute('parse-end')) {
+            return node;
+        }
+        node = node.parentNode;
+    }
+    return null;
+}
+
+// 计算在元素内的文本偏移量
+function getCaretCharacterOffsetWithin(container, offset, element) {
+    if (container === element) {
+        return offset;
+    }
+    
+    let totalOffset = 0;
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
+    let currentNode;
+    
+    while ((currentNode = walker.nextNode())) {
+        if (currentNode === container) {
+            return totalOffset + offset;
+        }
+        totalOffset += currentNode.textContent.length;
+    }
+    return totalOffset;
+}
+
+// 计算在原始文档中的偏移量
+function findOffsetFromPosition(container, offset, rootElement, reduce) {
+    let node = container;
+    
+    // 向上查找带有位置属性的元素
+    while (node && node !== rootElement) {
+        if (node.nodeType === 1 && 
+            node.hasAttribute('parse-start') && 
+            node.hasAttribute('parse-end')) {
+            
+            const parseStart = parseInt(node.getAttribute('parse-start'));
+            const parseEnd = parseInt(node.getAttribute('parse-end'));
+            
+            if (!isNaN(parseStart) && !isNaN(parseEnd)) {
+                // 特殊处理数学公式
+                if (node.classList.contains('math-inline') || node.classList.contains('math-block')) {
+                    if (reduce === 'start') return parseStart;
+                    if (reduce === 'end') return parseEnd;
+                }
+                
+                // 计算在元素内的偏移量
+                const elementOffset = getCaretCharacterOffsetWithin(container, offset, node);
+                return parseStart + elementOffset;
+            }
+        }
+        node = node.parentNode;
+    }
+    
+    return null;
+}
+
+// 获取原始文档中的范围
+function getSourceDocumentRange(rootElement, range) {
+    const limitedRange = document.createRange();
+    limitedRange.setStartBefore(rootElement);
+    limitedRange.setEndAfter(rootElement);
+    
+    const comp = (i) => range.compareBoundaryPoints(i, limitedRange);
+    
+    if (
+        comp(Range.END_TO_START) >= 0 ||  // range start is behind element's end
+        comp(Range.START_TO_END) <= 0     // range end is before element's start
+    ) {
+        return [0, 0];
+    }
+    
+    if (comp(Range.START_TO_START) > 0) {
+        limitedRange.setStart(range.startContainer, range.startOffset);
+    }
+    
+    if (comp(Range.END_TO_END) < 0) {
+        limitedRange.setEnd(range.endContainer, range.endOffset);
+    }
+    
+    const startOffset = findOffsetFromPosition(
+        limitedRange.startContainer, 
+        limitedRange.startOffset, 
+        rootElement, 
+        'start'
+    );
+    
+    const endOffset = findOffsetFromPosition(
+        limitedRange.endContainer, 
+        limitedRange.endOffset, 
+        rootElement, 
+        'end'
+    );
+    
+    if (startOffset === null || endOffset === null) {
+        return [0, 0];
+    }
+    
+    return [startOffset, endOffset];
+}
+
+/****************************
  * Vue 应用
  ****************************/
 
@@ -309,6 +451,14 @@ const app = createApp({
 
         const docUpload = ref(null);
         const codeUpload = ref(null);
+
+        const annotations = ref([]);
+        const currentSelection = ref(null);
+        const showAnnotationDialog = ref(false);
+        const newAnnotation = ref(new Annotation());
+        const selectedAnnotation = ref(null);
+        const editingAnnotation = ref(false);
+        const annotationName = ref('');
 
         const triggerDocUpload = () => docUpload.value.click();
         const triggerCodeUpload = () => codeUpload.value.click();
@@ -384,6 +534,198 @@ const app = createApp({
         const removeDocFile = (index) => removeFile(index, docFiles, selectedDocFile, selectedDocContent, '需求文档');
         const removeCodeFile = (index) => removeFile(index, codeFiles, selectedCodeFile, selectedCodeContent, '代码文件');
 
+        /***********************
+         * 标注方法
+         ***********************/
+        
+        // 处理文档选择
+        const handleDocSelection = (event) => {
+            const selection = window.getSelection();
+            if (!selection || selection.toString().trim() === '') {
+                currentSelection.value = null;
+                return;
+            }
+            
+            const range = selection.getRangeAt(0);
+            const docPanel = document.querySelector('.content-text-doc');
+            
+            if (docPanel) {
+                const [start, end] = getSourceDocumentRange(docPanel, range);
+                if (start !== 0 || end !== 0) {
+                    currentSelection.value = {
+                        type: 'doc',
+                        documentId: selectedDocFile.value,
+                        start,
+                        end,
+                        content: selection.toString()
+                    };
+                    showAnnotationDialog.value = true;
+                }
+            }
+        };
+        
+        // 处理代码选择
+        const handleCodeSelection = (event) => {
+            const selection = window.getSelection();
+            if (!selection || selection.toString().trim() === '') {
+                currentSelection.value = null;
+                return;
+            }
+            
+            const range = selection.getRangeAt(0);
+            const codePanel = document.querySelector('.content-text-code');
+            
+            if (codePanel) {
+                const codeLine = findPositionElement(range.startContainer, codePanel);
+                if (codeLine && codeLine.classList.contains('code-line')) {
+                    const start = parseInt(codeLine.getAttribute('parse-start'));
+                    const end = parseInt(codeLine.getAttribute('parse-end'));
+                    
+                    if (!isNaN(start) && !isNaN(end)) {
+                        currentSelection.value = {
+                            type: 'code',
+                            documentId: selectedCodeFile.value,
+                            start,
+                            end,
+                            content: selection.toString()
+                        };
+                        showAnnotationDialog.value = true;
+                    }
+                }
+            }
+        };
+        
+        // 创建新标注
+        const createAnnotation = () => {
+            if (!currentSelection.value) return;
+            
+            const annotation = new Annotation();
+            annotation.category = annotationName.value || "新标注";
+            
+            if (currentSelection.value.type === 'doc') {
+                annotation.docRanges.push(
+                    new DocumentRange(
+                        currentSelection.value.documentId,
+                        currentSelection.value.start,
+                        currentSelection.value.end,
+                        currentSelection.value.content
+                    )
+                );
+            } else {
+                annotation.codeRanges.push(
+                    new CodeRange(
+                        currentSelection.value.documentId,
+                        currentSelection.value.start,
+                        currentSelection.value.end,
+                        currentSelection.value.content
+                    )
+                );
+            }
+            
+            annotations.value.push(annotation);
+            annotationName.value = '';
+            showAnnotationDialog.value = false;
+            currentSelection.value = null;
+            
+            ElMessage.success('标注创建成功');
+        };
+        
+        // 添加到现有标注
+        const addToAnnotation = (annotation) => {
+            if (!currentSelection.value || !annotation) return;
+            
+            if (currentSelection.value.type === 'doc') {
+                annotation.docRanges.push(
+                    new DocumentRange(
+                        currentSelection.value.documentId,
+                        currentSelection.value.start,
+                        currentSelection.value.end,
+                        currentSelection.value.content
+                    )
+                );
+            } else {
+                annotation.codeRanges.push(
+                    new CodeRange(
+                        currentSelection.value.documentId,
+                        currentSelection.value.start,
+                        currentSelection.value.end,
+                        currentSelection.value.content
+                    )
+                );
+            }
+            
+            annotation.updateTime = new Date().toISOString();
+            showAnnotationDialog.value = false;
+            currentSelection.value = null;
+            
+            ElMessage.success('已添加到标注');
+        };
+        
+        // 编辑标注名称
+        const editAnnotation = (annotation) => {
+            selectedAnnotation.value = annotation;
+            annotationName.value = annotation.category;
+            editingAnnotation.value = true;
+        };
+        
+        // 保存标注名称
+        const saveAnnotationName = () => {
+            if (selectedAnnotation.value) {
+                selectedAnnotation.value.category = annotationName.value;
+                selectedAnnotation.value.updateTime = new Date().toISOString();
+                editingAnnotation.value = false;
+                ElMessage.success('标注名称已更新');
+            }
+        };
+        
+        // 删除标注
+        const removeAnnotation = (index) => {
+            ElMessageBox.confirm('确定要删除此标注吗?', '确认删除', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                annotations.value.splice(index, 1);
+                ElMessage.success('标注已删除');
+            }).catch(() => {});
+        };
+        
+        // 删除标注中的范围
+        const removeRange = (annotation, type, index) => {
+            if (type === 'doc') {
+                annotation.docRanges.splice(index, 1);
+            } else {
+                annotation.codeRanges.splice(index, 1);
+            }
+            
+            annotation.updateTime = new Date().toISOString();
+            
+            // 如果标注中没有范围了，删除整个标注
+            if (annotation.docRanges.length === 0 && annotation.codeRanges.length === 0) {
+                const idx = annotations.value.indexOf(annotation);
+                if (idx !== -1) {
+                    annotations.value.splice(idx, 1);
+                    ElMessage.success('标注已删除');
+                }
+            } else {
+                ElMessage.success('范围已删除');
+            }
+        };
+        
+        // 初始化事件监听
+        onMounted(() => {
+            const docPanel = document.querySelector('.content-text-doc');
+            if (docPanel) {
+                docPanel.addEventListener('mouseup', handleDocSelection);
+            }
+            
+            const codePanel = document.querySelector('.content-text-code');
+            if (codePanel) {
+                codePanel.addEventListener('mouseup', handleCodeSelection);
+            }
+        });
+        
+
         return {
             docFiles, codeFiles,
             selectedDocFile, selectedCodeFile,
@@ -393,7 +735,24 @@ const app = createApp({
             triggerDocUpload, triggerCodeUpload,
             handleDocUpload, handleCodeUpload,
             selectDocFile, selectCodeFile,
-            removeDocFile, removeCodeFile
+            removeDocFile, removeCodeFile,
+            annotations,
+            currentSelection,
+            showAnnotationDialog,
+            newAnnotation,
+            selectedAnnotation,
+            editingAnnotation,
+            annotationName,
+            createAnnotation,
+            addToAnnotation,
+            editAnnotation,
+            saveAnnotationName,
+            removeAnnotation,
+            removeRange,
+            formatDate: (dateStr) => {
+                const date = new Date(dateStr);
+                return date.toLocaleString();
+            }
         };
     }
 });

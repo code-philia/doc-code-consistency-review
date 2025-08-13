@@ -101,6 +101,7 @@
 
             <el-splitter-panel class="main-content">
                 <el-splitter>
+                    <!-- 文档展示区域 -->
                     <el-splitter-panel class="split-panel req-panel" :min="200" size="40%">
                         <div class="panel-title">
                             <i class="fas fa-file-word"></i> <span>${ selectedDocFile || '请选择需求文档' }</span>
@@ -113,6 +114,8 @@
                             <div class="content-text-doc" v-html="selectedDocContent"></div>
                         </div>
                     </el-splitter-panel>
+
+                    <!-- 代码展示区域 -->
                     <el-splitter-panel class="split-panel code-panel" :min="200" size="40%">
                         <div class="panel-title">
                             <i class="fas fa-file-code"></i> <span>${ selectedCodeFile || '请选择代码文件' }</span>
@@ -121,11 +124,174 @@
                             <pre class="content-text-code" v-html="selectedCodeContent"></pre>
                         </div>
                     </el-splitter-panel>
+
+                    <!-- 标注结果 -->
                     <el-splitter-panel class="split-panel annotation-panel" collapsible>
                         <div class="panel-title">
                             <i class="fas fa-comments"></i> <span>标注</span>
                         </div>
+                        <div class="content-card">
+                            <!-- 标注列表 -->
+                            <div class="annotation-list">
+                                <el-collapse>
+                                    <el-collapse-item 
+                                        v-for="(anno, index) in annotations" 
+                                        :key="anno.id"
+                                        :title="anno.category"
+                                    >
+                                        <template #title>
+                                            <div class="annotation-header">
+                                                <el-tooltip effect="light" :content="anno.category" placement="top">
+                                                    <span class="annotation-title">${ anno.category }</span>
+                                                </el-tooltip>
+                                                <el-button-group>
+                                                    <el-button 
+                                                        class="custom-button"
+                                                        type="primary"
+                                                        link
+                                                        @click.stop="editAnnotation(anno)"
+                                                    >重命名</el-button>
+                                                    <el-button 
+                                                        class="custom-button"
+                                                        type="danger"
+                                                        link
+                                                        @click.stop="removeAnnotation(index)"
+                                                    >删除</el-button>
+                                                </el-button-group>
+                                            </div>
+                                        </template>
+                                        
+                                        <div class="annotation-content">
+                                            <!-- 文档范围 -->
+                                            <div v-if="anno.docRanges.length > 0" class="annotation-section">
+                                                <h4>需求文档范围</h4>
+                                                <div v-for="(range, rIndex) in anno.docRanges" :key="'doc-'+rIndex" class="range-item">
+                                                    <div class="range-header">
+                                                        <span>${ range.documentId }</span>
+                                                        <el-button 
+                                                            type="danger" 
+                                                            size="small" 
+                                                            link
+                                                            @click="removeRange(anno, 'doc', rIndex)"
+                                                        >×</el-button>
+                                                    </div>
+                                                    <div class="range-content">
+                                                        <el-tooltip effect="light" :content="range.content" placement="top">
+                                                            <div class="truncated-text">${ range.content }</div>
+                                                        </el-tooltip>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 代码范围 -->
+                                            <div v-if="anno.codeRanges.length > 0" class="annotation-section">
+                                                <h4>代码范围</h4>
+                                                <div v-for="(range, rIndex) in anno.codeRanges" :key="'code-'+rIndex" class="range-item">
+                                                    <div class="range-header">
+                                                        <span>${ range.documentId }</span>
+                                                        <el-button 
+                                                            type="danger" 
+                                                            size="small"
+                                                            link
+                                                            @click="removeRange(anno, 'code', rIndex)"
+                                                        >×</el-button>
+                                                    </div>
+                                                    <div class="range-content">
+                                                        <el-tooltip effect="light" :content="range.content" placement="top">
+                                                            <pre class="truncated-code">${ range.content }</pre>
+                                                        </el-tooltip>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div v-if="anno.docRanges.length === 0 && anno.codeRanges.length === 0" class="empty-ranges">
+                                                此标注中没有添加任何范围
+                                            </div>
+                                        </div>
+                                    </el-collapse-item>
+                                </el-collapse>
+                                
+                                <div v-if="annotations.length === 0" class="empty-annotations">
+                                    暂无标注，请在文档或代码中选择文本创建标注
+                                </div>
+                            </div>
+                        </div>
                     </el-splitter-panel>
+
+                    <!-- 标注对话框 -->
+                    <el-dialog 
+                        v-model="showAnnotationDialog" 
+                        title="新建标注" 
+                        width="500px"
+                        :close-on-click-modal="false"
+                    >
+                        <div v-if="currentSelection">
+                            <div class="selection-preview">
+                                ${ currentSelection.content }
+                            </div>
+                            
+                            <div class="annotation-options">
+                                <div style="display: flex; margin-bottom: 15px; gap: 10px;">
+                                    <el-input 
+                                        v-model="annotationName" 
+                                        placeholder="输入标注名称" 
+                                    ></el-input>
+                                    
+                                    <el-button 
+                                        type="primary" 
+                                        @click="createAnnotation"
+                                    >
+                                        创建新标注
+                                    </el-button>
+                                </div>
+                                                                
+                                
+                                <div v-if="annotations.length > 0">
+                                    <p style="margin: 10px 0 5px; font-size: 14px;">添加到现有标注:</p>
+                                    
+                                    <el-dropdown 
+                                        placement="bottom" 
+                                        trigger="click" 
+                                        style="width: 100%"
+                                    >
+                                        <el-button style="width: 100%; text-align: left;">
+                                            选择标注...
+                                            <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                                        </el-button>
+                                        
+                                        <template #dropdown>
+                                            <el-dropdown-menu class="annotation-dropdown-menu">
+                                                <el-dropdown-item 
+                                                    v-for="anno in annotations" 
+                                                    :key="anno.id"
+                                                    @click="addToAnnotation(anno)"
+                                                >
+                                                    <div class="dropdown-item-content">
+                                                        <span class="dropdown-annotation-name">${ anno.category }</span>
+                                                        <span class="dropdown-annotation-date">${ formatDate(anno.updateTime) }</span>
+                                                    </div>
+                                                </el-dropdown-item>
+                                            </el-dropdown-menu>
+                                        </template>
+                                    </el-dropdown>
+                                </div>
+                            </div>
+                        </div>
+                    </el-dialog>
+
+                    <!-- 编辑标注对话框 -->
+                    <el-dialog 
+                        v-model="editingAnnotation" 
+                        title="编辑标注名称" 
+                        width="400px"
+                        :close-on-click-modal="false"
+                    >
+                        <el-input v-model="annotationName" placeholder="输入新标注名称"></el-input>
+                        <template #footer>
+                            <el-button @click="editingAnnotation = false">取消</el-button>
+                            <el-button type="primary" @click="saveAnnotationName">保存</el-button>
+                        </template>
+                    </el-dialog>
                 </el-splitter>
             </el-splitter-panel>
         </el-splitter>

@@ -348,3 +348,136 @@
     display: flex;
     gap: 3px;
 }
+
+.annotation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    padding-right: 10px;
+}
+
+.annotation-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0; /* 这个很重要，确保flex容器能正确计算溢出 */
+    max-width: 30%;
+}
+
+.el-button-group {
+    flex-shrink: 0;
+}
+
+.el-button.custom-button {
+    font-size: 12px;
+}
+
+.annotation-content {
+    font-size: 12px;
+}
+
+.annotation-section {
+    margin-bottom: 8px;
+}
+
+.annotation-section h4 {
+    margin-bottom: 2px;
+    color: var(--text-primary);
+}
+
+.range-item {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 4px;
+    margin-bottom: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.range-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.range-content {
+    font-size: 11px;
+    padding: 5px;
+    background-color: white;
+    border-radius: 3px;
+}
+
+.truncated-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.truncated-code {
+    font-family: Consolas, monospace;
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 60px;
+}
+
+.selection-preview {
+    max-height: 100px;
+    overflow: auto;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.annotation-options {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.empty-annotations, .empty-ranges {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.update-time {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    text-align: right;
+}
+
+.annotation-dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+    width: 300px;
+}
+
+.dropdown-item-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 5px 0;
+}
+
+.dropdown-annotation-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+    margin-bottom: 3px;
+}
+
+.dropdown-annotation-date {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
