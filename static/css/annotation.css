@@ -109,6 +109,7 @@
     display: flex;
     align-items: center;
     cursor: pointer;
+    gap: 10px;
 }
 
 .category-header i {
@@ -343,46 +344,10 @@
 }
 
 
-/* 新增样式 */
-.category-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
 .category-actions {
     display: flex;
     gap: 5px;
 }
-
-.action-btn {
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-}
-
-.action-btn i {
-    margin-right: 4px;
-}
-
-.action-btn:hover {
-    background-color: #2980b9;
-}
-
-.action-btn.delete {
-    background-color: #e74c3c;
-}
-
-.action-btn.delete:hover {
-    background-color: #c0392b;
-}
-
 
 .file-info {
     flex: 1;

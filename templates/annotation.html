@@ -46,9 +46,7 @@
                                 <span class="file-count">(${docFiles.length})</span>
                             </div>
                             <div class="category-actions">
-                                <button class="action-btn" @click="triggerDocUpload">
-                                    <i class="fas fa-plus"></i>
-                                </button>
+                                <el-button type="primary" size="small" plain @click="triggerDocUpload">上传</el-button>
                             </div>
                         </div>
                         <div class="file-items">
@@ -64,9 +62,7 @@
                                     <span class="file-name">${ file.name }</span>
                                 </div>
                                 <div class="file-actions">
-                                    <button class="action-btn delete" @click.stop="removeDocFile(index)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <el-button type="danger" size="small" plain @click.stop="removeDocFile(index)">×</el-button>
                                 </div>
                             </div>
                         </div>
@@ -80,9 +76,7 @@
                                 <span class="file-count">(${codeFiles.length})</span>
                             </div>
                             <div class="category-actions">
-                                <button class="action-btn" @click="triggerCodeUpload">
-                                    <i class="fas fa-plus"></i>
-                                </button>
+                                <el-button type="primary" size="small" plain @click="triggerCodeUpload">上传</el-button>
                             </div>
                         </div>
                         <div class="file-items">
@@ -98,9 +92,7 @@
                                     <span class="file-name">${ file.name }</span>
                                 </div>
                                 <div class="file-actions">
-                                    <button class="action-btn delete" @click.stop="removeCodeFile(index)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                    <el-button type="danger" size="small" plain @click.stop="removeCodeFile(index)">×</el-button>
                                 </div>
                             </div>
                         </div>
