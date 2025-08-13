@@ -10,9 +10,9 @@
     --button-bg: #f0f0f0;
     --button-hover: #e5e5e5;
     --divider-color: #eaeaea;
-    --header-height: 60px;
-    --sidebar-width: 50px;
-    --content-padding: 20px;
+    --header-height: 48px;
+    --sidebar-width: 40px;
+    --content-padding: 16px;
     --history-bg: #f5f7fa;
 }
 
@@ -29,13 +29,13 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
-/* 顶部标题栏 */
 header {
     display: flex;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 16px;
     background-color: var(--card-bg);
     height: var(--header-height);
     border-bottom: 1px solid var(--divider-color);
@@ -43,11 +43,11 @@ header {
 }
 
 .header-icon {
-    width: 32px;
-    height: 32px;
-    margin-right: 12px;
+    width: 26px;
+    height: 26px;
+    margin-right: 10px;
     background: var(--accent-color);
-    border-radius: 6px;
+    border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -56,25 +56,23 @@ header {
 
 .title {
     font-weight: 600;
-    font-size: 18px;
+    font-size: 14px;
     flex-grow: 1;
 }
 
-/* 主内容区 */
 .main-container {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
-/* 左侧导航栏 */
 .sidebar {
     width: var(--sidebar-width);
     background-color: var(--sidebar-bg);
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 20px;
+    padding-top: 16px;
 }
 
 .nav-item {
@@ -82,7 +80,7 @@ header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 12px 0;
+    padding: 10px 0;
     cursor: pointer;
     position: relative;
     color: var(--text-secondary);
@@ -99,7 +97,7 @@ header {
     left: 0;
     top: 0;
     height: 100%;
-    width: 3px;
+    width: 2px;
     background-color: var(--accent-color);
 }
 
@@ -108,16 +106,15 @@ header {
 }
 
 .nav-item i {
-    font-size: 18px;
-    margin-bottom: 4px;
+    font-size: 14px;
+    margin-bottom: 3px;
 }
 
 .nav-item span {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 500;
 }
 
-/* 内容区域 */
 .content {
     flex: 1;
     padding: var(--content-padding);
@@ -127,56 +124,54 @@ header {
 }
 
 .section {
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .section-title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 600;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     display: flex;
     align-items: center;
 }
 
 .section-title i {
-    margin-right: 10px;
+    margin-right: 8px;
     color: var(--accent-color);
 }
 
-/* 新的开始区域布局 */
 .welcome-container {
     display: flex;
-    gap: 25px;
-    height: calc(100vh - 180px);
+    gap: 20px;
+    height: calc(100vh - 144px);
 }
 
-/* 历史项目区域 */
 .history-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     background: var(--history-bg);
-    border-radius: 8px;
-    padding: 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-radius: 6px;
+    padding: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .history-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 11px;
     border-bottom: 1px solid var(--divider-color);
 }
 
 .history-title {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .history-title i {
@@ -185,15 +180,15 @@ header {
 
 .history-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
 }
 
 .history-btn {
     background: var(--button-bg);
     border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 10px;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -207,40 +202,39 @@ header {
     overflow-y: auto;
 }
 
-/* 操作区域 */
 .actions-section {
-    width: 400px;
+    width: 320px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 14px;
 }
 
 .action-card {
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 6px;
+    padding: 16px;
     transition: all 0.2s;
     cursor: pointer;
     height: 100%;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 
 .action-card:hover {
     border-color: var(--accent-color);
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .card-icon {
-    font-size: 28px;
+    font-size: 22px;
     color: var(--accent-color);
-    margin-bottom: 16px;
+    margin-bottom: 13px;
     background: rgba(0, 120, 212, 0.1);
-    width: 52px;
-    height: 52px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -248,15 +242,15 @@ header {
 }
 
 .card-title {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .card-description {
-    font-size: 13px;
+    font-size: 10px;
     color: var(--text-secondary);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     flex-grow: 1;
     line-height: 1.5;
 }
@@ -265,23 +259,22 @@ header {
     background-color: var(--accent-color);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 13px;
+    padding: 6px 13px;
+    border-radius: 5px;
+    font-size: 10px;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s;
     align-self: flex-start;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .card-button:hover {
     background-color: var(--accent-hover);
 }
 
-/* 最近项目列表 */
 .recent-list {
     display: flex;
     flex-direction: column;
@@ -290,25 +283,25 @@ header {
 .recent-item {
     display: flex;
     align-items: center;
-    padding: 12px 14px;
-    border-radius: 6px;
+    padding: 10px 11px;
+    border-radius: 5px;
     cursor: pointer;
     transition: all 0.2s;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
 }
 
 .recent-item:hover {
     background-color: var(--card-bg);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 
 .recent-icon {
     color: var(--accent-color);
-    margin-right: 14px;
-    font-size: 16px;
+    margin-right: 11px;
+    font-size: 13px;
     background: rgba(0, 120, 212, 0.1);
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -321,33 +314,32 @@ header {
 
 .recent-name {
     font-weight: 500;
-    margin-bottom: 3px;
-    font-size: 14px;
+    margin-bottom: 2px;
+    font-size: 11px;
 }
 
 .recent-path {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 260px;
+    max-width: 208px;
 }
 
 .recent-time {
-    font-size: 11px;
+    font-size: 9px;
     color: var(--text-secondary);
-    min-width: 60px;
+    min-width: 48px;
     text-align: right;
 }
 
-/* 半自动模式卡片 */
 .semi-auto-card {
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 6px;
-    padding: 22px;
-    margin-top: 10px;
+    border-radius: 5px;
+    padding: 18px;
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
 }
@@ -355,21 +347,21 @@ header {
 .semi-auto-title {
     display: flex;
     align-items: center;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .semi-auto-title i {
     color: var(--accent-color);
-    margin-right: 10px;
-    font-size: 18px;
+    margin-right: 8px;
+    font-size: 14px;
 }
 
 .semi-auto-description {
-    font-size: 13px;
+    font-size: 10px;
     color: var(--text-secondary);
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     line-height: 1.5;
 }
 
@@ -377,38 +369,37 @@ header {
     background-color: var(--accent-color);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-size: 13px;
+    padding: 6px 13px;
+    border-radius: 3px;
+    font-size: 10px;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s;
     align-self: flex-start;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .semi-auto-button:hover {
     background-color: var(--accent-hover);
 }
 
-/* 底部区域 */
 .footer {
     margin-top: auto;
-    padding-top: 0px;
+    padding-top: 0;
     border-top: 1px solid var(--divider-color);
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-secondary);
 }
 
 .footer-links a {
     color: var(--text-secondary);
     text-decoration: none;
-    margin-right: 12px;
-    font-size: 12px;
+    margin-right: 10px;
+    font-size: 10px;
 }
 
 .footer-links a:hover {
@@ -416,7 +407,6 @@ header {
     text-decoration: underline;
 }
 
-/* 空状态提示 */
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -425,19 +415,19 @@ header {
     height: 100%;
     color: var(--text-secondary);
     text-align: center;
-    padding: 20px;
+    padding: 16px;
 }
 
 .empty-state i {
-    font-size: 40px;
-    margin-bottom: 12px;
+    font-size: 32px;
+    margin-bottom: 10px;
     color: #ccc;
 }
 
 .empty-state p {
-    max-width: 280px;
+    max-width: 224px;
     line-height: 1.5;
-    font-size: 13px;
+    font-size: 10px;
 }
 
 @media (max-width: 992px) {
@@ -473,15 +463,14 @@ header {
     }
 }
 
-/* 新建项目 */
 .new-project-dialog .el-dialog__header {
-    padding: 18px 24px;
+    padding: 14px 19px;
     margin-right: 0;
     border-bottom: 1px solid var(--divider-color);
 }
 
 .new-project-dialog .el-dialog__title {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
 }
 
@@ -491,24 +480,24 @@ header {
 
 .dialog-container {
     display: flex;
-    min-height: 300px;
+    min-height: 240px;
 }
 
 .dialog-sidebar {
-    width: 220px;
+    width: 176px;
     background-color: var(--sidebar-bg);
     border-right: 1px solid var(--divider-color);
-    padding: 12px;
+    padding: 10px;
 }
 
 .option-menu .option-item {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
-    border-radius: 6px;
+    padding: 10px 13px;
+    border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 500;
 }
 
@@ -522,56 +511,55 @@ header {
 }
 
 .option-menu .option-item .el-icon {
-    margin-right: 10px;
-    font-size: 18px;
+    margin-right: 8px;
+    font-size: 14px;
 }
 
 .dialog-content {
     flex: 1;
-    padding: 24px 30px;
+    padding: 19px 24px;
 }
 
 .form-section .form-title {
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .form-section .form-description {
-    font-size: 13px;
+    font-size: 10px;
     color: var(--text-secondary);
-    margin-bottom: 24px;
+    margin-bottom: 19px;
     line-height: 1.6;
 }
 
 .project-form .el-form-item__label {
     font-weight: 500;
-    padding-bottom: 4px !important;
+    padding-bottom: 3px !important;
 }
 
 .new-project-dialog .el-dialog__footer {
-    padding: 12px 24px;
+    padding: 10px 19px;
     border-top: 1px solid var(--divider-color);
 }
 
-/* 导入项目 */
 .action-card {
     justify-content: space-between;
 }
 
 .dialog-description {
-    font-size: 13px;
+    font-size: 10px;
     color: var(--text-secondary);
     line-height: 1.6;
-    margin-top: -10px;
+    margin-top: -8px;
     background-color: #f5f7fa;
-    padding: 8px 12px;
-    border-radius: 4px;
+    padding: 6px 10px;
+    border-radius: 3px;
 }
 
 .dialog-description code {
     background-color: #e9eaf0;
-    padding: 2px 5px;
-    border-radius: 3px;
+    padding: 2px 4px;
+    border-radius: 2px;
     font-family: 'Courier New', Courier, monospace;
 }

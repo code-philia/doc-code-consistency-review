@@ -2,10 +2,10 @@
     --bg-color: #f5f7f9;
     --header-bg: #2c3e50;
     --sidebar-bg: #34495e;
-    --sidebar-width: 280px;
-    --sidebar-min-width: 200px;
-    --sidebar-max-width: 400px;
-    --sidebar-collapsed-width: 50px;
+    --sidebar-width: 224px;
+    --sidebar-min-width: 160px;
+    --sidebar-max-width: 320px;
+    --sidebar-collapsed-width: 40px;
     --text-primary: #2c3e50;
     --text-secondary: #7f8c8d;
     --text-light: #ecf0f1;
@@ -37,92 +37,88 @@
     overflow: hidden;
 }
 
-/* 顶部菜单栏 */
 .header {
     background-color: var(--header-bg);
     color: var(--text-light);
-    height: 40px;
+    height: 32px;
     display: flex;
     align-items: center;
-    padding: 0 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 0 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     z-index: 100;
 }
 
-/* 主内容区 */
 .main-container {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
-/* 左侧侧边栏 */
 .sidebar {
     width: var(--sidebar-width);
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: auto;
-    border-right: 2px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
 }
 
 .sidebar-header {
-    padding: 15px 20px;
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-title {
     font-weight: 600;
-    font-size: 16px;
+    font-size: 13px;
     display: flex;
     align-items: center;
 }
 
 .sidebar-title i {
-    margin-right: 10px;
+    margin-right: 8px;
 }
 
 .sidebar-header {
     position: relative;
-    padding: 15px 20px;
-    min-height: 50px; /* 确保有足够高度 */
+    padding: 12px 16px;
+    min-height: 40px;
 }
 
 .file-tree {
     flex: 1;
     overflow-y: auto;
-    padding: 10px 0;
+    padding: 8px 0;
 }
 
 .file-category {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .category-header {
-    padding: 8px 20px;
+    padding: 6px 16px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 11px;
     color: #95a5a6;
     display: flex;
     align-items: center;
     cursor: pointer;
-    gap: 10px;
 }
 
 .category-header i {
-    margin-right: 8px;
-    font-size: 14px;
+    margin-right: 6px;
+    font-size: 11px;
 }
 
 .file-items {
-    padding-left: 10px;
+    padding-left: 8px;
 }
 
 .file-item {
-    padding: 8px 15px 8px 10px;
+    padding: 6px 12px 6px 8px;
     display: flex;
     align-items: center;
     cursor: pointer;
@@ -136,20 +132,19 @@
     left: 0;
     top: 0;
     height: 100%;
-    width: 3px;
+    width: 2px;
     background-color: var(--accent-color);
 }
 
 .file-item i {
-    margin-right: 10px;
-    font-size: 14px;
-    width: 16px;
+    margin-right: 8px;
+    font-size: 11px;
+    width: 13px;
     text-align: center;
 }
 
-
 .file-name {
-    font-size: 13px;
+    font-size: 10px;
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -157,15 +152,13 @@
 }
 
 .file-status {
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 3px;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 2px;
     background-color: rgba(255,255,255,0.1);
-    margin-left: 8px;
+    margin-left: 6px;
 }
 
-
-/* 主体区域 */
 .main-content {
     flex: 1;
     display: flex;
@@ -174,7 +167,6 @@
     overflow: hidden;
 }
 
-/* 分割视图通用样式 */
 .split-view {
     display: flex;
     flex: 1;
@@ -184,11 +176,10 @@
 
 .split-panel {
     overflow: hidden;
-    padding: 20px;
+    padding: 16px;
     position: relative;
 }
 
-/* 对齐视图 */
 .alignment-view {
     display: none;
 }
@@ -202,20 +193,19 @@
     flex: 1;
 }
 
-/* 面板标题 */
 .panel-title {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 15px;
-    padding-bottom: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
 }
 
 .panel-title i {
-    margin-right: 10px;
+    margin-right: 8px;
     color: var(--accent-color);
 }
 
@@ -223,57 +213,55 @@
     overflow: hidden;
 }
 
-/* 内容样式 */
 .content-card {
     height: 90%;
     background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    padding: 5px;
-    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 4px;
+    margin-bottom: 16px;
     overflow: hidden;
 }
 
 .content-header {
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     color: var(--text-primary);
     display: flex;
     align-items: center;
 }
 
 .content-header i {
-    margin-right: 8px;
+    margin-right: 5px;
     color: var(--accent-color);
 }
 
 .content-text-doc {
     line-height: 2;
-    font-size: 14px;
+    font-size: 11px;
     position: relative;
-    padding: 20px;
+    padding: 16px;
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow-y: scroll; /* 允许垂直滚动 */
-    overflow-x: auto; /* 允许水平滚动 */
+    overflow-y: scroll;
+    overflow-x: auto;
 }
 
 .content-text-code {
     line-height: 2;
-    font-size: 14px;
+    font-size: 11px;
     position: relative;
     font-family: 'Consolas', 'Courier New', monospace;
     background-color: var(--bg-code);
     height: 100%;
     white-space: pre;
-    padding: 10px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    overflow-y: scroll; /* 允许垂直滚动 */
-    overflow-x: auto; /* 允许水平滚动 */
+    overflow-y: scroll;
+    overflow-x: auto;
 }
-
 
 .file-item.selected::before {
     content: "";
@@ -281,46 +269,46 @@
     left: 0;
     top: 0;
     height: 100%;
-    width: 3px;
+    width: 2px;
     background-color: #3498db;
 }
 
 .code-line {
-    display: flex; /* 使用 flex 布局，使行号和代码对齐 */
-    white-space: pre-wrap; /* 允许代码换行 */
+    display: flex;
+    white-space: pre-wrap;
     word-break: break-all;
 }
 
 .line-number {
-    flex-shrink: 0; /* 防止行号被压缩 */
-    width: 40px; /* 固定宽度，可以根据需要调整 */
-    padding-left: 2px;
+    flex-shrink: 0;
+    width: 32px;
+    padding-left: 1px;
     text-align: left;
     color: var(--text-secondary);
-    user-select: none; /* 防止选中行号 */
-    background-color: var(--bg-code-line-number); /* 行号背景色，与代码块背景色稍作区分 */
-    position: sticky; /* 使行号在水平滚动时固定 */
+    user-select: none;
+    background-color: var(--bg-code-line-number);
+    position: sticky;
     left: 0;
-    z-index: 1; /* 确保行号在代码内容之上 */
-    border-right: 1px solid var(--border-color); /* 增加分割线 */
+    z-index: 1;
+    border-right: 1px solid var(--border-color);
 }
 
 .code-content {
     font-family: Consolas, monospace;
-    flex-grow: 1; /* 占据剩余空间 */
-    padding-left: 10px; /* 增加代码和行号之间的间距 */
+    flex-grow: 1;
+    padding-left: 8px;
 }
 
 .empty-message {
     text-align: center;
     color: var(--text-secondary);
-    padding: 20px;
+    padding: 16px;
 }
 
 .empty-item {
-    padding: 20px;
+    padding: 16px;
     text-align: start;
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-secondary);
 }
 
@@ -329,8 +317,8 @@
     border: none;
     color: #606266;
     cursor: pointer;
-    padding: 0 5px;
-    margin-left: 5px;
+    padding: 0 4px;
+    margin-left: 4px;
 }
 
 .upload-btn:hover {
@@ -343,10 +331,15 @@
     font-weight: 500;
 }
 
+.category-header {
+    display: flex;
+    align-items: center;
+    gap:10px;
+}
 
 .category-actions {
     display: flex;
-    gap: 5px;
+    gap: 3px;
 }
 
 .file-info {
@@ -359,5 +352,5 @@
 
 .file-actions {
     display: flex;
-    gap: 5px;
+    gap: 3px;
 }
