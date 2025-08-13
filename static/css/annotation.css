@@ -258,6 +258,11 @@
     overflow-x: auto;
 }
 
+.annotation-list {
+    height: 100%;
+    overflow-y: scroll;
+}
+
 .file-item.selected::before {
     content: "";
     position: absolute;
