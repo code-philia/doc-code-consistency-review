@@ -102,7 +102,7 @@
 
             <el-splitter-panel class="main-content">
                 <el-splitter>
-                    <el-splitter-panel class="split-panel req-panel" :min="200" size="50%">
+                    <el-splitter-panel class="split-panel req-panel" :min="200" size="40%">
                         <div class="panel-title">
                             <i class="fas fa-file-word"></i> <span>${ selectedDocFile || '请选择需求文档' }</span>
                         </div>
@@ -114,12 +114,17 @@
                             <div class="content-text-doc" v-html="selectedDocContent"></div>
                         </div>
                     </el-splitter-panel>
-                    <el-splitter-panel class="split-panel code-panel" :min="200" size="50%">
+                    <el-splitter-panel class="split-panel code-panel" :min="200" size="40%">
                         <div class="panel-title">
                             <i class="fas fa-file-code"></i> <span>${ selectedCodeFile || '请选择代码文件' }</span>
                         </div>
                         <div class="content-card">
                             <pre class="content-text-code" v-html="selectedCodeContent"></pre>
+                        </div>
+                    </el-splitter-panel>
+                    <el-splitter-panel class="split-panel annotation-panel" collapsible>
+                        <div class="panel-title">
+                            <i class="fas fa-comments"></i> <span>标注</span>
                         </div>
                     </el-splitter-panel>
                 </el-splitter>
@@ -128,7 +133,7 @@
     </div>
     
     <!-- 隐藏的文件上传输入 -->
-    <input type="file" ref="docUpload" style="display: none" accept=".md,.txt,.docx" @change="handleDocUpload">
+    <input type="file" ref="docUpload" style="display: none" accept=".md,.txt,.docx,.doc" @change="handleDocUpload">
     <input type="file" ref="codeUpload" style="display: none" accept=".js,.py,.java,.c,.cpp,.cs,.html,.css" @change="handleCodeUpload">
 </div>
 
