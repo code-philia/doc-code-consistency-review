@@ -433,6 +433,16 @@ function getSourceDocumentRange(rootElement, range) {
     return [startOffset, endOffset];
 }
 
+// 获取原始文档内容
+function getSourceDocumentContent(start, end, rawContent) {
+    if (start < 0 || end < 0 || start >= rawContent.length || end >= rawContent.length || start > end) {
+        return '';
+    }
+    
+    // 获取原始内容的子字符串
+    return rawContent.substring(start, end + 1);
+}
+
 /****************************
  * Vue 应用
  ****************************/
@@ -445,8 +455,10 @@ const app = createApp({
 
         const selectedDocFile = ref('');
         const selectedCodeFile = ref('');
-        const selectedDocContent = ref('');
-        const selectedCodeContent = ref('');
+        const selectedDocRawContent = ref('');
+        const selectedCodeRawContent = ref('');
+        const selectedDocContent = ref(''); // 渲染后的内容
+        const selectedCodeContent = ref(''); // 渲染后的内容
         const renderError = ref('');
 
         const docUpload = ref(null);
@@ -460,6 +472,9 @@ const app = createApp({
         const editingAnnotation = ref(false);
         const annotationName = ref('');
 
+        /***********************
+         * 增删和选择文件
+         ***********************/
         const triggerDocUpload = () => docUpload.value.click();
         const triggerCodeUpload = () => codeUpload.value.click();
 
@@ -468,18 +483,32 @@ const app = createApp({
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 const content = e.target.result;
+                let renderedContent = '';
+                try {
+                    if (fileType === 'doc') {
+                        renderedContent = await renderMarkdown(content);
+                    } else if (fileType === 'code') {
+                        renderedContent = formatCodeWithLineNumbers(content);
+                    }
+                } catch (e) {
+                    renderError.value = e.message;
+                    renderedContent = '<div class="render-error">渲染失败，请检查源文件格式。</div>';
+                    console.error(e);
+                }
+
                 const newFile = {
                     name: file.name,
                     content: content,
+                    renderedContent: renderedContent,
                     lastModified: new Date(file.lastModified)
                 };
                 fileList.value.push(newFile);
                 event.target.value = '';
                 ElMessage.success(`${fileType} "${file.name}" 上传成功`);
 
-                if (fileType === '需求文档') {
+                if (fileType === 'doc') {
                     selectDocFile(newFile);
                 } else {
                     selectCodeFile(newFile);
@@ -488,31 +517,19 @@ const app = createApp({
             reader.readAsText(file);
         };
         
-        const handleDocUpload = (event) => handleFileUpload(event, docFiles, '需求文档');
-        const handleCodeUpload = (event) => handleFileUpload(event, codeFiles, '代码文件');
+        const handleDocUpload = (event) => handleFileUpload(event, docFiles, 'doc');
+        const handleCodeUpload = (event) => handleFileUpload(event, codeFiles, 'code');
         
-        // Select Doc File (now async)
-        const selectDocFile = async (file) => {
+        const selectDocFile = (file) => {
             selectedDocFile.value = file.name;
-            renderError.value = '';
-            try {
-                selectedDocContent.value = await renderMarkdown(file.content);
-                console.log('需求文档：', selectedDocContent.value);
-            } catch (e) {
-                renderError.value = e.message;
-                selectedDocContent.value = '<div class="render-error">渲染失败，请检查Markdown格式。</div>';
-                console.error(e);
-            }
+            selectedDocRawContent.value = file.content;
+            selectedDocContent.value = file.renderedContent || '';
         };
         
         const selectCodeFile = (file) => {
             selectedCodeFile.value = file.name;
-            try {
-                selectedCodeContent.value = formatCodeWithLineNumbers(file.content);
-                console.log('代码文件：', selectedCodeContent.value);
-            } catch (e) {
-                 selectedCodeContent.value = `<div class="render-error">代码高亮失败: ${e.message}</div>`
-            }
+            selectedCodeRawContent.value = file.content;
+            selectedCodeContent.value = file.renderedContent || '';
         };
 
         const removeFile = (index, fileList, selectedFileName, selectedFileContent, fileType) => {
@@ -537,7 +554,6 @@ const app = createApp({
         /***********************
          * 标注方法
          ***********************/
-        
         // 处理文档选择
         const handleDocSelection = (event) => {
             const selection = window.getSelection();
@@ -552,12 +568,14 @@ const app = createApp({
             if (docPanel) {
                 const [start, end] = getSourceDocumentRange(docPanel, range);
                 if (start !== 0 || end !== 0) {
+                    const rawContent = getSourceDocumentContent(start, end, selectedDocRawContent.value);
+                    
                     currentSelection.value = {
                         type: 'doc',
                         documentId: selectedDocFile.value,
                         start,
                         end,
-                        content: selection.toString()
+                        content: rawContent
                     };
                     showAnnotationDialog.value = true;
                 }
