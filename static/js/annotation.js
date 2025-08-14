@@ -17,31 +17,32 @@ const { ElMessage, ElMessageBox } = ElementPlus;
 /****************************
  * 工具函数 (Utils)
  ****************************/
-function regularizeFileContent(content) {
-  // Use Unix line break
-  content = content.replace(/\r?\n|\r/g, '\n');
+function regularizeFileContent(content, type) {
+    // Use Unix line break
+    content = content.replace(/\r?\n|\r/g, '\n');
 
-  // Remove gremlin zero-width whitespaces (U+200b)
-  content = content.replace(/\u200b/g, '');
+    // Remove gremlin zero-width whitespaces (U+200b)
+    content = content.replace(/\u200b/g, '');
 
-  // Split contiguous inline math `$math1$$math2$`
-  content = content.replace(/(?<=\S)\$\$(?=\S)/g, '$ $');
-
-  return content;
+    if (type === 'doc') {
+      // Split contiguous inline math `$math1$$math2$`
+      content = content.replace(/(?<=\S)\$\$(?=\S)/g, '$ $');
+    }
+    return content;
 }
 
 function splitLines(text, emptyLastLine = false) {
-  text += '\n';
-  const result = text.match(/.*?(\r|\r?\n)/g);
+    text += '\n';
+    const result = text.match(/.*?(\r|\r?\n)/g);
 
-  if (result === null) {
-    return [];
-  }
+    if (result === null) {
+        return [];
+    }
 
-  const lastLine = result.pop();
-  if (lastLine && (emptyLastLine || lastLine !== '\n')) {
-    result.push(lastLine.slice(0, -1));
-  }
+    const lastLine = result.pop();
+    if (lastLine && (emptyLastLine || lastLine !== '\n')) {
+        result.push(lastLine.slice(0, -1));
+    }
 
   return result;
 }
@@ -322,6 +323,17 @@ class CodeRange {
     }
 }
 
+class File {
+    constructor(name, content, renderedDocument, type, lastModified = new Date().toISOString()) {
+        this.id = crypto.randomUUID();
+        this.name = name;
+        this.content = content;
+        this.renderedDocument = renderedDocument || '';
+        this.type = type; // doc or code
+        this.lastModified = lastModified;
+    }
+}
+
 /****************************
  * 标注工具函数
  ****************************/
@@ -541,26 +553,23 @@ const app = createApp({
 
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const content = e.target.result;
-                let renderedContent = '';
+                const rawContent = e.target.result;
+                const content = regularizeFileContent(rawContent, fileType);
+                let renderedDocument = '';
                 try {
                     if (fileType === 'doc') {
-                        renderedContent = await renderMarkdown(content);
+                        renderedDocument = await renderMarkdown(content);
                     } else if (fileType === 'code') {
-                        renderedContent = formatCodeWithLineNumbers(content);
+                        renderedDocument = formatCodeWithLineNumbers(content);
                     }
                 } catch (e) {
                     renderError.value = e.message;
-                    renderedContent = '<div class="render-error">渲染失败，请检查源文件格式。</div>';
+                    renderedDocument = '<div class="render-error">渲染失败，请检查源文件格式。</div>';
                     console.error(e);
                 }
 
-                const newFile = {
-                    name: file.name,
-                    content: content,
-                    renderedContent: renderedContent,
-                    lastModified: new Date(file.lastModified)
-                };
+                const newFile = new File(file.name, content, renderedDocument, fileType, new Date(file.lastModified).toISOString());
+                
                 fileList.value.push(newFile);
                 event.target.value = '';
                 ElMessage.success(`${fileType} "${file.name}" 上传成功`);
@@ -580,13 +589,13 @@ const app = createApp({
         const selectDocFile = (file) => {
             selectedDocFile.value = file.name;
             selectedDocRawContent.value = file.content;
-            selectedDocContent.value = file.renderedContent || '';
+            selectedDocContent.value = file.renderedDocument || '';
         };
         
         const selectCodeFile = (file) => {
             selectedCodeFile.value = file.name;
             selectedCodeRawContent.value = file.content;
-            selectedCodeContent.value = file.renderedContent || '';
+            selectedCodeContent.value = file.renderedDocument || '';
         };
 
         const removeFile = (index, fileList, selectedFileName, selectedFileContent, fileType) => {
@@ -822,6 +831,195 @@ const app = createApp({
             }
         };
 
+        /****************************
+         * 保存、导入、导出标注
+         ****************************/
+        const handleNewTask = async () => {
+            if (annotations.value.length > 0 || docFiles.value.length > 0 || codeFiles.value.length > 0) {
+                try {
+                    await ElMessageBox.confirm('当前有未保存的标注，是否先保存?', '新建任务', {
+                        confirmButtonText: '保存并新建',
+                        cancelButtonText: '不保存',
+                        type: 'warning',
+                        distinguishCancelAndClose: true,
+                        showClose: false
+                    });
+                    // 用户选择保存
+                    handleExportAnnotations();
+                    resetTask();
+                } catch (error) {
+                    if (error === 'cancel') {
+                        // 用户选择不保存
+                        resetTask();
+                    }
+                }
+            } else {
+                resetTask();
+            }
+        };
+
+        const resetTask = () => {
+            annotations.value = [];
+            docFiles.value = [];
+            codeFiles.value = [];
+            selectedDocFile.value = '';
+            selectedCodeFile.value = '';
+            selectedDocContent.value = '';
+            selectedCodeContent.value = '';
+            renderError.value = '';
+            annotationName.value = '';
+            ElMessage.success('已创建新任务');
+        };
+
+        const handleImportAnnotations = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        // 验证数据格式
+                        if (!data.annotations || !data.docFiles || !data.codeFiles) {
+                            throw new Error('无效的标注文件格式');
+                        }
+                        
+                        // 重置当前状态
+                        resetTask();
+                        
+                        // 导入文档文件
+                        for (const fileData of data.docFiles) {
+                            docFiles.value.push(new File(
+                                fileData.name,
+                                fileData.content,
+                                fileData.renderedDocument,
+                                'doc',
+                                fileData.lastModified
+                            ));
+                        }
+                        
+                        // 导入代码文件
+                        for (const fileData of data.codeFiles) {
+                            codeFiles.value.push(new File(
+                                fileData.name,
+                                fileData.content,
+                                fileData.renderedDocument,
+                                'code',
+                                fileData.lastModified
+                            ));
+                        }
+                        
+                        // 导入标注
+                        for (const annoData of data.annotations) {
+                            const annotation = new Annotation();
+                            annotation.id = annoData.id || crypto.randomUUID();
+                            annotation.category = annoData.category;
+                            annotation.updateTime = annoData.updateTime;
+                            
+                            // 导入文档范围
+                            for (const rangeData of annoData.docRanges) {
+                                annotation.docRanges.push(new DocumentRange(
+                                    rangeData.documentId,
+                                    rangeData.start,
+                                    rangeData.end,
+                                    rangeData.content
+                                ));
+                            }
+                            
+                            // 导入代码范围
+                            for (const rangeData of annoData.codeRanges) {
+                                annotation.codeRanges.push(new CodeRange(
+                                    rangeData.documentId,
+                                    rangeData.start,
+                                    rangeData.end,
+                                    rangeData.content
+                                ));
+                            }
+                            
+                            annotations.value.push(annotation);
+                        }
+                        
+                        // 自动选择第一个文档和代码文件
+                        if (docFiles.value.length > 0) {
+                            selectDocFile(docFiles.value[0]);
+                        }
+                        if (codeFiles.value.length > 0) {
+                            selectCodeFile(codeFiles.value[0]);
+                        }
+                        
+                        ElMessage.success('标注导入成功');
+                    } catch (error) {
+                        console.error('导入失败:', error);
+                        ElMessage.error(`导入失败: ${error.message}`);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        };
+
+        const handleExportAnnotations = () => {
+            // 准备导出数据
+            const exportData = {
+                annotations: annotations.value.map(anno => ({
+                    id: anno.id,
+                    category: anno.category,
+                    docRanges: anno.docRanges.map(range => ({
+                        documentId: range.documentId,
+                        start: range.start,
+                        end: range.end,
+                        content: range.content
+                    })),
+                    codeRanges: anno.codeRanges.map(range => ({
+                        documentId: range.documentId,
+                        start: range.start,
+                        end: range.end,
+                        content: range.content
+                    })),
+                    updateTime: anno.updateTime
+                })),
+                docFiles: docFiles.value.map(file => ({
+                    id: file.id,
+                    name: file.name,
+                    content: file.content,
+                    type: file.type,
+                    renderedDocument: file.renderedDocument,
+                    lastModified: file.lastModified
+                })),
+                codeFiles: codeFiles.value.map(file => ({
+                    id: file.id,
+                    name: file.name,
+                    content: file.content,
+                    type: file.type,
+                    renderedDocument: file.renderedDocument,
+                    lastModified: file.lastModified
+                }))
+            };
+            
+            // 创建下载链接
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // 生成文件名：标注项目_当前时间.json
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+            a.download = `标注项目_${dateStr}.json`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            ElMessage.success('标注导出成功');
+        };
+
         // 初始化事件监听
         onMounted(() => {
             const docPanel = document.querySelector('.content-text-doc');
@@ -834,7 +1032,6 @@ const app = createApp({
                 codePanel.addEventListener('mouseup', handleCodeSelection);
             }
         });
-        
 
         return {
             docFiles, codeFiles,
@@ -863,7 +1060,8 @@ const app = createApp({
                 const date = new Date(dateStr);
                 return date.toLocaleString();
             },
-            gotoRange
+            gotoRange,
+            handleNewTask,handleImportAnnotations, handleExportAnnotations,
         };
     }
 });

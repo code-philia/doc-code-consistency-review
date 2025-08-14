@@ -24,6 +24,27 @@
 <div id="app">
     <!-- 顶部菜单栏 -->
     <div class="header">
+        <div class="header-title">
+            <i class="fas fa-code-branch"></i> 
+            <span>  需求-代码一致性标注</span>
+        </div>
+        <div class="button-group">
+            <el-tooltip effect="light" :content="`新建标注任务`" placement="bottom">
+                <button class="header-button" @click="handleNewTask">
+                    <i class="fas fa-file-circle-plus"></i>
+                </button>
+            </el-tooltip>
+            <el-tooltip effect="light" :content="`导入标注`" placement="bottom">
+                <button class="header-button" @click="handleImportAnnotations">
+                    <i class="fas fa-download"></i>
+                </button>
+            </el-tooltip>
+            <el-tooltip effect="light" :content="`导出标注`" placement="bottom">
+                <button class="header-button" @click="handleExportAnnotations">
+                    <i class="fas fa-upload"></i>
+                </button>
+            </el-tooltip>
+        </div>
     </div>
     
     <div class="main-container">

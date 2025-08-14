@@ -46,6 +46,7 @@
     padding: 0 16px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     z-index: 100;
+    justify-content: space-between;
 }
 
 .main-container {
@@ -374,6 +375,33 @@
 
 .el-button-group {
     flex-shrink: 0;
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2px;
+}
+
+.header-button {
+    color:#ffffff;
+    font-size: 16px;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: transparent;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.header-button:hover {
+    background-color: rgba(160, 160, 160, 0.5);
 }
 
 .el-button.custom-button {
