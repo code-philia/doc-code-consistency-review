@@ -44,6 +44,11 @@
                     <i class="fas fa-upload"></i>
                 </button>
             </el-tooltip>
+            <el-tooltip effect="light" :content="`设置`" placement="bottom">
+                <button class="header-button" @click="showSettingsDialog = true">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </el-tooltip>
         </div>
     </div>
     
@@ -321,6 +326,24 @@
     <!-- 隐藏的文件上传输入 -->
     <input type="file" ref="docUpload" style="display: none" accept=".md,.txt,.docx,.doc" @change="handleDocUpload">
     <input type="file" ref="codeUpload" style="display: none" accept=".js,.py,.java,.c,.cpp,.cs,.html,.css" @change="handleCodeUpload">
+    
+    <!-- 设置表单 -->
+    <el-dialog 
+        v-model="showSettingsDialog" 
+        title="设置" 
+        width="500px"
+        :close-on-click-modal="false"
+    >
+        <el-form :model="settingsForm" label-width="100px">
+            <el-form-item label="工作目录">
+                <el-input v-model="settingsForm.workDirectory" placeholder="请输入工作目录（例如：C:/myproject/）"></el-input>
+            </el-form-item>
+        </el-form>
+        <template #footer>
+            <el-button @click="showSettingsDialog = false">取消</el-button>
+            <el-button type="primary" @click="saveSettings">保存</el-button>
+        </template>
+    </el-dialog>
 </div>
 
 <script type="module" src="/static/js/annotation.js"></script>

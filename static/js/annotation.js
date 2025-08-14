@@ -47,6 +47,14 @@ function splitLines(text, emptyLastLine = false) {
   return result;
 }
 
+function normalizePath(path) {
+    if (path.includes('\\')) {
+        return path.replace(/\//g, '\\').replace(/\\+$/, '') + '\\';
+    } else {
+        return path.replace(/\\/g, '/').replace(/\/+$/, '') + '/';
+    }
+}
+
 /****************************
  * Markdown Rendering with Position Attributes
  ****************************/
@@ -324,13 +332,14 @@ class CodeRange {
 }
 
 class File {
-    constructor(name, content, renderedDocument, type, lastModified = new Date().toISOString()) {
+    constructor(name, content, renderedDocument, type, localPath, lastModified = new Date().toISOString()) {
         this.id = crypto.randomUUID();
         this.name = name;
         this.content = content;
         this.renderedDocument = renderedDocument || '';
         this.type = type; // doc or code
         this.lastModified = lastModified;
+        this.localPath = localPath;
     }
 }
 
@@ -541,6 +550,28 @@ const app = createApp({
         const editingAnnotation = ref(false);
         const annotationName = ref('');
 
+        const showSettingsDialog = ref(false);
+        const settingsForm = ref({
+            workDirectory: ''
+        });
+
+        const saveSettings = () => {
+            // 规范化路径
+            if (settingsForm.value.workDirectory) {
+                settingsForm.value.workDirectory = normalizePath(settingsForm.value.workDirectory);
+            }            
+            showSettingsDialog.value = false;
+            ElMessage.success('设置已保存');
+        };
+
+        function getPathSeparator() {
+            // 根据路径特征判断系统类型
+            if (settingsForm.value.workDirectory && settingsForm.value.workDirectory.includes('\\')) {
+                return '\\'; // Windows
+            }
+            return '/'; // Unix/Mac (默认)
+        }
+
         /***********************
          * 增删和选择文件
          ***********************/
@@ -551,6 +582,11 @@ const app = createApp({
             const file = event.target.files[0];
             if (!file) return;
 
+            const workDir = settingsForm.value.workDirectory || '';
+            
+            const separator = getPathSeparator();
+            const localPath = workDir ? `${workDir}${separator}${file.name}` : file.name;
+            
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const rawContent = e.target.result;
@@ -568,7 +604,7 @@ const app = createApp({
                     console.error(e);
                 }
 
-                const newFile = new File(file.name, content, renderedDocument, fileType, new Date(file.lastModified).toISOString());
+                const newFile = new File(file.name, content, renderedDocument, fileType, localPath, new Date(file.lastModified).toISOString());
                 
                 fileList.value.push(newFile);
                 event.target.value = '';
@@ -875,6 +911,7 @@ const app = createApp({
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
+
             input.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -899,6 +936,7 @@ const app = createApp({
                                 fileData.content,
                                 fileData.renderedDocument,
                                 'doc',
+                                fileData.localPath || fileData.name,
                                 fileData.lastModified
                             ));
                         }
@@ -910,6 +948,7 @@ const app = createApp({
                                 fileData.content,
                                 fileData.renderedDocument,
                                 'code',
+                                fileData.localPath || fileData.name,
                                 fileData.lastModified
                             ));
                         }
@@ -973,7 +1012,7 @@ const app = createApp({
                         documentId: range.documentId,
                         start: range.start,
                         end: range.end,
-                        content: range.content
+                        content: range.content,
                     })),
                     codeRanges: anno.codeRanges.map(range => ({
                         documentId: range.documentId,
@@ -989,7 +1028,8 @@ const app = createApp({
                     content: file.content,
                     type: file.type,
                     renderedDocument: file.renderedDocument,
-                    lastModified: file.lastModified
+                    lastModified: file.lastModified,
+                    localPath: file.localPath
                 })),
                 codeFiles: codeFiles.value.map(file => ({
                     id: file.id,
@@ -997,7 +1037,8 @@ const app = createApp({
                     content: file.content,
                     type: file.type,
                     renderedDocument: file.renderedDocument,
-                    lastModified: file.lastModified
+                    lastModified: file.lastModified,
+                    localPath: file.localPath
                 }))
             };
             
@@ -1007,10 +1048,13 @@ const app = createApp({
             const a = document.createElement('a');
             a.href = url;
             
+            
+
             // 生成文件名：标注项目_当前时间.json
+            let defaultFilename = '标注项目';
             const now = new Date();
             const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
-            a.download = `标注项目_${dateStr}.json`;
+            a.download = `${defaultFilename}_${dateStr}.json`;
             
             document.body.appendChild(a);
             a.click();
@@ -1034,6 +1078,7 @@ const app = createApp({
         });
 
         return {
+            showSettingsDialog, settingsForm, saveSettings,
             docFiles, codeFiles,
             selectedDocFile, selectedCodeFile,
             selectedDocContent, selectedCodeContent,
