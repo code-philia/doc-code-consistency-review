@@ -294,23 +294,31 @@ function calculateCodeLineOffsets(codeContent) {
 }
 
 function formatCodeWithLineNumbers(codeContent) {
-    if (!codeContent) return '';
+    const textLines = splitLines(codeContent, true);
 
-    // 计算每行的偏移量
-    const lineOffsets = calculateCodeLineOffsets(codeContent);
-    const textLines = codeContent.split(/\r?\n/);
+    let innerHTML = '';
+    let offset = 0;
+    const createWrapperSpan = (line) => {
+        line = line.match(/.*?(\r|\r?\n|$)/)?.[0] ?? '';
 
-    return textLines.map((line, idx) => {
-        // 获取当前行的偏移量
-        const offset = lineOffsets[idx] || { start: 0, end: 0 };
+        const wrapperCode = document.createElement('code');   // FIXME line number of more than 3 digits will not be in good style
+        wrapperCode.className = 'annotation-skip';
 
-        return `
-            <div class="code-line" parse-start="${offset.start}" parse-end="${offset.end}">
-                <span class="line-number">${String(idx + 1).padStart(3, ' ')}</span>
-                <span class="code-content">${line}</span>
-            </div>
-        `;
-    }).join('');
+        const wrapperSpan = document.createElement('span');
+        wrapperSpan.className = 'parse-wrapper-span';
+        wrapperSpan.setAttribute('parse-start', `${offset}`);
+        wrapperSpan.setAttribute('parse-end', `${offset += line.length}`);
+        wrapperSpan.textContent = line;
+
+        wrapperCode.appendChild(wrapperSpan);
+        innerHTML += wrapperCode.outerHTML;
+
+        wrapperSpan.remove();
+    }
+
+    textLines.forEach(createWrapperSpan);
+
+    return innerHTML;
 }
 
 /****************************
@@ -384,7 +392,7 @@ export function findOffsetFromPosition(container, offset, rootElement, reduce = 
             const i = parseInt(parseStart);
             const j = parseInt(parseEnd);
             if (!Number.isNaN(i) && !Number.isNaN(j)) {
-                // reduce to the start or end of math element
+                // TODO: reduce to the start or end of math element
                 if (node.classList.contains('parse-math')) {
                     if (reduce === 'start') {
                         return i;
@@ -402,8 +410,7 @@ export function findOffsetFromPosition(container, offset, rootElement, reduce = 
 
                 // NOTE e.g., <td> parse-start will start from '| xxx' in source document, and similarly there are other elements that text content starts at different offset
                 // NOTE do not use getTextContentBytesLength here because it is the length as string in sourceDocument
-                // WARNING: don't know why node.textContent has 12 space more than the container text  
-                return _offset === null ? null : j - ((node.textContent?.length - 12 ?? 0) - _offset);
+                return _offset === null ? null : j - ((node.textContent?.length ?? 0) - _offset);
             }
         }
 
@@ -751,19 +758,17 @@ const app = createApp({
             }
 
             const range = selection.getRangeAt(0);
-            const docPanel = document.querySelector('.content-text-doc');
+            const editorDiv = document.querySelector('.content-text-doc');
 
-            if (docPanel) {
-                const [start, end] = getSourceDocumentRange(docPanel, range);
-                if (start !== 0 || end !== 0) {
-                    const rawContent = getSourceDocumentContent(start, end, selectedDocRawContent.value);
-
+            if (editorDiv && editorDiv instanceof HTMLElement) {
+                const [start, end] = getSourceDocumentRange(editorDiv, range);
+                if (end - start > 0) {
                     currentSelection.value = {
                         type: 'doc',
                         documentId: selectedDocFile.value,
                         start,
                         end,
-                        content: rawContent
+                        content: selectedDocRawContent.value.slice(start, end)
                     };
                     showAnnotationDialog.value = true;
                 }
