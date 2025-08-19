@@ -70,9 +70,10 @@
                                 <span>需求文档</span>
                                 <span class="file-count"> (${docFiles.length})</span>
                             </div>
-                            <div class="category-actions">
-                                <el-button type="primary" size="small" plain @click="triggerDocUpload">上传</el-button>
-                            </div>
+                            <el-button-group>
+                                <el-button type="primary" size="small" link @click="triggerDocUpload">文件</el-button>
+                                <el-button type="primary" size="small" link @click="triggerDocFolderUpload">目录</el-button>
+                            </el-button-group>
                         </div>
                         <div class="file-items">
                             <div v-if="docFiles.length === 0" class="file-item empty-item">
@@ -100,9 +101,10 @@
                                 <span>代码文件</span>
                                 <span class="file-count"> (${codeFiles.length})</span>
                             </div>
-                            <div class="category-actions">
-                                <el-button type="primary" size="small" plain @click="triggerCodeUpload">上传</el-button>
-                            </div>
+                            <el-button-group>
+                                <el-button type="primary" size="small" link @click="triggerCodeUpload">文件</el-button>
+                                <el-button type="primary" size="small" link @click="triggerCodeFolderUpload">目录</el-button>
+                            </el-button-group>
                         </div>
                         <div class="file-items">
                             <div v-if="codeFiles.length === 0" class="file-item empty-item">
@@ -325,8 +327,10 @@
     
     <!-- 隐藏的文件上传输入 -->
     <input type="file" ref="docUpload" style="display: none" accept=".md,.txt,.docx,.doc" @change="handleDocUpload">
-    <input type="file" ref="codeUpload" style="display: none" accept=".js,.py,.java,.c,.cpp,.cs,.html,.css" @change="handleCodeUpload">
-    
+    <input type="file" ref="codeUpload" style="display: none" accept=".js,.py,.java,.c,.cpp,.h,.cs,.html,.css" @change="handleCodeUpload">
+    <input type="file" ref="docFolderUpload" @change="handleDocFolderUpload" webkitdirectory multiple style="display: none;">
+    <input type="file" ref="codeFolderUpload" @change="handleCodeFolderUpload" webkitdirectory multiple style="display: none;">
+
     <!-- 设置表单 -->
     <el-dialog 
         v-model="showSettingsDialog" 

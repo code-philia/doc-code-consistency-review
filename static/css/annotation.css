@@ -338,11 +338,6 @@
     gap:10px;
 }
 
-.category-actions {
-    display: flex;
-    gap: 3px;
-}
-
 .file-info {
     flex: 1;
     display: flex;
@@ -371,10 +366,6 @@
     text-overflow: ellipsis;
     min-width: 0; /* 这个很重要，确保flex容器能正确计算溢出 */
     max-width: 30%;
-}
-
-.el-button-group {
-    flex-shrink: 0;
 }
 
 .button-group {

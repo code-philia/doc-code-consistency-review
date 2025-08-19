@@ -48,11 +48,24 @@ function splitLines(text, emptyLastLine = false) {
 }
 
 function normalizePath(path) {
-    if (path.includes('\\')) {
-        return path.replace(/\//g, '\\').replace(/\\+$/, '') + '\\';
-    } else {
-        return path.replace(/\\/g, '/').replace(/\/+$/, '') + '/';
+    if (!path) return '';
+    
+    // 检测路径中的分隔符
+    const isWindowsPath = path.includes('\\');
+    const separator = isWindowsPath ? '\\' : '/';
+    
+    // 规范化路径
+    return path
+        .replace(/[\\/]+/g, separator)  // 替换多个连续分隔符
+        .replace(/[\\/]$/, '') + separator; // 确保以分隔符结尾
+}
+
+function getPathSeparator() {
+    if (settingsForm.value.workDirectory && 
+        settingsForm.value.workDirectory.includes('\\')) {
+        return '\\'; // Windows
     }
+    return '/'; // Unix/Mac (默认)
 }
 
 /****************************
@@ -535,12 +548,14 @@ const app = createApp({
         const selectedCodeFile = ref('');
         const selectedDocRawContent = ref('');
         const selectedCodeRawContent = ref('');
-        const selectedDocContent = ref(''); // 渲染后的内容
-        const selectedCodeContent = ref(''); // 渲染后的内容
+        const selectedDocContent = ref('');
+        const selectedCodeContent = ref('');
         const renderError = ref('');
 
         const docUpload = ref(null);
         const codeUpload = ref(null);
+        const docFolderUpload = ref(null);
+        const codeFolderUpload = ref(null);
 
         const annotations = ref([]);
         const currentSelection = ref(null);
@@ -575,53 +590,149 @@ const app = createApp({
         /***********************
          * 增删和选择文件
          ***********************/
-        const triggerDocUpload = () => docUpload.value.click();
-        const triggerCodeUpload = () => codeUpload.value.click();
-
+        // 上传文件（单个文件或从文件夹）
         const handleFileUpload = (event, fileList, fileType) => {
-            const file = event.target.files[0];
-            if (!file) return;
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
 
             const workDir = settingsForm.value.workDirectory || '';
-            
             const separator = getPathSeparator();
-            const localPath = workDir ? `${workDir}${separator}${file.name}` : file.name;
             
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const rawContent = e.target.result;
-                const content = regularizeFileContent(rawContent, fileType);
-                let renderedDocument = '';
-                try {
-                    if (fileType === 'doc') {
-                        renderedDocument = await renderMarkdown(content);
-                    } else if (fileType === 'code') {
-                        renderedDocument = formatCodeWithLineNumbers(content);
-                    }
-                } catch (e) {
-                    renderError.value = e.message;
-                    renderedDocument = '<div class="render-error">渲染失败，请检查源文件格式。</div>';
-                    console.error(e);
-                }
-
-                const newFile = new File(file.name, content, renderedDocument, fileType, localPath, new Date(file.lastModified).toISOString());
+            files.forEach(file => {
+                const localPath = workDir ? `${workDir}${separator}${file.name}` : file.name;
                 
-                fileList.value.push(newFile);
-                event.target.value = '';
-                ElMessage.success(`${fileType} "${file.name}" 上传成功`);
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const rawContent = e.target.result;
+                    const content = regularizeFileContent(rawContent, fileType);
+                    let renderedDocument = '';
+                    try {
+                        if (fileType === 'doc') {
+                            renderedDocument = await renderMarkdown(content);
+                        } else if (fileType === 'code') {
+                            renderedDocument = formatCodeWithLineNumbers(content);
+                        }
+                    } catch (e) {
+                        renderError.value = e.message;
+                        renderedDocument = '<div class="render-error">渲染失败，请检查源文件格式。</div>';
+                        console.error(e);
+                    }
 
-                if (fileType === 'doc') {
-                    selectDocFile(newFile);
-                } else {
-                    selectCodeFile(newFile);
-                }
-            };
-            reader.readAsText(file);
+                    const newFile = new File(
+                        file.name, 
+                        content, 
+                        renderedDocument, 
+                        fileType, 
+                        localPath, 
+                        new Date(file.lastModified).toISOString()
+                    );
+                    
+                    fileList.value.push(newFile);
+                    event.target.value = '';
+                    ElMessage.success(`${fileType === 'doc' ? '文档' : '代码'} "${file.name}" 上传成功`);
+
+                    if (fileType === 'doc') {
+                        selectDocFile(newFile);
+                    } else {
+                        selectCodeFile(newFile);
+                    }
+                };
+                reader.readAsText(file);
+            });
         };
-        
+        const handleFolderUpload = async (event, fileList, fileType, validExtensions) => {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+
+            const workDir = settingsForm.value.workDirectory || '';
+            const separator = getPathSeparator();
+            
+            // 过滤有效文件
+            const validFiles = files.filter(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                return validExtensions.includes(ext);
+            });
+
+            if (validFiles.length === 0) {
+                ElMessage.warning(`没有找到有效的${fileType === 'doc' ? '文档' : '代码'}文件`);
+                return;
+            }
+
+            // 批量处理文件
+            for (const file of validFiles) {
+                const localPath = workDir ? `${workDir}${separator}${file.name}` : file.name;
+                
+                await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const rawContent = e.target.result;
+                        const content = regularizeFileContent(rawContent, fileType);
+                        let renderedDocument = '';
+                        
+                        try {
+                            if (fileType === 'doc') {
+                                renderedDocument = await renderMarkdown(content);
+                            } else if (fileType === 'code') {
+                                renderedDocument = formatCodeWithLineNumbers(content);
+                            }
+                        } catch (e) {
+                            renderError.value = e.message;
+                            renderedDocument = '<div class="render-error">渲染失败，请检查源文件格式。</div>';
+                            console.error(e);
+                        }
+
+                        const newFile = new File(
+                            file.name, 
+                            content, 
+                            renderedDocument, 
+                            fileType, 
+                            localPath, 
+                            new Date(file.lastModified).toISOString()
+                        );
+                        
+                        fileList.value.push(newFile);
+                        resolve();
+                    };
+                    reader.readAsText(file);
+                });
+            }
+
+            event.target.value = '';
+            ElMessage.success(`已上传 ${validFiles.length} 个${fileType === 'doc' ? '文档' : '代码'}文件`);
+            
+            // 自动选择第一个文件
+            if (fileType === 'doc' && fileList.value.length > 0) {
+                selectDocFile(fileList.value[0]);
+            } else if (fileType === 'code' && fileList.value.length > 0) {
+                selectCodeFile(fileList.value[0]);
+            }
+        };
+
         const handleDocUpload = (event) => handleFileUpload(event, docFiles, 'doc');
         const handleCodeUpload = (event) => handleFileUpload(event, codeFiles, 'code');
-        
+        const handleDocFolderUpload = (event) => {
+            handleFolderUpload(
+                event, 
+                docFiles, 
+                'doc', 
+                ['doc', 'docx', 'md', 'txt'] // 支持的文档扩展名
+            );
+        };
+        const handleCodeFolderUpload = (event) => {
+            handleFolderUpload(
+                event, 
+                codeFiles, 
+                'code', 
+                ['c', 'cpp', 'h','js','py','java','html','css' ] // 支持的代码扩展名
+            );
+        };
+
+        const triggerDocUpload = () => docUpload.value.click();
+        const triggerCodeUpload = () => codeUpload.value.click();
+        const triggerDocFolderUpload = () => docFolderUpload.value.click();
+        const triggerCodeFolderUpload = () => codeFolderUpload.value.click();
+
+        // 选择文件
         const selectDocFile = (file) => {
             selectedDocFile.value = file.name;
             selectedDocRawContent.value = file.content;
@@ -634,6 +745,7 @@ const app = createApp({
             selectedCodeContent.value = file.renderedDocument || '';
         };
 
+        // 删除文件
         const removeFile = (index, fileList, selectedFileName, selectedFileContent, fileType) => {
             const fileName = fileList.value[index].name;
             ElMessageBox.confirm(`确定要删除${fileType} "${fileName}" 吗?`, '确认删除', {
@@ -835,7 +947,6 @@ const app = createApp({
         /***********************
          * 滚动定位方法
          ***********************/
-        
         // 跳转到标注范围
         const gotoRange = (range, type) => {
             if (type === 'doc') {
@@ -1083,6 +1194,12 @@ const app = createApp({
             selectedDocFile, selectedCodeFile,
             selectedDocContent, selectedCodeContent,
             renderError,
+            docFolderUpload,
+            codeFolderUpload,
+            triggerDocFolderUpload,
+            triggerCodeFolderUpload,
+            handleDocFolderUpload,
+            handleCodeFolderUpload,
             docUpload, codeUpload,
             triggerDocUpload, triggerCodeUpload,
             handleDocUpload, handleCodeUpload,
