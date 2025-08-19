@@ -1,17 +1,17 @@
 // Import libraries as ES Modules
-import {unified} from 'https://esm.sh/unified@11.0.4';
+import { unified } from 'https://esm.sh/unified@11.0.4';
 import remarkParse from 'https://esm.sh/remark-parse@11.0.0';
 import remarkGfm from 'https://esm.sh/remark-gfm@4.0.0';
 import remarkMath from 'https://esm.sh/remark-math@6.0.0';
 import remarkRehype from 'https://esm.sh/remark-rehype@11.1.0';
 import rehypeKatex from 'https://esm.sh/rehype-katex@7.0.0';
 import rehypeStringify from 'https://esm.sh/rehype-stringify@10.0.0';
-import {trimLines} from 'https://esm.sh/trim-lines@3.0.1';
+import { trimLines } from 'https://esm.sh/trim-lines@3.0.1';
 
 /****************************
  * 全局状态与配置
  ****************************/
-const { createApp, ref , onMounted, nextTick} = Vue;
+const { createApp, ref, onMounted, nextTick } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 
 /****************************
@@ -25,8 +25,8 @@ function regularizeFileContent(content, type) {
     content = content.replace(/\u200b/g, '');
 
     if (type === 'doc') {
-      // Split contiguous inline math `$math1$$math2$`
-      content = content.replace(/(?<=\S)\$\$(?=\S)/g, '$ $');
+        // Split contiguous inline math `$math1$$math2$`
+        content = content.replace(/(?<=\S)\$\$(?=\S)/g, '$ $');
     }
     return content;
 }
@@ -44,16 +44,16 @@ function splitLines(text, emptyLastLine = false) {
         result.push(lastLine.slice(0, -1));
     }
 
-  return result;
+    return result;
 }
 
 function normalizePath(path) {
     if (!path) return '';
-    
+
     // 检测路径中的分隔符
     const isWindowsPath = path.includes('\\');
     const separator = isWindowsPath ? '\\' : '/';
-    
+
     // 规范化路径
     return path
         .replace(/[\\/]+/g, separator)  // 替换多个连续分隔符
@@ -61,7 +61,7 @@ function normalizePath(path) {
 }
 
 function getPathSeparator() {
-    if (settingsForm.value.workDirectory && 
+    if (settingsForm.value.workDirectory &&
         settingsForm.value.workDirectory.includes('\\')) {
         return '\\'; // Windows
     }
@@ -77,23 +77,23 @@ function getPathSeparator() {
  * @param {string | function} tag - The HTML tag name or a function that returns it.
  */
 function wrapHandler(tag) {
-  return (state, node) => {
-    const tagName = typeof tag === 'function' ? tag(node) : tag;
-    const element = {
-      type: 'element',
-      tagName,
-      properties: {},
-      children: state.all(node)
+    return (state, node) => {
+        const tagName = typeof tag === 'function' ? tag(node) : tag;
+        const element = {
+            type: 'element',
+            tagName,
+            properties: {},
+            children: state.all(node)
+        };
+
+        if (node.position) {
+            element.properties['parse-start'] = node.position.start.offset;
+            element.properties['parse-end'] = node.position.end.offset;
+        }
+
+        state.patch(node, element);
+        return state.applyData(node, element);
     };
-
-    if (node.position) {
-      element.properties['parse-start'] = node.position.start.offset;
-      element.properties['parse-end'] = node.position.end.offset;
-    }
-
-    state.patch(node, element);
-    return state.applyData(node, element);
-  };
 }
 
 /**
@@ -129,8 +129,8 @@ function codeHandler(state, node) {
         type: 'element',
         tagName: 'span',
         properties: {
-             'parse-start': node.position.start.offset + 3 + (node.lang || '').length,
-             'parse-end': node.position.end.offset - 3
+            'parse-start': node.position.start.offset + 3 + (node.lang || '').length,
+            'parse-end': node.position.end.offset - 3
         },
         children: [{ type: 'text', value }]
     };
@@ -143,7 +143,7 @@ function codeHandler(state, node) {
     if (lang && window.hljs.getLanguage(lang)) {
         properties.className = ['language-' + lang];
     }
-    
+
     const codeElement = {
         type: 'element',
         tagName: 'code',
@@ -155,7 +155,7 @@ function codeHandler(state, node) {
         codeElement.data = { meta: node.meta };
     }
     state.patch(node, codeElement);
-    
+
     // Wrap in <pre>
     const preElement = {
         type: 'element',
@@ -206,16 +206,16 @@ function defaultUnknownHandler(state, node) {
     const data = node.data || {};
     const result =
         'value' in node && !(data.hProperties || data.hChildren) ?
-        { type: 'text', value: node.value } :
-        {
-            type: 'element',
-            tagName: 'div',
-            properties: {
-                'parse-start': node.position.start.offset,
-                'parse-end': node.position.end.offset
-            },
-            children: state.all(node)
-        };
+            { type: 'text', value: node.value } :
+            {
+                type: 'element',
+                tagName: 'div',
+                properties: {
+                    'parse-start': node.position.start.offset,
+                    'parse-end': node.position.end.offset
+                },
+                children: state.all(node)
+            };
     state.patch(node, result);
     return state.applyData(node, result);
 }
@@ -271,39 +271,39 @@ async function renderMarkdown(content) {
 function calculateCodeLineOffsets(codeContent) {
     const lineOffsets = [];
     if (!codeContent) return lineOffsets;
-    
+
     let start = 0;
     let end = 0;
     const lines = codeContent.split(/\r?\n/);
-    
+
     for (let i = 0; i < lines.length; i++) {
         // 当前行的长度（包括换行符）
         const lineLength = lines[i].length + 1;
         end = start + lineLength;
-        
+
         // 记录当前行的起始和结束位置
         lineOffsets.push({
             start: start,
             end: i === lines.length - 1 ? end - 1 : end // 最后一行不包含换行符
         });
-        
+
         start = end;
     }
-    
+
     return lineOffsets;
 }
 
 function formatCodeWithLineNumbers(codeContent) {
     if (!codeContent) return '';
-    
+
     // 计算每行的偏移量
     const lineOffsets = calculateCodeLineOffsets(codeContent);
     const textLines = codeContent.split(/\r?\n/);
-    
+
     return textLines.map((line, idx) => {
         // 获取当前行的偏移量
         const offset = lineOffsets[idx] || { start: 0, end: 0 };
-        
+
         return `
             <div class="code-line" parse-start="${offset.start}" parse-end="${offset.end}">
                 <span class="line-number">${String(idx + 1).padStart(3, ' ')}</span>
@@ -360,121 +360,95 @@ class File {
  * 标注工具函数
  ****************************/
 
-// 查找带有位置属性的祖先元素
-function findPositionElement(node, rootElement) {
-    while (node && node !== rootElement) {
-        if (node.nodeType === 1 && 
-            node.hasAttribute('parse-start') && 
-            node.hasAttribute('parse-end')) {
-            return node;
-        }
-        node = node.parentNode;
-    }
-    return null;
-}
-
 // 计算在元素内的文本偏移量
-function getCaretCharacterOffsetWithin(container, offset, element) {
-    if (container === element) {
-        return offset;
-    }
-    
-    let totalOffset = 0;
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-    let currentNode;
-    
-    while ((currentNode = walker.nextNode())) {
-        if (currentNode === container) {
-            return totalOffset + offset;
-        }
-        totalOffset += currentNode.textContent.length;
-    }
-    return totalOffset;
+export function getCaretCharacterOffsetWithin(container, offset, element) {
+    let caretOffset = null;
+    const preCaretRange = new Range();
+    preCaretRange.selectNodeContents(element);
+    preCaretRange.setEnd(container, offset);
+    caretOffset = preCaretRange.toString().length;
+    return caretOffset;
 }
 
 // 计算在原始文档中的偏移量
-function findOffsetFromPosition(container, offset, rootElement, reduce) {
+export function findOffsetFromPosition(container, offset, rootElement, reduce = null) {
     let node = container;
-    
-    // 向上查找带有位置属性的元素
-    while (node && node !== rootElement) {
-        if (node.nodeType === 1 && 
-            node.hasAttribute('parse-start') && 
-            node.hasAttribute('parse-end')) {
-            
-            const parseStart = parseInt(node.getAttribute('parse-start'));
-            const parseEnd = parseInt(node.getAttribute('parse-end'));
-            
-            if (!isNaN(parseStart) && !isNaN(parseEnd)) {
-                // 特殊处理数学公式
-                if (node.classList.contains('math-inline') || node.classList.contains('math-block')) {
-                    if (reduce === 'start') return parseStart;
-                    if (reduce === 'end') return parseEnd;
+    for (; node; node = node.parentNode) {
+        let parseStart;
+        let parseEnd;  // NOTE We use this because <td> parse-start will start from '| xxx' in source document
+        if (
+            node instanceof HTMLElement
+            && (parseStart = node.getAttribute('parse-start')) !== null
+            && (parseEnd = node.getAttribute('parse-end')) !== null
+        ) {
+            const i = parseInt(parseStart);
+            const j = parseInt(parseEnd);
+            if (!Number.isNaN(i) && !Number.isNaN(j)) {
+                // reduce to the start or end of math element
+                if (node.classList.contains('parse-math')) {
+                    if (reduce === 'start') {
+                        return i;
+                    }
+                    if (reduce === 'end') {
+                        return j;
+                    }
                 }
-                
-                // 计算在元素内的偏移量
-                const elementOffset = getCaretCharacterOffsetWithin(container, offset, node);
-                return parseStart + elementOffset;
+
+                // container: contain the text
+                // offset: the offset in the text
+                // node: the node that contains the parse-start and parse-end attributes
+                const _offset = getCaretCharacterOffsetWithin(container, offset, node);
+                if (_offset === 0) return i;
+
+                // NOTE e.g., <td> parse-start will start from '| xxx' in source document, and similarly there are other elements that text content starts at different offset
+                // NOTE do not use getTextContentBytesLength here because it is the length as string in sourceDocument
+                // WARNING: don't know why node.textContent has 12 space more than the container text  
+                return _offset === null ? null : j - ((node.textContent?.length - 12 ?? 0) - _offset);
             }
         }
-        node = node.parentNode;
+
+        if (node === rootElement) {
+            const _offset = getCaretCharacterOffsetWithin(container, offset, rootElement);
+            return _offset;
+        }
     }
-    
+
     return null;
 }
 
 // 获取原始文档中的范围
 function getSourceDocumentRange(rootElement, range) {
-    const limitedRange = document.createRange();
+    const limitedRange = new Range();
     limitedRange.setStartBefore(rootElement);
     limitedRange.setEndAfter(rootElement);
-    
+
     const comp = (i) => range.compareBoundaryPoints(i, limitedRange);
-    
+
     if (
-        comp(Range.END_TO_START) >= 0 ||  // range start is behind element's end
-        comp(Range.START_TO_END) <= 0     // range end is before element's start
+        comp(Range.END_TO_START) >= 0       // range start is behind element's end
+        || comp(Range.START_TO_END) <= 0    // range end is before element's start
     ) {
         return [0, 0];
     }
-    
-    if (comp(Range.START_TO_START) > 0) {
+
+    if (comp(Range.START_TO_START) > 0) { // range start is behind element start
         limitedRange.setStart(range.startContainer, range.startOffset);
     }
-    
-    if (comp(Range.END_TO_END) < 0) {
+
+    if (comp(Range.END_TO_END) < 0) {     // range end is before element end
         limitedRange.setEnd(range.endContainer, range.endOffset);
     }
-    
-    const startOffset = findOffsetFromPosition(
-        limitedRange.startContainer, 
-        limitedRange.startOffset, 
-        rootElement, 
-        'start'
-    );
-    
-    const endOffset = findOffsetFromPosition(
-        limitedRange.endContainer, 
-        limitedRange.endOffset, 
-        rootElement, 
-        'end'
-    );
-    
+
+    console.log(limitedRange.startContainer, limitedRange.startOffset, limitedRange.endContainer, limitedRange.endOffset);
+
+    const startOffset = findOffsetFromPosition(limitedRange.startContainer, limitedRange.startOffset, rootElement, 'start');
+    const endOffset = findOffsetFromPosition(limitedRange.endContainer, limitedRange.endOffset, rootElement, 'end');
+
     if (startOffset === null || endOffset === null) {
         return [0, 0];
     }
-    
-    return [startOffset, endOffset];
-}
 
-// 获取原始文档内容
-function getSourceDocumentContent(start, end, rawContent) {
-    if (start < 0 || end < 0 || start >= rawContent.length || end >= rawContent.length || start > end) {
-        return '';
-    }
-    
-    // 获取原始内容的子字符串
-    return rawContent.substring(start, end + 1);
+    return [startOffset, endOffset];
 }
 
 /****************************
@@ -485,17 +459,17 @@ function getSourceDocumentContent(start, end, rawContent) {
 function scrollDocToOffset(offset) {
     const docPanel = document.querySelector('.content-text-doc');
     if (!docPanel) return;
-    
+
     // 查找包含偏移量的元素
     const elements = docPanel.querySelectorAll('[parse-start][parse-end]');
     for (const el of elements) {
         const start = parseInt(el.getAttribute('parse-start'));
         const end = parseInt(el.getAttribute('parse-end'));
-        
+
         if (offset >= start && offset <= end) {
             // 滚动到元素位置
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
+
             // 高亮显示
             const originalBg = el.style.backgroundColor;
             el.style.backgroundColor = 'rgba(255,255,0,0.3)';
@@ -511,18 +485,18 @@ function scrollDocToOffset(offset) {
 function scrollCodeToOffset(offset) {
     const codePanel = document.querySelector('.content-text-code');
     if (!codePanel) return;
-    
+
     // 查找包含偏移量的代码行
     const lines = codePanel.querySelectorAll('.code-line');
     for (const line of lines) {
         const start = parseInt(line.getAttribute('parse-start'));
         const end = parseInt(line.getAttribute('parse-end'));
-        
+
         if (offset >= start && offset <= end) {
             console.log("scroll to", start, end);
             // 滚动到代码行位置
             line.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
+
             // 高亮显示
             const originalBg = line.style.backgroundColor;
             line.style.backgroundColor = 'rgba(255,255,0,0.3)';
@@ -558,8 +532,8 @@ const app = createApp({
         const codeFolderUpload = ref(null);
 
         const annotations = ref([]);
-        const currentSelection = ref(null);
         const showAnnotationDialog = ref(false);
+        const currentSelection = ref(null);
         const newAnnotation = ref(new Annotation());
         const selectedAnnotation = ref(null);
         const editingAnnotation = ref(false);
@@ -574,7 +548,7 @@ const app = createApp({
             // 规范化路径
             if (settingsForm.value.workDirectory) {
                 settingsForm.value.workDirectory = normalizePath(settingsForm.value.workDirectory);
-            }            
+            }
             showSettingsDialog.value = false;
             ElMessage.success('设置已保存');
         };
@@ -597,10 +571,10 @@ const app = createApp({
 
             const workDir = settingsForm.value.workDirectory || '';
             const separator = getPathSeparator();
-            
+
             files.forEach(file => {
                 const localPath = workDir ? `${workDir}${separator}${file.name}` : file.name;
-                
+
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     const rawContent = e.target.result;
@@ -619,14 +593,14 @@ const app = createApp({
                     }
 
                     const newFile = new File(
-                        file.name, 
-                        content, 
-                        renderedDocument, 
-                        fileType, 
-                        localPath, 
+                        file.name,
+                        content,
+                        renderedDocument,
+                        fileType,
+                        localPath,
                         new Date(file.lastModified).toISOString()
                     );
-                    
+
                     fileList.value.push(newFile);
                     event.target.value = '';
                     ElMessage.success(`${fileType === 'doc' ? '文档' : '代码'} "${file.name}" 上传成功`);
@@ -646,7 +620,7 @@ const app = createApp({
 
             const workDir = settingsForm.value.workDirectory || '';
             const separator = getPathSeparator();
-            
+
             // 过滤有效文件
             const validFiles = files.filter(file => {
                 const ext = file.name.split('.').pop().toLowerCase();
@@ -661,14 +635,14 @@ const app = createApp({
             // 批量处理文件
             for (const file of validFiles) {
                 const localPath = workDir ? `${workDir}${separator}${file.name}` : file.name;
-                
+
                 await new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         const rawContent = e.target.result;
                         const content = regularizeFileContent(rawContent, fileType);
                         let renderedDocument = '';
-                        
+
                         try {
                             if (fileType === 'doc') {
                                 renderedDocument = await renderMarkdown(content);
@@ -682,14 +656,14 @@ const app = createApp({
                         }
 
                         const newFile = new File(
-                            file.name, 
-                            content, 
-                            renderedDocument, 
-                            fileType, 
-                            localPath, 
+                            file.name,
+                            content,
+                            renderedDocument,
+                            fileType,
+                            localPath,
                             new Date(file.lastModified).toISOString()
                         );
-                        
+
                         fileList.value.push(newFile);
                         resolve();
                     };
@@ -699,7 +673,7 @@ const app = createApp({
 
             event.target.value = '';
             ElMessage.success(`已上传 ${validFiles.length} 个${fileType === 'doc' ? '文档' : '代码'}文件`);
-            
+
             // 自动选择第一个文件
             if (fileType === 'doc' && fileList.value.length > 0) {
                 selectDocFile(fileList.value[0]);
@@ -712,18 +686,18 @@ const app = createApp({
         const handleCodeUpload = (event) => handleFileUpload(event, codeFiles, 'code');
         const handleDocFolderUpload = (event) => {
             handleFolderUpload(
-                event, 
-                docFiles, 
-                'doc', 
+                event,
+                docFiles,
+                'doc',
                 ['doc', 'docx', 'md', 'txt'] // 支持的文档扩展名
             );
         };
         const handleCodeFolderUpload = (event) => {
             handleFolderUpload(
-                event, 
-                codeFiles, 
-                'code', 
-                ['c', 'cpp', 'h','js','py','java','html','css' ] // 支持的代码扩展名
+                event,
+                codeFiles,
+                'code',
+                ['c', 'cpp', 'h', 'js', 'py', 'java', 'html', 'css'] // 支持的代码扩展名
             );
         };
 
@@ -738,7 +712,7 @@ const app = createApp({
             selectedDocRawContent.value = file.content;
             selectedDocContent.value = file.renderedDocument || '';
         };
-        
+
         const selectCodeFile = (file) => {
             selectedCodeFile.value = file.name;
             selectedCodeRawContent.value = file.content;
@@ -759,9 +733,9 @@ const app = createApp({
                 }
                 fileList.value.splice(index, 1);
                 ElMessage.success(`${fileType} "${fileName}" 已删除`);
-            }).catch(() => {});
+            }).catch(() => { });
         };
-        
+
         const removeDocFile = (index) => removeFile(index, docFiles, selectedDocFile, selectedDocContent, '需求文档');
         const removeCodeFile = (index) => removeFile(index, codeFiles, selectedCodeFile, selectedCodeContent, '代码文件');
 
@@ -775,15 +749,15 @@ const app = createApp({
                 currentSelection.value = null;
                 return;
             }
-            
+
             const range = selection.getRangeAt(0);
             const docPanel = document.querySelector('.content-text-doc');
-            
+
             if (docPanel) {
                 const [start, end] = getSourceDocumentRange(docPanel, range);
                 if (start !== 0 || end !== 0) {
                     const rawContent = getSourceDocumentContent(start, end, selectedDocRawContent.value);
-                    
+
                     currentSelection.value = {
                         type: 'doc',
                         documentId: selectedDocFile.value,
@@ -795,7 +769,7 @@ const app = createApp({
                 }
             }
         };
-        
+
         // 处理代码选择
         const handleCodeSelection = (event) => {
             const selection = window.getSelection();
@@ -803,37 +777,31 @@ const app = createApp({
                 currentSelection.value = null;
                 return;
             }
-            
             const range = selection.getRangeAt(0);
-            const codePanel = document.querySelector('.content-text-code');
-            
-            if (codePanel) {
-                const codeLine = findPositionElement(range.startContainer, codePanel);
-                if (codeLine && codeLine.classList.contains('code-line')) {
-                    const start = parseInt(codeLine.getAttribute('parse-start'));
-                    const end = parseInt(codeLine.getAttribute('parse-end'));
-                    
-                    if (!isNaN(start) && !isNaN(end)) {
-                        currentSelection.value = {
-                            type: 'code',
-                            documentId: selectedCodeFile.value,
-                            start,
-                            end,
-                            content: selection.toString()
-                        };
-                        showAnnotationDialog.value = true;
-                    }
+            const editorDiv = document.querySelector('.content-text-code');
+
+            if (editorDiv && editorDiv instanceof HTMLElement) {
+                const [start, end] = getSourceDocumentRange(editorDiv, range);
+                if (end - start > 0) {
+                    currentSelection.value = {
+                        type: 'code',
+                        documentId: selectedCodeFile.value,
+                        start,
+                        end,
+                        content: selectedCodeRawContent.value.slice(start, end)
+                    };
+                    showAnnotationDialog.value = true;
                 }
             }
         };
-        
+
         // 创建新标注
         const createAnnotation = () => {
             if (!currentSelection.value) return;
-            
+
             const annotation = new Annotation();
             annotation.category = annotationName.value || "新标注";
-            
+
             if (currentSelection.value.type === 'doc') {
                 annotation.docRanges.push(
                     new DocumentRange(
@@ -853,19 +821,19 @@ const app = createApp({
                     )
                 );
             }
-            
+
             annotations.value.push(annotation);
             annotationName.value = '';
             showAnnotationDialog.value = false;
             currentSelection.value = null;
-            
+
             ElMessage.success('标注创建成功');
         };
-        
+
         // 添加到现有标注
         const addToAnnotation = (annotation) => {
             if (!currentSelection.value || !annotation) return;
-            
+
             if (currentSelection.value.type === 'doc') {
                 annotation.docRanges.push(
                     new DocumentRange(
@@ -885,21 +853,21 @@ const app = createApp({
                     )
                 );
             }
-            
+
             annotation.updateTime = new Date().toISOString();
             showAnnotationDialog.value = false;
             currentSelection.value = null;
-            
+
             ElMessage.success('已添加到标注');
         };
-        
+
         // 编辑标注名称
         const editAnnotation = (annotation) => {
             selectedAnnotation.value = annotation;
             annotationName.value = annotation.category;
             editingAnnotation.value = true;
         };
-        
+
         // 保存标注名称
         const saveAnnotationName = () => {
             if (selectedAnnotation.value) {
@@ -909,7 +877,7 @@ const app = createApp({
                 ElMessage.success('标注名称已更新');
             }
         };
-        
+
         // 删除标注
         const removeAnnotation = (index) => {
             ElMessageBox.confirm('确定要删除此标注吗?', '确认删除', {
@@ -919,9 +887,9 @@ const app = createApp({
             }).then(() => {
                 annotations.value.splice(index, 1);
                 ElMessage.success('标注已删除');
-            }).catch(() => {});
+            }).catch(() => { });
         };
-        
+
         // 删除标注中的范围
         const removeRange = (annotation, type, index) => {
             if (type === 'doc') {
@@ -929,9 +897,9 @@ const app = createApp({
             } else {
                 annotation.codeRanges.splice(index, 1);
             }
-            
+
             annotation.updateTime = new Date().toISOString();
-            
+
             // 如果标注中没有范围了，删除整个标注
             if (annotation.docRanges.length === 0 && annotation.codeRanges.length === 0) {
                 const idx = annotations.value.indexOf(annotation);
@@ -943,7 +911,7 @@ const app = createApp({
                 ElMessage.success('范围已删除');
             }
         };
-        
+
         /***********************
          * 滚动定位方法
          ***********************/
@@ -956,7 +924,7 @@ const app = createApp({
                     if (selectedDocFile.value !== docFile.name) {
                         selectDocFile(docFile);
                     }
-                    
+
                     // 滚动到指定位置
                     nextTick(() => {
                         scrollDocToOffset(range.start);
@@ -969,7 +937,7 @@ const app = createApp({
                     if (selectedCodeFile.value !== codeFile.name) {
                         selectCodeFile(codeFile);
                     }
-                    
+
                     // 滚动到指定位置
                     nextTick(() => {
                         scrollCodeToOffset(range.start);
@@ -1026,20 +994,20 @@ const app = createApp({
             input.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-                
+
                 const reader = new FileReader();
                 reader.onload = async (event) => {
                     try {
                         const data = JSON.parse(event.target.result);
-                        
+
                         // 验证数据格式
                         if (!data.annotations || !data.docFiles || !data.codeFiles) {
                             throw new Error('无效的标注文件格式');
                         }
-                        
+
                         // 重置当前状态
                         resetTask();
-                        
+
                         // 导入文档文件
                         for (const fileData of data.docFiles) {
                             docFiles.value.push(new File(
@@ -1051,7 +1019,7 @@ const app = createApp({
                                 fileData.lastModified
                             ));
                         }
-                        
+
                         // 导入代码文件
                         for (const fileData of data.codeFiles) {
                             codeFiles.value.push(new File(
@@ -1063,14 +1031,14 @@ const app = createApp({
                                 fileData.lastModified
                             ));
                         }
-                        
+
                         // 导入标注
                         for (const annoData of data.annotations) {
                             const annotation = new Annotation();
                             annotation.id = annoData.id || crypto.randomUUID();
                             annotation.category = annoData.category;
                             annotation.updateTime = annoData.updateTime;
-                            
+
                             // 导入文档范围
                             for (const rangeData of annoData.docRanges) {
                                 annotation.docRanges.push(new DocumentRange(
@@ -1080,7 +1048,7 @@ const app = createApp({
                                     rangeData.content
                                 ));
                             }
-                            
+
                             // 导入代码范围
                             for (const rangeData of annoData.codeRanges) {
                                 annotation.codeRanges.push(new CodeRange(
@@ -1090,10 +1058,10 @@ const app = createApp({
                                     rangeData.content
                                 ));
                             }
-                            
+
                             annotations.value.push(annotation);
                         }
-                        
+
                         // 自动选择第一个文档和代码文件
                         if (docFiles.value.length > 0) {
                             selectDocFile(docFiles.value[0]);
@@ -1101,7 +1069,7 @@ const app = createApp({
                         if (codeFiles.value.length > 0) {
                             selectCodeFile(codeFiles.value[0]);
                         }
-                        
+
                         ElMessage.success('标注导入成功');
                     } catch (error) {
                         console.error('导入失败:', error);
@@ -1152,26 +1120,26 @@ const app = createApp({
                     localPath: file.localPath
                 }))
             };
-            
+
             // 创建下载链接
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            
-            
+
+
 
             // 生成文件名：标注项目_当前时间.json
             let defaultFilename = '标注项目';
             const now = new Date();
-            const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+            const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
             a.download = `${defaultFilename}_${dateStr}.json`;
-            
+
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
+
             ElMessage.success('标注导出成功');
         };
 
@@ -1181,7 +1149,7 @@ const app = createApp({
             if (docPanel) {
                 docPanel.addEventListener('mouseup', handleDocSelection);
             }
-            
+
             const codePanel = document.querySelector('.content-text-code');
             if (codePanel) {
                 codePanel.addEventListener('mouseup', handleCodeSelection);
@@ -1223,7 +1191,7 @@ const app = createApp({
                 return date.toLocaleString();
             },
             gotoRange,
-            handleNewTask,handleImportAnnotations, handleExportAnnotations,
+            handleNewTask, handleImportAnnotations, handleExportAnnotations,
         };
     }
 });
