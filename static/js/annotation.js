@@ -1,4 +1,7 @@
-import { regularizeFileContent, normalizePath, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, scrollToRange } from './utils.js';
+import {
+    regularizeFileContent, normalizePath, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, scrollToRange,
+    highlightRange, removeAllHighlights
+} from './utils.js';
 import { Annotation, DocumentRange, CodeRange, File } from './type.js';
 
 const { createApp, ref, onMounted, nextTick } = Vue;
@@ -203,12 +206,36 @@ const app = createApp({
             selectedDocFile.value = file.name;
             selectedDocRawContent.value = file.content;
             selectedDocContent.value = file.renderedDocument || '';
+            removeAllHighlights('doc');
+
+            nextTick(() => {
+                annotations.value.forEach(annotation => {
+                    const hasDocRange = annotation.docRanges.some(
+                        range => range.documentId === file.name
+                    );
+                    if (hasDocRange) {
+                        highlightAnnotation(annotation);
+                    }
+                });
+            });
         };
 
         const selectCodeFile = (file) => {
             selectedCodeFile.value = file.name;
             selectedCodeRawContent.value = file.content;
             selectedCodeContent.value = file.renderedDocument || '';
+            removeAllHighlights('code');
+
+            nextTick(() => {
+                annotations.value.forEach(annotation => {
+                    const hasCodeRange = annotation.codeRanges.some(
+                        range => range.documentId === file.name
+                    );
+                    if (hasCodeRange) {
+                        highlightAnnotation(annotation);
+                    }
+                });
+            });
         };
 
         // 删除文件
@@ -285,6 +312,62 @@ const app = createApp({
             }
         };
 
+        const activeHighlights = ref(new Map()); // 存储标注ID与其对应的高亮元素
+
+        // 高亮标注范围
+        const highlightAnnotation = (annotation) => {
+            removeAnnotationHighlights(annotation.id);
+
+            const highlights = [];
+
+            // 高亮文档范围
+            annotation.docRanges.forEach(range => {
+                if (range.documentId === selectedDocFile.value) {
+                    const rangeHighlights = highlightRange(
+                        range.start,
+                        range.end,
+                        'doc',
+                        annotation.id
+                    );
+                    highlights.push(...rangeHighlights);
+                }
+            });
+
+            // 高亮代码范围
+            annotation.codeRanges.forEach(range => {
+                if (range.documentId === selectedCodeFile.value) {
+                    const rangeHighlights = highlightRange(
+                        range.start,
+                        range.end,
+                        'code',
+                        annotation.id
+                    );
+                    highlights.push(...rangeHighlights);
+                }
+            });
+
+            activeHighlights.value.set(annotation.id, highlights);
+        };
+
+        // 移除标注高亮
+        const removeAnnotationHighlights = (annotationId) => {
+            if (activeHighlights.value.has(annotationId)) {
+                // 从DOM中移除高亮元素
+                const highlights = activeHighlights.value.get(annotationId);
+                highlights.forEach(highlight => {
+                    if (highlight.parentNode) {
+                        const parent = highlight.parentNode;
+                        while (highlight.firstChild) {
+                            parent.insertBefore(highlight.firstChild, highlight);
+                        }
+                        parent.removeChild(highlight);
+                    }
+                });
+
+                activeHighlights.value.delete(annotationId);
+            }
+        };
+
         // 创建新标注
         const createAnnotation = () => {
             if (!currentSelection.value) return;
@@ -317,6 +400,10 @@ const app = createApp({
             showAnnotationDialog.value = false;
             currentSelection.value = null;
 
+            nextTick(() => {
+                highlightAnnotation(annotation);
+            });
+
             ElMessage.success('标注创建成功');
         };
 
@@ -348,6 +435,10 @@ const app = createApp({
             showAnnotationDialog.value = false;
             currentSelection.value = null;
 
+            nextTick(() => {
+                highlightAnnotation(annotation);
+            });
+
             ElMessage.success('已添加到标注');
         };
 
@@ -375,6 +466,9 @@ const app = createApp({
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(() => {
+                const annotation = annotations.value[index];
+                removeAnnotationHighlights(annotation.id);
+
                 annotations.value.splice(index, 1);
                 ElMessage.success('标注已删除');
             }).catch(() => { });
@@ -382,6 +476,8 @@ const app = createApp({
 
         // 删除标注中的范围
         const removeRange = (annotation, type, index) => {
+            removeAnnotationHighlights(annotation.id);
+
             if (type === 'doc') {
                 annotation.docRanges.splice(index, 1);
             } else {
@@ -399,6 +495,12 @@ const app = createApp({
                 }
             } else {
                 ElMessage.success('范围已删除');
+            }
+
+            if (annotation.docRanges.length > 0 || annotation.codeRanges.length > 0) {
+                nextTick(() => {
+                    highlightAnnotation(annotation);
+                });
             }
         };
 

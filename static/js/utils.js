@@ -374,28 +374,271 @@ export function getSourceDocumentRange(rootElement, range) {
 }
 
 /****************************
- * 滚动定位工具函数
+ * 滚动定位与临时高亮
  ****************************/
+const currentTemporaryHighlights = {
+    doc: [],
+    code: []
+};
 
-// 滚动到文档中的指定偏移量
 export function scrollToRange(targetStart, targetEnd, type = 'doc') {
     const editorDiv = document.querySelector(`.content-text-${type}`);
     if (!editorDiv) return;
 
+    removeTemporaryHighlights(type);
+
     const elements = editorDiv.querySelectorAll('[parse-start][parse-end]');
+    let firstHighlightedElement = null;
+
     for (let i = 0; i < elements.length; i++) {
         const el = elements[i];
-
         const start = parseInt(el.getAttribute('parse-start'));
         const end = parseInt(el.getAttribute('parse-end'));
 
-        if ((start >= targetStart && start <= targetEnd) || (end >= targetStart && end <= targetEnd)) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            const originalBg = el.style.backgroundColor;
-            el.style.backgroundColor = 'rgba(255,255,0,0.3)';
-            setTimeout(() => {
-                el.style.backgroundColor = originalBg;
-            }, 5000);
+        // 检查元素是否与目标范围有重叠
+        if (end > targetStart && start < targetEnd) {
+            const highlightStart = Math.max(targetStart, start);
+            const highlightEnd = Math.min(targetEnd, end);
+
+            // 计算在元素内的相对位置
+            const localStart = highlightStart - start;
+            const localEnd = highlightEnd - start;
+
+            const highlight = createTemporaryHighlightInElement(el, localStart, localEnd);
+            if (highlight) {
+                highlight._originalStyles = {
+                    backgroundColor: highlight.style.backgroundColor,
+                    boxShadow: highlight.style.boxShadow
+                };
+
+                highlight.style.backgroundColor = 'rgba(255, 215, 0, 0.7)';
+                highlight.style.boxShadow = '0 0 8px 4px rgba(255, 215, 0, 0.5)';
+
+                currentTemporaryHighlights[type].push(highlight);
+
+                setTimeout(() => {
+                    removeTemporaryHighlight(highlight, type);
+                }, 5000);
+
+                if (!firstHighlightedElement) {
+                    firstHighlightedElement = highlight;
+                }
+            }
         }
     }
+
+    if (firstHighlightedElement) {
+        firstHighlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function createTemporaryHighlightInElement(element, start, end) {
+    const textNodes = getTextNodesIn(element);
+    let currentPos = 0;
+
+    for (let i = 0; i < textNodes.length; i++) {
+        const node = textNodes[i];
+        const nodeLength = node.textContent.length;
+
+        if (currentPos + nodeLength > start && currentPos < end) {
+            const nodeStart = Math.max(0, start - currentPos);
+            const nodeEnd = Math.min(nodeLength, end - currentPos);
+
+            // 拆分文本节点并添加临时高亮
+            if (nodeEnd > nodeStart) {
+                const range = document.createRange();
+
+                range.setStart(node, nodeStart);
+                range.setEnd(node, nodeEnd);
+
+                const highlightSpan = document.createElement('span');
+                highlightSpan.className = 'temporary-highlight';
+
+                try {
+                    range.surroundContents(highlightSpan);
+                    return highlightSpan;
+                } catch (e) {
+                    // 如果无法包围内容（例如范围跨越多个元素），则跳过
+                    console.warn("无法创建高亮:", e);
+                    return null;
+                }
+            }
+        }
+
+        currentPos += nodeLength;
+    }
+
+    return null;
+}
+
+function removeTemporaryHighlight(highlight, type) {
+    if (highlight._originalStyles) {
+        Object.assign(highlight.style, highlight._originalStyles);
+        delete highlight._originalStyles;
+    }
+
+    const index = currentTemporaryHighlights[type].indexOf(highlight);
+    if (index !== -1) {
+        currentTemporaryHighlights[type].splice(index, 1);
+    }
+
+    const parent = highlight.parentNode;
+    if (parent) {
+        // 将高亮内容移回父节点
+        while (highlight.firstChild) {
+            parent.insertBefore(highlight.firstChild, highlight);
+        }
+        // 移除空的临时高亮元素
+        parent.removeChild(highlight);
+    }
+}
+
+export function removeTemporaryHighlights(type = null) {
+    if (type) {
+        while (currentTemporaryHighlights[type].length > 0) {
+            const highlight = currentTemporaryHighlights[type].pop();
+            if (highlight._originalStyles) {
+                Object.assign(highlight.style, highlight._originalStyles);
+                delete highlight._originalStyles;
+            }
+
+            const parent = highlight.parentNode;
+            if (parent) {
+                // 将高亮内容移回父节点
+                while (highlight.firstChild) {
+                    parent.insertBefore(highlight.firstChild, highlight);
+                }
+                // 移除空的临时高亮元素
+                parent.removeChild(highlight);
+            }
+        }
+    } else {
+        removeTemporaryHighlights('doc');
+        removeTemporaryHighlights('code');
+    }
+}
+
+/****************************
+ * 高亮工具函数
+ ****************************/
+// 高亮指定范围
+export function highlightRange(start, end, type = 'doc', annotationId = null) {
+    const editorDiv = document.querySelector(`.content-text-${type}`);
+    if (!editorDiv) return [];
+
+    const highlights = [];
+    const elements = editorDiv.querySelectorAll('[parse-start][parse-end]');
+
+    for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        const elemStart = parseInt(el.getAttribute('parse-start'));
+        const elemEnd = parseInt(el.getAttribute('parse-end'));
+
+        // 检查元素是否与目标范围有重叠
+        if (elemEnd > start && elemStart < end) {
+            const highlightStart = Math.max(start, elemStart);
+            const highlightEnd = Math.min(end, elemEnd);
+
+            // 计算在元素内的相对位置
+            const localStart = highlightStart - elemStart;
+            const localEnd = highlightEnd - elemStart;
+
+            // 创建高亮
+            const highlight = createHighlightInElement(el, localStart, localEnd, annotationId);
+            if (highlight) highlights.push(highlight);
+        }
+    }
+
+    return highlights;
+}
+
+// 在元素内创建高亮
+function createHighlightInElement(element, start, end, annotationId) {
+    const textNodes = getTextNodesIn(element);
+    let currentPos = 0;
+
+    for (let i = 0; i < textNodes.length; i++) {
+        const node = textNodes[i];
+        const nodeLength = node.textContent.length;
+
+        // 检查这个文本节点是否包含目标范围
+        if (currentPos + nodeLength > start && currentPos < end) {
+            const nodeStart = Math.max(0, start - currentPos);
+            const nodeEnd = Math.min(nodeLength, end - currentPos);
+
+            // 拆分文本节点并添加高亮
+            if (nodeEnd > nodeStart) {
+                const range = document.createRange();
+
+                // 设置范围到文本节点的特定部分
+                range.setStart(node, nodeStart);
+                range.setEnd(node, nodeEnd);
+
+                // 创建高亮元素
+                const highlightSpan = document.createElement('span');
+                highlightSpan.className = 'annotation-highlight';
+                if (annotationId) {
+                    highlightSpan.setAttribute('data-annotation-id', annotationId);
+                }
+
+                // 用高亮元素包裹选中文本
+                range.surroundContents(highlightSpan);
+                return highlightSpan;
+            }
+        }
+
+        currentPos += nodeLength;
+    }
+
+    return null;
+}
+
+// 获取元素内的所有文本节点
+function getTextNodesIn(node) {
+    const textNodes = [];
+    const treeWalker = document.createTreeWalker(
+        node,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+
+    let currentNode;
+    while (currentNode = treeWalker.nextNode()) {
+        textNodes.push(currentNode);
+    }
+
+    return textNodes;
+}
+
+// 移除所有高亮
+export function removeAllHighlights(type = 'doc') {
+    const editorDiv = document.querySelector(`.content-text-${type}`);
+    if (!editorDiv) return;
+
+    const highlights = editorDiv.querySelectorAll('.annotation-highlight');
+    highlights.forEach(highlight => {
+        const parent = highlight.parentNode;
+        // 将高亮内容移回父节点
+        while (highlight.firstChild) {
+            parent.insertBefore(highlight.firstChild, highlight);
+        }
+        // 移除空的高亮元素
+        parent.removeChild(highlight);
+    });
+}
+
+// 移除特定标注的高亮
+export function removeAnnotationHighlights(annotationId, type = 'doc') {
+    const editorDiv = document.querySelector(`.content-text-${type}`);
+    if (!editorDiv) return;
+
+    const highlights = editorDiv.querySelectorAll(`.annotation-highlight[data-annotation-id="${annotationId}"]`);
+    highlights.forEach(highlight => {
+        const parent = highlight.parentNode;
+        while (highlight.firstChild) {
+            parent.insertBefore(highlight.firstChild, highlight);
+        }
+        parent.removeChild(highlight);
+    });
 }
