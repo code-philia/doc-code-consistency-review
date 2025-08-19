@@ -378,54 +378,24 @@ export function getSourceDocumentRange(rootElement, range) {
  ****************************/
 
 // 滚动到文档中的指定偏移量
-export function scrollDocToOffset(offset) {
-    const docPanel = document.querySelector('.content-text-doc');
-    if (!docPanel) return;
+export function scrollToRange(targetStart, targetEnd, type = 'doc') {
+    const editorDiv = document.querySelector(`.content-text-${type}`);
+    if (!editorDiv) return;
 
-    // 查找包含偏移量的元素
-    const elements = docPanel.querySelectorAll('[parse-start][parse-end]');
-    for (const el of elements) {
+    const elements = editorDiv.querySelectorAll('[parse-start][parse-end]');
+    for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+
         const start = parseInt(el.getAttribute('parse-start'));
         const end = parseInt(el.getAttribute('parse-end'));
 
-        if (offset >= start && offset <= end) {
-            // 滚动到元素位置
+        if ((start >= targetStart && start <= targetEnd) || (end >= targetStart && end <= targetEnd)) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            // 高亮显示
             const originalBg = el.style.backgroundColor;
             el.style.backgroundColor = 'rgba(255,255,0,0.3)';
             setTimeout(() => {
                 el.style.backgroundColor = originalBg;
-            }, 2000);
-            break;
-        }
-    }
-}
-
-// 滚动到代码中的指定偏移量
-export function scrollCodeToOffset(offset) {
-    const codePanel = document.querySelector('.content-text-code');
-    if (!codePanel) return;
-
-    // 查找包含偏移量的代码行
-    const lines = codePanel.querySelectorAll('.code-line');
-    for (const line of lines) {
-        const start = parseInt(line.getAttribute('parse-start'));
-        const end = parseInt(line.getAttribute('parse-end'));
-
-        if (offset >= start && offset <= end) {
-            console.log("scroll to", start, end);
-            // 滚动到代码行位置
-            line.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            // 高亮显示
-            const originalBg = line.style.backgroundColor;
-            line.style.backgroundColor = 'rgba(255,255,0,0.3)';
-            setTimeout(() => {
-                line.style.backgroundColor = originalBg;
             }, 5000);
-            break;
         }
     }
 }

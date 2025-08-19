@@ -1,4 +1,4 @@
-import { regularizeFileContent, normalizePath, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange } from './utils.js';
+import { regularizeFileContent, normalizePath, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, scrollToRange } from './utils.js';
 import { Annotation, DocumentRange, CodeRange, File } from './type.js';
 
 const { createApp, ref, onMounted, nextTick } = Vue;
@@ -417,7 +417,7 @@ const app = createApp({
 
                     // 滚动到指定位置
                     nextTick(() => {
-                        scrollDocToOffset(range.start);
+                        scrollToRange(range.start, range.end, 'doc');
                     });
                 }
             } else if (type === 'code') {
@@ -430,7 +430,7 @@ const app = createApp({
 
                     // 滚动到指定位置
                     nextTick(() => {
-                        scrollCodeToOffset(range.start);
+                        scrollToRange(range.start, range.end, 'code');
                     });
                 }
             }
