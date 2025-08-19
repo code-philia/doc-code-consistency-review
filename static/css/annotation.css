@@ -510,20 +510,6 @@
 
 .temporary-highlight {
     background-color: rgba(255, 215, 0, 0.7);
-    border-radius: 3px;
-    box-shadow: 0 0 8px 4px rgba(255, 215, 0, 0.5);
-    animation: pulse-highlight 1s ease-in-out infinite alternate;
-}
-
-@keyframes pulse-highlight {
-    from {
-        background-color: rgba(255, 215, 0, 0.7);
-        box-shadow: 0 0 8px 4px rgba(255, 215, 0, 0.5);
-    }
-    to {
-        background-color: rgba(255, 215, 0, 0.9);
-        box-shadow: 0 0 12px 6px rgba(255, 215, 0, 0.7);
-    }
 }
 
 .temporary-highlight {
