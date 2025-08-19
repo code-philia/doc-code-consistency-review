@@ -544,7 +544,7 @@ export function highlightRange(start, end, type = 'doc', annotationId = null) {
             const localEnd = highlightEnd - elemStart;
 
             // 创建高亮
-            const highlight = createHighlightInElement(el, localStart, localEnd, annotationId);
+            const highlight = createHighlightInElement(el, localStart, localEnd, annotationId, highlightStart, highlightEnd);
             if (highlight) highlights.push(highlight);
         }
     }
@@ -552,8 +552,7 @@ export function highlightRange(start, end, type = 'doc', annotationId = null) {
     return highlights;
 }
 
-// 在元素内创建高亮
-function createHighlightInElement(element, start, end, annotationId) {
+function createHighlightInElement(element, start, end, annotationId, rangeStart, rangeEnd) {
     const textNodes = getTextNodesIn(element);
     let currentPos = 0;
 
@@ -580,6 +579,10 @@ function createHighlightInElement(element, start, end, annotationId) {
                 if (annotationId) {
                     highlightSpan.setAttribute('data-annotation-id', annotationId);
                 }
+
+                // 添加范围信息
+                highlightSpan.setAttribute('data-range-start', rangeStart);
+                highlightSpan.setAttribute('data-range-end', rangeEnd);
 
                 // 用高亮元素包裹选中文本
                 range.surroundContents(highlightSpan);

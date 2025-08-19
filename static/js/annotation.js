@@ -39,6 +39,9 @@ const app = createApp({
             workDirectory: ''
         });
 
+        const filteredAnnotations = ref(null);
+        const isFiltered = ref(false);
+
         const saveSettings = () => {
             // 规范化路径
             if (settingsForm.value.workDirectory) {
@@ -505,6 +508,118 @@ const app = createApp({
         };
 
         /***********************
+         * 点击高亮跳转
+         ***********************/
+        // 根据范围筛选标注
+        const filterAnnotationsByRange = (start, end, type) => {
+            const overlappingAnnotations = annotations.value.filter(annotation => {
+                // 检查文档范围
+                const hasDocOverlap = annotation.docRanges.some(range =>
+                    range.end > start && range.start < end
+                );
+
+                // 检查代码范围
+                const hasCodeOverlap = annotation.codeRanges.some(range =>
+                    range.end > start && range.start < end
+                );
+
+                return hasDocOverlap || hasCodeOverlap;
+            });
+
+            filteredAnnotations.value = overlappingAnnotations;
+            isFiltered.value = true;
+
+            // 如果没有找到匹配的标注，显示提示
+            if (overlappingAnnotations.length === 0) {
+                ElMessage.info('未找到包含此范围的标注');
+            } else {
+                // 自动滚动到第一个关联区域
+                if (type === 'doc') {
+                    // 双击的是文档，查找第一个代码范围
+                    const firstCodeRange = findFirstCodeRange(overlappingAnnotations);
+                    if (firstCodeRange) {
+                        nextTick(() => {
+                            gotoRange(firstCodeRange, 'code');
+                        });
+                    }
+                } else {
+                    // 双击的是代码，查找第一个文档范围
+                    const firstDocRange = findFirstDocRange(overlappingAnnotations);
+                    if (firstDocRange) {
+                        nextTick(() => {
+                            gotoRange(firstDocRange, 'doc');
+                        });
+                    }
+                }
+            }
+        };
+
+        // 查找第一个代码范围
+        const findFirstCodeRange = (annoList) => {
+            for (const annotation of annoList) {
+                if (annotation.codeRanges.length > 0) {
+                    return annotation.codeRanges[0];
+                }
+            }
+            return null;
+        };
+
+        // 查找第一个文档范围
+        const findFirstDocRange = (annoList) => {
+            for (const annotation of annoList) {
+                if (annotation.docRanges.length > 0) {
+                    return annotation.docRanges[0];
+                }
+            }
+            return null;
+        };
+
+        // 显示全部标注
+        const showAllAnnotations = () => {
+            filteredAnnotations.value = null;
+            isFiltered.value = false;
+        };
+
+        // 处理双击事件
+        const handleLeftClick = (event, type) => {
+            let target = event.target;
+            while (target && !target.classList.contains('annotation-highlight')) {
+                target = target.parentElement;
+            }
+
+            if (!target) return;
+
+            // 获取高亮块的标注ID
+            const annotationId = target.getAttribute('data-annotation-id');
+            if (!annotationId) return;
+
+            // 查找对应的标注
+            const annotation = annotations.value.find(a => a.id === annotationId);
+            if (!annotation) return;
+
+            // 查找高亮块对应的范围
+            let rangeStart = null;
+            let rangeEnd = null;
+
+            // 尝试从高亮块的自定义属性获取范围
+            if (target.hasAttribute('data-range-start') && target.hasAttribute('data-range-end')) {
+                rangeStart = parseInt(target.getAttribute('data-range-start'));
+                rangeEnd = parseInt(target.getAttribute('data-range-end'));
+            } else {
+                // 如果没有自定义属性，尝试从父元素获取
+                const parentWithAttrs = target.closest('[parse-start][parse-end]');
+                if (parentWithAttrs) {
+                    rangeStart = parseInt(parentWithAttrs.getAttribute('parse-start'));
+                    rangeEnd = parseInt(parentWithAttrs.getAttribute('parse-end'));
+                }
+            }
+
+            if (rangeStart !== null && rangeEnd !== null) {
+                filterAnnotationsByRange(rangeStart, rangeEnd, type);
+            }
+        };
+
+        /***********************
          * 滚动定位方法
          ***********************/
         // 跳转到标注范围
@@ -575,6 +690,8 @@ const app = createApp({
             selectedCodeContent.value = '';
             renderError.value = '';
             annotationName.value = '';
+            filteredAnnotations.value = null;
+            isFiltered.value = false;
             ElMessage.success('已创建新任务');
         };
 
@@ -719,8 +836,6 @@ const app = createApp({
             const a = document.createElement('a');
             a.href = url;
 
-
-
             // 生成文件名：标注项目_当前时间.json
             let defaultFilename = '标注项目';
             const now = new Date();
@@ -740,11 +855,13 @@ const app = createApp({
             const docPanel = document.querySelector('.content-text-doc');
             if (docPanel) {
                 docPanel.addEventListener('mouseup', handleDocSelection);
+                docPanel.addEventListener('click', (e) => handleLeftClick(e, 'doc'));
             }
 
             const codePanel = document.querySelector('.content-text-code');
             if (codePanel) {
                 codePanel.addEventListener('mouseup', handleCodeSelection);
+                codePanel.addEventListener('click', (e) => handleLeftClick(e, 'code'));
             }
         });
 
@@ -784,6 +901,9 @@ const app = createApp({
             },
             gotoRange,
             handleNewTask, handleImportAnnotations, handleExportAnnotations,
+            filteredAnnotations,
+            isFiltered,
+            showAllAnnotations,
         };
     }
 });

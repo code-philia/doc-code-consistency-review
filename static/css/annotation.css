@@ -521,3 +521,9 @@
     position: relative;
     z-index: 1;
 }
+
+.filter-number {
+    font-size: 12px;
+    color: #67c23a;
+    margin-left: 10px;
+}

@@ -156,14 +156,28 @@
                     <!-- 标注结果 -->
                     <el-splitter-panel class="split-panel annotation-panel" collapsible>
                         <div class="panel-title">
-                            <i class="fas fa-comments"></i> <span>标注</span>
+                            <i class="fas fa-comments"></i> 
+                            <span>标注</span>
+                            <el-button 
+                                v-if="isFiltered" 
+                                type="primary" 
+                                size="small" 
+                                plain
+                                @click="showAllAnnotations"
+                                style="margin-left: 10px;"
+                            >
+                                <i class="fas fa-list"></i> 全部
+                            </el-button>
+                            <span class="filter-number" v-if="isFiltered">
+                                (已筛选 ${filteredAnnotations ? filteredAnnotations.length : 0} 个标注)
+                            </span>                       
                         </div>
                         <div class="content-card">
                             <!-- 标注列表 -->
                             <div class="annotation-list">
                                 <el-collapse>
                                     <el-collapse-item 
-                                        v-for="(anno, index) in annotations" 
+                                        v-for="(anno, index) in (isFiltered ? filteredAnnotations : annotations)" 
                                         :key="anno.id"
                                         :title="anno.category"
                                     >
@@ -239,8 +253,9 @@
                                     </el-collapse-item>
                                 </el-collapse>
                                 
-                                <div v-if="annotations.length === 0" class="empty-annotations">
-                                    暂无标注，请在文档或代码中选择文本创建标注
+                                <div v-if="(isFiltered ? filteredAnnotations : annotations).length === 0" class="empty-annotations">
+                                    <span v-if="isFiltered">没有找到匹配的标注</span>
+                                    <span v-else>暂无标注，请在文档或代码中选择文本创建标注</span>
                                 </div>
                             </div>
                         </div>
