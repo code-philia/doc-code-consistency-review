@@ -4,38 +4,10 @@
 let activeView = 'statsView'; // 当前活动视图
 
 const { createApp, ref, onMounted, computed } = Vue;
-const { ElButton, ElMessage, ElMessageBox } = ElementPlus;
-
-// 这里的 window.markdownit 和 window.texmath 是因为在 HTML 中通过 <script> 标签全局引入了它们
-// 实例化 markdown-it，并添加 texmath 插件
-const md = window.markdownit({
-    html: true,         // 允许输出原始 HTML
-    linkify: true,      // 自动将链接文本转换为链接
-    typographer: true,  // 启用一些排版替换（例如引号）
-    highlight: function (str, lang) {
-        if (lang && window.hljs && window.hljs.getLanguage(lang)) {
-            try {
-                return '<pre class="hljs"><code>' +
-                    window.hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
-                    '</code></pre>';
-            } catch (__) { }
-        }
-        return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
-    }
-}).use(window.texmath, {
-    engine: window.katex,
-    delimiters: 'dollars',
-    katexOptions: {
-        strict: false,
-        macros: {
-            "\\RR": "\\mathbb{R}",
-            "\\C": "\\mathbb{C}",
-            "\\N": "\\mathbb{N}",
-            "\\Z": "\\mathbb{Z}",
-            "\\Q": "\\mathbb{Q}"
-        }
-    }
-});
+const { ElMessage, ElMessageBox } = ElementPlus;
+import {
+    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers
+} from './utils.js';
 
 /****************************
  * 工具函数
@@ -59,6 +31,7 @@ function switchView(viewName) {
     document.getElementById('alignmentButton').classList.remove('active');
     document.getElementById(viewName + 'Button').classList.add('active');
 }
+window.switchView = switchView;
 
 /** 占位功能：预览 */
 function previewPanel() {
@@ -69,37 +42,6 @@ function previewPanel() {
 function exportPanel() {
     alert('导出功能将在后续实现');
 }
-
-/**
- * 渲染 Markdown -> HTML
- */
-function renderMarkdown(content) {
-    try {
-        // 使用 markdown-it 渲染 Markdown
-        const renderedHtml = md.render(content);
-
-        // 返回渲染后的 HTML 字符串
-        return renderedHtml;
-    } catch (error) {
-        console.error("Markdown渲染错误:", error);
-        return `<div class="render-error">${error.message}</div>`;
-    }
-}
-
-/**
- * 格式化代码并添加行号
- */
-function formatCodeWithLineNumbers(codeContent) {
-    if (!codeContent) return '';
-    codeContent = codeContent.replace(/\r\n/g, '\n');
-    return codeContent.split('\n').map((line, idx) => `
-        <div class="code-line">
-            <span class="line-number">${String(idx + 1).padStart(3, ' ')}</span>
-            <span class="code-content">${line}</span>
-        </div>
-    `).join('');
-}
-
 
 /****************************
  * Vue 应用
@@ -160,14 +102,22 @@ const app = createApp({
                 if (activeView !== 'alignmentView') {
                     switchView('alignment');
                 }
+
                 const response = await axios.get(`/project/file-content?path=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(fileName)}&type=${fileType}`);
                 if (response.data.status === 'success') {
-                    if (fileType === 'doc') {
-                        selectedDocFile.value = fileName;
-                        selectedDocContent.value = renderMarkdown(response.data.content);
-                    } else if (fileType === 'code') {
-                        selectedCodeFile.value = fileName;
-                        selectedCodeContent.value = formatCodeWithLineNumbers(response.data.content);
+                    const content = regularizeFileContent(response.data.content, fileType);
+                    try {
+                        if (fileType === 'doc') {
+                            selectedDocFile.value = fileName;
+                            selectedDocContent.value = await renderMarkdown(content);
+                        } else if (fileType === 'code') {
+                            selectedCodeFile.value = fileName;
+                            selectedCodeContent.value = formatCodeWithLineNumbers(content);
+                        }
+                    } catch (e) {
+                        renderError.value = e.message;
+                        renderedDocument = '<div class="render-error">渲染失败，请检查源文件格式。</div>';
+                        console.error(e);
                     }
                 } else {
                     ElMessage.error(`加载文件内容失败: ${response.data.message}`);
