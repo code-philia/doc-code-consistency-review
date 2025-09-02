@@ -4,7 +4,7 @@
 let activeView = 'statsView'; // 当前活动视图
 
 const { createApp, ref, onMounted, computed } = Vue;
-const { ElButton, ElMessage } = ElementPlus;
+const { ElButton, ElMessage, ElMessageBox } = ElementPlus;
 
 // 这里的 window.markdownit 和 window.texmath 是因为在 HTML 中通过 <script> 标签全局引入了它们
 // 实例化 markdown-it，并添加 texmath 插件
@@ -16,9 +16,9 @@ const md = window.markdownit({
         if (lang && window.hljs && window.hljs.getLanguage(lang)) {
             try {
                 return '<pre class="hljs"><code>' +
-                       window.hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
-                       '</code></pre>';
-            } catch (__) {}
+                    window.hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+                    '</code></pre>';
+            } catch (__) { }
         }
         return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
     }
@@ -77,7 +77,7 @@ function renderMarkdown(content) {
     try {
         // 使用 markdown-it 渲染 Markdown
         const renderedHtml = md.render(content);
-        
+
         // 返回渲染后的 HTML 字符串
         return renderedHtml;
     } catch (error) {
@@ -233,13 +233,13 @@ const app = createApp({
 
         const docFileTree = computed(() => buildFileTree(projectFiles.value.doc_files, 'doc'));
         const codeFileTree = computed(() => buildFileTree(projectFiles.value.code_files, 'code'));
-        
+
         const handleNodeClick = (data) => {
             if (data.type === 'file') {
                 fetchFileContent(data.path, data.fileType);
             }
         };
-      
+
         /***********************
          * 问题单管理
          ***********************/
@@ -309,6 +309,83 @@ const app = createApp({
         };
 
         /***********************
+         * 对齐结果与右键菜单管理
+         ***********************/
+        const alignmentResults = ref([
+            {
+                id: 1,
+                name: '用户登录功能实现',
+                hasReview: true,
+                docRanges: [{ documentId: '需求文档A.md', content: '用户应能通过输入用户名和密码登录系统...' }],
+                codeRanges: [{ documentId: 'auth.js', content: 'function login(username, password) { ... }' }]
+            },
+            {
+                id: 2,
+                name: '密码加密存储',
+                hasReview: false,
+                docRanges: [{ documentId: '需求文档A.md', content: '系统需对用户密码进行哈希加密处理...' }],
+                codeRanges: [{ documentId: 'utils.js', content: 'const hash = bcrypt.hashSync(password, salt);' }]
+            },
+            {
+                id: 3,
+                name: '税务计算逻辑',
+                hasReview: true,
+                docRanges: [{ documentId: '税务计算需求.md', content: '税率根据收入分级计算，具体标准如下...' }],
+                codeRanges: []
+            },
+        ]);
+
+        const contextMenu = ref({
+            visible: false,
+            top: 0,
+            left: 0,
+            selectedAlignment: null,
+        });
+
+        const showContextMenu = (event, alignment) => {
+            contextMenu.value.visible = true;
+            contextMenu.value.top = event.clientY;
+            contextMenu.value.left = event.clientX;
+            contextMenu.value.selectedAlignment = alignment;
+
+            // 添加一个全局点击事件监听器来隐藏菜单
+            document.addEventListener('click', hideContextMenu);
+        };
+
+        const hideContextMenu = () => {
+            contextMenu.value.visible = false;
+            // 移除监听器，避免内存泄漏
+            document.removeEventListener('click', hideContextMenu);
+        };
+
+        const renameAlignment = () => {
+            if (!contextMenu.value.selectedAlignment) return;
+            const newName = prompt('请输入新的名称：', contextMenu.value.selectedAlignment.name);
+            if (newName && newName.trim() !== '') {
+                const alignment = alignmentResults.value.find(a => a.id === contextMenu.value.selectedAlignment.id);
+                if (alignment) {
+                    alignment.name = newName.trim();
+                    ElMessage.success('重命名成功！');
+                }
+            }
+        };
+
+        const deleteAlignment = () => {
+            if (!contextMenu.value.selectedAlignment) return;
+            ElMessageBox.confirm('确定要删除此对齐项吗？', '确认删除', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                const index = alignmentResults.value.findIndex(a => a.id === contextMenu.value.selectedAlignment.id);
+                if (index > -1) {
+                    alignmentResults.value.splice(index, 1);
+                    ElMessage.info('对齐项已删除。');
+                }
+            }).catch(() => { });
+        };
+
+        /***********************
          * 生命周期
          ***********************/
         onMounted(fetchProjectMetadata);
@@ -331,7 +408,12 @@ const app = createApp({
             ignoreIssue,
             docFileTree,
             codeFileTree,
-            handleNodeClick
+            handleNodeClick,
+            alignmentResults,
+            contextMenu,
+            showContextMenu,
+            renameAlignment,
+            deleteAlignment
         };
     }
 });

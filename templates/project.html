@@ -248,7 +248,6 @@
                 <!-- 对齐视图 -->
                 <div class="alignment-view split-view" id="alignmentView">
                     <el-splitter layout="vertical">
-                        <!-- 上半部分 -->
                         <el-splitter-panel :min="200" size="100%">
                             <el-splitter>
                                 <el-splitter-panel class="split-panel req-panel" :min="200" size="50%">
@@ -267,11 +266,85 @@
                                         <pre class="content-text-code" v-html="selectedCodeContent"></pre>
                                     </div>
                                 </el-splitter-panel>
+                                <el-splitter-panel class="split-panel right-sidebar" collapsible>
+                                    <div class="panel-title">
+                                        <i class="fas fa-link"></i>
+                                        <span>对齐与审查</span>
+                                    </div>
+                                    <div class="content-card">
+                                        <div class="alignment-list">
+                                            <el-collapse v-if="alignmentResults.length > 0">
+                                                <el-collapse-item 
+                                                    v-for="(alignment, index) in alignmentResults" 
+                                                    :key="alignment.id"
+                                                    :title="alignment.name"
+                                                    @contextmenu.prevent="showContextMenu($event, alignment)"
+                                                >
+                                                    <template #title>
+                                                        <div class="alignment-header">
+                                                            <el-tooltip effect="light" :content="alignment.name" placement="top">
+                                                                <span class="alignment-title">${ alignment.name }</span>
+                                                            </el-tooltip>
+                                                            <el-tag 
+                                                                :type="alignment.hasReview ? 'success' : 'info'" 
+                                                                size="small" 
+                                                                class="review-tag"
+                                                            >
+                                                                ${ alignment.hasReview ? '已审查' : '未审查' }
+                                                            </el-tag>
+                                                        </div>
+                                                    </template>
+                                                    
+                                                    <div class="alignment-content">
+                                                        <div v-if="alignment.docRanges.length > 0" class="alignment-section">
+                                                            <h4>需求文档范围</h4>
+                                                            <div v-for="(range, rIndex) in alignment.docRanges" :key="'doc-'+rIndex" class="range-item">
+                                                                <div class="range-header">
+                                                                    <span>${ range.documentId }</span>
+                                                                    <el-button 
+                                                                        type="danger" 
+                                                                        size="small"
+                                                                        link
+                                                                    >×</el-button>
+                                                                </div>
+                                                                <div class="range-content">
+                                                                    <el-tooltip effect="light" :content="range.content" placement="top">
+                                                                        <pre class="truncated-code">${ range.content }</pre>
+                                                                    </el-tooltip>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div v-if="alignment.codeRanges.length > 0" class="alignment-section">
+                                                            <h4>代码范围</h4>
+                                                            <div v-for="(range, rIndex) in alignment.codeRanges" :key="'code-'+rIndex" class="range-item">
+                                                                <div class="range-header">
+                                                                    <span>${ range.documentId }</span>
+                                                                    <el-button 
+                                                                        type="danger" 
+                                                                        size="small"
+                                                                        link
+                                                                    >×</el-button>
+                                                                </div>
+                                                                <div class="range-content">
+                                                                    <el-tooltip effect="light" :content="range.content" placement="top">
+                                                                        <pre class="truncated-code">${ range.content }</pre>
+                                                                    </el-tooltip>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </el-collapse-item>
+                                            </el-collapse>
+                                            <div v-else class="empty-message">
+                                                暂无对齐结果
+                                            </div>
+                                        </div>
+                                    </div>
+                                </el-splitter-panel>
                             </el-splitter>
                         </el-splitter-panel>
 
-                        <!-- 底部问题单 -->
-                        <el-splitter-panel  class="bottom-bar" id="bottomBar" collapsible>
+                        <el-splitter-panel class="bottom-bar" id="bottomBar" collapsible>
                             <div class="bottom-bar-content">
                                 <div class="issue-header-bar">
                                     <div class="issue-title-bar">
@@ -318,6 +391,19 @@
                             </div>
                         </el-splitter-panel>
                     </el-splitter>
+
+                    <div 
+                        v-if="contextMenu.visible" 
+                        class="context-menu" 
+                        :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }"
+                    >
+                        <div class="context-menu-item" @click="renameAlignment">
+                            <i class="fas fa-pen"></i> 重命名
+                        </div>
+                        <div class="context-menu-item" @click="deleteAlignment">
+                            <i class="fas fa-trash"></i> 删除
+                        </div>
+                    </div>
                 </div>
             </el-splitter-panel>
         </el-splitter>

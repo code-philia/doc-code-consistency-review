@@ -284,6 +284,24 @@
     overflow-y: scroll;
 }
 
+.annotation-list .el-collapse {
+    border-top: none;
+    border-bottom: none;
+}
+
+.annotation-list .el-collapse-item__header {
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.annotation-list .el-collapse-item__wrap {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.annotation-list .el-collapse-item__content {
+    padding-bottom: 8px;
+}
+
 .file-item.selected::before {
     content: "";
     position: absolute;

@@ -928,3 +928,132 @@
 .issue-status.unconfirmed {
     background-color: #e0e0e0;
 }
+
+.right-sidebar {
+    background-color: #fcfcfc;
+}
+
+.right-sidebar .panel-title {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.alignment-list {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.alignment-list .el-collapse {
+    border-top: none;
+    border-bottom: none;
+}
+
+.alignment-list .el-collapse-item__header {
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.alignment-list .el-collapse-item__wrap {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.alignment-list .el-collapse-item__content {
+    padding-bottom: 8px;
+}
+
+.alignment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    padding-right: 10px;
+}
+
+.alignment-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    max-width: 30%;
+}
+
+.review-tag {
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.alignment-content {
+    padding: 0 12px;
+    font-size: 10px;
+}
+
+.alignment-section h4 {
+    margin-bottom: 2px;
+    color: var(--text-primary);
+}
+
+.range-item {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 4px;
+    margin-bottom: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.range-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.range-content {
+    font-size: 11px;
+    padding: 5px;
+    background-color: white;
+    border-radius: 3px;
+}
+
+.truncated-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.truncated-code {
+    font-family: Consolas, monospace;
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 60px;
+}
+
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border-radius: 4px;
+    z-index: 2000;
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.context-menu-item:hover {
+    background-color: var(--menu-hover);
+    color: var(--accent-hover);
+}
+
+.context-menu-item i {
+    margin-right: 8px;
+    width: 12px;
+}
