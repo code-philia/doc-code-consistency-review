@@ -527,3 +527,31 @@
     color: #67c23a;
     margin-left: 10px;
 }
+
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border-radius: 4px;
+    z-index: 2000;
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.context-menu-item:hover {
+    background-color: var(--menu-hover);
+    color: var(--accent-hover);
+}
+
+.context-menu-item i {
+    margin-right: 8px;
+    width: 12px;
+}

@@ -42,6 +42,12 @@ const app = createApp({
         const filteredAnnotations = ref(null);
         const isFiltered = ref(false);
 
+        const contextMenu = ref({
+            visible: false,
+            top: 0,
+            left: 0,
+            selectedAnnotation: null,
+        });
         const saveSettings = () => {
             // 规范化路径
             if (settingsForm.value.workDirectory) {
@@ -463,18 +469,44 @@ const app = createApp({
         };
 
         // 删除标注
-        const removeAnnotation = (index) => {
-            ElMessageBox.confirm('确定要删除此标注吗?', '确认删除', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-                type: 'warning'
-            }).then(() => {
-                const annotation = annotations.value[index];
-                removeAnnotationHighlights(annotation.id);
+        const showContextMenu = (event, annotation) => {
+            contextMenu.value.visible = true;
+            contextMenu.value.top = event.clientY;
+            contextMenu.value.left = event.clientX;
+            contextMenu.value.selectedAnnotation = annotation;
 
-                annotations.value.splice(index, 1);
-                ElMessage.success('标注已删除');
-            }).catch(() => { });
+            document.addEventListener('click', hideContextMenu);
+        };
+
+        const hideContextMenu = () => {
+            contextMenu.value.visible = false;
+            document.removeEventListener('click', hideContextMenu);
+        };
+
+        // 新的重命名函数，它会调用现有的 editAnnotation 逻辑
+        const renameAnnotation = () => {
+            if (!contextMenu.value.selectedAnnotation) return;
+            editAnnotation(contextMenu.value.selectedAnnotation);
+        };
+
+        // 新的删除函数，替代旧的 removeAnnotation
+        const deleteAnnotation = () => {
+            if (!contextMenu.value.selectedAnnotation) return;
+
+            const annotationToDelete = contextMenu.value.selectedAnnotation;
+            const index = annotations.value.findIndex(a => a.id === annotationToDelete.id);
+
+            if (index > -1) {
+                ElMessageBox.confirm(`确定要删除标注 "${annotationToDelete.category}" 吗?`, '确认删除', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    removeAnnotationHighlights(annotationToDelete.id);
+                    annotations.value.splice(index, 1);
+                    ElMessage.success('标注已删除');
+                }).catch(() => { });
+            }
         };
 
         // 删除标注中的范围
@@ -893,7 +925,6 @@ const app = createApp({
             addToAnnotation,
             editAnnotation,
             saveAnnotationName,
-            removeAnnotation,
             removeRange,
             formatDate: (dateStr) => {
                 const date = new Date(dateStr);
@@ -904,6 +935,10 @@ const app = createApp({
             filteredAnnotations,
             isFiltered,
             showAllAnnotations,
+            contextMenu,
+            showContextMenu,
+            renameAnnotation,
+            deleteAnnotation,
         };
     }
 });
