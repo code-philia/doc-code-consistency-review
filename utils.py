@@ -3,6 +3,7 @@ import markdown
 from bs4 import BeautifulSoup
 import re
 import tiktoken
+from doc2md import docToMd
 
 def count_lines_of_code(filepath):
     """一个简单的代码行数统计函数，忽略空行"""
@@ -244,11 +245,29 @@ def create_chunk(filename, start, end, lines):
     }
     
 
-def get_all_files_with_relative_paths(base_path):
+def get_all_files_with_relative_paths(base_path, type = 'code'):
     """递归遍历目录，获取所有文件的相对路径"""
     all_files = []
     for root, _, files in os.walk(base_path):
         for file in files:
+            if type == 'code' and not (file.endswith('.py') or file.endswith('.java') or file.endswith('.cpp') or file.endswith('.js') or file.endswith('.c') or file.endswith('.h')):
+                continue
+            if type == 'doc' and not (file.endswith('.docx') or file.endswith('.md')):
+                continue
+            
             relative_path = os.path.relpath(os.path.join(root, file), base_path)
             all_files.append(relative_path)
+            
     return all_files
+
+def convert_doc_to_markdown(doc_repo_path):
+    converted_repo_path = os.path.join(os.path.dirname(doc_repo_path), "doc_repo_converted")
+    os.makedirs(converted_repo_path, exist_ok=True)
+    
+    for root, _, files in os.walk(doc_repo_path):
+        for file in files:
+            if not file.endswith('.docx'):
+                continue
+            docToMd.convertDocToMarkdown(os.path.join(root, file), converted_repo_path)
+            
+            

@@ -2,7 +2,7 @@ import os
 import time
 from flask import Flask, json, render_template, request, jsonify
 import socket
-from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code
+from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown
 from agent import query_generated_requirement, query_related_code, query_review_result
 import random
 import string
@@ -108,8 +108,11 @@ def create_project_from_folder(project_name, folder_path):
         return jsonify({"status": "error", "message": "该文件夹已包含 'metadata.json'，似乎已是一个项目。"}), 400
 
     try:
-        code_files = get_all_files_with_relative_paths(code_repo_path)
-        doc_files = get_all_files_with_relative_paths(doc_repo_path)
+        code_files = get_all_files_with_relative_paths(code_repo_path, type ='code')
+        doc_files = get_all_files_with_relative_paths(doc_repo_path, type ='doc')
+        
+        # 对 doc_repo 目录下的文档进行格式转换
+        convert_doc_to_markdown(doc_repo_path)
         
         total_loc = 0
         for file in code_files:
@@ -276,18 +279,20 @@ def get_file_content():
     try:
         # 获取项目元数据以确定文件仓库路径
         metadata_file = os.path.join(project_path, 'metadata.json')
-        if not os.path.exists(metadata_file):
-            return jsonify({"status": "error", "message": "项目元数据文件不存在"}), 404
-
         with open(metadata_file, 'r', encoding='utf-8') as f:
             metadata = json.load(f)
 
-        repo_path = metadata.get(repo_map[file_type])
-        if not repo_path:
-            return jsonify({"status": "error", "message": "项目仓库路径未定义"}), 500
-
-        file_path = os.path.join(repo_path, filename)
-
+        if file_type == 'code':
+            repo_path = metadata.get(repo_map[file_type])
+            file_path = os.path.join(repo_path, filename)
+        else: # 'doc'
+            if filename.endswith('.md'):
+                repo_path = metadata.get(repo_map[file_type])
+                file_path = os.path.join(repo_path, filename)
+            else: # docx类型，读取转换后的md文件
+                file_name_prefix = filename.split('.')[0]
+                file_path = os.path.join(project_path, 'doc_repo_converted', file_name_prefix, file_name_prefix + '.md')
+            
         if not os.path.exists(file_path):
             return jsonify({"status": "error", "message": "文件未找到"}), 404
         
