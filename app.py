@@ -7,6 +7,7 @@ from agent import query_generated_requirement, query_related_code, query_review_
 import random
 import string
 from datetime import datetime, timedelta
+from werkzeug.utils import secure_filename
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
@@ -257,6 +258,127 @@ def get_project_metadata():
 
     except (json.JSONDecodeError, Exception) as e:
         return jsonify({"status": "error", "message": f"读取元数据文件失败: {e}"}), 500
+
+@app.route('/project/upload-files', methods=['POST'])
+def upload_files():
+    try:
+        project_path = request.form.get('path')
+        file_type = request.form.get('fileType')  # 'doc' or 'code'
+        files = request.files.getlist('files')
+
+        if not all([project_path, file_type, files]):
+            return jsonify({"status": "error", "message": "请求参数不完整。"}), 400
+
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+
+        if file_type == 'code':
+            code_repo_path = metadata.get('code_repo')
+            for file in files:
+                # 保留包含中文的原始相对路径
+                relative_path = file.filename.replace('\\', '/')
+
+                # 安全检查：防止目录遍历攻击 (e.g., ../../secret.txt)
+                # 1. 路径拼接后进行规范化
+                dest_path = os.path.abspath(os.path.join(code_repo_path, relative_path))
+                # 2. 确保目标路径仍然在 code_repo 目录内
+                if not dest_path.startswith(os.path.abspath(code_repo_path)):
+                    return jsonify({"status": "error", "message": f"检测到不安全的路径: {relative_path}"}), 400
+
+                # 创建目标目录并保存文件
+                dest_dir = os.path.dirname(dest_path)
+                os.makedirs(dest_dir, exist_ok=True)
+                file.save(dest_path)
+
+            # 更新元数据
+            metadata['code_files'] = get_all_files_with_relative_paths(code_repo_path, type='code')
+            total_loc = sum(count_lines_of_code(os.path.join(code_repo_path, f)) for f in metadata['code_files'])
+            metadata['code_scale'] = total_loc
+
+        elif file_type == 'doc':
+            doc_repo_path = metadata.get('doc_repo')
+            has_docx = False
+            for file in files:
+                # 直接使用原始文件名，仅取最后的文件名部分，天然防止了目录遍历
+                filename = os.path.basename(file.filename)
+                if filename.endswith(('.md', '.docx')):
+                    file.save(os.path.join(doc_repo_path, filename))
+                    if filename.endswith('.docx'):
+                        has_docx = True
+            
+            if has_docx:
+                convert_doc_to_markdown(doc_repo_path)
+            
+            metadata['doc_files'] = get_all_files_with_relative_paths(doc_repo_path, type='doc')
+
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=4, ensure_ascii=False)
+
+        return jsonify({"status": "success"}), 200
+
+    except Exception as e:
+        print(f"Error during file upload: {e}")
+        return jsonify({"status": "error", "message": f"服务器处理文件上传时出错: {e}"}), 500
+    try:
+        project_path = request.form.get('path')
+        file_type = request.form.get('fileType')  # 'doc' or 'code'
+        files = request.files.getlist('files')
+
+        if not all([project_path, file_type, files]):
+            return jsonify({"status": "error", "message": "请求参数不完整。"}), 400
+
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+
+        if file_type == 'code':
+            code_repo_path = metadata.get('code_repo')
+            for file in files:
+                # 前端发送的filename包含了相对路径
+                relative_path = file.filename.replace('\\', '/')
+                # 为了安全，只对最后的文件名部分进行secure处理
+                path_parts = relative_path.split('/')
+                safe_filename = secure_filename(path_parts[-1])
+                dest_dir_parts = path_parts[:-1]
+                
+                dest_dir = os.path.join(code_repo_path, *dest_dir_parts)
+                os.makedirs(dest_dir, exist_ok=True)
+                
+                file.save(os.path.join(dest_dir, safe_filename))
+
+            # 全量更新文件列表和代码规模
+            metadata['code_files'] = get_all_files_with_relative_paths(code_repo_path, type='code')
+            total_loc = sum(count_lines_of_code(os.path.join(code_repo_path, f)) for f in metadata['code_files'])
+            metadata['code_scale'] = total_loc
+
+        elif file_type == 'doc':
+            doc_repo_path = metadata.get('doc_repo')
+            has_docx = False
+            for file in files:
+                # 文档文件扁平化存储，只取文件名
+                filename = secure_filename(os.path.basename(file.filename))
+                if filename.endswith(('.md', '.docx')):
+                    file.save(os.path.join(doc_repo_path, filename))
+                    if filename.endswith('.docx'):
+                        has_docx = True
+            
+            # 如果上传了docx文件，则执行转换
+            if has_docx:
+                convert_doc_to_markdown(doc_repo_path)
+            
+            # 全量更新文档列表
+            metadata['doc_files'] = get_all_files_with_relative_paths(doc_repo_path, type='doc')
+
+        # 将更新后的元数据写回文件
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=4, ensure_ascii=False)
+
+        return jsonify({"status": "success"}), 200
+
+    except Exception as e:
+        print(f"Error during file upload: {e}")
+        return jsonify({"status": "error", "message": f"服务器处理文件上传时出错: {e}"}), 500
 
 @app.route('/project/file-content', methods=['GET'])
 def get_file_content():

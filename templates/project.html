@@ -42,8 +42,18 @@
             <div class="menu-item">
                 文件
                 <div class="dropdown">
-                    <div class="dropdown-item"><i class="fas fa-file-alt"></i> 添加需求文档</div>
-                    <div class="dropdown-item"><i class="fas fa-file-code"></i> 添加代码文件</div>
+                    <div class="dropdown-item" @click="addFile('doc', 'file')"><i class="fas fa-file-alt"></i> 添加需求文档 (单个)</div>
+                    <div class="dropdown-item" @click="addFile('doc', 'folder')"><i class="fas fa-folder"></i> 添加需求文档 (文件夹)</div>
+                    <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (单个)</div>
+                    <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (文件夹)</div>
+                </div>
+            </div>
+            <div class="menu-item">
+                智能工具
+                <div class="dropdown">
+                    <div class="dropdown-item"><i class="fas fa-sitemap"></i> 需求分解</div>
+                    <div class="dropdown-item"><i class="fas fa-link"></i> 自动对齐</div>
+                    <div class="dropdown-item"><i class="fas fa-tasks"></i> 自动审查</div>
                 </div>
             </div>
         </div>

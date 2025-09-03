@@ -191,6 +191,66 @@ const app = createApp({
         };
 
         /***********************
+         * 文件上传
+         ***********************/
+        const addFile = (fileType, selectionMode) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+
+            // 'file'模式下允许选择多个文件
+            input.multiple = selectionMode === 'file';
+
+            if (selectionMode === 'folder') {
+                input.webkitdirectory = true;
+            }
+
+            // 对文档类型进行文件格式过滤
+            if (fileType === 'doc') {
+                input.accept = '.md,.docx';
+            }
+
+            input.onchange = async (e) => {
+                const files = e.target.files;
+                if (!files || files.length === 0) {
+                    return; // 用户取消了选择
+                }
+
+                const formData = new FormData();
+                formData.append('path', projectPath.value);
+                formData.append('fileType', fileType);
+
+                for (let i = 0; i < files.length; i++) {
+                    // 如果是文件夹上传，浏览器会提供 webkitRelativePath
+                    const path = files[i].webkitRelativePath || files[i].name;
+                    formData.append('files', files[i], path);
+                }
+
+                ElMessage.info('文件正在上传，请稍候...');
+
+                try {
+                    const response = await axios.post('/project/upload-files', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+
+                    if (response.data.status === 'success') {
+                        ElMessage.success('文件上传成功！');
+                        await fetchProjectMetadata(); // 刷新文件列表
+                    } else {
+                        ElMessage.error(`上传失败: ${response.data.message}`);
+                    }
+                } catch (err) {
+                    console.error("Error uploading files:", err);
+                    ElMessage.error(`上传文件时发生网络错误: ${err.message}`);
+                }
+            };
+
+            input.click();
+        };
+
+
+        /***********************
          * 问题单管理
          ***********************/
         const issues = ref([
@@ -351,6 +411,7 @@ const app = createApp({
             selectedDocContent,
             selectedCodeContent,
             fetchFileContent,
+            addFile,
             issues,
             selectedIssue,
             selectIssue,

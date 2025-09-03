@@ -268,6 +268,11 @@ def convert_doc_to_markdown(doc_repo_path):
         for file in files:
             if not file.endswith('.docx'):
                 continue
+            
+            file_name_prefix = os.path.splitext(file)[0]
+            converted_md_path = os.path.join(converted_repo_path, file_name_prefix, file_name_prefix + '.md')
+            
+            if os.path.exists(converted_md_path):
+                continue
+
             docToMd.convertDocToMarkdown(os.path.join(root, file), converted_repo_path)
-            
-            
