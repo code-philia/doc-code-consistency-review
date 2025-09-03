@@ -1,0 +1,7 @@
+Flask
+openai
+markdown
+beautifulsoup4
+tiktoken
+lxml
+Pillow
