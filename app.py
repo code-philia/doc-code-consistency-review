@@ -529,6 +529,33 @@ def add_alignment():
     except Exception as e:
         return jsonify({"status": "error", "message": f"写入对齐文件失败: {e}"}), 500
 
+@app.route('/project/alignment', methods=['DELETE'])
+def delete_alignment():
+    """删除一个指定ID的对齐关系"""
+    project_path = request.args.get('path')
+    alignment_id = request.args.get('id')
+
+    if not all([project_path, alignment_id]):
+        return jsonify({"status": "error", "message": "缺少项目路径或对齐ID参数。"}), 400
+
+    alignments_file = os.path.join(project_path, 'alignments.json')
+    if not os.path.exists(alignments_file):
+        return jsonify({"status": "success", "message": "文件不存在，无需删除。"}), 200
+
+    try:
+        with open(alignments_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        if alignment_id in data:
+            del data[alignment_id]
+
+        with open(alignments_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"删除对齐项时出错: {e}"}), 500
+
 
 def find_available_port(start_port):
     port = start_port

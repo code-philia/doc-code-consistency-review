@@ -437,29 +437,51 @@ const app = createApp({
             document.removeEventListener('click', hideContextMenu);
         };
 
-        const renameAlignment = () => {
+
+        const renameAlignment = async () => {
             if (!contextMenu.value.selectedAlignment) return;
-            const newName = prompt('请输入新的名称：', contextMenu.value.selectedAlignment.name);
-            if (newName && newName.trim() !== '') {
-                const alignment = alignmentResults.value.find(a => a.id === contextMenu.value.selectedAlignment.id);
-                if (alignment) {
-                    alignment.name = newName.trim();
+            const alignment = alignmentResults.value.find(a => a.id === contextMenu.value.selectedAlignment.id);
+            if (!alignment) return;
+
+            const oldName = alignment.name;
+            const newName = prompt('请输入新的名称：', oldName);
+
+            if (newName && newName.trim() !== '' && newName.trim() !== oldName) {
+                alignment.name = newName.trim();
+                try {
+                    await axios.post(
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}`,
+                        alignment
+                    );
                     ElMessage.success('重命名成功！');
+                } catch (err) {
+                    // 如果后端更新失败，则恢复前端的名称
+                    alignment.name = oldName;
+                    console.error("Error renaming alignment:", err);
+                    ElMessage.error(`重命名失败: ${err.message}`);
                 }
             }
         };
 
         const deleteAlignment = () => {
             if (!contextMenu.value.selectedAlignment) return;
-            ElMessageBox.confirm('确定要删除此对齐项吗？', '确认删除', {
+            const alignmentToDelete = contextMenu.value.selectedAlignment;
+
+            ElMessageBox.confirm(`确定要删除对齐项 "${alignmentToDelete.name}" 吗？`, '确认删除', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'warning'
-            }).then(() => {
-                const index = alignmentResults.value.findIndex(a => a.id === contextMenu.value.selectedAlignment.id);
-                if (index > -1) {
-                    alignmentResults.value.splice(index, 1);
-                    ElMessage.info('对齐项已删除。');
+            }).then(async () => {
+                try {
+                    await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignmentToDelete.id}`);
+                    const index = alignmentResults.value.findIndex(a => a.id === alignmentToDelete.id);
+                    if (index > -1) {
+                        alignmentResults.value.splice(index, 1);
+                        ElMessage.info('对齐项已删除。');
+                    }
+                } catch (err) {
+                    console.error("Error deleting alignment:", err);
+                    ElMessage.error(`删除失败: ${err.message}`);
                 }
             }).catch(() => { });
         };
