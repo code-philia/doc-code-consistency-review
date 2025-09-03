@@ -265,7 +265,7 @@
                                         <i class="fas fa-file-word"></i> <span>${ selectedDocFile || '请选择需求文档' }</span>
                                     </div>
                                     <div class="content-card">
-                                        <div class="content-text-doc" v-html="selectedDocContent"></div>
+                                        <div class="content-text-doc" v-html="selectedDocContent" @mouseup="handleDocSelection"></div>
                                     </div>
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel code-panel" :min="200" size="50%">
@@ -417,6 +417,29 @@
                 </div>
             </el-splitter-panel>
         </el-splitter>
+
+        <el-dialog 
+            v-model="showAlignmentDialog" 
+            title="新建需求点" 
+            width="500px"
+            :close-on-click-modal="false"
+        >
+            <div v-if="currentSelection">
+                <div class="selection-preview">
+                    ${ currentSelection.content }
+                </div>
+                 <el-input
+                    v-model="newAlignmentName"
+                    placeholder="为该需求点命名"
+                    style="margin-top: 5px;"
+                ></el-input>
+            </div>
+            <template #footer>
+                <el-button @click="showAlignmentDialog = false">取消</el-button>
+                <el-button type="primary" @click="createAlignment">创建</el-button>
+            </template>
+        </el-dialog>
+
     </div>
 </div>
 

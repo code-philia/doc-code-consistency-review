@@ -320,65 +320,7 @@ def upload_files():
     except Exception as e:
         print(f"Error during file upload: {e}")
         return jsonify({"status": "error", "message": f"服务器处理文件上传时出错: {e}"}), 500
-    try:
-        project_path = request.form.get('path')
-        file_type = request.form.get('fileType')  # 'doc' or 'code'
-        files = request.files.getlist('files')
 
-        if not all([project_path, file_type, files]):
-            return jsonify({"status": "error", "message": "请求参数不完整。"}), 400
-
-        metadata_file = os.path.join(project_path, 'metadata.json')
-        with open(metadata_file, 'r', encoding='utf-8') as f:
-            metadata = json.load(f)
-
-        if file_type == 'code':
-            code_repo_path = metadata.get('code_repo')
-            for file in files:
-                # 前端发送的filename包含了相对路径
-                relative_path = file.filename.replace('\\', '/')
-                # 为了安全，只对最后的文件名部分进行secure处理
-                path_parts = relative_path.split('/')
-                safe_filename = secure_filename(path_parts[-1])
-                dest_dir_parts = path_parts[:-1]
-                
-                dest_dir = os.path.join(code_repo_path, *dest_dir_parts)
-                os.makedirs(dest_dir, exist_ok=True)
-                
-                file.save(os.path.join(dest_dir, safe_filename))
-
-            # 全量更新文件列表和代码规模
-            metadata['code_files'] = get_all_files_with_relative_paths(code_repo_path, type='code')
-            total_loc = sum(count_lines_of_code(os.path.join(code_repo_path, f)) for f in metadata['code_files'])
-            metadata['code_scale'] = total_loc
-
-        elif file_type == 'doc':
-            doc_repo_path = metadata.get('doc_repo')
-            has_docx = False
-            for file in files:
-                # 文档文件扁平化存储，只取文件名
-                filename = secure_filename(os.path.basename(file.filename))
-                if filename.endswith(('.md', '.docx')):
-                    file.save(os.path.join(doc_repo_path, filename))
-                    if filename.endswith('.docx'):
-                        has_docx = True
-            
-            # 如果上传了docx文件，则执行转换
-            if has_docx:
-                convert_doc_to_markdown(doc_repo_path)
-            
-            # 全量更新文档列表
-            metadata['doc_files'] = get_all_files_with_relative_paths(doc_repo_path, type='doc')
-
-        # 将更新后的元数据写回文件
-        with open(metadata_file, 'w', encoding='utf-8') as f:
-            json.dump(metadata, f, indent=4, ensure_ascii=False)
-
-        return jsonify({"status": "success"}), 200
-
-    except Exception as e:
-        print(f"Error during file upload: {e}")
-        return jsonify({"status": "error", "message": f"服务器处理文件上传时出错: {e}"}), 500
 
 @app.route('/project/file-content', methods=['GET'])
 def get_file_content():
@@ -537,6 +479,55 @@ def review_single_requirement():
     # requirement_point_reviewed = query_review_result(requirement_point)
     
     return jsonify({"result": 0})
+
+
+@app.route('/project/alignments', methods=['GET'])
+def get_alignments():
+    """获取项目的所有对齐关系"""
+    project_path = request.args.get('path')
+    if not project_path:
+        return jsonify({"status": "error", "message": "缺少项目路径参数。"}), 400
+
+    alignments_file = os.path.join(project_path, 'alignments.json')
+    if not os.path.exists(alignments_file):
+        return jsonify({"status": "success", "data": {}}), 200 # 文件不存在返回空对象
+
+    try:
+        with open(alignments_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return jsonify({"status": "success", "data": data}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"读取对齐文件失败: {e}"}), 500
+
+@app.route('/project/alignments', methods=['POST'])
+def add_alignment():
+    """添加一个新的对齐关系"""
+    project_path = request.args.get('path')
+    if not project_path:
+        return jsonify({"status": "error", "message": "缺少项目路径参数。"}), 400
+
+    new_alignment = request.json
+    if not new_alignment or 'id' not in new_alignment:
+        return jsonify({"status": "error", "message": "无效的对齐数据。"}), 400
+
+    alignments_file = os.path.join(project_path, 'alignments.json')
+    data = {}
+    if os.path.exists(alignments_file):
+        with open(alignments_file, 'r', encoding='utf-8') as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                pass # 文件内容为空或损坏，忽略
+
+    # 以ID为键，添加或更新对齐关系
+    data[new_alignment['id']] = new_alignment
+
+    try:
+        with open(alignments_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"写入对齐文件失败: {e}"}), 500
 
 
 def find_available_port(start_port):

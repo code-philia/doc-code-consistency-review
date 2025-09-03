@@ -1076,3 +1076,14 @@
     margin-right: 8px;
     width: 12px;
 }
+
+.selection-preview {
+    max-height: 100px;
+    overflow: auto;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    border: 1px solid #e9ecef;
+}

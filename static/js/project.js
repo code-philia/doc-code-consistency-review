@@ -6,7 +6,7 @@ let activeView = 'statsView'; // 当前活动视图
 const { createApp, ref, onMounted, computed } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
-    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers
+    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange
 } from './utils.js';
 
 /****************************
@@ -67,10 +67,37 @@ const app = createApp({
         const selectedCodeFile = ref('');
         const selectedDocContent = ref('');
         const selectedCodeContent = ref('');
+        const selectedDocRawContent = ref('');
+
+        const alignmentResults = ref([]);
+        const showAlignmentDialog = ref(false);
+        const currentSelection = ref(null);
+        const newAlignmentName = ref('');
 
         /***********************
          * 文件加载相关方法
          ***********************/
+        const fetchAlignments = async () => {
+            if (!projectPath.value) return;
+            try {
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`);
+                if (response.data.status === 'success' && response.data.data) {
+                    // 后端返回的是以ID为键的对象，转换为数组以便渲染
+                    alignmentResults.value = Object.values(response.data.data);
+                } else {
+                    ElMessage.error(`加载对齐数据失败: ${response.data.message}`);
+                }
+            } catch (err) {
+                // 如果是404或空文件，静默处理
+                if (err.response && err.response.status === 404) {
+                    alignmentResults.value = [];
+                } else {
+                    console.error("Error fetching alignments:", err);
+                    ElMessage.error(`加载对齐数据失败: ${err.message}`);
+                }
+            }
+        };
+
         const fetchProjectMetadata = async () => {
             if (!projectPath.value) {
                 ElMessage.error("项目路径不存在，无法加载文件列表。");
@@ -83,6 +110,8 @@ const app = createApp({
                     projectFiles.value.code_files = metadata.code_files || [];
                     projectFiles.value.doc_files = metadata.doc_files || [];
                     projectName.value = metadata.project_name || projectName.value;
+
+                    await fetchAlignments();
                 } else {
                     ElMessage.error(`加载项目元数据失败: ${response.data.message}`);
                 }
@@ -109,6 +138,7 @@ const app = createApp({
                     try {
                         if (fileType === 'doc') {
                             selectedDocFile.value = fileName;
+                            selectedDocRawContent.value = content;
                             selectedDocContent.value = await renderMarkdown(content);
                         } else if (fileType === 'code') {
                             selectedCodeFile.value = fileName;
@@ -249,6 +279,69 @@ const app = createApp({
             input.click();
         };
 
+        /***********************
+         * 对齐关系创建
+         ***********************/
+        const handleDocSelection = (event) => {
+            const selection = window.getSelection();
+            console.log("User selection:", selection ? selection.toString() : 'null');
+            if (!selection || selection.toString().trim() === '') return;
+
+            const range = selection.getRangeAt(0);
+            const editorDiv = document.querySelector('.content-text-doc');
+
+            if (editorDiv && editorDiv.contains(range.commonAncestorContainer)) {
+                const [start, end] = getSourceDocumentRange(editorDiv, range);
+                if (end - start > 0) {
+                    currentSelection.value = {
+                        documentId: selectedDocFile.value,
+                        start,
+                        end,
+                        content: selectedDocRawContent.value.slice(start, end)
+                    };
+                    showAlignmentDialog.value = true;
+                    newAlignmentName.value = '';
+                }
+            }
+        };
+
+        const createAlignment = async () => {
+            const id = crypto.randomUUID();
+            if (!currentSelection.value) {
+                ElMessage.warning('请先选择需求文本。');
+                return;
+            }
+            if (!newAlignmentName.value.trim()) {
+                newAlignmentName.value = `需求点_${id.slice(0, 8)}`;
+            }
+
+            const newAlignment = {
+                id: id,
+                name: newAlignmentName.value.trim(),
+                hasReview: false,
+                docRanges: [{ ...currentSelection.value }],
+                codeRanges: [] // 初始代码范围为空
+            };
+
+            // 更新前端UI
+            alignmentResults.value.push(newAlignment);
+            showAlignmentDialog.value = false;
+
+            // 发送到后端保存
+            try {
+                await axios.post(
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}`,
+                    newAlignment
+                );
+                ElMessage.success('对齐关系创建成功');
+            } catch (err) {
+                console.error("Error saving alignment:", err);
+                ElMessage.error(`保存对齐关系失败: ${err.message}`);
+                // 可选：如果保存失败，可以从UI中移除刚添加的项
+                alignmentResults.value.pop();
+            }
+        };
+
 
         /***********************
          * 问题单管理
@@ -321,30 +414,6 @@ const app = createApp({
         /***********************
          * 对齐结果与右键菜单管理
          ***********************/
-        const alignmentResults = ref([
-            {
-                id: 1,
-                name: '用户登录功能实现',
-                hasReview: true,
-                docRanges: [{ documentId: '需求文档A.md', content: '用户应能通过输入用户名和密码登录系统...' }],
-                codeRanges: [{ documentId: 'auth.js', content: 'function login(username, password) { ... }' }]
-            },
-            {
-                id: 2,
-                name: '密码加密存储',
-                hasReview: false,
-                docRanges: [{ documentId: '需求文档A.md', content: '系统需对用户密码进行哈希加密处理...' }],
-                codeRanges: [{ documentId: 'utils.js', content: 'const hash = bcrypt.hashSync(password, salt);' }]
-            },
-            {
-                id: 3,
-                name: '税务计算逻辑',
-                hasReview: true,
-                docRanges: [{ documentId: '税务计算需求.md', content: '税率根据收入分级计算，具体标准如下...' }],
-                codeRanges: []
-            },
-        ]);
-
         const contextMenu = ref({
             visible: false,
             top: 0,
@@ -410,6 +479,13 @@ const app = createApp({
             selectedCodeFile,
             selectedDocContent,
             selectedCodeContent,
+            selectedDocRawContent,
+            handleDocSelection,
+            showAlignmentDialog,
+            currentSelection,
+            newAlignmentName,
+            createAlignment,
+            alignmentResults,
             fetchFileContent,
             addFile,
             issues,
