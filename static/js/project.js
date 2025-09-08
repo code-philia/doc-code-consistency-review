@@ -79,8 +79,15 @@ const app = createApp({
          ***********************/
         const fetchAlignments = async () => {
             if (!projectPath.value) return;
+            
+            // 如果没有选中文档，返回空列表
+            if (!selectedDocFile.value) {
+                alignmentResults.value = [];
+                return;
+            }
+            
             try {
-                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`);
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`);
                 if (response.data.status === 'success' && response.data.data) {
                     // 后端返回的是以ID为键的对象，转换为数组以便渲染
                     alignmentResults.value = Object.values(response.data.data);
@@ -140,6 +147,8 @@ const app = createApp({
                             selectedDocFile.value = fileName;
                             selectedDocRawContent.value = content;
                             selectedDocContent.value = await renderMarkdown(content);
+                            // 当选择文档时，获取该文档的对齐结果
+                            await fetchAlignments();
                         } else if (fileType === 'code') {
                             selectedCodeFile.value = fileName;
                             selectedCodeContent.value = formatCodeWithLineNumbers(content);
@@ -330,7 +339,7 @@ const app = createApp({
             // 发送到后端保存
             try {
                 await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}`,
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
                     newAlignment
                 );
                 ElMessage.success('对齐关系创建成功');
@@ -450,7 +459,7 @@ const app = createApp({
                 alignment.name = newName.trim();
                 try {
                     await axios.post(
-                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}`,
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
                         alignment
                     );
                     ElMessage.success('重命名成功！');
@@ -473,7 +482,7 @@ const app = createApp({
                 type: 'warning'
             }).then(async () => {
                 try {
-                    await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignmentToDelete.id}`);
+                    await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}&id=${alignmentToDelete.id}`);
                     const index = alignmentResults.value.findIndex(a => a.id === alignmentToDelete.id);
                     if (index > -1) {
                         alignmentResults.value.splice(index, 1);

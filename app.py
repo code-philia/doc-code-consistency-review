@@ -481,16 +481,28 @@ def review_single_requirement():
     return jsonify({"result": 0})
 
 
+def get_filename_without_extension(filename):
+    """去掉文件名的扩展名"""
+    return os.path.splitext(filename)[0]
+
 @app.route('/project/alignments', methods=['GET'])
 def get_alignments():
-    """获取项目的所有对齐关系"""
+    """获取指定需求文档的对齐关系"""
     project_path = request.args.get('path')
-    if not project_path:
-        return jsonify({"status": "error", "message": "缺少项目路径参数。"}), 400
+    doc_filename = request.args.get('doc_filename')
+    if not all([project_path, doc_filename]):
+        return jsonify({"status": "error", "message": "缺少项目路径或文档名参数。"}), 400
 
-    alignments_file = os.path.join(project_path, 'alignments.json')
+    results_dir = os.path.join(project_path, 'results')
+    os.makedirs(results_dir, exist_ok=True) # 确保results目录存在
+
+    # 去掉文件扩展名
+    doc_name_without_ext = get_filename_without_extension(doc_filename)
+    alignments_file = os.path.join(project_path, 'results', f'{doc_name_without_ext}.json')
     if not os.path.exists(alignments_file):
-        return jsonify({"status": "success", "data": {}}), 200 # 文件不存在返回空对象
+        with open(alignments_file, 'w', encoding='utf-8') as f:
+            json.dump({}, f, indent=4, ensure_ascii=False)
+        return jsonify({"status": "success", "data": {}}), 200
 
     try:
         with open(alignments_file, 'r', encoding='utf-8') as f:
@@ -501,25 +513,30 @@ def get_alignments():
 
 @app.route('/project/alignments', methods=['POST'])
 def add_alignment():
-    """添加一个新的对齐关系"""
+    """在指定需求文档的对齐文件中添加/更新一个对齐关系"""
     project_path = request.args.get('path')
-    if not project_path:
-        return jsonify({"status": "error", "message": "缺少项目路径参数。"}), 400
+    doc_filename = request.args.get('doc_filename')
+    if not all([project_path, doc_filename]):
+        return jsonify({"status": "error", "message": "缺少项目路径或文档名参数。"}), 400
 
     new_alignment = request.json
     if not new_alignment or 'id' not in new_alignment:
         return jsonify({"status": "error", "message": "无效的对齐数据。"}), 400
 
-    alignments_file = os.path.join(project_path, 'alignments.json')
+    results_dir = os.path.join(project_path, 'results')
+    os.makedirs(results_dir, exist_ok=True) # 确保results目录存在
+    # 去掉文件扩展名
+    doc_name_without_ext = get_filename_without_extension(doc_filename)
+    alignments_file = os.path.join(results_dir, f'{doc_name_without_ext}.json')
+
     data = {}
     if os.path.exists(alignments_file):
         with open(alignments_file, 'r', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except json.JSONDecodeError:
-                pass # 文件内容为空或损坏，忽略
+                pass
 
-    # 以ID为键，添加或更新对齐关系
     data[new_alignment['id']] = new_alignment
 
     try:
@@ -529,16 +546,20 @@ def add_alignment():
     except Exception as e:
         return jsonify({"status": "error", "message": f"写入对齐文件失败: {e}"}), 500
 
+
 @app.route('/project/alignment', methods=['DELETE'])
 def delete_alignment():
-    """删除一个指定ID的对齐关系"""
+    """从指定需求文档的对齐文件中删除一个对齐关系"""
     project_path = request.args.get('path')
+    doc_filename = request.args.get('doc_filename')
     alignment_id = request.args.get('id')
 
-    if not all([project_path, alignment_id]):
-        return jsonify({"status": "error", "message": "缺少项目路径或对齐ID参数。"}), 400
+    if not all([project_path, doc_filename, alignment_id]):
+        return jsonify({"status": "error", "message": "缺少项目路径、文档名或对齐ID参数。"}), 400
 
-    alignments_file = os.path.join(project_path, 'alignments.json')
+    # 去掉文件扩展名
+    doc_name_without_ext = get_filename_without_extension(doc_filename)
+    alignments_file = os.path.join(project_path, 'results', f'{doc_name_without_ext}.json')
     if not os.path.exists(alignments_file):
         return jsonify({"status": "success", "message": "文件不存在，无需删除。"}), 200
 
