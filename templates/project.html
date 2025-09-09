@@ -57,7 +57,11 @@
                         <span v-if="!isAutoAligning">自动对齐</span>
                         <span v-else>对齐中... ${alignmentProgress}%</span>
                     </div>
-                    <div class="dropdown-item"><i class="fas fa-tasks"></i> 自动审查</div>
+                    <div class="dropdown-item" @click="startAutoReview" :class="{disabled: isAutoReviewing}">
+                        <i class="fas fa-tasks"></i> 
+                        <span v-if="!isAutoReviewing">自动审查</span>
+                        <span v-else>审查中... ${reviewProgress}%</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -174,6 +178,23 @@
                             </div>
                             <div class="stat-value">${ totalAlignedRequirements }</div>
                             <div class="stat-description">已确认的需求与代码对应关系</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-title">
+                                <i class="fas fa-search"></i> 审查进度
+                            </div>
+                            <div class="stat-value">${ totalReviewedRequirements }/${ totalAlignedRequirements }</div>
+                            <div class="stat-description">已审查的对齐关系数量</div>
+                            <div class="progress-stat">
+                                <div class="progress-label">
+                                    <span>完成度</span>
+                                    <span>${ totalAlignedRequirements > 0 ? Math.round((totalReviewedRequirements / totalAlignedRequirements) * 100) : 0 }%</span>
+                                </div>
+                                <div class="progress-big">
+                                    <div class="progress-big-bar" :style="`width: ${totalAlignedRequirements > 0 ? Math.round((totalReviewedRequirements / totalAlignedRequirements) * 100) : 0}%`"></div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="stat-card">
@@ -300,12 +321,12 @@
                                                                 <span class="alignment-title">${ alignment.name }</span>
                                                             </el-tooltip>
                                                             <el-tag 
-                                                                :type="alignment.hasReview ? 'success' : 'info'" 
-                                                                size="small" 
-                                                                class="review-tag"
-                                                            >
-                                                                ${ alignment.hasReview ? '已审查' : '未审查' }
-                                                            </el-tag>
+                                                :type="alignment.isReviewed ? 'success' : 'info'" 
+                                                size="small" 
+                                                class="review-tag"
+                                            >
+                                                ${ alignment.isReviewed ? '已审查' : '未审查' }
+                                            </el-tag>
                                                         </div>
                                                     </template>
                                                     
@@ -386,19 +407,20 @@
                                     </div>
                                     <div
                                         v-for="(issue, index) in issues"
-                                        :key="index"
+                                        :key="issue.id"
                                         class="issue-row"
                                         :class="{ 'selected': issue === selectedIssue }"
                                         @click="selectIssue(issue)"
+                                        @dblclick="showIssueDetail(issue)"
                                     >
                                         <div class="issue-cell issue-level-cell">
-                                            <span class="issue-level" :class="issue.level">${ issue.level }</span>
+                                            <span class="issue-level" :class="issue.level?.toLowerCase()">${ issue.level }</span>
                                         </div>
-                                        <div class="issue-cell issue-description-cell">${ issue.description }</div>
-                                        <div class="issue-cell issue-req-cell">${ issue.relatedReq }</div>
-                                        <div class="issue-cell issue-code-cell">${ issue.relatedCode }</div>
+                                        <div class="issue-cell issue-description-cell">${ issue.summary }</div>
+                                        <div class="issue-cell issue-req-cell">${ issue.docFilename }</div>
+                                        <div class="issue-cell issue-code-cell">需求点 #${ issue.requirementId }</div>
                                         <div class="issue-cell issue-status-cell">
-                                            <span class="issue-status" :class="issue.status">${ issue.status === 'confirmed' ? '已确认' : '未确认' }</span>
+                                            <span class="issue-status" :class="issue.status?.toLowerCase()">${ issue.status === 'confirmed' ? '已确认' : '未确认' }</span>
                                         </div>
                                     </div>
                                 </div>
@@ -411,12 +433,18 @@
                         class="context-menu" 
                         :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }"
                     >
-                        <div class="context-menu-item" @click="renameAlignment">
-                            <i class="fas fa-pen"></i> 重命名
-                        </div>
-                        <div class="context-menu-item" @click="deleteAlignment">
-                            <i class="fas fa-trash"></i> 删除
-                        </div>
+                        <!-- 对齐关系右键菜单 -->
+                        <template v-if="contextMenu.selectedAlignment">
+                            <div class="context-menu-item" @click="renameAlignment">
+                                <i class="fas fa-pen"></i> 重命名
+                            </div>
+                            <div class="context-menu-item" @click="deleteAlignment">
+                                <i class="fas fa-trash"></i> 删除
+                            </div>
+                            <div class="context-menu-item" @click="showReviewResult" v-if="contextMenu.selectedAlignment.isReviewed">
+                                <i class="fas fa-search"></i> 查看详情
+                            </div>
+                        </template>
                     </div>
                 </div>
             </el-splitter-panel>
@@ -441,6 +469,76 @@
             <template #footer>
                 <el-button @click="showAlignmentDialog = false">取消</el-button>
                 <el-button type="primary" @click="createAlignment">创建</el-button>
+            </template>
+        </el-dialog>
+
+        <!-- 审查结果详情弹窗 -->
+        <el-dialog 
+            v-model="showReviewDialog" 
+            :title="'需求点：' + (selectedReviewAlignment?.name || '未知')" 
+            width="800px"
+            :close-on-click-modal="false"
+        >
+            <div v-if="selectedReviewAlignment" class="review-detail">
+                <!-- 需求内容 -->
+                <div class="review-section">
+                    <h4><i class="fas fa-file-alt"></i> 需求内容</h4>
+                    <div class="doc-ranges">
+                        <div v-for="range in selectedReviewAlignment.docRanges" :key="range.id" class="doc-range">
+                            <div class="doc-file-info">
+                                <span class="file-name">${ range.filename }</span>
+                                <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                            </div>
+                            <pre class="doc-content"><code>${ range.content }</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 代码信息 -->
+                <div class="review-section">
+                    <h4><i class="fas fa-code"></i> 关联代码</h4>
+                    <div class="code-ranges">
+                        <div v-for="range in selectedReviewAlignment.codeRanges" :key="range.id" class="code-range">
+                            <div class="code-file-info">
+                                <span class="file-name">${ range.filename }</span>
+                                <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                            </div>
+                            <pre class="code-content"><code>${ range.content }</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 审查思考过程 -->
+                <div class="review-section">
+                    <h4><i class="fas fa-search"></i> 审查思考过程</h4>
+                    <div class="review-process">
+                        <pre class="review-thoughts">${ selectedReviewAlignment.reviewThoughts || '暂无审查思考过程' }</pre>
+                    </div>
+                </div>
+
+                <!-- 相关问题单 -->
+                <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="review-section">
+                    <h4><i class="fas fa-exclamation-triangle"></i> 相关问题单</h4>
+                    <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
+                        <div class="issue-header">
+                            <div class="issue-level" :class="issue.level?.toLowerCase()">
+                                ${ issue.level || '未知' }
+                            </div>
+                            <div class="issue-status">
+                                状态: ${ issue.status || '未知' }
+                            </div>
+                        </div>
+                        <div class="issue-summary">
+                            ${ issue.summary || '暂无描述' }
+                        </div>
+                        <div class="issue-description">
+                            ${ issue.description || '暂无详细描述' }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <template #footer>
+                <el-button @click="showReviewDialog = false">关闭</el-button>
             </template>
         </el-dialog>
 

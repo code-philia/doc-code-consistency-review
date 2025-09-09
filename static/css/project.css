@@ -1087,3 +1087,256 @@
     font-size: 12px;
     border: 1px solid #e9ecef;
 }
+
+/* 审查结果详情弹窗样式 */
+.review-detail {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.review-section {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.review-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.review-section h4 {
+    color: var(--text-primary);
+    font-size: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.review-section h4 i {
+    color: var(--accent-color);
+}
+
+.requirement-info {
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 4px solid var(--accent-color);
+}
+
+.requirement-content {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.doc-ranges {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.doc-range {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+}
+
+.doc-file-info {
+    background-color: #e9ecef;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.doc-file-info .file-name {
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.doc-range .doc-content {
+    margin: 0;
+    padding: 12px;
+    background-color: #ffffff;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-x: auto;
+    border: none;
+}
+
+.doc-range .doc-content code {
+    background: none;
+    padding: 0;
+    color: var(--text-primary);
+}
+
+.code-ranges {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.code-range {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+}
+
+.code-file-info {
+    background-color: #e9ecef;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.code-file-info .file-name {
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.line-range {
+    color: var(--text-secondary);
+}
+
+.code-range .code-content {
+    margin: 0;
+    padding: 12px;
+    background-color: #ffffff;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-x: auto;
+    border: none;
+}
+
+.code-range .code-content code {
+    background: none;
+    padding: 0;
+    color: var(--text-primary);
+}
+
+.review-process {
+    background-color: #f8f9fa;
+    padding: 16px;
+    border-radius: 6px;
+    border-left: 4px solid #28a745;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+}
+
+.review-conclusion {
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.review-conclusion.pass {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.review-conclusion.fail {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.review-conclusion.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* 审查思考过程样式 */
+.review-thoughts {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 16px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #495057;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0;
+}
+
+/* 问题单信息样式 */
+.issue-info {
+    background-color: #fff3cd;
+    padding: 16px;
+    border-radius: 6px;
+    border-left: 4px solid var(--warning-color);
+    margin-bottom: 12px;
+}
+
+.issue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.issue-info .issue-level {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.issue-level.high {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.issue-level.medium {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.issue-level.low {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.issue-summary {
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.issue-description {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.issue-info .issue-status {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}

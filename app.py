@@ -578,6 +578,157 @@ def delete_alignment():
         return jsonify({"status": "error", "message": f"删除对齐项时出错: {e}"}), 500
 
 
+@app.route('/project/alignment-file', methods=['GET'])
+def get_alignment_file():
+    """根据文件路径加载对齐关系文件"""
+    file_path = request.args.get('path')
+    if not file_path:
+        return jsonify({"status": "error", "message": "缺少文件路径参数。"}), 400
+
+    if not os.path.exists(file_path):
+        return jsonify({"status": "error", "message": "对齐关系文件不存在。"}), 404
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # 将字典格式转换为列表格式
+        if isinstance(data, dict):
+            alignments = list(data.values())
+        else:
+            alignments = data
+            
+        return jsonify({"status": "success", "data": alignments}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"读取对齐文件失败: {e}"}), 500
+
+
+# 问题单相关API
+@app.route('/project/issues', methods=['GET'])
+def get_issues():
+    try:
+        project_path = request.args.get('path')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
+        
+        # 构建问题单文件路径
+        issues_file = os.path.join(project_path, 'issues.json')
+        
+        if os.path.exists(issues_file):
+            with open(issues_file, 'r', encoding='utf-8') as f:
+                issues = json.load(f)
+            return jsonify({'status': 'success', 'data': issues})
+        else:
+            # 如果文件不存在，返回空列表
+            return jsonify({'status': 'success', 'data': []})
+            
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/project/issues', methods=['POST'])
+def add_issue():
+    try:
+        project_path = request.args.get('path')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
+        
+        issue_data = request.json
+        if not issue_data:
+            return jsonify({'status': 'error', 'message': '缺少问题单数据'})
+        
+        # 构建问题单文件路径
+        issues_file = os.path.join(project_path, 'issues.json')
+        
+        # 读取现有问题单数据
+        issues = []
+        if os.path.exists(issues_file):
+            with open(issues_file, 'r', encoding='utf-8') as f:
+                issues = json.load(f)
+        
+        # 添加新问题单
+        issues.append(issue_data)
+        
+        # 保存问题单数据
+        with open(issues_file, 'w', encoding='utf-8') as f:
+            json.dump(issues, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({'status': 'success', 'message': '问题单添加成功'})
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/project/issues/<issue_id>', methods=['PUT'])
+def update_issue(issue_id):
+    try:
+        project_path = request.args.get('path')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
+        
+        issue_data = request.json
+        if not issue_data:
+            return jsonify({'status': 'error', 'message': '缺少问题单数据'})
+        
+        # 构建问题单文件路径
+        issues_file = os.path.join(project_path, 'issues.json')
+        
+        if os.path.exists(issues_file):
+            with open(issues_file, 'r', encoding='utf-8') as f:
+                issues = json.load(f)
+            
+            # 查找并更新问题单
+            for i, issue in enumerate(issues):
+                if issue.get('id') == issue_id:
+                    issues[i] = issue_data
+                    break
+            else:
+                return jsonify({'status': 'error', 'message': '问题单不存在'})
+            
+            # 保存更新后的问题单数据
+            with open(issues_file, 'w', encoding='utf-8') as f:
+                json.dump(issues, f, ensure_ascii=False, indent=2)
+            
+            return jsonify({'status': 'success', 'message': '问题单更新成功'})
+        else:
+            return jsonify({'status': 'error', 'message': '问题单文件不存在'})
+            
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+@app.route('/project/issues/<issue_id>', methods=['DELETE'])
+def delete_issue(issue_id):
+    try:
+        project_path = request.args.get('path')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
+        
+        # 构建问题单文件路径
+        issues_file = os.path.join(project_path, 'issues.json')
+        
+        if os.path.exists(issues_file):
+            with open(issues_file, 'r', encoding='utf-8') as f:
+                issues = json.load(f)
+            
+            # 查找并删除问题单
+            for i, issue in enumerate(issues):
+                if issue.get('id') == issue_id:
+                    del issues[i]
+                    break
+            else:
+                return jsonify({'status': 'error', 'message': '问题单不存在'})
+            
+            # 保存更新后的问题单数据
+            with open(issues_file, 'w', encoding='utf-8') as f:
+                json.dump(issues, f, ensure_ascii=False, indent=2)
+            
+            return jsonify({'status': 'success', 'message': '问题单删除成功'})
+        else:
+            return jsonify({'status': 'error', 'message': '问题单文件不存在'})
+            
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 def find_available_port(start_port):
     port = start_port
     while True:

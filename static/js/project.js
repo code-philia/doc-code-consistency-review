@@ -71,10 +71,14 @@ const app = createApp({
 
         const alignmentResults = ref([]);
         const isAutoAligning = ref(false);
+        const isAutoReviewing = ref(false);
         const alignmentProgress = ref({ current: 0, total: 0 });
+        const reviewProgress = ref({ current: 0, total: 0 });
         const showAlignmentDialog = ref(false);
         const currentSelection = ref(null);
         const newAlignmentName = ref('');
+        const showReviewDialog = ref(false);
+        const selectedReviewAlignment = ref(null);
 
         /***********************
          * 文件加载相关方法
@@ -110,6 +114,184 @@ const app = createApp({
             }
         };
 
+        /***********************
+         * 自动审查功能
+         ***********************/
+        const startAutoReview = async () => {
+            if (isAutoReviewing.value) {
+                ElMessage.warning('自动审查正在进行中，请稍候...');
+                return;
+            }
+
+            if (totalAlignedRequirements.value === 0) {
+                ElMessage.warning('没有已对齐的需求点，请先进行对齐');
+                return;
+            }
+
+            isAutoReviewing.value = true;
+            reviewProgress.value = { current: 0, total: 0 };
+            ElMessage.info('开始自动审查，正在分析对齐关系...');
+
+            try {
+                // 收集所有已对齐但未审查的需求点
+                const unreviewed = [];
+                Object.keys(allAlignments.value).forEach(docFile => {
+                    const alignments = allAlignments.value[docFile] || [];
+                    alignments.forEach(alignment => {
+                        if (alignment.codeRanges && alignment.codeRanges.length > 0 && !alignment.isReviewed) {
+                            unreviewed.push({ docFile, alignment });
+                        }
+                    });
+                });
+
+                reviewProgress.value.total = unreviewed.length;
+
+                for (const { docFile, alignment } of unreviewed) {
+                    reviewProgress.value.current++;
+
+                    // 生成mock审查结果
+                    await generateMockReview(docFile, alignment);
+
+                    // 实时更新统计数据
+                    await fetchAllAlignments();
+                    ElMessage.info(`已审查: ${alignment.name}`);
+
+                    // 添加延迟以模拟处理时间
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+
+                // 重新加载所有对齐数据和问题单
+                await fetchAllAlignments();
+                await fetchIssues();
+
+                ElMessage.success(`自动审查完成！共审查 ${unreviewed.length} 个对齐关系`);
+            } catch (error) {
+                console.error('自动审查过程中出现错误:', error);
+                ElMessage.error(`自动审查失败: ${error.message}`);
+            } finally {
+                isAutoReviewing.value = false;
+                reviewProgress.value = { current: 0, total: 0 };
+            }
+        };
+
+        const generateMockReview = async (docFile, alignment) => {
+            // 生成mock审查思考过程
+            const requirementContent = alignment.docRanges && alignment.docRanges[0] ? alignment.docRanges[0].content : '';
+            const codeContent = alignment.codeRanges && alignment.codeRanges[0] ? alignment.codeRanges[0].content : '';
+
+            let reviewThoughts = `## 审查思考过程\n\n`;
+            reviewThoughts += `### 需求分析\n`;
+            reviewThoughts += `需求点"${alignment.name}"描述了以下功能要求：\n`;
+            reviewThoughts += `${requirementContent.substring(0, 200)}...\n\n`;
+
+            reviewThoughts += `### 代码实现分析\n`;
+            reviewThoughts += `对应的代码实现位于文件 \`${alignment.codeRanges[0].filename}\` 第${alignment.codeRanges[0].start}-${alignment.codeRanges[0].end}行。\n\n`;
+
+            // 根据内容生成不同的审查结论
+            let hasIssue = Math.random() < 0.3; // 30%概率生成问题单
+            let reviewConclusion = '';
+
+            if (requirementContent.includes('表格') || requirementContent.includes('数据')) {
+                reviewConclusion = '代码实现了基本的数据结构定义，符合需求中对表格数据处理的要求。';
+                if (hasIssue) {
+                    reviewConclusion += ' 但缺少数据验证和错误处理机制。';
+                }
+            } else if (requirementContent.includes('公式') || requirementContent.includes('计算')) {
+                reviewConclusion = '代码实现了相应的计算函数，数学逻辑基本正确。';
+                if (hasIssue) {
+                    reviewConclusion += ' 但需要考虑边界条件和异常情况的处理。';
+                }
+            } else {
+                reviewConclusion = '代码实现与需求描述基本一致，功能覆盖度良好。';
+                if (hasIssue) {
+                    reviewConclusion += ' 但代码注释不够详细，可维护性有待提升。';
+                }
+            }
+
+            reviewThoughts += `### 审查结论\n${reviewConclusion}\n`;
+
+            // 更新对齐关系，只添加审查标志和思考过程
+            const updatedAlignment = {
+                ...alignment,
+                isReviewed: true, // 设置审查标志位
+                reviewThoughts: reviewThoughts // 记录审查思考过程
+            };
+
+            // 保存审查结果
+            await axios.post(
+                `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`,
+                updatedAlignment
+            );
+
+            // 如果有问题，生成问题单并保存到issues.json
+            if (hasIssue) {
+                await generateIssueToFile(alignment, reviewConclusion);
+            }
+
+            console.log(`生成审查结果: ${alignment.name}`);
+        };
+
+        // 生成问题单并保存到issues.json文件
+        const generateIssueToFile = async (alignment, reviewConclusion) => {
+            const issueId = crypto.randomUUID();
+            const requirementContent = alignment.docRanges && alignment.docRanges[0] ? alignment.docRanges[0].content : '';
+
+            // Mock问题等级（随机生成）
+            const levels = ['high', 'medium', 'low'];
+            const level = levels[Math.floor(Math.random() * levels.length)];
+
+            // Mock问题概述（根据需求内容生成）
+            const summaryOptions = [
+                '代码实现与需求描述存在差异',
+                '功能实现不够完整',
+                '缺少必要的错误处理机制',
+                '代码注释不够详细',
+                '性能优化空间较大',
+                '安全性考虑不足',
+                '用户体验有待改进',
+                '数据验证逻辑缺失',
+                '接口设计不够规范',
+                '配置参数需要调整'
+            ];
+
+            let summary;
+            if (requirementContent.includes('用户') || requirementContent.includes('登录') || requirementContent.includes('认证')) {
+                summary = '用户认证功能存在安全隐患';
+            } else if (requirementContent.includes('数据库') || requirementContent.includes('连接')) {
+                summary = '数据库连接配置需要优化';
+            } else if (requirementContent.includes('接口') || requirementContent.includes('API')) {
+                summary = 'API接口实现不完整';
+            } else if (requirementContent.includes('文件') || requirementContent.includes('上传')) {
+                summary = '文件处理功能需要完善';
+            } else if (requirementContent.includes('权限') || requirementContent.includes('访问')) {
+                summary = '权限控制机制不够严格';
+            } else {
+                // 随机选择一个问题概述
+                summary = summaryOptions[Math.floor(Math.random() * summaryOptions.length)];
+            }
+
+            const newIssue = {
+                id: issueId,
+                level: level, // Mock的问题等级
+                summary: summary, // Mock的问题概述
+                description: reviewConclusion, // 问题详细描述
+                status: 'unconfirmed', // 固定状态：初始为"未确认"
+                alignmentId: alignment.id, // 关联的对齐关系ID
+                relatedDocFile: selectedDocFile.value,
+                relatedRequirementId: alignment.id, // 保持向后兼容
+                createdDate: new Date().toISOString(),
+                updatedDate: new Date().toISOString()
+            };
+
+            // 保存问题单到后端
+            await axios.post(
+                `/project/issues?path=${encodeURIComponent(projectPath.value)}`,
+                newIssue
+            );
+
+            console.log(`生成问题单: ${summary}`);
+        };
+
         // 加载所有文档的对齐数据用于统计
         const fetchAllAlignments = async () => {
             if (!projectPath.value || !projectFiles.value.doc_files.length) return;
@@ -131,6 +313,19 @@ const app = createApp({
             }
 
             allAlignments.value = alignments;
+        };
+
+        // 加载问题单数据
+        const fetchIssues = async () => {
+            try {
+                const response = await axios.get(`/project/issues?path=${encodeURIComponent(projectPath.value)}`);
+                if (response.data.status === 'success') {
+                    issues.value = response.data.data || [];
+                }
+            } catch (error) {
+                console.error('获取问题单数据失败:', error);
+                issues.value = [];
+            }
         };
 
         const fetchProjectMetadata = async () => {
@@ -353,6 +548,18 @@ const app = createApp({
             return Object.values(requirementStats.value).reduce((sum, stat) => sum + stat.alignedRequirements, 0);
         });
 
+        const totalReviewedRequirements = computed(() => {
+            let reviewedCount = 0;
+            Object.values(allAlignments.value).forEach(alignments => {
+                alignments.forEach(alignment => {
+                    if (alignment.isReviewed) {
+                        reviewedCount++;
+                    }
+                });
+            });
+            return reviewedCount;
+        });
+
         const codeFileStats = computed(() => {
             const stats = {};
             projectFiles.value.code_files.forEach(codeFile => {
@@ -546,7 +753,8 @@ const app = createApp({
             const newAlignment = {
                 id: id,
                 name: newAlignmentName.value.trim(),
-                hasReview: false,
+                isReviewed: false,
+                reviewThoughts: '',
                 docRanges: [{ ...currentSelection.value }],
                 codeRanges: [] // 初始代码范围为空
             };
@@ -621,25 +829,56 @@ const app = createApp({
             selectedIssue.value = issue;
         };
 
-        const confirmIssue = () => {
+        const confirmIssue = async () => {
             if (!selectedIssue.value) {
                 ElMessage.warning('请先选择一个问题单。');
                 return;
             }
-            selectedIssue.value.status = 'confirmed';
-            ElMessage.success('问题单已确认。');
+
+            try {
+                // 更新问题单状态为已确认
+                const updatedIssue = { ...selectedIssue.value, status: 'confirmed' };
+                const response = await axios.put(
+                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`,
+                    updatedIssue
+                );
+
+                if (response.data.status === 'success') {
+                    selectedIssue.value.status = 'confirmed';
+                    ElMessage.success('问题单已确认。');
+                } else {
+                    ElMessage.error('确认失败：' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error confirming issue:', error);
+                ElMessage.error('确认失败：' + (error.response?.data?.message || error.message));
+            }
         };
 
-        const ignoreIssue = () => {
+        const ignoreIssue = async () => {
             if (!selectedIssue.value) {
                 ElMessage.warning('请先选择一个问题单。');
                 return;
             }
-            const index = issues.value.indexOf(selectedIssue.value);
-            if (index > -1) {
-                issues.value.splice(index, 1);
-                selectedIssue.value = null;
-                ElMessage.info('问题单已忽略。');
+
+            try {
+                const response = await axios.delete(
+                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`
+                );
+
+                if (response.data.status === 'success') {
+                    const index = issues.value.indexOf(selectedIssue.value);
+                    if (index > -1) {
+                        issues.value.splice(index, 1);
+                        selectedIssue.value = null;
+                        ElMessage.info('问题单已忽略。');
+                    }
+                } else {
+                    ElMessage.error('删除失败：' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error deleting issue:', error);
+                ElMessage.error('删除失败：' + (error.response?.data?.message || error.message));
             }
         };
 
@@ -720,10 +959,63 @@ const app = createApp({
             }).catch(() => { });
         };
 
+        const showReviewResult = () => {
+            if (!contextMenu.value.selectedAlignment) return;
+
+            selectedReviewAlignment.value = contextMenu.value.selectedAlignment;
+            showReviewDialog.value = true;
+            hideContextMenu();
+        };
+
+        const getIssueById = (issueId) => {
+            return issues.value.find(issue => issue.id === issueId);
+        };
+
+        const getIssuesByAlignmentId = (alignmentId) => {
+            return issues.value.filter(issue => issue.alignmentId === alignmentId);
+        };
+
+        const showIssueDetail = async (issue) => {
+            if (!issue) return;
+
+            try {
+                // 根据问题单的docFilename构造对齐关系文件路径
+                const docFilename = issue.relatedDocFile;
+                if (!docFilename) {
+                    ElMessage.error('问题单缺少关联的文档信息');
+                    return;
+                }
+
+                // 使用新的API端点加载对齐关系数据
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFilename)}`);
+                if (response.data.status === 'success') {
+                    const alignments = response.data.data || {};
+
+                    // 直接通过alignmentId作为键索引找到对应的对齐关系
+                    const targetAlignment = alignments[issue.alignmentId];
+
+                    if (targetAlignment) {
+                        selectedReviewAlignment.value = targetAlignment;
+                        showReviewDialog.value = true;
+                    } else {
+                        ElMessage.warning(`未找到ID为 ${issue.alignmentId} 的对齐关系`);
+                    }
+                } else {
+                    ElMessage.error(`加载对齐关系文件失败: ${response.data.message || '未知错误'}`);
+                }
+            } catch (error) {
+                console.error('加载对齐关系详情失败:', error);
+                ElMessage.error(`加载失败: ${error.message}`);
+            }
+        };
+
         /***********************
          * 生命周期
          ***********************/
-        onMounted(fetchProjectMetadata);
+        onMounted(async () => {
+            await fetchProjectMetadata();
+            await fetchIssues();
+        });
 
         /***********************
          * 暴露到模板
@@ -764,7 +1056,27 @@ const app = createApp({
             requirementStats,
             totalRequirements,
             totalAlignedRequirements,
-            codeFileStats
+            totalReviewedRequirements,
+            codeFileStats,
+            // 自动审查功能
+            startAutoReview,
+            isAutoReviewing,
+            reviewProgress,
+            // 问题单数据
+            fetchIssues,
+            // 审查结果弹窗
+            showReviewDialog,
+            selectedReviewAlignment,
+            showReviewResult,
+            getIssueById,
+            getIssuesByAlignmentId,
+
+            // 问题单相关
+            selectedIssue,
+            selectIssue,
+            confirmIssue,
+            ignoreIssue,
+            showIssueDetail
         };
     }
 });
