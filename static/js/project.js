@@ -3,7 +3,7 @@
  ****************************/
 let activeView = 'statsView'; // 当前活动视图
 
-const { createApp, ref, onMounted, computed } = Vue;
+const { createApp, ref, onMounted, computed, nextTick } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
     regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange
@@ -70,6 +70,8 @@ const app = createApp({
         const selectedDocRawContent = ref('');
 
         const alignmentResults = ref([]);
+        const isAutoAligning = ref(false);
+        const alignmentProgress = ref({ current: 0, total: 0 });
         const showAlignmentDialog = ref(false);
         const currentSelection = ref(null);
         const newAlignmentName = ref('');
@@ -77,15 +79,18 @@ const app = createApp({
         /***********************
          * 文件加载相关方法
          ***********************/
+        // 存储所有文档的对齐数据
+        const allAlignments = ref({});
+
         const fetchAlignments = async () => {
             if (!projectPath.value) return;
-            
+
             // 如果没有选中文档，返回空列表
             if (!selectedDocFile.value) {
                 alignmentResults.value = [];
                 return;
             }
-            
+
             try {
                 const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`);
                 if (response.data.status === 'success' && response.data.data) {
@@ -105,6 +110,29 @@ const app = createApp({
             }
         };
 
+        // 加载所有文档的对齐数据用于统计
+        const fetchAllAlignments = async () => {
+            if (!projectPath.value || !projectFiles.value.doc_files.length) return;
+
+            const alignments = {};
+
+            for (const docFile of projectFiles.value.doc_files) {
+                try {
+                    const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`);
+                    if (response.data.status === 'success' && response.data.data) {
+                        alignments[docFile] = Object.values(response.data.data);
+                    } else {
+                        alignments[docFile] = [];
+                    }
+                } catch (err) {
+                    // 如果是404或空文件，静默处理
+                    alignments[docFile] = [];
+                }
+            }
+
+            allAlignments.value = alignments;
+        };
+
         const fetchProjectMetadata = async () => {
             if (!projectPath.value) {
                 ElMessage.error("项目路径不存在，无法加载文件列表。");
@@ -118,6 +146,9 @@ const app = createApp({
                     projectFiles.value.doc_files = metadata.doc_files || [];
                     projectName.value = metadata.project_name || projectName.value;
 
+                    // 加载所有文档的对齐数据用于统计
+                    await fetchAllAlignments();
+                    // 如果有选中的文档，加载其对齐数据
                     await fetchAlignments();
                 } else {
                     ElMessage.error(`加载项目元数据失败: ${response.data.message}`);
@@ -289,6 +320,194 @@ const app = createApp({
         };
 
         /***********************
+         * 统计数据计算
+         ***********************/
+        const requirementStats = computed(() => {
+            const stats = {};
+            projectFiles.value.doc_files.forEach(docFile => {
+                stats[docFile] = {
+                    totalRequirements: 0,
+                    alignedRequirements: 0
+                };
+            });
+
+            // 基于所有文档的对齐数据计算统计信息
+            Object.keys(allAlignments.value).forEach(docFile => {
+                const alignments = allAlignments.value[docFile] || [];
+                if (stats[docFile]) {
+                    stats[docFile].totalRequirements = alignments.length;
+                    stats[docFile].alignedRequirements = alignments.filter(alignment =>
+                        alignment.codeRanges && alignment.codeRanges.length > 0
+                    ).length;
+                }
+            });
+
+            return stats;
+        });
+
+        const totalRequirements = computed(() => {
+            return Object.values(requirementStats.value).reduce((sum, stat) => sum + stat.totalRequirements, 0);
+        });
+
+        const totalAlignedRequirements = computed(() => {
+            return Object.values(requirementStats.value).reduce((sum, stat) => sum + stat.alignedRequirements, 0);
+        });
+
+        const codeFileStats = computed(() => {
+            const stats = {};
+            projectFiles.value.code_files.forEach(codeFile => {
+                stats[codeFile] = {
+                    totalAlignments: 0,
+                    coveredRequirements: 0
+                };
+            });
+
+            // 基于所有文档的对齐数据计算代码文件统计信息
+            Object.values(allAlignments.value).forEach(alignments => {
+                alignments.forEach(alignment => {
+                    if (alignment.codeRanges && alignment.codeRanges.length > 0) {
+                        alignment.codeRanges.forEach(codeRange => {
+                            const codeFile = codeRange.filename;
+                            if (stats[codeFile]) {
+                                stats[codeFile].alignmentCount++;
+                            }
+                        });
+                        // 每个对齐关系代表一个被覆盖的需求
+                        const uniqueCodeFiles = [...new Set(alignment.codeRanges.map(cr => cr.filename))];
+                        uniqueCodeFiles.forEach(codeFile => {
+                            if (stats[codeFile]) {
+                                stats[codeFile].coveredRequirements++;
+                            }
+                        });
+                    }
+                });
+            });
+
+            return stats;
+        });
+
+        /***********************
+         * 自动对齐功能
+         ***********************/
+        const startAutoAlignment = async () => {
+            if (isAutoAligning.value) {
+                ElMessage.warning('自动对齐正在进行中，请稍候...');
+                return;
+            }
+
+            if (projectFiles.value.doc_files.length === 0) {
+                ElMessage.warning('请先添加需求文档');
+                return;
+            }
+
+            if (projectFiles.value.code_files.length === 0) {
+                ElMessage.warning('请先添加代码文件');
+                return;
+            }
+
+            isAutoAligning.value = true;
+            ElMessage.info('开始自动对齐，正在扫描未对齐的需求点...');
+
+            try {
+                // 扫描所有文档中未对齐的需求点
+                let totalUnalignedCount = 0;
+                let processedCount = 0;
+
+                for (const docFile of projectFiles.value.doc_files) {
+                    const unalignedCount = await processUnalignedRequirements(docFile);
+                    totalUnalignedCount += unalignedCount;
+                    processedCount += unalignedCount;
+
+                    // 实时更新统计数据 - 触发响应式更新
+                    await nextTick();
+                }
+
+                // 重新加载所有对齐数据以更新统计信息
+                await fetchAllAlignments();
+
+                if (totalUnalignedCount === 0) {
+                    ElMessage.info('所有需求点都已对齐，无需处理');
+                } else {
+                    ElMessage.success(`自动对齐完成！共处理 ${processedCount} 个未对齐需求点`);
+                }
+            } catch (error) {
+                console.error('自动对齐过程中出现错误:', error);
+                ElMessage.error(`自动对齐失败: ${error.message}`);
+            } finally {
+                isAutoAligning.value = false;
+                alignmentProgress.value = { current: 0, total: 0 };
+            }
+        };
+
+        const processUnalignedRequirements = async (docFile) => {
+            try {
+                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`);
+                const existingAlignments = alignmentResponse.data.status === 'success' ? Object.values(alignmentResponse.data.data || {}) : [];
+
+                // 找到所有未对齐的需求点（codeRanges为空或不存在）
+                const unalignedRequirements = existingAlignments.filter(alignment =>
+                    !alignment.codeRanges || alignment.codeRanges.length === 0
+                );
+
+                alignmentProgress.value.total += unalignedRequirements.length;
+
+                for (const requirement of unalignedRequirements) {
+                    alignmentProgress.value.current++;
+
+                    // 为未对齐的需求点生成mock代码对齐
+                    await addMockCodeToRequirement(docFile, requirement);
+
+                    // 实时更新统计数据
+                    await fetchAllAlignments();
+                    ElMessage.info(`已对齐需求点: ${requirement.name}`);
+
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                return unalignedRequirements.length;
+            } catch (error) {
+                console.error(`处理文档 ${docFile} 时出错:`, error);
+                throw error;
+            }
+        };
+
+        const addMockCodeToRequirement = async (docFile, requirement) => {
+            const randomCodeFile = projectFiles.value.code_files[Math.floor(Math.random() * projectFiles.value.code_files.length)];
+            const startLine = Math.floor(Math.random() * 50) + 1;
+            const endLine = startLine + Math.floor(Math.random() * 20) + 5;
+            let mockCode = `// Mock代码段 - 对应需求: ${requirement.name}\n`;
+            const updatedAlignment = {
+                ...requirement,
+                codeRanges: [{
+                    filename: randomCodeFile,
+                    start: startLine,
+                    end: endLine,
+                    content: mockCode
+                }]
+            };
+
+            try {
+                await axios.post(
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`,
+                    updatedAlignment
+                );
+
+                // 如果当前选中的是这个文档，更新前端显示
+                if (selectedDocFile.value === docFile) {
+                    const index = alignmentResults.value.findIndex(a => a.id === requirement.id);
+                    if (index > -1) {
+                        alignmentResults.value[index] = updatedAlignment;
+                    }
+                }
+
+                console.log(`为需求点添加代码对齐: ${requirement.name}`);
+            } catch (error) {
+                console.error(`为需求点 ${requirement.name} 添加代码对齐失败:`, error);
+                throw error;
+            }
+        };
+
+        /***********************
          * 对齐关系创建
          ***********************/
         const handleDocSelection = (event) => {
@@ -342,6 +561,10 @@ const app = createApp({
                     `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
                     newAlignment
                 );
+
+                // 更新所有对齐数据以保持统计信息同步
+                await fetchAllAlignments();
+
                 ElMessage.success('对齐关系创建成功');
             } catch (err) {
                 console.error("Error saving alignment:", err);
@@ -486,6 +709,8 @@ const app = createApp({
                     const index = alignmentResults.value.findIndex(a => a.id === alignmentToDelete.id);
                     if (index > -1) {
                         alignmentResults.value.splice(index, 1);
+                        // 更新所有对齐数据以保持统计信息同步
+                        await fetchAllAlignments();
                         ElMessage.info('对齐项已删除。');
                     }
                 } catch (err) {
@@ -527,11 +752,19 @@ const app = createApp({
             docFileTree,
             codeFileTree,
             handleNodeClick,
-            alignmentResults,
             contextMenu,
             showContextMenu,
             renameAlignment,
-            deleteAlignment
+            deleteAlignment,
+            // 自动对齐功能
+            startAutoAlignment,
+            isAutoAligning,
+            alignmentProgress,
+            // 统计数据
+            requirementStats,
+            totalRequirements,
+            totalAlignedRequirements,
+            codeFileStats
         };
     }
 });

@@ -52,7 +52,11 @@
                 智能工具
                 <div class="dropdown">
                     <div class="dropdown-item"><i class="fas fa-sitemap"></i> 需求分解</div>
-                    <div class="dropdown-item"><i class="fas fa-link"></i> 自动对齐</div>
+                    <div class="dropdown-item" @click="startAutoAlignment" :class="{disabled: isAutoAligning}">
+                        <i class="fas fa-link"></i> 
+                        <span v-if="!isAutoAligning">自动对齐</span>
+                        <span v-else>对齐中... ${alignmentProgress}%</span>
+                    </div>
                     <div class="dropdown-item"><i class="fas fa-tasks"></i> 自动审查</div>
                 </div>
             </div>
@@ -168,7 +172,7 @@
                             <div class="stat-title">
                                 <i class="fas fa-link"></i> 需求-代码对齐对数
                             </div>
-                            <div class="stat-value">127</div>
+                            <div class="stat-value">${ totalAlignedRequirements }</div>
                             <div class="stat-description">已确认的需求与代码对应关系</div>
                         </div>
                         
@@ -176,15 +180,15 @@
                             <div class="stat-title">
                                 <i class="fas fa-bug"></i> 问题单总数
                             </div>
-                            <div class="stat-value">42</div>
+                            <div class="stat-value">${ issues.length }</div>
                             <div class="stat-description">发现的问题单条目总数</div>
                             <div class="progress-stat">
                                 <div class="progress-label">
                                     <span>已解决</span>
-                                    <span>78%</span>
+                                    <span>${ Math.round((issues.filter(i => i.status === 'confirmed').length / Math.max(issues.length, 1)) * 100) }%</span>
                                 </div>
                                 <div class="progress-big">
-                                    <div class="progress-big-bar" style="width: 78%"></div>
+                                    <div class="progress-big-bar" :style="`width: ${Math.round((issues.filter(i => i.status === 'confirmed').length / Math.max(issues.length, 1)) * 100)}%`"></div>
                                 </div>
                             </div>
                         </div>
@@ -208,13 +212,13 @@
                                 <td>${ file }</td>
                                 <td class="file-progress-cell">
                                     <div class="file-progress">
-                                        <span class="file-progress-value">85%</span>
+                                        <span class="file-progress-value">${ requirementStats[file] ? Math.round((requirementStats[file].alignedRequirements / Math.max(requirementStats[file].totalRequirements, 1)) * 100) : 0 }%</span>
                                         <div class="file-progress-bar">
-                                            <div class="file-progress-fill" style="width: 85%"></div>
+                                            <div class="file-progress-fill" :style="`width: ${requirementStats[file] ? Math.round((requirementStats[file].alignedRequirements / Math.max(requirementStats[file].totalRequirements, 1)) * 100) : 0}%`"></div>
                                         </div>
                                     </div>
                                 </td>
-                                <td>76/89</td>
+                                <td>${ requirementStats[file] ? requirementStats[file].alignedRequirements : 0 }/${ requirementStats[file] ? requirementStats[file].totalRequirements : 0 }</td>
                             </tr>
                             <tr v-if="projectFiles.doc_files.length === 0">
                                 <td colspan="4" class="empty-message">暂无需求文档</td>
@@ -240,13 +244,13 @@
                                 <td>${ file }</td>
                                 <td class="file-progress-cell">
                                     <div class="file-progress">
-                                        <span class="file-progress-value">85%</span>
+                                        <span class="file-progress-value">${ codeFileStats[file] && codeFileStats[file].totalAlignments > 0 ? Math.round((codeFileStats[file].coveredRequirements / codeFileStats[file].totalAlignments) * 100) : 0 }%</span>
                                         <div class="file-progress-bar">
-                                            <div class="file-progress-fill" style="width: 85%"></div>
+                                            <div class="file-progress-fill" :style="`width: ${codeFileStats[file] && codeFileStats[file].totalAlignments > 0 ? Math.round((codeFileStats[file].coveredRequirements / codeFileStats[file].totalAlignments) * 100) : 0}%`"></div>
                                         </div>
                                     </div>
                                 </td>
-                                <td>76/89</td>
+                                <td>${ codeFileStats[file] ? codeFileStats[file].coveredRequirements : 0 }/${ codeFileStats[file] ? codeFileStats[file].totalAlignments : 0 }</td>
                             </tr>
                             <tr v-if="projectFiles.code_files.length === 0">
                                 <td colspan="4" class="empty-message">暂无代码文件</td>
