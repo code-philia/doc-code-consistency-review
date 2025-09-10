@@ -234,15 +234,108 @@
 }
 
 .content-text-doc {
-    line-height: 2;
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
     font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    overflow-x: auto;
+    border: none;
+    margin: 0;
     position: relative;
-    padding: 16px;
     height: 100%;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+}
+
+/* 为content-text-doc应用完整的markdown样式 */
+.content-text-doc h1,
+.content-text-doc h2,
+.content-text-doc h3,
+.content-text-doc h4,
+.content-text-doc h5,
+.content-text-doc h6 {
+    margin: 2px 0 2px 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.content-text-doc h2 {
+    font-size: 14px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 2px;
+}
+
+.content-text-doc h3 {
+    font-size: 13px;
+}
+
+.content-text-doc p {
+    margin: 4px 0;
+}
+
+.content-text-doc code {
+    background-color: #e9ecef;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+}
+
+.content-text-doc pre {
+    background-color: #e9ecef;
+    padding: 4px;
+    border-radius: 4px;
     overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+    margin: 6px 0;
+}
+
+.content-text-doc ul,
+.content-text-doc ol {
+    margin: 2px 0;
+    padding-left: 20px;
+}
+
+.content-text-doc li {
+    margin: 2px 0;
+}
+
+.content-text-doc blockquote {
+    border-left: 3px solid #007bff;
+    margin: 3px 0;
+    padding-left: 8px;
+    color: #6c757d;
+}
+
+.content-text-doc table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 6px 0;
+    font-size: 11px;
+}
+
+.content-text-doc th,
+.content-text-doc td {
+    border: 1px solid #dee2e6;
+    padding: 4px 6px;
+    text-align: left;
+}
+
+.content-text-doc th {
+    background-color: #e9ecef;
+    font-weight: 600;
+}
+
+.content-text-doc .katex {
+    font-size: 1em;
+}
+
+.content-text-doc .katex-display {
+    margin: 4px 0;
 }
 
 .content-text-code {

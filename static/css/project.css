@@ -547,15 +547,11 @@
 }
 
 .content-text-doc {
-    line-height: 2;
-    font-size: 12px;
     position: relative;
-    padding: 16px;
     height: 100%;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    overflow-x: auto;
 }
 
 .content-text-code {
@@ -1250,7 +1246,7 @@
     margin-bottom: 4px;
 }
 
-/* 统一的Markdown内容渲染样式 */
+.content-text-doc,
 .markdown-content-rendered,
 .doc-content-rendered,
 .review-thoughts-rendered {
@@ -1265,6 +1261,12 @@
     margin: 0;
 }
 
+.content-text-doc h1,
+.content-text-doc h2,
+.content-text-doc h3,
+.content-text-doc h4,
+.content-text-doc h5,
+.content-text-doc h6,
 .markdown-content-rendered h1,
 .markdown-content-rendered h2,
 .markdown-content-rendered h3,
@@ -1288,6 +1290,7 @@
     font-weight: 600;
 }
 
+.content-text-doc h2,
 .markdown-content-rendered h2,
 .doc-content-rendered h2,
 .review-thoughts-rendered h2 {
@@ -1296,18 +1299,21 @@
     padding-bottom: 2px;
 }
 
+.content-text-doc h3,
 .markdown-content-rendered h3,
 .doc-content-rendered h3,
 .review-thoughts-rendered h3 {
     font-size: 13px;
 }
 
+.content-text-doc p,
 .markdown-content-rendered p,
 .doc-content-rendered p,
 .review-thoughts-rendered p {
     margin: 4px 0;
 }
 
+.content-text-doc code,
 .markdown-content-rendered code,
 .doc-content-rendered code,
 .review-thoughts-rendered code {
@@ -1318,6 +1324,7 @@
     font-size: 11px;
 }
 
+.content-text-doc pre,
 .markdown-content-rendered pre,
 .doc-content-rendered pre,
 .review-thoughts-rendered pre {
@@ -1330,6 +1337,8 @@
     margin: 6px 0;
 }
 
+.content-text-doc ul,
+.content-text-doc ol,
 .markdown-content-rendered ul,
 .markdown-content-rendered ol,
 .doc-content-rendered ul,
@@ -1340,27 +1349,24 @@
     padding-left: 20px;
 }
 
+.content-text-doc li,
 .markdown-content-rendered li,
 .doc-content-rendered li,
 .review-thoughts-rendered li {
     margin: 2px 0;
 }
 
+.content-text-doc blockquote,
 .markdown-content-rendered blockquote,
-.doc-content-rendered blockquote {
+.doc-content-rendered blockquote,
+.review-thoughts-rendered blockquote {
     border-left: 3px solid #007bff;
     margin: 3px 0;
     padding-left: 8px;
     color: #6c757d;
 }
 
-.review-thoughts-rendered blockquote {
-    border-left: 3px solid #28a745;
-    margin: 3px 0;
-    padding-left: 8px;
-    color: #6c757d;
-}
-
+.content-text-doc table,
 .markdown-content-rendered table,
 .doc-content-rendered table {
     border-collapse: collapse;
@@ -1369,6 +1375,8 @@
     font-size: 11px;
 }
 
+.content-text-doc th,
+.content-text-doc td,
 .markdown-content-rendered th,
 .markdown-content-rendered td,
 .doc-content-rendered th,
@@ -1378,18 +1386,21 @@
     text-align: left;
 }
 
+.content-text-doc th,
 .markdown-content-rendered th,
 .doc-content-rendered th {
     background-color: #e9ecef;
     font-weight: 600;
 }
 
+.content-text-doc .katex,
 .markdown-content-rendered .katex,
 .doc-content-rendered .katex,
 .review-thoughts-rendered .katex {
     font-size: 1em;
 }
 
+.content-text-doc .katex-display,
 .markdown-content-rendered .katex-display,
 .doc-content-rendered .katex-display,
 .review-thoughts-rendered .katex-display {
@@ -1489,23 +1500,6 @@
     color: #856404;
     border: 1px solid #ffeaa7;
 }
-
-/* 审查思考过程样式 */
-.review-thoughts {
-    background-color: #f8f9fa;
-    padding: 8px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 11px;
-    line-height: 1.4;
-    color: #495057;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-height: 250px;
-    overflow-y: auto;
-    margin: 0;
-}
-
-/* 原有的.review-thoughts-rendered样式已合并到统一的markdown-content-rendered样式中 */
 
 .issue-info {
     background-color: #fff3cd;
