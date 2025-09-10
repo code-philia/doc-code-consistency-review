@@ -1340,3 +1340,27 @@
     color: var(--text-secondary);
     font-weight: 500;
 }
+
+.alignment-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-left: 16px;
+}
+
+.alignment-title {
+    flex: 1;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.review-tag {
+    flex-shrink: 0;
+}

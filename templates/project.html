@@ -298,7 +298,7 @@
                                         <i class="fas fa-file-code"></i> <span>${ selectedCodeFile || '请选择代码文件' }</span>
                                     </div>
                                     <div class="content-card">
-                                        <pre class="content-text-code" v-html="selectedCodeContent"></pre>
+                                        <pre class="content-text-code" v-html="selectedCodeContent" @mouseup="handleCodeSelection"></pre>
                                     </div>
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel right-sidebar" collapsible>
@@ -321,11 +321,11 @@
                                                                 <span class="alignment-title">${ alignment.name }</span>
                                                             </el-tooltip>
                                                             <el-tag 
-                                                :type="alignment.isReviewed ? 'success' : 'info'" 
+                                                :type="getAlignmentStatus(alignment).type" 
                                                 size="small" 
                                                 class="review-tag"
                                             >
-                                                ${ alignment.isReviewed ? '已审查' : '未审查' }
+                                                ${ getAlignmentStatus(alignment).text }
                                             </el-tag>
                                                         </div>
                                                     </template>
@@ -340,6 +340,7 @@
                                                                         type="danger" 
                                                                         size="small"
                                                                         link
+                                                                        @click="removeRange(alignment, 'doc', rIndex)"
                                                                     >×</el-button>
                                                                 </div>
                                                                 <div class="range-content">
@@ -358,6 +359,7 @@
                                                                         type="danger" 
                                                                         size="small"
                                                                         link
+                                                                        @click="removeRange(alignment, 'code', rIndex)"
                                                                     >×</el-button>
                                                                 </div>
                                                                 <div class="range-content">
@@ -539,6 +541,58 @@
             </div>
             <template #footer>
                 <el-button @click="showReviewDialog = false">关闭</el-button>
+            </template>
+        </el-dialog>
+
+        <!-- 代码选择对话框 -->
+        <el-dialog 
+            v-model="showCodeSelectionDialog" 
+            title="添加代码到对齐关系" 
+            width="500px"
+            :close-on-click-modal="false"
+        >
+            <div v-if="currentSelection">
+                <div class="selection-preview">
+                    ${ currentSelection.content }
+                </div>
+                
+                <div class="annotation-options">
+                    <div v-if="alignmentResults.length > 0">
+                        <p style="margin: 10px 0 15px; font-size: 14px;">选择要添加到的对齐关系:</p>
+                        
+                        <el-dropdown 
+                            placement="bottom" 
+                            trigger="click" 
+                            size="small"
+                            style="width: 100%"
+                        >
+                            <el-button style="width: 100%; text-align: left;">
+                                选择对齐关系...
+                                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                            </el-button>
+                            
+                            <template #dropdown>
+                                <el-dropdown-menu class="annotation-dropdown-menu" style="max-height: 300px; overflow-y: auto;">
+                                    <el-dropdown-item 
+                                        v-for="alignment in alignmentResults" 
+                                        :key="alignment.id"
+                                        @click="addToAlignment(alignment)"
+                                    >
+                                        <div class="dropdown-item-content">
+                                            <span class="dropdown-annotation-name">${ alignment.name }</span>
+                                        </div>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                    <div v-else>
+                        <p style="margin: 10px 0; font-size: 14px; color: #999;">暂无可用的对齐关系</p>
+                    </div>
+                </div>
+            </div>
+            <template #footer>
+                <el-button @click="showCodeSelectionDialog = false">取消</el-button>
             </template>
         </el-dialog>
 

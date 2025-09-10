@@ -68,6 +68,7 @@ const app = createApp({
         const selectedDocContent = ref('');
         const selectedCodeContent = ref('');
         const selectedDocRawContent = ref('');
+        const selectedCodeRawContent = ref('');
 
         const alignmentResults = ref([]);
         const isAutoAligning = ref(false);
@@ -75,6 +76,7 @@ const app = createApp({
         const alignmentProgress = ref({ current: 0, total: 0 });
         const reviewProgress = ref({ current: 0, total: 0 });
         const showAlignmentDialog = ref(false);
+        const showCodeSelectionDialog = ref(false);
         const currentSelection = ref(null);
         const newAlignmentName = ref('');
         const showReviewDialog = ref(false);
@@ -384,6 +386,7 @@ const app = createApp({
                             await fetchAlignments();
                         } else if (fileType === 'code') {
                             selectedCodeFile.value = fileName;
+                            selectedCodeRawContent.value = content;
                             selectedCodeContent.value = formatCodeWithLineNumbers(content);
                         }
                     } catch (e) {
@@ -722,6 +725,33 @@ const app = createApp({
         };
 
         /***********************
+         * 状态计算函数
+         ***********************/
+        const getAlignmentStatus = (alignment) => {
+            if (!alignment.codeRanges || alignment.codeRanges.length === 0) {
+                return {
+                    status: 'unaligned',
+                    text: '未对齐',
+                    type: 'info'
+                };
+            }
+            
+            if (alignment.isReviewed) {
+                return {
+                    status: 'reviewed',
+                    text: '已审查',
+                    type: 'success'
+                };
+            }
+            
+            return {
+                status: 'unreviewed',
+                text: '未审查',
+                type: 'warning'
+            };
+        };
+
+        /***********************
          * 对齐关系创建
          ***********************/
         const handleDocSelection = (event) => {
@@ -786,6 +816,59 @@ const app = createApp({
                 ElMessage.error(`保存对齐关系失败: ${err.message}`);
                 // 可选：如果保存失败，可以从UI中移除刚添加的项
                 alignmentResults.value.pop();
+            }
+        };
+
+        // 处理代码选择
+        const handleCodeSelection = (event) => {
+            const selection = window.getSelection();
+            console.log("Code selection:", selection ? selection.toString() : 'null');
+            if (!selection || selection.toString().trim() === '') return;
+
+            const range = selection.getRangeAt(0);
+            const editorDiv = document.querySelector('.content-text-code');
+
+            if (editorDiv && editorDiv.contains(range.commonAncestorContainer)) {
+                const [start, end] = getSourceDocumentRange(editorDiv, range);
+                if (end - start > 0) {
+                    currentSelection.value = {
+                        type: 'code',
+                        documentId: selectedCodeFile.value,
+                        start,
+                        end,
+                        content: selectedCodeRawContent.value.slice(start, end)
+                    };
+                    showCodeSelectionDialog.value = true;
+                    newAlignmentName.value = '';
+                }
+            }
+        };
+
+        // 添加到现有对齐关系
+        const addToAlignment = async (alignment) => {
+            if (!currentSelection.value || !alignment) return;
+
+            if (currentSelection.value.type === 'code') {
+                alignment.codeRanges.push({
+                    documentId: currentSelection.value.documentId,
+                    start: currentSelection.value.start,
+                    end: currentSelection.value.end,
+                    content: currentSelection.value.content
+                });
+            }
+
+            showCodeSelectionDialog.value = false;
+            currentSelection.value = null;
+
+            try {
+                await axios.post(
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
+                    alignment
+                );
+                ElMessage.success('已添加到对齐关系');
+            } catch (err) {
+                console.error("Error updating alignment:", err);
+                ElMessage.error(`更新对齐关系失败: ${err.message}`);
             }
         };
 
@@ -966,6 +1049,48 @@ const app = createApp({
             }).catch(() => { });
         };
 
+        // 删除对齐关系中的范围
+        const removeRange = async (alignment, type, index) => {
+            if (type === 'doc') {
+                alignment.docRanges.splice(index, 1);
+            } else {
+                alignment.codeRanges.splice(index, 1);
+            }
+
+            // 当删除所有代码范围时，重置审查状态
+            if (alignment.codeRanges.length === 0) {
+                alignment.isReviewed = false;
+                alignment.reviewThoughts = '';
+            }
+
+            // 如果对齐关系中没有范围了，删除整个对齐关系
+            if (alignment.docRanges.length === 0 && alignment.codeRanges.length === 0) {
+                const idx = alignmentResults.value.indexOf(alignment);
+                if (idx !== -1) {
+                    try {
+                        await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}&id=${alignment.id}`);
+                        alignmentResults.value.splice(idx, 1);
+                        await fetchAllAlignments();
+                        ElMessage.success('对齐关系已删除');
+                    } catch (err) {
+                        console.error("Error deleting alignment:", err);
+                        ElMessage.error(`删除失败: ${err.message}`);
+                    }
+                }
+            } else {
+                try {
+                    await axios.post(
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
+                        alignment
+                    );
+                    ElMessage.success('范围已删除');
+                } catch (err) {
+                    console.error("Error updating alignment:", err);
+                    ElMessage.error(`更新失败: ${err.message}`);
+                }
+            }
+        };
+
         const showReviewResult = () => {
             if (!contextMenu.value.selectedAlignment) return;
 
@@ -1055,6 +1180,11 @@ const app = createApp({
             showContextMenu,
             renameAlignment,
             deleteAlignment,
+            removeRange,
+            getAlignmentStatus,
+            handleCodeSelection,
+            addToAlignment,
+            showCodeSelectionDialog,
             // 自动对齐功能
             startAutoAlignment,
             isAutoAligning,
