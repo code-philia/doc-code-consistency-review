@@ -478,70 +478,74 @@
         <el-dialog 
             v-model="showReviewDialog" 
             :title="'需求点：' + (selectedReviewAlignment?.name || '未知')" 
-            width="800px"
+            width="1200px"
+            top="2vh"
             :close-on-click-modal="false"
         >
-            <div v-if="selectedReviewAlignment" class="review-detail">
-                <!-- 需求内容 -->
-                <div class="review-section">
-                    <h4><i class="fas fa-file-alt"></i> 需求内容</h4>
-                    <div class="doc-ranges">
-                        <div v-for="range in selectedReviewAlignment.docRanges" :key="range.id" class="doc-range">
-                            <div class="doc-file-info">
-                                <span class="file-name">${ range.filename }</span>
-                                <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+            <div v-if="selectedReviewAlignment" class="review-detail-container">
+                <!-- 左栏：需求和代码 -->
+                <div class="review-left-panel">
+                    <!-- 需求内容 -->
+                    <div class="review-left-section">
+                        <h4><i class="fas fa-file-alt"></i> 需求内容</h4>
+                        <div class="doc-ranges-container">
+                            <div v-for="range in selectedReviewAlignment.docRanges" :key="range.id" class="doc-range">
+                                <div class="doc-file-info">
+                                    <span class="file-name">${ range.filename }</span>
+                                    <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                                </div>
+                                <pre class="doc-content"><code>${ range.content }</code></pre>
                             </div>
-                            <pre class="doc-content"><code>${ range.content }</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- 代码信息 -->
+                    <div class="review-left-section">
+                        <h4><i class="fas fa-code"></i> 关联代码</h4>
+                        <div class="code-ranges-container">
+                            <div v-for="range in selectedReviewAlignment.codeRanges" :key="range.id" class="code-range">
+                                <div class="code-file-info">
+                                    <span class="file-name">${ range.filename }</span>
+                                    <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                                </div>
+                                <pre class="code-content"><code>${ range.content }</code></pre>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 代码信息 -->
-                <div class="review-section">
-                    <h4><i class="fas fa-code"></i> 关联代码</h4>
-                    <div class="code-ranges">
-                        <div v-for="range in selectedReviewAlignment.codeRanges" :key="range.id" class="code-range">
-                            <div class="code-file-info">
-                                <span class="file-name">${ range.filename }</span>
-                                <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
-                            </div>
-                            <pre class="code-content"><code>${ range.content }</code></pre>
+                <!-- 右栏：审查过程和问题单 -->
+                <div class="review-right-panel">
+                    <!-- 审查思考过程 -->
+                    <div class="review-right-section">
+                        <h4><i class="fas fa-search"></i> 审查思考过程</h4>
+                        <div class="review-process">
+                            <pre class="review-thoughts">${ selectedReviewAlignment.reviewThoughts || '暂无审查思考过程' }</pre>
                         </div>
                     </div>
-                </div>
 
-                <!-- 审查思考过程 -->
-                <div class="review-section">
-                    <h4><i class="fas fa-search"></i> 审查思考过程</h4>
-                    <div class="review-process">
-                        <pre class="review-thoughts">${ selectedReviewAlignment.reviewThoughts || '暂无审查思考过程' }</pre>
-                    </div>
-                </div>
-
-                <!-- 相关问题单 -->
-                <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="review-section">
-                    <h4><i class="fas fa-exclamation-triangle"></i> 相关问题单</h4>
-                    <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
-                        <div class="issue-header">
-                            <div class="issue-level" :class="issue.level?.toLowerCase()">
-                                ${ issue.level || '未知' }
+                    <!-- 相关问题单 -->
+                    <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="review-right-section">
+                        <h4><i class="fas fa-exclamation-triangle"></i> 相关问题单</h4>
+                        <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
+                            <div class="issue-header">
+                                <div class="issue-level" :class="issue.level?.toLowerCase()">
+                                    ${ issue.level || '未知' }
+                                </div>
+                                <div class="issue-status">
+                                    状态: ${ issue.status || '未知' }
+                                </div>
                             </div>
-                            <div class="issue-status">
-                                状态: ${ issue.status || '未知' }
+                            <div class="issue-summary">
+                                ${ issue.summary || '暂无描述' }
                             </div>
-                        </div>
-                        <div class="issue-summary">
-                            ${ issue.summary || '暂无描述' }
-                        </div>
-                        <div class="issue-description">
-                            ${ issue.description || '暂无详细描述' }
+                            <div class="issue-description">
+                                ${ issue.description || '暂无详细描述' }
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <template #footer>
-                <el-button @click="showReviewDialog = false">关闭</el-button>
-            </template>
         </el-dialog>
 
         <!-- 代码选择对话框 -->
