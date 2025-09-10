@@ -154,6 +154,12 @@ const app = createApp({
 
                     // 实时更新统计数据
                     await fetchAllAlignments();
+                    
+                    // 如果当前审查的对齐关系属于当前选中的文档，实时更新右侧面板
+                    if (docFile === selectedDocFile.value) {
+                        await fetchAlignments();
+                    }
+                    
                     ElMessage.info(`已审查: ${alignment.name}`);
 
                     // 添加延迟以模拟处理时间
@@ -162,6 +168,7 @@ const app = createApp({
 
                 // 重新加载所有对齐数据和问题单
                 await fetchAllAlignments();
+                await fetchAlignments(); // 确保右侧面板显示最新状态
                 await fetchIssues();
 
                 ElMessage.success(`自动审查完成！共审查 ${unreviewed.length} 个对齐关系`);
