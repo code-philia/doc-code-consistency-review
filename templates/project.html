@@ -494,7 +494,7 @@
                                     <span class="file-name">${ range.filename }</span>
                                     <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
                                 </div>
-                                <pre class="doc-content"><code>${ range.content }</code></pre>
+                                <div class="doc-content-rendered" v-html="renderMarkdownWithLatex(range.content)"></div>
                             </div>
                         </div>
                     </div>
@@ -520,7 +520,7 @@
                     <div class="review-right-section">
                         <h4><i class="fas fa-search"></i> 审查思考过程</h4>
                         <div class="review-process">
-                            <pre class="review-thoughts">${ selectedReviewAlignment.reviewThoughts || '暂无审查思考过程' }</pre>
+                            <div class="review-thoughts-rendered" v-html="renderMarkdownWithLatex(selectedReviewAlignment.reviewThoughts || '暂无审查思考过程')"></div>
                         </div>
                     </div>
 

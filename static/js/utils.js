@@ -645,3 +645,30 @@ export function removeAnnotationHighlights(annotationId, type = 'doc') {
         parent.removeChild(highlight);
     });
 }
+
+// 将字符偏移转换为行号
+export function convertOffsetToLineNumbers(content, startOffset, endOffset) {
+    const lines = content.split('\n');
+    let currentOffset = 0;
+    let startLine = 1;
+    let endLine = 1;
+    let foundStart = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const lineLength = lines[i].length + 1; // +1 for the newline character
+
+        if (!foundStart && currentOffset + lineLength > startOffset) {
+            startLine = i + 1;
+            foundStart = true;
+        }
+
+        if (currentOffset + lineLength > endOffset) {
+            endLine = i + 1;
+            break;
+        }
+
+        currentOffset += lineLength;
+    }
+
+    return { startLine, endLine };
+}

@@ -6,7 +6,7 @@ let activeView = 'statsView'; // 当前活动视图
 const { createApp, ref, onMounted, computed, nextTick } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
-    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange
+    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers
 } from './utils.js';
 
 /****************************
@@ -113,6 +113,73 @@ const app = createApp({
                     console.error("Error fetching alignments:", err);
                     ElMessage.error(`加载对齐数据失败: ${err.message}`);
                 }
+            }
+        };
+
+        /***********************
+         * Markdown渲染功能
+         ***********************/
+        // 初始化 markdown-it
+        const md = window.markdownit({
+            html: true,
+            linkify: true,
+            typographer: true
+        });
+        
+        // 如果有 texmath 插件，则使用它
+        if (window.texmath && window.katex) {
+            // 确保texmath能找到katex引擎
+            window.texmath.katex = window.katex;
+            md.use(window.texmath, {
+                engine: window.katex,
+                delimiters: 'dollars',
+                katexOptions: {
+                    throwOnError: false,
+                    errorColor: '#cc0000',
+                    displayMode: false,
+                    output: 'html',
+                    trust: true
+                }
+            });
+        }
+        
+        const renderMarkdownWithLatex = (markdownContent) => {
+            if (!markdownContent) return '';
+            try {
+                // 先处理数学公式
+                let processedContent = markdownContent;
+                if (window.katex) {
+                    // 处理块级公式 $$...$$
+                    processedContent = processedContent.replace(/\$\$([^$]+?)\$\$/g, (match, formula) => {
+                        try {
+                            return window.katex.renderToString(formula, {
+                                displayMode: true,
+                                throwOnError: false
+                            });
+                        } catch (e) {
+                            return match;
+                        }
+                    });
+                    
+                    // 处理行内公式 $...$
+                    processedContent = processedContent.replace(/\$([^$\n]+?)\$/g, (match, formula) => {
+                        try {
+                            return window.katex.renderToString(formula, {
+                                displayMode: false,
+                                throwOnError: false
+                            });
+                        } catch (e) {
+                            return match;
+                        }
+                    });
+                }
+                
+                // 然后渲染markdown
+                const html = md.render(processedContent);
+                return html;
+            } catch (error) {
+                console.error('Markdown渲染错误:', error);
+                return markdownContent; // 渲染失败时返回原文
             }
         };
 
@@ -829,12 +896,27 @@ const app = createApp({
                 newAlignmentName.value = `需求点_${id.slice(0, 8)}`;
             }
 
+            // 为文档范围添加filename和行号信息
+            const docFileContent = selectedDocRawContent.value;
+            const { startLine, endLine } = convertOffsetToLineNumbers(
+                docFileContent,
+                currentSelection.value.start,
+                currentSelection.value.end
+            );
+
+            const docRange = {
+                ...currentSelection.value,
+                filename: currentSelection.value.documentId, // 添加文件名
+                startLine: startLine, // 添加起始行号
+                endLine: endLine // 添加结束行号
+            };
+
             const newAlignment = {
                 id: id,
                 name: newAlignmentName.value.trim(),
                 isReviewed: false,
                 reviewThoughts: '',
-                docRanges: [{ ...currentSelection.value }],
+                docRanges: [docRange],
                 codeRanges: [] // 初始代码范围为空
             };
 
@@ -891,10 +973,21 @@ const app = createApp({
             if (!currentSelection.value || !alignment) return;
 
             if (currentSelection.value.type === 'code') {
+                // 获取代码文件内容以转换字符偏移为行号
+                const codeFileContent = selectedCodeRawContent.value;
+                const { startLine, endLine } = convertOffsetToLineNumbers(
+                    codeFileContent,
+                    currentSelection.value.start,
+                    currentSelection.value.end
+                );
+
                 alignment.codeRanges.push({
                     documentId: currentSelection.value.documentId,
+                    filename: currentSelection.value.documentId, // 文件名
                     start: currentSelection.value.start,
                     end: currentSelection.value.end,
+                    startLine: startLine, // 起始行号
+                    endLine: endLine, // 结束行号
                     content: currentSelection.value.content
                 });
             }
@@ -907,6 +1000,10 @@ const app = createApp({
                     `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
                     alignment
                 );
+                
+                // 更新所有对齐数据以保持统计信息同步
+                await fetchAllAlignments();
+                
                 ElMessage.success('已添加到对齐关系');
             } catch (err) {
                 console.error("Error updating alignment:", err);
@@ -1255,7 +1352,10 @@ const app = createApp({
             selectIssue,
             confirmIssue,
             ignoreIssue,
-            showIssueDetail
+            showIssueDetail,
+            
+            // Markdown渲染
+            renderMarkdownWithLatex
         };
     }
 });

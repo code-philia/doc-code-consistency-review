@@ -1247,6 +1247,153 @@
     background: none;
     padding: 0;
     color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+/* 统一的Markdown内容渲染样式 */
+.markdown-content-rendered,
+.doc-content-rendered,
+.review-thoughts-rendered {
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    overflow-x: auto;
+    border: none;
+    margin: 0;
+}
+
+.markdown-content-rendered h1,
+.markdown-content-rendered h2,
+.markdown-content-rendered h3,
+.markdown-content-rendered h4,
+.markdown-content-rendered h5,
+.markdown-content-rendered h6,
+.doc-content-rendered h1,
+.doc-content-rendered h2,
+.doc-content-rendered h3,
+.doc-content-rendered h4,
+.doc-content-rendered h5,
+.doc-content-rendered h6,
+.review-thoughts-rendered h1,
+.review-thoughts-rendered h2,
+.review-thoughts-rendered h3,
+.review-thoughts-rendered h4,
+.review-thoughts-rendered h5,
+.review-thoughts-rendered h6 {
+    margin: 2px 0 2px 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.markdown-content-rendered h2,
+.doc-content-rendered h2,
+.review-thoughts-rendered h2 {
+    font-size: 14px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 2px;
+}
+
+.markdown-content-rendered h3,
+.doc-content-rendered h3,
+.review-thoughts-rendered h3 {
+    font-size: 13px;
+}
+
+.markdown-content-rendered p,
+.doc-content-rendered p,
+.review-thoughts-rendered p {
+    margin: 4px 0;
+}
+
+.markdown-content-rendered code,
+.doc-content-rendered code,
+.review-thoughts-rendered code {
+    background-color: #e9ecef;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+}
+
+.markdown-content-rendered pre,
+.doc-content-rendered pre,
+.review-thoughts-rendered pre {
+    background-color: #e9ecef;
+    padding: 4px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+    margin: 6px 0;
+}
+
+.markdown-content-rendered ul,
+.markdown-content-rendered ol,
+.doc-content-rendered ul,
+.doc-content-rendered ol,
+.review-thoughts-rendered ul,
+.review-thoughts-rendered ol {
+    margin: 2px 0;
+    padding-left: 20px;
+}
+
+.markdown-content-rendered li,
+.doc-content-rendered li,
+.review-thoughts-rendered li {
+    margin: 2px 0;
+}
+
+.markdown-content-rendered blockquote,
+.doc-content-rendered blockquote {
+    border-left: 3px solid #007bff;
+    margin: 3px 0;
+    padding-left: 8px;
+    color: #6c757d;
+}
+
+.review-thoughts-rendered blockquote {
+    border-left: 3px solid #28a745;
+    margin: 3px 0;
+    padding-left: 8px;
+    color: #6c757d;
+}
+
+.markdown-content-rendered table,
+.doc-content-rendered table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 6px 0;
+    font-size: 11px;
+}
+
+.markdown-content-rendered th,
+.markdown-content-rendered td,
+.doc-content-rendered th,
+.doc-content-rendered td {
+    border: 1px solid #dee2e6;
+    padding: 4px 6px;
+    text-align: left;
+}
+
+.markdown-content-rendered th,
+.doc-content-rendered th {
+    background-color: #e9ecef;
+    font-weight: 600;
+}
+
+.markdown-content-rendered .katex,
+.doc-content-rendered .katex,
+.review-thoughts-rendered .katex {
+    font-size: 1em;
+}
+
+.markdown-content-rendered .katex-display,
+.doc-content-rendered .katex-display,
+.review-thoughts-rendered .katex-display {
+    margin: 4px 0;
 }
 
 .code-ranges {
@@ -1260,6 +1407,7 @@
     border-radius: 6px;
     overflow: hidden;
     border: 1px solid #e9ecef;
+    margin-bottom: 4px;
 }
 
 .code-file-info {
@@ -1345,8 +1493,6 @@
 /* 审查思考过程样式 */
 .review-thoughts {
     background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
     padding: 8px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 11px;
@@ -1359,7 +1505,8 @@
     margin: 0;
 }
 
-/* 问题单信息样式 */
+/* 原有的.review-thoughts-rendered样式已合并到统一的markdown-content-rendered样式中 */
+
 .issue-info {
     background-color: #fff3cd;
     padding: 8px;
