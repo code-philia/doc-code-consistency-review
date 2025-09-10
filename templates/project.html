@@ -419,8 +419,8 @@
                                             <span class="issue-level" :class="issue.level?.toLowerCase()">${ issue.level }</span>
                                         </div>
                                         <div class="issue-cell issue-description-cell">${ issue.summary }</div>
-                                        <div class="issue-cell issue-req-cell">${ issue.docFilename }</div>
-                                        <div class="issue-cell issue-code-cell">需求点 #${ issue.requirementId }</div>
+                                        <div class="issue-cell issue-req-cell" :title="issue.briefRequirement">${ issue.briefRequirement || '无相关需求' }</div>
+                                        <div class="issue-cell issue-code-cell" :title="issue.briefCode">${ issue.briefCode || '无相关代码' }</div>
                                         <div class="issue-cell issue-status-cell">
                                             <span class="issue-status" :class="issue.status?.toLowerCase()">${ issue.status === 'confirmed' ? '已确认' : '未确认' }</span>
                                         </div>

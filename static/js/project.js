@@ -156,12 +156,12 @@ const app = createApp({
 
                     // 实时更新统计数据
                     await fetchAllAlignments();
-                    
+
                     // 如果当前审查的对齐关系属于当前选中的文档，实时更新右侧面板
                     if (docFile === selectedDocFile.value) {
                         await fetchAlignments();
                     }
-                    
+
                     ElMessage.info(`已审查: ${alignment.name}`);
 
                     // 添加延迟以模拟处理时间
@@ -279,6 +279,14 @@ const app = createApp({
                 summary = summaryOptions[Math.floor(Math.random() * summaryOptions.length)];
             }
 
+            const briefRequirement = alignment.docRanges && alignment.docRanges[0]
+                ? alignment.docRanges[0].content.substring(0, 30) + (alignment.docRanges[0].content.length > 100 ? '...' : '')
+                : '无相关需求';
+
+            const briefCode = alignment.codeRanges && alignment.codeRanges[0]
+                ? alignment.codeRanges[0].content.substring(0, 30) + (alignment.codeRanges[0].content.length > 100 ? '...' : '')
+                : '无相关代码';
+
             const newIssue = {
                 id: issueId,
                 level: level, // Mock的问题等级
@@ -288,6 +296,9 @@ const app = createApp({
                 alignmentId: alignment.id, // 关联的对齐关系ID
                 relatedDocFile: selectedDocFile.value,
                 relatedRequirementId: alignment.id, // 保持向后兼容
+                // 新增缩略信息字段
+                briefRequirement: briefRequirement, // 缩略需求信息
+                briefCode: briefCode, // 缩略代码信息
                 createdDate: new Date().toISOString(),
                 updatedDate: new Date().toISOString()
             };
@@ -329,7 +340,38 @@ const app = createApp({
             try {
                 const response = await axios.get(`/project/issues?path=${encodeURIComponent(projectPath.value)}`);
                 if (response.data.status === 'success') {
-                    issues.value = response.data.data || [];
+                    const issuesData = response.data.data || [];
+
+                    // 为没有缩略信息的旧问题单提供兼容性支持
+                    for (const issue of issuesData) {
+                        if (!issue.briefRequirement || !issue.briefCode) {
+                            try {
+                                // 根据alignmentId查找对齐关系获取缩略信息
+                                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(issue.relatedDocFile)}`);
+                                if (alignmentResponse.data.status === 'success') {
+                                    const alignments = alignmentResponse.data.data || {};
+                                    const alignment = alignments[issue.alignmentId];
+
+                                    if (alignment) {
+                                        // 提取缩略信息
+                                        issue.briefRequirement = alignment.docRanges && alignment.docRanges[0]
+                                            ? alignment.docRanges[0].content.substring(0, 100) + (alignment.docRanges[0].content.length > 100 ? '...' : '')
+                                            : '无相关需求';
+
+                                        issue.briefCode = alignment.codeRanges && alignment.codeRanges[0]
+                                            ? alignment.codeRanges[0].content.substring(0, 100) + (alignment.codeRanges[0].content.length > 100 ? '...' : '')
+                                            : '无相关代码';
+                                    }
+                                }
+                            } catch (err) {
+                                // 如果获取对齐关系失败，使用默认值
+                                issue.briefRequirement = issue.briefRequirement || '无相关需求';
+                                issue.briefCode = issue.briefCode || '无相关代码';
+                            }
+                        }
+                    }
+
+                    issues.value = issuesData;
                 }
             } catch (error) {
                 console.error('获取问题单数据失败:', error);
@@ -735,7 +777,7 @@ const app = createApp({
                     type: 'info'
                 };
             }
-            
+
             if (alignment.isReviewed) {
                 return {
                     status: 'reviewed',
@@ -743,7 +785,7 @@ const app = createApp({
                     type: 'success'
                 };
             }
-            
+
             return {
                 status: 'unreviewed',
                 text: '未审查',
