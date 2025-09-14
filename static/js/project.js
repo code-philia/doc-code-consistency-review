@@ -192,11 +192,6 @@ const app = createApp({
                 return;
             }
 
-            if (totalAlignedRequirements.value === 0) {
-                ElMessage.warning('没有已对齐的需求点，请先进行对齐');
-                return;
-            }
-
             isAutoReviewing.value = true;
             reviewProgress.value = { current: 0, total: 0 };
             ElMessage.info('开始自动审查，正在分析对齐关系...');
@@ -218,8 +213,12 @@ const app = createApp({
                 for (const { docFile, alignment } of unreviewed) {
                     reviewProgress.value.current++;
 
-                    // 生成mock审查结果
-                    await generateMockReview(docFile, alignment);
+                    // 调用后端进行审查
+                    await axios.post('/api/review-alignment', {
+                        projectPath: projectPath.value,
+                        docFile: docFile,
+                        alignment: alignment
+                    });
 
                     // 实时更新统计数据
                     await fetchAllAlignments();
@@ -248,135 +247,6 @@ const app = createApp({
                 isAutoReviewing.value = false;
                 reviewProgress.value = { current: 0, total: 0 };
             }
-        };
-
-        const generateMockReview = async (docFile, alignment) => {
-            // 生成mock审查思考过程
-            const requirementContent = alignment.docRanges && alignment.docRanges[0] ? alignment.docRanges[0].content : '';
-            const codeContent = alignment.codeRanges && alignment.codeRanges[0] ? alignment.codeRanges[0].content : '';
-
-            let reviewThoughts = `## 审查思考过程\n\n`;
-            reviewThoughts += `### 需求分析\n`;
-            reviewThoughts += `需求点"${alignment.name}"描述了以下功能要求：\n`;
-            reviewThoughts += `${requirementContent.substring(0, 200)}...\n\n`;
-
-            reviewThoughts += `### 代码实现分析\n`;
-            reviewThoughts += `对应的代码实现位于文件 \`${alignment.codeRanges[0].filename}\` 第${alignment.codeRanges[0].start}-${alignment.codeRanges[0].end}行。\n\n`;
-
-            // 根据内容生成不同的审查结论
-            let hasIssue = Math.random() < 0.3; // 30%概率生成问题单
-            let reviewConclusion = '';
-
-            if (requirementContent.includes('表格') || requirementContent.includes('数据')) {
-                reviewConclusion = '代码实现了基本的数据结构定义，符合需求中对表格数据处理的要求。';
-                if (hasIssue) {
-                    reviewConclusion += ' 但缺少数据验证和错误处理机制。';
-                }
-            } else if (requirementContent.includes('公式') || requirementContent.includes('计算')) {
-                reviewConclusion = '代码实现了相应的计算函数，数学逻辑基本正确。';
-                if (hasIssue) {
-                    reviewConclusion += ' 但需要考虑边界条件和异常情况的处理。';
-                }
-            } else {
-                reviewConclusion = '代码实现与需求描述基本一致，功能覆盖度良好。';
-                if (hasIssue) {
-                    reviewConclusion += ' 但代码注释不够详细，可维护性有待提升。';
-                }
-            }
-
-            reviewThoughts += `### 审查结论\n${reviewConclusion}\n`;
-
-            // 更新对齐关系，只添加审查标志和思考过程
-            const updatedAlignment = {
-                ...alignment,
-                isReviewed: true, // 设置审查标志位
-                reviewThoughts: reviewThoughts // 记录审查思考过程
-            };
-
-            // 保存审查结果
-            await axios.post(
-                `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`,
-                updatedAlignment
-            );
-
-            // 如果有问题，生成问题单并保存到issues.json
-            if (hasIssue) {
-                await generateIssueToFile(alignment, reviewConclusion);
-            }
-
-            console.log(`生成审查结果: ${alignment.name}`);
-        };
-
-        // 生成问题单并保存到issues.json文件
-        const generateIssueToFile = async (alignment, reviewConclusion) => {
-            const issueId = crypto.randomUUID();
-            const requirementContent = alignment.docRanges && alignment.docRanges[0] ? alignment.docRanges[0].content : '';
-
-            // Mock问题等级（随机生成）
-            const levels = ['high', 'medium', 'low'];
-            const level = levels[Math.floor(Math.random() * levels.length)];
-
-            // Mock问题概述（根据需求内容生成）
-            const summaryOptions = [
-                '代码实现与需求描述存在差异',
-                '功能实现不够完整',
-                '缺少必要的错误处理机制',
-                '代码注释不够详细',
-                '性能优化空间较大',
-                '安全性考虑不足',
-                '用户体验有待改进',
-                '数据验证逻辑缺失',
-                '接口设计不够规范',
-                '配置参数需要调整'
-            ];
-
-            let summary;
-            if (requirementContent.includes('用户') || requirementContent.includes('登录') || requirementContent.includes('认证')) {
-                summary = '用户认证功能存在安全隐患';
-            } else if (requirementContent.includes('数据库') || requirementContent.includes('连接')) {
-                summary = '数据库连接配置需要优化';
-            } else if (requirementContent.includes('接口') || requirementContent.includes('API')) {
-                summary = 'API接口实现不完整';
-            } else if (requirementContent.includes('文件') || requirementContent.includes('上传')) {
-                summary = '文件处理功能需要完善';
-            } else if (requirementContent.includes('权限') || requirementContent.includes('访问')) {
-                summary = '权限控制机制不够严格';
-            } else {
-                // 随机选择一个问题概述
-                summary = summaryOptions[Math.floor(Math.random() * summaryOptions.length)];
-            }
-
-            const briefRequirement = alignment.docRanges && alignment.docRanges[0]
-                ? alignment.docRanges[0].content.substring(0, 30) + (alignment.docRanges[0].content.length > 100 ? '...' : '')
-                : '无相关需求';
-
-            const briefCode = alignment.codeRanges && alignment.codeRanges[0]
-                ? alignment.codeRanges[0].content.substring(0, 30) + (alignment.codeRanges[0].content.length > 100 ? '...' : '')
-                : '无相关代码';
-
-            const newIssue = {
-                id: issueId,
-                level: level, // Mock的问题等级
-                summary: summary, // Mock的问题概述
-                description: reviewConclusion, // 问题详细描述
-                status: 'unconfirmed', // 固定状态：初始为"未确认"
-                alignmentId: alignment.id, // 关联的对齐关系ID
-                relatedDocFile: selectedDocFile.value,
-                relatedRequirementId: alignment.id, // 保持向后兼容
-                // 新增缩略信息字段
-                briefRequirement: briefRequirement, // 缩略需求信息
-                briefCode: briefCode, // 缩略代码信息
-                createdDate: new Date().toISOString(),
-                updatedDate: new Date().toISOString()
-            };
-
-            // 保存问题单到后端
-            await axios.post(
-                `/project/issues?path=${encodeURIComponent(projectPath.value)}`,
-                newIssue
-            );
-
-            console.log(`生成问题单: ${summary}`);
         };
 
         // 加载所有文档的对齐数据用于统计

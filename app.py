@@ -2,12 +2,13 @@ import os
 import time
 from flask import Flask, json, render_template, request, jsonify
 import socket
-from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown
+from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension
 from agent import query_generated_requirement, query_related_code, query_review_result
 import random
 import string
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
+import uuid
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
@@ -384,19 +385,6 @@ def query_related_code_endpoint():
     return jsonify({"relatedCode": related_code})
 
 
-@app.route('/api/review-consistency',  methods=['POST'])
-def review_consistency_endpoint():
-    data = request.json
-    requirement = data.get('requirement')
-    related_code = data.get('relatedCode', [])
-    
-    review_process, issues = query_review_result(requirement, related_code)
-    # review_process = "This is a mock review process. The code implementation matches the requirement."
-    # issues = "This is a mock issue list. No issues found."
-    
-    return jsonify({"reviewProcess":review_process, "issues": issues})
-
-
 @app.route('/api/generate-requirement', methods=['POST'])
 def generate_requirement_endpoint():
     data = request.json
@@ -470,16 +458,98 @@ def align_single_requirement():
     return jsonify({"requirementPoint": requirement_point_list[0]})
 
 
-@app.route('/api/review', methods=['POST'])
-def review_single_requirement():
+@app.route('/api/review-alignment', methods=['POST'])
+def review_alignment():
     data = request.json
-    requirement_point = data.get('requirement')
-    print("Received requirement point for review:", requirement_point)
-    
-    # requirement_point_reviewed = query_review_result(requirement_point)
-    
-    return jsonify({"result": 0})
+    project_path = data.get('projectPath')
+    doc_file = data.get('docFile')
+    alignment = data.get('alignment')
 
+    if not all([project_path, doc_file, alignment]):
+        return jsonify({"status": "error", "message": "Missing required parameters"}), 400
+
+    # 1. 调用 agent 获取审查结果
+    review_process, issue = query_review_result(
+        alignment.get('docRanges', []),
+        alignment.get('codeRanges', [])
+    )
+
+    # 2. 更新对齐关系
+    alignment['isReviewed'] = True
+    alignment['reviewThoughts'] = review_process
+    
+    # 3. 保存更新后的对齐关系
+    doc_name_without_ext = get_filename_without_extension(doc_file)
+    alignments_file = os.path.join(project_path, 'results', f'{doc_name_without_ext}.json')
+    
+    try:
+        alignments_data = {}
+        if os.path.exists(alignments_file):
+            with open(alignments_file, 'r', encoding='utf-8') as f:
+                try:
+                    alignments_data = json.load(f)
+                except json.JSONDecodeError:
+                    pass  # File is empty or corrupt, start with an empty dict
+
+        # Update the dictionary using the alignment ID as the key
+        alignments_data[alignment['id']] = alignment
+
+        with open(alignments_file, 'w', encoding='utf-8') as f:
+            json.dump(alignments_data, f, ensure_ascii=False, indent=4)
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to save alignment: {str(e)}"}), 500
+
+    # 4. 如果有，生成并保存问题单
+    if issue:
+        generate_and_save_issue(project_path, alignment, issue, doc_file)
+
+    return jsonify({"status": "success"})
+
+
+def generate_and_save_issue(project_path, alignment, issue_details, doc_file):
+    issue_id = str(uuid.uuid4())
+    
+    # 从LLM返回的issue详情中提取信息
+    level = issue_details.get('level', 'medium')
+    summary = issue_details.get('summary', '未提供摘要')
+    description = issue_details.get('description', '未提供详细描述')
+
+    # 获取缩略信息
+    brief_requirement = alignment.get('docRanges', [{}])[0].get('content', '')[:30] + '...'
+    brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')[:30] + '...'
+
+    new_issue = {
+        "id": issue_id,
+        "level": level,
+        "summary": summary,
+        "description": description,
+        "status": "unconfirmed",
+        "alignmentId": alignment.get('id'),
+        "relatedDocFile": doc_file,
+        "relatedRequirementId": alignment.get('id'), # 兼容旧字段
+        "briefRequirement": brief_requirement,
+        "briefCode": brief_code,
+        "createdDate": datetime.now().isoformat(),
+        "updatedDate": datetime.now().isoformat()
+    }
+
+    issues_file = os.path.join(project_path, 'issues.json')
+    try:
+        issues_data = []
+        if os.path.exists(issues_file):
+            with open(issues_file, 'r', encoding='utf-8') as f:
+                try:
+                    issues_data = json.load(f)
+                except json.JSONDecodeError:
+                    pass # 文件为空或损坏
+        
+        issues_data.append(new_issue)
+        
+        with open(issues_file, 'w', encoding='utf-8') as f:
+            json.dump(issues_data, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Failed to save issue: {str(e)}")
 
 def get_filename_without_extension(filename):
     """去掉文件名的扩展名"""
@@ -602,8 +672,6 @@ def get_alignment_file():
     except Exception as e:
         return jsonify({"status": "error", "message": f"读取对齐文件失败: {e}"}), 500
 
-
-# 问题单相关API
 @app.route('/project/issues', methods=['GET'])
 def get_issues():
     try:

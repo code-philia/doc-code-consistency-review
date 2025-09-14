@@ -6,7 +6,7 @@ from openai import OpenAI
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8001/v1")
 API_KEY = os.environ.get("API_KEY", "0")
-MODEL_NAME = "/home/kwy/project/models/deepseek-coder-6.7b-instruct"
+MODEL_NAME = "deepseek-coder-6.7b-instruct"
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -214,118 +214,70 @@ def query_review_result(requirement, related_code):
         
     返回:
         review_process: 审查过程
-        issues: 问题单
+        issue: 问题单 (字典) 或 None
     """
-    # 1. 拼接相关代码
+    # 1. 拼接需求和代码上下文
+    requirement_context = "\n".join(
+        f"需求片段来源: {block['filename']} (行 {block['startLine']}-{block['endLine']})\n内容:\n{block['content']}"
+        for block in requirement
+    )
+    
     code_context = "\n\n".join(
-        f"所属文件: {block['filename']}\n"
-        f"代码:\n{block['content']}"
-        for idx, block in enumerate(related_code)
+        f"代码片段来源: {block['filename']} (行 {block['start']}-{block['end']})\n内容:\n{block['content']}"
+        for block in related_code
     )
     
     # 2. 构造提示词
     template = REVIEW_PROMPT_TEMPLATE
     prompt = template.format(
-        requirement=requirement,
+        requirement=requirement_context,
         related_code=code_context
     )
     
     # 3. 调用LLM
     try:
         response = query_llm(prompt)
-        print("LLM response:", response.content)
+        print("LLM response for review:", response.content)
         parsed_output = parse_review_output(response.content)
+        
+        return parsed_output.get('review_process'), parsed_output.get('issue')
         
     except Exception as e:
         print(f"审查过程中出错: {str(e)}")
-        return None, None
-    
-    return parsed_output['review_process'], parsed_output['issues']
+        return f"审查过程中发生错误: {e}", None
 
 
 def parse_review_output(response):
     """
-    解析审查输出，分离分析过程和问题单
+    解析审查输出的JSON
     
     参数:
         response: LLM的完整响应文本
         
     返回:
-        包含两个键的字典:
-        - "review_process": 审查分析过程文本
-        - "issues": 问题单文本
+        包含 "review_process" 和 "issue" 的字典
     """
-    # 定义分隔符
-    process_end_marker = "===== 审查分析过程结束 ====="
-    
-    # 尝试按分隔符分割
-    if process_end_marker in response:
-        parts = response.split(process_end_marker)
-        
-        # 第一部分是审查分析过程
-        review_process = parts[0].strip()
-        
-        # 第二部分是问题单
-        issues_text = parts[1].strip() if len(parts) > 1 else ""
-        
-        # 检查问题单部分是否包含标题
-        issues_title = "问题单"
-        if issues_title in issues_text:
-            # 移除标题
-            issues_text = issues_text.split(issues_title, 1)[-1].strip()
-        
-        return {
-            "review_process": review_process,
-            "issues": issues_text
-        }
-    
-    # 回退方案：尝试识别标题分割
-    review_title = "审查分析过程"
-    issues_title = "问题单"
-    
-    if review_title in response and issues_title in response:
-        # 尝试按标题分割
-        review_parts = response.split(review_title)
-        if len(review_parts) > 1:
-            review_section = review_parts[1]
-            # 在审查部分中查找问题单标题
-            if issues_title in review_section:
-                review_parts2 = review_section.split(issues_title)
-                review_process = review_parts2[0].strip()
-                issues = review_parts2[1].strip() if len(review_parts2) > 1 else ""
-            else:
-                # 如果没有找到问题单标题，整个第二部分作为问题单
-                review_process = review_section
-                issues = ""
+    try:
+        # 提取Markdown代码块中的JSON
+        json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', response, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
         else:
-            review_process = response
-            issues = ""
-        
+            # 如果没有找到代码块，假设整个响应就是JSON
+            json_str = response
+
+        data = json.loads(json_str)
         return {
-            "review_process": review_process,
-            "issues": issues
+            "review_process": data.get("review_process", "未能解析出审查过程。"),
+            "issue": data.get("issue") # 如果为null，则返回None
         }
-    
-    # 最后回退：使用正则表达式尝试识别问题单格式
-    issue_pattern = r'在\[.*?\]的\[.*?\]处，程序实现是.*?，而需求是.*?，实现与需求不一致，原因是.*?。'
-    issues_match = re.findall(issue_pattern, response, re.DOTALL)
-    
-    if issues_match:
-        # 假设问题单之前的内容都是审查分析过程
-        issues_start = response.find(issues_match[0])
-        review_process = response[:issues_start].strip()
-        issues = "\n".join(issues_match)
-        
+    except (json.JSONDecodeError, AttributeError) as e:
+        print(f"解析审查输出失败: {e}")
+        # 作为回退，将原始响应作为审查过程
         return {
-            "review_process": review_process,
-            "issues": issues
+            "review_process": response,
+            "issue": None
         }
-    
-    # 如果所有方法都失败，返回原始响应作为审查过程
-    return {
-        "review_process": response,
-        "issues": "未能解析出问题单"
-    }
 
 # ================= 需求反生成 =================
 def query_generated_requirement(related_code):

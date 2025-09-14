@@ -276,3 +276,7 @@ def convert_doc_to_markdown(doc_repo_path):
                 continue
 
             docToMd.convertDocToMarkdown(os.path.join(root, file), converted_repo_path)
+
+def get_filename_without_extension(filepath):
+    """获取不带扩展名的文件名"""
+    return os.path.splitext(os.path.basename(filepath))[0]
