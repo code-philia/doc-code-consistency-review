@@ -461,6 +461,90 @@ def align_single_requirement():
     return jsonify({"requirementPoint": requirement_point_list[0]})
 
 
+@app.route('/api/align-requirement-to-project', methods=['POST'])
+def align_requirement_to_project():
+    """
+    为单个需求点在项目中查找相关代码并返回codeRanges格式的结果
+    """
+    data = request.json
+    doc_ranges = data.get('docRanges', [])
+    project_path = data.get('projectPath', '')
+    
+    # 拼接所有docRanges的content作为requirement_text
+    requirement_text = '\n\n'.join([doc_range.get('content', '') for doc_range in doc_ranges if doc_range.get('content')])
+    if not requirement_text or not project_path:
+        return jsonify({"status": "error", "message": "缺少需求内容或项目路径参数"}), 400
+    
+    try:
+        # 获取项目中所有代码文件
+        code_repo_path = os.path.join(project_path, 'code_repo')
+        all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
+        code_files = []
+        
+        for file_path in all_files:
+            full_path = os.path.join(code_repo_path, file_path)
+            if os.path.exists(full_path):
+                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    # 为代码添加行号
+                    lines = content.splitlines()
+                    numbered_content = '\n'.join([f"{i+1}: {line}" for i, line in enumerate(lines)])
+                    code_files.append({
+                        'name': file_path,
+                        'content': content,
+                        'numberedContent': numbered_content
+                    })
+        
+        # 调用对齐函数获取相关代码
+        related_code = query_related_code(requirement_text, code_files, split_code=True)
+        
+        print("requirement_text: ", requirement_text)
+        print("related_code: ", related_code)
+        
+        # 转换为codeRanges格式
+        code_ranges = []
+        for code_block in related_code:
+            # 获取原始代码内容（不带行号）
+            file_path = os.path.join(code_repo_path, code_block['filename'])
+            if os.path.exists(file_path):
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    original_content = f.read()
+                    lines = original_content.splitlines(keepends=True)  # 保留换行符
+                    
+                    # 提取指定行范围的内容
+                    start_line = max(1, code_block['start'])
+                    end_line = min(len(lines), code_block['end'])
+                    
+                    if start_line <= end_line:
+                        # 计算字符偏移量
+                        char_start = sum(len(line) for line in lines[:start_line-1])
+                        char_end = sum(len(line) for line in lines[:end_line])
+                        
+                        # 提取内容（不保留换行符用于显示）
+                        range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
+                        
+                        code_ranges.append({
+                            'filename': code_block['filename'],
+                            'start': char_start,  # 字符偏移量
+                            'end': char_end,      # 字符偏移量
+                            'content': range_content,
+                            'documentId': code_block['filename'],
+                            'startLine': start_line,
+                            'endLine': end_line
+                        })
+        
+        return jsonify({
+            "status": "success",
+            "codeRanges": code_ranges
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "status": "error", 
+            "message": f"对齐过程中出错: {str(e)}"
+        }), 500
+
+
 @app.route('/api/review-alignment', methods=['POST'])
 def review_alignment():
     data = request.json

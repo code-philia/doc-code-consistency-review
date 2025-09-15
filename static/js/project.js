@@ -701,21 +701,25 @@ const app = createApp({
         };
 
         const addMockCodeToRequirement = async (docFile, requirement) => {
-            const randomCodeFile = projectFiles.value.code_files[Math.floor(Math.random() * projectFiles.value.code_files.length)];
-            const startLine = Math.floor(Math.random() * 50) + 1;
-            const endLine = startLine + Math.floor(Math.random() * 20) + 5;
-            let mockCode = `// Mock代码段 - 对应需求: ${requirement.name}\n`;
-            const updatedAlignment = {
-                ...requirement,
-                codeRanges: [{
-                    filename: randomCodeFile,
-                    start: startLine,
-                    end: endLine,
-                    content: mockCode
-                }]
-            };
-
             try {
+                // 调用新的API获取真实的代码对齐结果
+                const alignResponse = await axios.post('/api/align-requirement-to-project', {
+                    docRanges: requirement.docRanges || [],
+                    projectPath: projectPath.value
+                });
+
+                if (alignResponse.data.status !== 'success') {
+                    throw new Error(alignResponse.data.message || '对齐API调用失败');
+                }
+
+                const codeRanges = alignResponse.data.codeRanges || [];
+                
+                const updatedAlignment = {
+                    ...requirement,
+                    codeRanges: codeRanges
+                };
+
+                // 保存对齐结果到文件
                 await axios.post(
                     `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`,
                     updatedAlignment
@@ -729,9 +733,25 @@ const app = createApp({
                     }
                 }
 
-                console.log(`为需求点添加代码对齐: ${requirement.name}`);
+                console.log(`为需求点添加代码对齐: ${requirement.name}，找到 ${codeRanges.length} 个相关代码块`);
             } catch (error) {
                 console.error(`为需求点 ${requirement.name} 添加代码对齐失败:`, error);
+                
+                // 如果API调用失败，回退到空的codeRanges
+                const fallbackAlignment = {
+                    ...requirement,
+                    codeRanges: []
+                };
+                
+                try {
+                    await axios.post(
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`,
+                        fallbackAlignment
+                    );
+                } catch (saveError) {
+                    console.error('保存空对齐关系也失败:', saveError);
+                }
+                
                 throw error;
             }
         };
