@@ -494,14 +494,6 @@
     display: none;
 }
 
-.req-panel {
-    flex: 1;
-    border-right: 1px solid var(--border-color);
-}
-
-.code-panel {
-    flex: 1;
-}
 
 .panel-title {
     font-size: 14px;
@@ -952,13 +944,7 @@
     outline: none;
 }
 
-.right-sidebar {
-    background-color: #fcfcfc;
-}
 
-.right-sidebar .panel-title {
-    border-bottom: 1px solid var(--border-color);
-}
 
 .alignment-list {
     height: 100%;
@@ -1259,7 +1245,6 @@
 .markdown-content-rendered,
 .doc-content-rendered,
 .review-thoughts-rendered {
-    background-color: #f8f9fa;
     padding: 12px;
     border-radius: 4px;
     font-size: 12px;
