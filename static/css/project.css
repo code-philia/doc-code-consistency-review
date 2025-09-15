@@ -275,16 +275,6 @@
     position: relative;
 }
 
-.file-item.active::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 2px;
-    background-color: var(--accent-color);
-}
-
 .file-item i {
     margin-right: 8px;
     font-size: 11px;
@@ -484,16 +474,19 @@
     position: relative;
 }
 
-.split-panel {
+.el-splitter-panel .split-panel {
     overflow: hidden;
     padding: 16px;
     position: relative;
 }
 
+.el-splitter-panel .split-panel .right-sidebar {
+    min-width: 0;
+}
+
 .alignment-view {
     display: none;
 }
-
 
 .panel-title {
     font-size: 14px;
@@ -511,12 +504,8 @@
     color: var(--accent-color);
 }
 
-.my-el-splitter {
-    overflow: hidden;
-}
-
 .content-card {
-    height: 90%;
+    height: 95%;
     background-color: white;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -868,7 +857,7 @@
 }
 
 .issue-cell {
-    padding: 10px 12px;
+    padding: 5px 6px;
     font-size: 10px;
     display: flex;
     align-items: center;
@@ -900,26 +889,6 @@
     justify-content: center;
 }
 
-.issue-level {
-    font-weight: bold;
-    padding: 1px 4px;
-    border-radius: 3px;
-    color: white;
-    font-size: 10px;
-}
-
-.issue-level.high {
-    background-color: var(--danger-color);
-}
-
-.issue-level.medium {
-    background-color: var(--warning-color);
-}
-
-.issue-level.low {
-    background-color: var(--success-color);
-}
-
 .issue-status {
     padding: 1px 6px;
     border-radius: 3px;
@@ -944,11 +913,9 @@
     outline: none;
 }
 
-
-
 .alignment-list {
     height: 100%;
-    overflow-y: auto;
+    overflow-y: scroll;
 }
 
 .alignment-list .el-collapse {
@@ -1516,9 +1483,9 @@
 
 .issue-level {
     display: inline-block;
-    padding: 4px 8px;
+    padding: 2px 4px;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
 }
@@ -1583,4 +1550,17 @@
 
 .review-tag {
     flex-shrink: 0;
+}
+
+.el-dropdown-menu {
+    width: 300px;
+}
+
+.dropdown-annotation-name{
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+    flex: 1;
 }
