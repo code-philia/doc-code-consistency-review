@@ -1,11 +1,4 @@
-import { unified } from 'https://esm.sh/unified@11.0.4';
-import remarkParse from 'https://esm.sh/remark-parse@11.0.0';
-import remarkGfm from 'https://esm.sh/remark-gfm@4.0.0';
-import remarkMath from 'https://esm.sh/remark-math@6.0.0';
-import remarkRehype from 'https://esm.sh/remark-rehype@11.1.0';
-import rehypeKatex from 'https://esm.sh/rehype-katex@7.0.0';
-import rehypeStringify from 'https://esm.sh/rehype-stringify@10.0.0';
-import { trimLines } from 'https://esm.sh/trim-lines@3.0.1';
+import { unified, remarkParse, remarkGfm, remarkMath, remarkRehype, rehypeKatex, rehypeStringify, trimLines } from './thirdParty/bundle.js';
 
 /****************************
  * Markdown Rendering 
