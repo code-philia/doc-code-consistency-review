@@ -521,9 +521,9 @@
                             <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="issues-container">
                                 <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
                                     <div class="issue-header">
-                                        <span :class="['issue-level', 'level-' + issue.level]">
-                                            <i class="fas fa-flag"></i> ${ issue.level.toUpperCase() }
-                                        </span>
+                                        <div class="issue-level" :class="issue.level?.toLowerCase()">
+                                            ${ issue.level?.toUpperCase() || '未知' }
+                                        </div>
                                         <span class="issue-status">${ issue.status === 'unconfirmed' ? '未确认' : '已导出' }</span>
                                         <div class="issue-actions">
                                             <button v-if="editingIssueId !== issue.id" class="action-btn edit-btn" @click="toggleEditIssue(issue)">
