@@ -1278,9 +1278,6 @@
 .markdown-content-rendered code,
 .doc-content-rendered code,
 .review-thoughts-rendered code {
-    background-color: #e9ecef;
-    padding: 2px 4px;
-    border-radius: 3px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 11px;
 }
@@ -1289,13 +1286,8 @@
 .markdown-content-rendered pre,
 .doc-content-rendered pre,
 .review-thoughts-rendered pre {
-    background-color: #e9ecef;
-    padding: 4px;
-    border-radius: 4px;
-    overflow-x: auto;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 11px;
-    margin: 6px 0;
 }
 
 .content-text-doc ul,
@@ -1533,7 +1525,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding-left: 16px;
+    padding-left: 6px;
 }
 
 .alignment-title {
@@ -1543,7 +1535,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     margin-right: 12px;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-primary);
 }

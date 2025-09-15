@@ -303,12 +303,21 @@
                                     <div class="panel-title">
                                         <i class="fas fa-link"></i>
                                         <span>对齐与审查</span>
+                                        <el-button 
+                                            v-if="isFiltered" 
+                                            @click="showAllAlignments" 
+                                            size="small" 
+                                            type="primary" 
+                                            style="margin-left: auto; font-size: 12px;"
+                                        >
+                                            全部
+                                        </el-button>
                                     </div>
                                     <div class="content-card">
                                         <div class="alignment-list">
-                                            <el-collapse v-if="alignmentResults.length > 0">
+                                            <el-collapse v-if="(isFiltered ? filteredAlignments : alignmentResults).length > 0">
                                                 <el-collapse-item 
-                                                    v-for="(alignment, index) in alignmentResults" 
+                                                    v-for="(alignment, index) in (isFiltered ? filteredAlignments : alignmentResults)" 
                                                     :key="alignment.id"
                                                     :title="alignment.name"
                                                     @contextmenu.prevent="showContextMenu($event, alignment)"
@@ -341,7 +350,7 @@
                                                                         @click="removeRange(alignment, 'doc', rIndex)"
                                                                     >×</el-button>
                                                                 </div>
-                                                                <div class="range-content">
+                                                                <div class="range-content" @click="handleAlignmentDocRangeClick(range)" style="cursor: pointer;">
                                                                     <pre class="truncated-code">${ range.content }</pre>
                                                                 </div>
                                                             </div>
