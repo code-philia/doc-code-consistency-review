@@ -315,16 +315,16 @@
                                                 >
                                                     <template #title>
                                                         <div class="alignment-header">
-                                                            <el-tooltip effect="light" :content="alignment.name" placement="top">
+                                                            <el-tooltip effect="light" :content="alignment.name" placement="left">
                                                                 <span class="alignment-title">${ alignment.name }</span>
                                                             </el-tooltip>
                                                             <el-tag 
-                                                :type="getAlignmentStatus(alignment).type" 
-                                                size="small" 
-                                                class="review-tag"
-                                            >
-                                                ${ getAlignmentStatus(alignment).text }
-                                            </el-tag>
+                                                                :type="getAlignmentStatus(alignment).type" 
+                                                                size="small" 
+                                                                class="review-tag"
+                                                            >
+                                                                ${ getAlignmentStatus(alignment).text }
+                                                            </el-tag>
                                                         </div>
                                                     </template>
                                                     
@@ -342,9 +342,7 @@
                                                                     >×</el-button>
                                                                 </div>
                                                                 <div class="range-content">
-                                                                    <el-tooltip effect="light" :content="range.content" placement="top">
-                                                                        <pre class="truncated-code">${ range.content }</pre>
-                                                                    </el-tooltip>
+                                                                    <pre class="truncated-code">${ range.content }</pre>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -361,9 +359,7 @@
                                                                     >×</el-button>
                                                                 </div>
                                                                 <div class="range-content">
-                                                                    <el-tooltip effect="light" :content="range.content" placement="top">
-                                                                        <pre class="truncated-code">${ range.content }</pre>
-                                                                    </el-tooltip>
+                                                                    <pre class="truncated-code">${ range.content }</pre>
                                                                 </div>
                                                             </div>
                                                         </div>
