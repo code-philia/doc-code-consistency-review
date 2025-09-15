@@ -134,7 +134,7 @@
                         </div>
                     </div>
                     
-                    <div class="file-category">
+                    <!-- <div class="file-category">
                         <div class="category-header">
                             <i class="fas fa-cog"></i> <span>项目元信息</span>
                             <span class="file-count">(${projectFiles.meta_files.length})</span>
@@ -146,7 +146,7 @@
                                 <span class="file-name">${ file }</span>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </el-splitter-panel>
 
@@ -203,7 +203,7 @@
                             <div class="stat-description">发现的问题单条目总数</div>
                             <div class="progress-stat">
                                 <div class="progress-label">
-                                    <span>已解决</span>
+                                    <span>已确认</span>
                                     <span>${ Math.round((issues.filter(i => i.status === 'confirmed').length / Math.max(issues.length, 1)) * 100) }%</span>
                                 </div>
                                 <div class="progress-big">
