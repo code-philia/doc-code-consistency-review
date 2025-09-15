@@ -385,11 +385,21 @@ const app = createApp({
                             // 重新加载高亮
                             await nextTick(() => {
                                 reloadHighlights();
+                                // 切换需求文档时，根据相关对齐关系自动高亮当前代码文件
+                                if (selectedCodeFile.value && alignmentResults.value) {
+                                    highlightCurrentCodeFileBasedOnDoc();
+                                }
                             });
                         } else if (fileType === 'code') {
                             selectedCodeFile.value = fileName;
                             selectedCodeRawContent.value = content;
                             selectedCodeContent.value = formatCodeWithLineNumbers(content);
+                            // 切换代码文件时，根据相关对齐关系自动高亮当前代码文件
+                            await nextTick(() => {
+                                if (selectedDocFile.value && alignmentResults.value) {
+                                    highlightCurrentCodeFileBasedOnDoc();
+                                }
+                            });
                         }
                     } catch (e) {
                         renderError.value = e.message;
@@ -853,24 +863,97 @@ const app = createApp({
             });
         };
 
+        // 高亮代码范围
+        const highlightCodeRange = (start, end, alignmentId) => {
+            const highlights = highlightRange(start, end, 'code', alignmentId);
+            
+            // 设置浅灰色背景和标识属性
+            highlights.forEach(highlight => {
+                highlight.style.backgroundColor = '#bdc3c7';
+                highlight.classList.add('code-highlight');
+                highlight.setAttribute('data-alignment-id', alignmentId);
+                highlight.setAttribute('data-range-start', start);
+                highlight.setAttribute('data-range-end', end);
+            });
+        };
+
         // 重新加载当前文档的所有高亮
         const reloadHighlights = () => {
-            if (!selectedDocFile.value || !alignmentResults.value) return;
+            // 重新加载需求文档高亮
+            if (selectedDocFile.value && alignmentResults.value) {
+                // 清除现有需求高亮
+                const existingDocHighlights = document.querySelectorAll('.requirement-highlight');
+                existingDocHighlights.forEach(el => {
+                    const parent = el.parentNode;
+                    parent.insertBefore(document.createTextNode(el.textContent), el);
+                    parent.removeChild(el);
+                    parent.normalize();
+                });
 
-            // 清除现有高亮
-            const existingHighlights = document.querySelectorAll('.requirement-highlight');
-            existingHighlights.forEach(el => {
+                // 重新应用所有对齐关系的需求高亮
+                alignmentResults.value.forEach(alignment => {
+                    if (alignment.docRanges && alignment.docRanges.length > 0) {
+                        alignment.docRanges.forEach(range => {
+                            if (range.documentId === selectedDocFile.value) {
+                                highlightRequirementRange(range.start, range.end, alignment.id);
+                            }
+                        });
+                    }
+                });
+            }
+
+            // 重新加载代码高亮
+            if (selectedCodeFile.value && alignmentResults.value) {
+                // 清除现有代码高亮
+                const existingCodeHighlights = document.querySelectorAll('.code-highlight');
+                existingCodeHighlights.forEach(el => {
+                    const parent = el.parentNode;
+                    parent.insertBefore(document.createTextNode(el.textContent), el);
+                    parent.removeChild(el);
+                    parent.normalize();
+                });
+
+                // 重新应用所有对齐关系的代码高亮
+                alignmentResults.value.forEach(alignment => {
+                    if (alignment.codeRanges && alignment.codeRanges.length > 0) {
+                        alignment.codeRanges.forEach(range => {
+                            if (range.documentId === selectedCodeFile.value) {
+                                highlightCodeRange(range.start, range.end, alignment.id);
+                            }
+                        });
+                    }
+                });
+            }
+        };
+
+        // 根据当前需求文档的对齐关系高亮当前代码文件
+        const highlightCurrentCodeFileBasedOnDoc = () => {
+            if (!selectedDocFile.value || !selectedCodeFile.value || !alignmentResults.value) {
+                return;
+            }
+
+            // 清除现有代码高亮
+            const existingCodeHighlights = document.querySelectorAll('.code-highlight');
+            existingCodeHighlights.forEach(el => {
                 const parent = el.parentNode;
                 parent.insertBefore(document.createTextNode(el.textContent), el);
                 parent.removeChild(el);
                 parent.normalize();
             });
 
-            // 重新应用所有对齐关系的高亮
+            // 查找与当前需求文档相关的对齐关系，并高亮对应的代码文件部分
             alignmentResults.value.forEach(alignment => {
-                if (alignment.docRanges && alignment.docRanges.length > 0) {
-                    alignment.docRanges.forEach(range => {
-                        highlightRequirementRange(range.start, range.end, alignment.id);
+                // 检查该对齐关系是否包含当前需求文档
+                const hasCurrentDoc = alignment.docRanges && alignment.docRanges.some(range => 
+                    range.documentId === selectedDocFile.value
+                );
+                
+                if (hasCurrentDoc && alignment.codeRanges) {
+                    // 高亮该对齐关系中当前代码文件的相关部分
+                    alignment.codeRanges.forEach(range => {
+                        if (range.documentId === selectedCodeFile.value) {
+                            highlightCodeRange(range.start, range.end, alignment.id);
+                        }
                     });
                 }
             });
@@ -879,8 +962,8 @@ const app = createApp({
         /***********************
          * 点击高亮筛选功能
          ***********************/
-        // 根据范围筛选对齐关系
-        const filterAlignmentsByRange = (start, end) => {
+        // 根据需求范围筛选对齐关系
+        const filterAlignmentsByDocRange = (start, end) => {
             const overlappingAlignments = alignmentResults.value.filter(alignment => {
                 // 检查需求文档范围是否有交集
                 const hasDocOverlap = alignment.docRanges.some(range =>
@@ -898,6 +981,25 @@ const app = createApp({
             }
         };
 
+        // 根据代码范围筛选对齐关系
+        const filterAlignmentsByCodeRange = (start, end, documentId) => {
+            const overlappingAlignments = alignmentResults.value.filter(alignment => {
+                // 检查代码范围是否有交集
+                const hasCodeOverlap = alignment.codeRanges.some(range =>
+                    range.documentId === documentId && range.end > start && range.start < end
+                );
+                return hasCodeOverlap;
+            });
+
+            filteredAlignments.value = overlappingAlignments;
+            isFiltered.value = true;
+
+            // 如果没有找到匹配的对齐关系，显示提示
+            if (overlappingAlignments.length === 0) {
+                ElMessage.info('未找到包含此代码范围的对齐关系');
+            }
+        };
+
         // 显示全部对齐关系
         const showAllAlignments = () => {
             filteredAlignments.value = null;
@@ -911,6 +1013,28 @@ const app = createApp({
 
             // 查找所有高亮元素
             const highlights = docPanel.querySelectorAll('.requirement-highlight');
+            const intersectingElements = [];
+            
+            for (const highlight of highlights) {
+                const highlightStart = parseInt(highlight.getAttribute('data-range-start'));
+                const highlightEnd = parseInt(highlight.getAttribute('data-range-end'));
+                
+                // 检查范围是否有交集：两个范围有交集的条件是 max(start1, start2) < min(end1, end2)
+                if (Math.max(highlightStart, start) < Math.min(highlightEnd, end)) {
+                    intersectingElements.push(highlight);
+                }
+            }
+            
+            return intersectingElements;
+        };
+
+        // 根据codeRange查找代码中所有有交集的高亮元素
+        const findIntersectingCodeHighlightElements = (start, end) => {
+            const codePanel = document.querySelector('.content-text-code');
+            if (!codePanel) return [];
+
+            // 查找所有代码高亮元素
+            const highlights = codePanel.querySelectorAll('.code-highlight');
             const intersectingElements = [];
             
             for (const highlight of highlights) {
@@ -952,11 +1076,11 @@ const app = createApp({
         const scrollToFirstAndHighlightAll = (elements) => {
             if (!elements || elements.length === 0) return;
             
-            // 滚动到第一个元素位置
+            // 滚动到第一个元素位置（只进行垂直滚动）
             elements[0].scrollIntoView({
                 behavior: 'smooth',
                 block: 'center',
-                inline: 'nearest'
+                inline: 'start'
             });
             
             // 为所有元素添加临时高亮效果
@@ -982,7 +1106,66 @@ const app = createApp({
                         element.style.transition = originalStyles[index].transition;
                     }, 300);
                 });
-            }, 5000);
+            }, 4000);
+        };
+
+        // 滚动到第一个代码元素并高亮所有相关元素
+        const scrollToFirstAndHighlightAllCode = (elements) => {
+            if (!elements || elements.length === 0) return;
+            
+            // 滚动到第一个元素位置（只进行垂直滚动）
+            elements[0].scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'start'
+            });
+            
+            // 为所有元素添加临时高亮效果
+            const originalStyles = [];
+            elements.forEach((element, index) => {
+                // 保存原始样式
+                originalStyles[index] = {
+                    backgroundColor: element.style.backgroundColor,
+                    transition: element.style.transition
+                };
+                
+                // 添加醒目的黄色高亮
+                element.style.backgroundColor = '#ffff00'; // 醒目的黄色
+                element.style.transition = 'background-color 0.3s ease';
+            });
+            
+            // 5秒后恢复原来的背景色
+            setTimeout(() => {
+                elements.forEach((element, index) => {
+                    element.style.backgroundColor = originalStyles[index].backgroundColor;
+                    // 再过一段时间移除transition，避免影响其他样式变化
+                    setTimeout(() => {
+                        element.style.transition = originalStyles[index].transition;
+                    }, 300);
+                });
+            }, 4000);
+        };
+
+        // 处理对齐结果中代码片段的点击事件（反向映射）
+        const handleAlignmentCodeRangeClick = (codeRange) => {
+            // 确保当前显示的是对应的代码文件
+            if (selectedCodeFile.value !== codeRange.documentId) {
+                // 如果不是当前代码文件，先切换到对应文件
+                fetchFileContent(codeRange.documentId, 'code').then(() => {
+                    // 文件加载完成后再查找和高亮
+                    setTimeout(() => {
+                        // 查找所有有交集的高亮元素
+                        const highlightElements = findIntersectingCodeHighlightElements(codeRange.start, codeRange.end);
+                        
+                        scrollToFirstAndHighlightAllCode(highlightElements);
+                    }, 100);
+                });
+            } else {
+                // 如果是当前代码文件，直接查找和高亮
+                const highlightElements = findIntersectingCodeHighlightElements(codeRange.start, codeRange.end);
+                
+                scrollToFirstAndHighlightAllCode(highlightElements);
+            }
         };
 
         // 处理对齐结果中需求片段的点击事件（反向映射）
@@ -1056,7 +1239,46 @@ const app = createApp({
             }
 
             if (rangeStart !== null && rangeEnd !== null) {
-                filterAlignmentsByRange(rangeStart, rangeEnd);
+                filterAlignmentsByDocRange(rangeStart, rangeEnd);
+            }
+        };
+
+        // 处理点击高亮代码片段事件
+        const handleCodeClick = (event) => {
+            let target = event.target;
+            while (target && !target.classList.contains('code-highlight')) {
+                target = target.parentElement;
+            }
+
+            if (!target) return;
+
+            // 获取高亮块的对齐关系ID
+            const alignmentId = target.getAttribute('data-alignment-id');
+            if (!alignmentId) return;
+
+            // 查找对应的对齐关系
+            const alignment = alignmentResults.value.find(a => a.id === alignmentId);
+            if (!alignment) return;
+
+            // 查找高亮块对应的范围
+            let rangeStart = null;
+            let rangeEnd = null;
+
+            // 尝试从高亮块的自定义属性获取范围
+            if (target.hasAttribute('data-range-start') && target.hasAttribute('data-range-end')) {
+                rangeStart = parseInt(target.getAttribute('data-range-start'));
+                rangeEnd = parseInt(target.getAttribute('data-range-end'));
+            } else {
+                // 如果没有自定义属性，尝试从父元素获取
+                const parentWithAttrs = target.closest('[parse-start][parse-end]');
+                if (parentWithAttrs) {
+                    rangeStart = parseInt(parentWithAttrs.getAttribute('parse-start'));
+                    rangeEnd = parseInt(parentWithAttrs.getAttribute('parse-end'));
+                }
+            }
+
+            if (rangeStart !== null && rangeEnd !== null) {
+                filterAlignmentsByCodeRange(rangeStart, rangeEnd, selectedCodeFile.value);
             }
         };
 
@@ -1110,6 +1332,9 @@ const app = createApp({
             }
 
             showCodeSelectionDialog.value = false;
+            
+            // 保存当前选择信息，因为稍后会清空currentSelection
+            const selectionInfo = currentSelection.value;
             currentSelection.value = null;
 
             try {
@@ -1120,6 +1345,11 @@ const app = createApp({
                 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
+                
+                // 高亮选中的代码部分
+                if (selectionInfo && selectionInfo.type === 'code') {
+                    highlightCodeRange(selectionInfo.start, selectionInfo.end, alignment.id);
+                }
                 
                 ElMessage.success('已添加到对齐关系');
             } catch (err) {
@@ -1494,6 +1724,12 @@ const app = createApp({
             if (docPanel) {
                 docPanel.addEventListener('click', handleRequirementClick);
             }
+            
+            // 添加点击高亮代码片段的事件监听器
+            const codePanel = document.querySelector('.content-text-code');
+            if (codePanel) {
+                codePanel.addEventListener('click', handleCodeClick);
+            }
         });
 
         /***********************
@@ -1578,6 +1814,7 @@ const app = createApp({
             
             // 反向映射功能
             handleAlignmentDocRangeClick,
+            handleAlignmentCodeRangeClick,
 
             activeReviewTab
         };

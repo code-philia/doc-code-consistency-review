@@ -367,7 +367,7 @@
                                                                         @click="removeRange(alignment, 'code', rIndex)"
                                                                     >×</el-button>
                                                                 </div>
-                                                                <div class="range-content">
+                                                                <div class="range-content" @click="handleAlignmentCodeRangeClick(range)" style="cursor: pointer;">
                                                                     <pre class="truncated-code">${ range.content }</pre>
                                                                 </div>
                                                             </div>
