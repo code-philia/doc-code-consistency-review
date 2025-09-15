@@ -516,34 +516,52 @@
 
                 <!-- 右栏：审查过程和问题单 -->
                 <div class="review-right-panel">
-                    <!-- 审查思考过程 -->
-                    <div class="review-right-section">
-                        <h4><i class="fas fa-search"></i> 审查思考过程</h4>
-                        <div class="review-process">
-                            <div class="review-thoughts-rendered" v-html="renderMarkdownWithLatex(selectedReviewAlignment.reviewThoughts || '暂无审查思考过程')"></div>
-                        </div>
-                    </div>
-
-                    <!-- 相关问题单 -->
-                    <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="review-right-section">
-                        <h4><i class="fas fa-exclamation-triangle"></i> 相关问题单</h4>
-                        <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
-                            <div class="issue-header">
-                                <div class="issue-level" :class="issue.level?.toLowerCase()">
-                                    ${ issue.level || '未知' }
+                    <el-tabs v-model="activeReviewTab" type="card" class="review-tabs">
+                        <el-tab-pane label="问题单" name="issues">
+                            <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="issues-container">
+                                <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
+                                    <div class="issue-header">
+                                        <span :class="['issue-level', 'level-' + issue.level]">
+                                            <i class="fas fa-flag"></i> ${ issue.level.toUpperCase() }
+                                        </span>
+                                        <span class="issue-status">${ issue.status === 'unconfirmed' ? '未确认' : '已导出' }</span>
+                                        <div class="issue-actions">
+                                            <button v-if="editingIssueId !== issue.id" class="action-btn edit-btn" @click="toggleEditIssue(issue)">
+                                                <i class="fas fa-edit"></i> 编辑
+                                            </button>
+                                            <button v-else class="action-btn save-btn" @click="saveIssue(issue)">
+                                                <i class="fas fa-save"></i> 保存
+                                            </button>
+                                            <button class="action-btn export-btn" @click="exportIssue(issue)">
+                                                <i class="fas fa-file-export"></i> 导出
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div 
+                                        class="issue-summary" 
+                                        :contenteditable="editingIssueId === issue.id"
+                                        :class="{ 'editable': editingIssueId === issue.id }"
+                                        @blur="updateIssueContentOnBlur($event, issue)"
+                                    >
+                                        ${ issue.description }
+                                    </div>
                                 </div>
-                                <div class="issue-status">
-                                    状态: ${ issue.status || '未知' }
-                                </div>
                             </div>
-                            <div class="issue-summary">
-                                ${ issue.summary || '暂无描述' }
+                            <div v-else class="empty-message">
+                                暂无相关问题单
                             </div>
-                            <div class="issue-description">
-                                ${ issue.description || '暂无详细描述' }
+                        </el-tab-pane>
+                        <el-tab-pane label="审查思考过程" name="process">
+                            <div class="review-process">
+                                <div class="review-thoughts-rendered" v-html="renderMarkdownWithLatex(selectedReviewAlignment.reviewThoughts || '暂无审查思考过程')"></div>
                             </div>
-                        </div>
-                    </div>
+                        </el-tab-pane>
+                        <el-tab-pane label="代码流程图" name="flowchart">
+                            <div class="empty-message">
+                                代码流程图功能正在开发中...
+                            </div>
+                        </el-tab-pane>
+                    </el-tabs>
                 </div>
             </div>
         </el-dialog>

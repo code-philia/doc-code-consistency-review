@@ -1,6 +1,6 @@
 import os
 import time
-from flask import Flask, json, render_template, request, jsonify
+from flask import Flask, json, render_template, request, jsonify, send_file
 import socket
 from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension
 from agent import query_generated_requirement, query_related_code, query_review_result
@@ -9,6 +9,9 @@ import string
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 import uuid
+from docx import Document
+from docx.shared import Inches
+import io
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
@@ -796,6 +799,97 @@ def delete_issue(issue_id):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
+# TODO: 优化导出格式
+@app.route('/api/export-issue', methods=['POST'])
+def export_issue():
+    data = request.json
+    issue = data.get('issue')
+
+    if not issue:
+        return jsonify({"status": "error", "message": "缺少问题单数据"}), 400
+
+    try:
+        document = Document()
+        document.add_heading('需求-代码一致性审查问题单', 0)
+
+        document.add_heading('问题摘要', level=1)
+        document.add_paragraph(issue.get('summary', '无'))
+
+        document.add_heading('问题详情', level=1)
+        document.add_paragraph(issue.get('description', '无'))
+
+        document.add_heading('基本信息', level=1)
+        p = document.add_paragraph()
+        p.add_run('严重等级: ').bold = True
+        p.add_run(issue.get('level', '未知'))
+        p.add_run('\n')
+        p.add_run('状态: ').bold = True
+        p.add_run('已导出' if issue.get('status') == 'confirmed' else '未确认')
+
+        document.add_heading('关联信息', level=1)
+        p = document.add_paragraph()
+        p.add_run('关联需求: ').bold = True
+        p.add_run(issue.get('relatedReq', '无'))
+        p.add_run('\n')
+        p.add_run('关联代码: ').bold = True
+        p.add_run(issue.get('relatedCode', '无'))
+
+        # 将文档保存到内存中的字节流
+        file_stream = io.BytesIO()
+        document.save(file_stream)
+        file_stream.seek(0)
+
+        return send_file(
+            file_stream,
+            as_attachment=True,
+            download_name=f"issue-{issue.get('id', 'N/A')}.docx",
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"导出失败: {str(e)}"}), 500
+
+@app.route('/project/issue/update', methods=['POST'])
+def update_issue_content():
+    data = request.json
+    project_path = data.get('path')
+    issue_id = data.get('issueId')
+    new_description = data.get('description')
+    new_status = data.get('status')
+
+    if not all([project_path, issue_id]):
+        return jsonify({"status": "error", "message": "缺少项目路径或问题单ID"}), 400
+
+    issues_file = os.path.join(project_path, 'issues.json')
+    if not os.path.exists(issues_file):
+        return jsonify({"status": "error", "message": "问题单文件不存在"}), 404
+
+    try:
+        with open(issues_file, 'r', encoding='utf-8') as f:
+            issues = json.load(f)
+
+        issue_found = False
+        for issue in issues:
+            if issue.get('id') == issue_id:
+                if new_description is not None:
+                    issue['description'] = new_description
+                if new_status is not None:
+                    issue['status'] = new_status
+                issue['updatedDate'] = datetime.now().isoformat()
+                issue_found = True
+                break
+        
+        if not issue_found:
+            return jsonify({"status": "error", "message": "未找到指定ID的问题单"}), 404
+
+        with open(issues_file, 'w', encoding='utf-8') as f:
+            json.dump(issues, f, indent=4, ensure_ascii=False)
+
+        return jsonify({"status": "success"}), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"更新问题单失败: {str(e)}"}), 500
+        
 
 def find_available_port(start_port):
     port = start_port

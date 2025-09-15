@@ -81,6 +81,9 @@ const app = createApp({
         const newAlignmentName = ref('');
         const showReviewDialog = ref(false);
         const selectedReviewAlignment = ref(null);
+        const activeReviewTab = ref('issues');
+        const editingIssueId = ref(null);
+        const issueContentBeforeEdit = ref('');
 
         /***********************
          * 文件加载相关方法
@@ -1116,6 +1119,82 @@ const app = createApp({
             return issues.value.filter(issue => issue.alignmentId === alignmentId);
         };
 
+        const toggleEditIssue = (issue) => {
+            if (editingIssueId.value === issue.id) {
+                // 如果当前是编辑状态，则取消编辑
+                const originalIssue = issues.value.find(i => i.id === issue.id);
+                if (originalIssue) {
+                    originalIssue.description = issueContentBeforeEdit.value;
+                }
+                editingIssueId.value = null;
+            } else {
+                // 进入编辑状态
+                editingIssueId.value = issue.id;
+                issueContentBeforeEdit.value = issue.description;
+            }
+        };
+
+        const updateIssueContentOnBlur = (event, issue) => {
+            // 当用户离开编辑区域时，更新数据模型中的内容
+            if (editingIssueId.value === issue.id) {
+                issue.description = event.target.innerText;
+            }
+        };
+
+        const saveIssue = async (issue) => {
+            editingIssueId.value = null; // 退出编辑模式
+            try {
+                const response = await axios.post('/project/issue/update', {
+                    path: projectPath.value,
+                    issueId: issue.id,
+                    description: issue.description
+                });
+                if (response.data.status === 'success') {
+                    ElMessage.success('问题单已更新');
+                } else {
+                    ElMessage.error(response.data.message || '保存失败');
+                    // 可选：回滚内容
+                    issue.description = issueContentBeforeEdit.value;
+                }
+            } catch (error) {
+                console.error('保存问题单失败:', error);
+                ElMessage.error('保存问题单时发生错误');
+                issue.description = issueContentBeforeEdit.value;
+            }
+        };
+
+        const exportIssue = async (issue) => {
+            try {
+                const response = await axios.post('/api/export-issue', {
+                    issue: issue
+                }, {
+                    responseType: 'blob' // 重要：接收二进制文件数据
+                });
+
+                const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = `问题单-${issue.id}.docx`;
+                link.click();
+                window.URL.revokeObjectURL(link.href);
+
+                // 更新问题单状态
+                issue.status = 'confirmed';
+                ElMessage.success('问题单已导出');
+
+                // 调用后端更新状态
+                await axios.post('/project/issue/update', {
+                    path: projectPath.value,
+                    issueId: issue.id,
+                    status: 'confirmed'
+                });
+
+            } catch (error) {
+                console.error('导出问题单失败:', error);
+                ElMessage.error('导出问题单时发生错误');
+            }
+        };
+
         const showIssueDetail = async (issue) => {
             if (!issue) return;
 
@@ -1223,9 +1302,17 @@ const app = createApp({
             confirmIssue,
             ignoreIssue,
             showIssueDetail,
+            editingIssueId,
+            issueContentBeforeEdit,
+            toggleEditIssue,
+            saveIssue,
+            exportIssue,
+            updateIssueContentOnBlur,
             
             // Markdown渲染
-            renderMarkdownWithLatex
+            renderMarkdownWithLatex,
+
+            activeReviewTab
         };
     }
 });
