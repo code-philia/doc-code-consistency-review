@@ -1733,6 +1733,28 @@ const app = createApp({
         };
 
         /***********************
+         * 需求分解功能
+         ***********************/
+        const startRequirementDecomposition = async () => {
+            ElMessage.info('开始需求分解，正在读取标注文件...');
+
+            try {
+                const response = await axios.post('/api/requirement-decomposition', {
+                    projectPath: projectPath.value
+                });
+
+                if (response.data.status === 'success') {
+                    ElMessage.success(`需求分解完成！共处理 ${response.data.processedCount} 个需求点`);
+                } else {
+                    ElMessage.error(`需求分解失败: ${response.data.message}`);
+                }
+            } catch (error) {
+                console.error('需求分解过程中出现错误:', error);
+                ElMessage.error(`需求分解失败: ${error.message}`);
+            }
+        };
+
+        /***********************
          * 生命周期
          ***********************/
         onMounted(async () => {
@@ -1835,6 +1857,9 @@ const app = createApp({
             // 反向映射功能
             handleAlignmentDocRangeClick,
             handleAlignmentCodeRangeClick,
+
+            // 需求分解功能
+            startRequirementDecomposition,
 
             activeReviewTab
         };

@@ -461,6 +461,116 @@ def align_single_requirement():
     return jsonify({"requirementPoint": requirement_point_list[0]})
 
 
+@app.route('/api/requirement-decomposition', methods=['POST'])
+def requirement_decomposition():
+    """处理需求分解请求"""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
+        
+        # 检查annotations目录是否存在
+        annotations_dir = os.path.join(project_path, 'annotations')
+        if not os.path.exists(annotations_dir):
+            return jsonify({'status': 'error', 'message': 'annotations目录不存在'})
+        
+        # 查找JSON标注文件
+        json_files = [f for f in os.listdir(annotations_dir) if f.endswith('.json')]
+        if not json_files:
+            return jsonify({'status': 'error', 'message': 'annotations目录中没有找到JSON文件'})
+        
+        # 读取第一个JSON文件
+        annotation_file = os.path.join(annotations_dir, json_files[0])
+        with open(annotation_file, 'r', encoding='utf-8') as f:
+            annotation_data = json.load(f)
+        
+        # 解析docFiles建立映射
+        doc_files = annotation_data.get('docFiles', [])
+        doc_id_to_name = {doc['id']: doc['name'] for doc in doc_files}
+        
+        # 解析annotations构建需求点
+        annotations = annotation_data.get('annotations', [])
+        processed_count = 0
+        
+        # 确保results目录存在
+        results_dir = os.path.join(project_path, 'results')
+        os.makedirs(results_dir, exist_ok=True)
+        
+        # 按文档分组处理需求点
+        doc_requirements = {}
+        
+        for annotation in annotations:
+            req_id = annotation.get('id')
+            category = annotation.get('category')
+            doc_ranges = annotation.get('docRanges', [])
+            
+            if not doc_ranges:
+                continue
+                
+            # 获取文档ID（所有docRanges应该属于同一个文档）
+            document_id = doc_ranges[0].get('documentId')
+            doc_name = doc_id_to_name.get(document_id)
+            
+            if not doc_name:
+                continue
+                
+            # 构建需求点对象，处理docRanges
+            processed_doc_ranges = []
+            for doc_range in doc_ranges:
+                processed_range = doc_range.copy()
+                processed_range['filename'] = doc_name
+                processed_range['documentId'] = doc_name
+                processed_doc_ranges.append(processed_range)
+            
+            requirement_point = {
+                'id': req_id,
+                'name': category,
+                'docRanges': processed_doc_ranges,
+                'codeRanges': [],
+                'isReviewed': False,
+                'reviewThoughts': ''
+            }
+            
+            # 按文档分组
+            if doc_name not in doc_requirements:
+                doc_requirements[doc_name] = []
+            doc_requirements[doc_name].append(requirement_point)
+            processed_count += 1
+        
+        # 保存到对应的对齐结果文件
+        for doc_name, requirements in doc_requirements.items():
+            # 构建对齐结果文件路径
+            doc_base_name = get_filename_without_extension(doc_name)
+            alignment_file = os.path.join(results_dir, f'{doc_base_name}_alignments.json')
+            
+            # 读取现有的对齐结果（如果存在）
+            existing_alignments = {}
+            if os.path.exists(alignment_file):
+                try:
+                    with open(alignment_file, 'r', encoding='utf-8') as f:
+                        existing_alignments = json.load(f)
+                except:
+                    existing_alignments = {}
+            
+            # 添加新的需求点
+            for req in requirements:
+                existing_alignments[req['id']] = req
+            
+            # 保存更新后的对齐结果
+            with open(alignment_file, 'w', encoding='utf-8') as f:
+                json.dump(existing_alignments, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            'status': 'success',
+            'message': '需求分解完成',
+            'processedCount': processed_count
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/align-requirement-to-project', methods=['POST'])
 def align_requirement_to_project():
     """
