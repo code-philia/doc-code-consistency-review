@@ -1600,3 +1600,21 @@
     max-width: 250px;
     flex: 1;
 }
+
+.highlight-block {
+    position: absolute;
+    background-color: rgba(244, 244, 244, 0.2); 
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: multiply;
+}
+
+.code-content,
+.doc-content {
+    position: relative;
+}
+
+.highlight-block + * {
+    position: relative;
+    z-index: 2;
+}
