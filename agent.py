@@ -162,17 +162,19 @@ def parse_review_output(response):
         if json_match:
             json_str = json_match.group(1)
         else:
-            # 如果没有找到代码块，假设整个响应就是JSON
-            json_str = response
+            json_match = re.search(r'({.*})', response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                json_str = response
 
         data = json.loads(json_str)
         return {
             "review_process": data.get("review_process", "未能解析出审查过程。"),
-            "issue": data.get("issue") # 如果为null，则返回None
+            "issue": data.get("issue")
         }
     except (json.JSONDecodeError, AttributeError) as e:
         print(f"解析审查输出失败: {e}")
-        # 作为回退，将原始响应作为审查过程
         return {
             "review_process": response,
             "issue": None
