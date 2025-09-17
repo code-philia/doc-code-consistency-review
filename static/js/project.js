@@ -33,16 +33,6 @@ function switchView(viewName) {
 }
 window.switchView = switchView;
 
-/** 占位功能：预览 */
-function previewPanel() {
-    alert('预览功能将在后续实现');
-}
-
-/** 占位功能：导出 */
-function exportPanel() {
-    alert('导出功能将在后续实现');
-}
-
 /****************************
  * Vue 应用
  ****************************/
@@ -837,13 +827,16 @@ const app = createApp({
         };
 
         const createAlignment = async () => {
-            const id = crypto.randomUUID();
+            // const id = crypto.randomUUID();
+            const id = '新需求点';
+
             if (!currentSelection.value) {
                 ElMessage.warning('请先选择需求文本。');
                 return;
             }
             if (!newAlignmentName.value.trim()) {
-                newAlignmentName.value = `需求点_${id.slice(0, 8)}`;
+                // newAlignmentName.value = `需求点_${id.slice(0, 8)}`;
+                newAlignmentName.value = id;
             }
 
             // 为文档范围添加filename和行号信息
@@ -1409,43 +1402,7 @@ const app = createApp({
         /***********************
          * 问题单管理
          ***********************/
-        const issues = ref([
-            {
-                level: 'high',
-                description: '需求“用户登录功能”未在代码中实现。',
-                relatedReq: '用户登录功能.md:L5-L10',
-                relatedCode: 'auth.js:L20-L45',
-                status: 'unconfirmed'
-            },
-            {
-                level: 'medium',
-                description: '函数`calculate_tax`的计算逻辑与需求文档不一致。',
-                relatedReq: '税务计算需求.md:L15-L20',
-                relatedCode: 'tax_calculator.py:L100',
-                status: 'unconfirmed'
-            },
-            {
-                level: 'low',
-                description: '代码注释不完整，不符合规范。',
-                relatedReq: '无',
-                relatedCode: 'main.c:L30-L35',
-                status: 'unconfirmed'
-            },
-            {
-                level: 'high',
-                description: 'SQL注入漏洞风险，参数未正确清理。',
-                relatedReq: '安全规范.md:L25',
-                relatedCode: 'database.php:L50',
-                status: 'unconfirmed'
-            },
-            {
-                level: 'high',
-                description: 'SQL注入漏洞风险，参数未正确清理。',
-                relatedReq: '安全规范.md:L25',
-                relatedCode: 'database.php:L50',
-                status: 'confirmed'
-            }
-        ]);
+        const issues = ref([]);
         const selectedIssue = ref(null);
 
         const selectIssue = (issue) => {

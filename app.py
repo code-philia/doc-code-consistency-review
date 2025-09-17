@@ -235,6 +235,8 @@ def import_project():
         if not project_name:
             return jsonify({"status": "error", "message": "'metadata.json' 文件中缺少 'project_name' 字段。"}), 400
         
+        update_history(project_name, project_path)
+
         # 验证成功，返回项目信息
         project_data = {
             "name": project_name,

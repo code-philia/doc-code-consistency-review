@@ -49,7 +49,9 @@
             <div class="menu-item">
                 智能工具
                 <div class="dropdown">
-                    <div class="dropdown-item" @click="startRequirementDecomposition"><i class="fas fa-sitemap"></i> 需求分解</div>
+                    <div class="dropdown-item" @click="startAutoSplit">
+                        <i class="fas fa-sitemap"></i> 需求分解
+                    </div>
                     <div class="dropdown-item" @click="startAutoAlignment" :class="{disabled: isAutoAligning}">
                         <i class="fas fa-link"></i> 
                         <span v-if="!isAutoAligning">自动对齐</span>
