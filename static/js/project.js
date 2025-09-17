@@ -1716,38 +1716,6 @@ const app = createApp({
             }
         };
 
-        const exportIssue = async (issue) => {
-            try {
-                const response = await axios.post('/api/export-issue', {
-                    issue: issue
-                }, {
-                    responseType: 'blob' // 重要：接收二进制文件数据
-                });
-
-                const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-                const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = `问题单-${issue.id}.docx`;
-                link.click();
-                window.URL.revokeObjectURL(link.href);
-
-                // 更新问题单状态
-                issue.status = 'confirmed';
-                ElMessage.success('问题单已导出');
-
-                // 调用后端更新状态
-                await axios.post('/project/issue/update', {
-                    path: projectPath.value,
-                    issueId: issue.id,
-                    status: 'confirmed'
-                });
-
-            } catch (error) {
-                console.error('导出问题单失败:', error);
-                ElMessage.error('导出问题单时发生错误');
-            }
-        };
-
         const showIssueDetail = async (issue) => {
             if (!issue) return;
 
@@ -1936,7 +1904,6 @@ const app = createApp({
             issueContentBeforeEdit,
             toggleEditIssue,
             saveIssue,
-            exportIssue,
             updateIssueContentOnBlur,
             
             // Markdown渲染

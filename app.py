@@ -980,55 +980,6 @@ def delete_issue(issue_id):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
-# TODO: 优化导出格式
-@app.route('/api/export-issue', methods=['POST'])
-def export_issue():
-    data = request.json
-    issue = data.get('issue')
-
-    if not issue:
-        return jsonify({"status": "error", "message": "缺少问题单数据"}), 400
-
-    try:
-        document = Document()
-        document.add_heading('需求-代码一致性审查问题单', 0)
-
-        document.add_heading('问题摘要', level=1)
-        document.add_paragraph(issue.get('summary', '无'))
-
-        document.add_heading('问题详情', level=1)
-        document.add_paragraph(issue.get('description', '无'))
-
-        document.add_heading('基本信息', level=1)
-        p = document.add_paragraph()
-        p.add_run('严重等级: ').bold = True
-        p.add_run(issue.get('level', '未知'))
-        p.add_run('\n')
-        p.add_run('状态: ').bold = True
-        p.add_run('已导出' if issue.get('status') == 'confirmed' else '未确认')
-
-        document.add_heading('关联信息', level=1)
-        p = document.add_paragraph()
-        p.add_run('关联需求: ').bold = True
-        p.add_run(issue.get('relatedReq', '无'))
-        p.add_run('\n')
-        p.add_run('关联代码: ').bold = True
-        p.add_run(issue.get('relatedCode', '无'))
-
-        # 将文档保存到内存中的字节流
-        file_stream = io.BytesIO()
-        document.save(file_stream)
-        file_stream.seek(0)
-
-        return send_file(
-            file_stream,
-            as_attachment=True,
-            download_name=f"issue-{issue.get('id', 'N/A')}.docx",
-            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        )
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"导出失败: {str(e)}"}), 500
 
 @app.route('/project/issue/update', methods=['POST'])
 def update_issue_content():
