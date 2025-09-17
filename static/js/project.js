@@ -898,7 +898,7 @@ const app = createApp({
             
             // 设置浅灰色背景和标识属性
             highlights.forEach(highlight => {
-                highlight.style.backgroundColor = '#bdc3c7';
+                highlight.style.backgroundColor = 'rgba(189, 195, 199, 0.3)';
                 highlight.classList.add('requirement-highlight');
                 highlight.setAttribute('data-alignment-id', alignmentId);
                 highlight.setAttribute('data-range-start', start);
@@ -912,7 +912,7 @@ const app = createApp({
             
             // 设置浅灰色背景和标识属性
             highlights.forEach(highlight => {
-                highlight.style.backgroundColor = '#bdc3c7';
+                highlight.style.backgroundColor = 'rgba(189, 195, 199, 0.3)';
                 highlight.classList.add('code-highlight');
                 highlight.setAttribute('data-alignment-id', alignmentId);
                 highlight.setAttribute('data-range-start', start);
