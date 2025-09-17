@@ -280,3 +280,9 @@ def convert_doc_to_markdown(doc_repo_path):
 def get_filename_without_extension(filepath):
     """获取不带扩展名的文件名"""
     return os.path.splitext(os.path.basename(filepath))[0]
+
+def chunk_list(lst, limit):
+    result = []
+    for i in range(0, len(lst), limit):
+        result.append(lst[i:i+limit])
+    return result

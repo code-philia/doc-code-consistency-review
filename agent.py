@@ -3,6 +3,7 @@ import re
 import json
 from prompt import ALIGN_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE
 from openai import OpenAI
+from utils import chunk_list
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8001/v1")
 API_KEY = os.environ.get("API_KEY", "0")
@@ -31,132 +32,72 @@ def query_llm(message, history=None):
     return result
 
 # ================= 对齐 相关代码 =================
-def query_related_code(requirement, code_files, split_code=False):
+def query_related_code(requirement, code_blocks, block_limit=None):
+    if block_limit:
+        chunked_code_blocks = chunk_list(code_blocks, block_limit)
+        related_code_blocks = []
+        for c in chunked_code_blocks:
+            related_code_blocks.extend(query_related_code_block(requirement, c))
+        return related_code_blocks
+    else:
+        return query_related_code_block(requirement, code_blocks)
+
+def query_related_code_block(requirement, code_blocks):
     """
     查询与需求点最相关的代码行号
     
     参数:
         requirement: 需求文本
-        code_files: 代码文件列表，每个文件包含名称和内容
-        split_code: 是否将代码文件拆分为块
+        code_blocks: 已经划分好的代码块
         
     返回:
         相关行号列表
     """
-    if split_code:
-        # 如果需要对代码进行分块处理
-        split_code_files = []
-        for code_file in code_files:
-            lines = code_file["numberedContent"].splitlines()
-            for i in range(0, len(lines), 1000):
-                chunk_content = "\n".join(lines[i:i + 1000])
-                split_code_files.append({
-                    "name": code_file['name'],
-                    "numberedContent": chunk_content
-                })
-        code_files = split_code_files  # Replace original code_files with split chunks
+    # related_code_blocks = []
 
-    related_code_blocks = []
-    for code_file in code_files:
-        # 构造提示词
-        template = ALIGN_PROMPT_TEMPLATE
-        prompt = template.format(
-            req_content=requirement,
-            code_content=code_file["numberedContent"]
-        )        
-        # 解析回复
-        response = query_llm(prompt)
-        llm_output = response.content
-        print("llm output: ", llm_output)
-        parsed_output = parse_alignment_output(llm_output)
+    # 构造提示词
+    template = ALIGN_PROMPT_TEMPLATE
+    prompt = template.format(
+        req_content=requirement,
+        code_content=code_blocks
+    )
+
+    # 解析回复
+    response = query_llm(prompt)
+    llm_output = response.content
+    print("original llm output: ", llm_output)
+    parsed_output = parse_alignment_output(llm_output)
+    print("parsed llm output: ", parsed_output)
+    
+    return parsed_output
+
+def parse_alignment_output(response):
+    """
+    解析对齐输出的JSON
+    
+    参数:
+        response: LLM的完整响应文本
         
-        # Ensure parsed_output contains intervals (e.g., [start, end])
-        if all(isinstance(item, list) and len(item) == 2 for item in parsed_output):
-            # Sort intervals by their starting line number
-            parsed_output = sorted(parsed_output, key=lambda x: x[0])  # 按起始行号排序
+    """
+    try:
+        # 提取Markdown代码块中的JSON
+        json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', response, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            # 如果没有找到代码块，假设整个响应就是JSON
+            json_str = response
+
+        data = json.loads(json_str)
+        if isinstance(data, dict):
+            return [data]
+        elif isinstance(data, list):
+            return data
         else:
             return []
-            
-        # 对行号区间进行排序并合并有交集的代码块
-        parsed_output = sorted(parsed_output, key=lambda x: x[0])  # 按起始行号排序
-        merged_blocks = []
-        
-        for interval in parsed_output:
-            if len(merged_blocks) == 0 or merged_blocks[-1][1] < interval[0] - 1:
-                merged_blocks.append(interval)
-            else:
-                merged_blocks[-1][1] = max(merged_blocks[-1][1], interval[1])
-
-        # 从代码块中提取对应的代码
-        for block in merged_blocks:
-            start_line, end_line = block
-            block_content = "\n".join(
-                line
-                for line in code_file["numberedContent"].splitlines()
-                if line.strip() and ":" in line and start_line <= int(line.split(":")[0]) <= end_line
-            )
-            related_code_blocks.append({
-                "filename": code_file["name"],
-                "content": block_content,
-                "start": start_line,
-                "end": end_line
-            })
-    
-    return related_code_blocks
-
-def parse_alignment_output(output):
-    """
-    解析LLM输出，提取行号区间列表
-    
-    处理可能的情况：
-    1. 直接JSON输出
-    2. Markdown代码块包裹的JSON
-    3. 不规范的JSON
-    4. 回退处理：提取数字对
-    
-    返回格式：[[start1, end1], [start2, end2], ...]
-    """
-    # 尝试提取Markdown代码块中的JSON
-    json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', output, re.DOTALL)
-    if json_match:
-        json_content = json_match.group(1)
-    else:
-        json_content = output.strip()
-    
-    try:
-        result = json.loads(json_content)
-        if isinstance(result, dict) and "related_code" in result:
-            related_code = result["related_code"]
-            # 验证格式：应该是[[start, end], ...]
-            if isinstance(related_code, list):
-                validated_intervals = []
-                for item in related_code:
-                    if isinstance(item, list) and len(item) == 2:
-                        start, end = item
-                        if isinstance(start, int) and isinstance(end, int) and start <= end:
-                            validated_intervals.append([start, end])
-                return validated_intervals
-        elif isinstance(result, list):
-            # 直接是列表格式，验证是否为区间列表
-            validated_intervals = []
-            for item in result:
-                if isinstance(item, list) and len(item) == 2:
-                    start, end = item
-                    if isinstance(start, int) and isinstance(end, int) and start <= end:
-                        validated_intervals.append([start, end])
-            return validated_intervals
-    except json.JSONDecodeError:
-        pass
-    
-    # 回退：尝试提取数字对，假设它们成对出现
-    numbers = list(map(int, re.findall(r'\b\d+\b', output)))
-    intervals = []
-    for i in range(0, len(numbers) - 1, 2):
-        start, end = numbers[i], numbers[i + 1]
-        if start <= end:
-            intervals.append([start, end])
-    
-    return intervals
+    except (json.JSONDecodeError, AttributeError) as e:
+        print(f"解析对齐输出失败: {e}")
+        return []
 
 
 # ================= 审查 相关代码 =================
@@ -174,12 +115,12 @@ def query_review_result(requirement, related_code):
     """
     # 1. 拼接需求和代码上下文
     requirement_context = "\n".join(
-        f"需求片段来源: {block['filename']} (行 {block['startLine']}-{block['endLine']})\n内容:\n{block['content']}"
+        f"需求片段来源: {block['filename']} ，内容:\n{block['content']}"
         for block in requirement
     )
     
     code_context = "\n\n".join(
-        f"代码片段来源: {block['filename']} (行 {block['start']}-{block['end']})\n内容:\n{block['content']}"
+        f"代码片段来源: {block['filename']}，内容:\n{block['content']}"
         for block in related_code
     )
     

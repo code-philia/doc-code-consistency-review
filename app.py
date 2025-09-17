@@ -13,6 +13,8 @@ from docx import Document
 from docx.shared import Inches
 import io
 
+from code_block import get_all_code_blocks
+
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
 MAX_HISTORY_ITEMS = 15 # 最多记录15条历史
@@ -469,19 +471,16 @@ def requirement_decomposition():
         project_path = data.get('projectPath')
         
         if not project_path:
-            return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
-        
-        # 检查annotations目录是否存在
+            return jsonify({'status':'error', 'message': '缺少项目路径'})
+
         annotations_dir = os.path.join(project_path, 'annotations')
         if not os.path.exists(annotations_dir):
-            return jsonify({'status': 'error', 'message': 'annotations目录不存在'})
-        
-        # 查找JSON标注文件
+            return jsonify({'status':'error', 'message': '标注目录不存在'})
+
         json_files = [f for f in os.listdir(annotations_dir) if f.endswith('.json')]
         if not json_files:
-            return jsonify({'status': 'error', 'message': 'annotations目录中没有找到JSON文件'})
-        
-        # 读取第一个JSON文件
+            return jsonify({'status':'error', 'message': '标注结果文件不存在'})
+
         annotation_file = os.path.join(annotations_dir, json_files[0])
         with open(annotation_file, 'r', encoding='utf-8') as f:
             annotation_data = json.load(f)
@@ -543,7 +542,7 @@ def requirement_decomposition():
         for doc_name, requirements in doc_requirements.items():
             # 构建对齐结果文件路径
             doc_base_name = get_filename_without_extension(doc_name)
-            alignment_file = os.path.join(results_dir, f'{doc_base_name}_alignments.json')
+            alignment_file = os.path.join(results_dir, f'{doc_base_name}.json')
             
             # 读取现有的对齐结果（如果存在）
             existing_alignments = {}
@@ -588,42 +587,28 @@ def align_requirement_to_project():
     try:
         # 获取项目中所有代码文件
         code_repo_path = os.path.join(project_path, 'code_repo')
+        code_block_base_path = os.path.join(project_path, 'code_block_repo')
         all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
-        code_files = []
-        
-        for file_path in all_files:
-            full_path = os.path.join(code_repo_path, file_path)
-            if os.path.exists(full_path):
-                with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read()
-                    # 为代码添加行号
-                    lines = content.splitlines()
-                    numbered_content = '\n'.join([f"{i+1}: {line}" for i, line in enumerate(lines)])
-                    code_files.append({
-                        'name': file_path,
-                        'content': content,
-                        'numberedContent': numbered_content
-                    })
-        
+
+        # 为代码进行分块或读取分块结果
+        all_code_blocks = get_all_code_blocks(code_repo_path, all_files, code_block_base_path)
+
         # 调用对齐函数获取相关代码
-        related_code = query_related_code(requirement_text, code_files, split_code=True)
-        
-        print("requirement_text: ", requirement_text)
-        print("related_code: ", related_code)
+        related_code = query_related_code(requirement_text, all_code_blocks, block_limit=50)
         
         # 转换为codeRanges格式
         code_ranges = []
         for code_block in related_code:
             # 获取原始代码内容（不带行号）
-            file_path = os.path.join(code_repo_path, code_block['filename'])
+            file_path = os.path.join(code_repo_path, code_block['file'])
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     original_content = f.read()
                     lines = original_content.splitlines(keepends=True)  # 保留换行符
                     
                     # 提取指定行范围的内容
-                    start_line = max(1, code_block['start'])
-                    end_line = min(len(lines), code_block['end'])
+                    start_line = max(1, code_block['range'][0])
+                    end_line = min(len(lines), code_block['range'][1])
                     
                     if start_line <= end_line:
                         # 计算字符偏移量
@@ -634,11 +619,11 @@ def align_requirement_to_project():
                         range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
                         
                         code_ranges.append({
-                            'filename': code_block['filename'],
+                            'filename': code_block['file'],
                             'start': char_start,  # 字符偏移量
                             'end': char_end,      # 字符偏移量
                             'content': range_content,
-                            'documentId': code_block['filename'],
+                            'documentId': code_block['file'],
                             'startLine': start_line,
                             'endLine': end_line
                         })
