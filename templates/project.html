@@ -389,20 +389,20 @@
                                 <div class="issue-header-bar">
                                     <div class="issue-title-bar">
                                         <h3><i class="fas fa-exclamation-triangle"></i> 问题单列表 (${issues.length})</h3>
-                                        <span v-if="issues.length === 0" class="no-issues-text">
-                                            当前对齐视图中暂无问题。
-                                        </span>
                                     </div>
                                     <div class="issue-actions">
                                         <button class="action-btn" @click="confirmIssue">
                                             <i class="fas fa-check"></i> 确认
                                         </button>
-                                        <button class="action-btn secondary" @click="ignoreIssue">
-                                            <i class="fas fa-times"></i> 忽略
+                                        <button class="action-btn" @click="markFalsePositive">
+                                            <i class="fas fa-exclamation-circle"></i> 误报
+                                        </button>
+                                        <button class="action-btn secondary" @click="deleteSelectedIssue">
+                                            <i class="fas fa-trash"></i> 删除
                                         </button>
                                     </div>
                                 </div>
-                                <div class="issue-table" v-if="issues.length > 0">
+                                <div class="issue-table">
                                     <div class="issue-row issue-header-row">
                                         <div class="issue-cell issue-level-cell">等级</div>
                                         <div class="issue-cell issue-description-cell">问题描述</div>
@@ -419,13 +419,22 @@
                                         @dblclick="showIssueDetail(issue)"
                                     >
                                         <div class="issue-cell issue-level-cell">
-                                            <span class="issue-level" :class="issue.level?.toLowerCase()">${ issue.level }</span>
+                                            <span class="issue-level" :class="issue.level?.toLowerCase()">
+                                                ${ issueLevelText(issue.level) }
+                                            </span>
                                         </div>
                                         <div class="issue-cell issue-description-cell">${ issue.summary }</div>
                                         <div class="issue-cell issue-req-cell" :title="issue.briefRequirement">${ issue.briefRequirement || '无相关需求' }</div>
                                         <div class="issue-cell issue-code-cell" :title="issue.briefCode">${ issue.briefCode || '无相关代码' }</div>
                                         <div class="issue-cell issue-status-cell">
-                                            <span class="issue-status" :class="issue.status?.toLowerCase()">${ issue.status === 'confirmed' ? '已确认' : '未确认' }</span>
+                                            <span class="issue-status"
+                                                  :class="issue.status?.toLowerCase()">
+                                                ${ issue.status === 'confirmed'
+                                                    ? '已确认'
+                                                    : (issue.status === 'false_positive'
+                                                        ? '误报'
+                                                        : '未确认') }
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -525,9 +534,15 @@
                                 <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
                                     <div class="issue-header">
                                         <div class="issue-level" :class="issue.level?.toLowerCase()">
-                                            ${ issue.level?.toUpperCase() || '未知' }
+                                            ${ issueLevelText(issue.level) }
                                         </div>
-                                        <span class="issue-status">${ issue.status === 'unconfirmed' ? '未确认' : '已导出' }</span>
+                                        <span class="issue-status" :class="issue.status?.toLowerCase()" :style="(issue.status === 'confirmed' || issue.status === 'false_positive') ? 'color: #fff;' : ''">
+                                            ${ issue.status === 'confirmed'
+                                                ? '已确认'
+                                                : (issue.status === 'false_positive'
+                                                    ? '误报'
+                                                    : '未确认') }
+                                        </span>
                                         <div class="issue-actions">
                                             <button v-if="editingIssueId !== issue.id" class="action-btn edit-btn" @click="toggleEditIssue(issue)">
                                                 <i class="fas fa-edit"></i> 编辑

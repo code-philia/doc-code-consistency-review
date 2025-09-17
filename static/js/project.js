@@ -1424,6 +1424,9 @@ const app = createApp({
                 );
 
                 if (response.data.status === 'success') {
+                    // 更新本地数据
+                    const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
+                    if (idx > -1) issues.value[idx].status = 'confirmed';
                     selectedIssue.value.status = 'confirmed';
                     ElMessage.success('问题单已确认。');
                 } else {
@@ -1432,6 +1435,60 @@ const app = createApp({
             } catch (error) {
                 console.error('Error confirming issue:', error);
                 ElMessage.error('确认失败：' + (error.response?.data?.message || error.message));
+            }
+        };
+
+        // 将选中的问题单标记为误报
+        const markFalsePositive = async () => {
+            if (!selectedIssue.value) {
+                ElMessage.warning('请先选择一个问题单。');
+                return;
+            }
+
+            try {
+                const updatedIssue = { ...selectedIssue.value, status: 'false_positive' };
+                const response = await axios.put(
+                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`,
+                    updatedIssue
+                );
+
+                if (response.data.status === 'success') {
+                    const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
+                    if (idx > -1) issues.value[idx].status = 'false_positive';
+                    selectedIssue.value.status = 'false_positive';
+                    ElMessage.success('问题单已标记为误报。');
+                } else {
+                    ElMessage.error('标记失败：' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error marking false positive:', error);
+                ElMessage.error('标记失败：' + (error.response?.data?.message || error.message));
+            }
+        };
+
+        // 删除选中的问题单
+        const deleteSelectedIssue = async () => {
+            if (!selectedIssue.value) {
+                ElMessage.warning('请先选择一个问题单。');
+                return;
+            }
+
+            try {
+                const response = await axios.delete(
+                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`
+                );
+
+                if (response.data.status === 'success') {
+                    const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
+                    if (idx > -1) issues.value.splice(idx, 1);
+                    selectedIssue.value = null;
+                    ElMessage.success('问题单已删除。');
+                } else {
+                    ElMessage.error('删除失败：' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error deleting issue:', error);
+                ElMessage.error('删除失败：' + (error.response?.data?.message || error.message));
             }
         };
 
@@ -1459,6 +1516,17 @@ const app = createApp({
             } catch (error) {
                 console.error('Error deleting issue:', error);
                 ElMessage.error('删除失败：' + (error.response?.data?.message || error.message));
+            }
+        };
+
+        // 问题单严重等级文本映射
+        const issueLevelText = (level) => {
+            if (!level) return '';
+            switch (level.toLowerCase()) {
+                case 'high': return '重大';
+                case 'medium': return '严重';
+                case 'low': return '一般';
+                default: return level;
             }
         };
 
@@ -1862,6 +1930,8 @@ const app = createApp({
             selectedIssue,
             selectIssue,
             confirmIssue,
+            markFalsePositive,
+            deleteSelectedIssue,
             ignoreIssue,
             showIssueDetail,
             editingIssueId,
@@ -1884,7 +1954,8 @@ const app = createApp({
             handleAlignmentCodeRangeClick,
             
             resetProjectState,
-            activeReviewTab
+            activeReviewTab,
+            issueLevelText
         };
     }
 });
