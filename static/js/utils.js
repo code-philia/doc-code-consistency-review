@@ -665,3 +665,10 @@ export function convertOffsetToLineNumbers(content, startOffset, endOffset) {
 
     return { startLine, endLine };
 }
+
+export function generateUUIDLike() {
+    const timestamp = Date.now().toString(36);
+    const randomStr = () => Math.random().toString(36).slice(2, 10);
+    const y = (Math.random() * 16 | 0).toString(16);
+    return `${randomStr()}-${timestamp.slice(-4)}-${'4' + randomStr().slice(1)}-${(y & 0x3 | 0x8).toString(16) + randomStr().slice(1)}-${randomStr()}`;
+}

@@ -6,7 +6,7 @@ let activeView = 'statsView'; // 当前活动视图
 const { createApp, ref, onMounted, computed, nextTick } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
-    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange
+    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike
 } from './utils.js';
 
 /****************************
@@ -827,16 +827,14 @@ const app = createApp({
         };
 
         const createAlignment = async () => {
-            // const id = crypto.randomUUID();
-            const id = '新需求点';
+            const id = generateUUIDLike();
 
             if (!currentSelection.value) {
                 ElMessage.warning('请先选择需求文本。');
                 return;
             }
             if (!newAlignmentName.value.trim()) {
-                // newAlignmentName.value = `需求点_${id.slice(0, 8)}`;
-                newAlignmentName.value = id;
+                newAlignmentName.value = `需求点_${id.slice(0, 8)}`;
             }
 
             // 为文档范围添加filename和行号信息
