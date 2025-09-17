@@ -80,13 +80,15 @@ def parse_alignment_output(response):
         
     """
     try:
-        # 提取Markdown代码块中的JSON
-        json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', response, re.DOTALL)
+        json_match = re.search(r'```(?:json)?\s*([\[\{].*?[\]\}])\s*```', response, re.DOTALL)
         if json_match:
             json_str = json_match.group(1)
         else:
-            # 如果没有找到代码块，假设整个响应就是JSON
-            json_str = response
+            json_match = re.search(r'([\[\{].*[\]\}])', response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                json_str = response.strip()
 
         data = json.loads(json_str)
         if isinstance(data, dict):
