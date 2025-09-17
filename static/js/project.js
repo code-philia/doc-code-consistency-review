@@ -1140,9 +1140,19 @@ const app = createApp({
             // 根据类型调用相应的筛选函数
             if (type === 'doc') {
                 filterAlignmentsByMultipleDocRanges(overlappingRanges);
+                
+                // 点击文档高亮块后，滚动到第一个筛选结果的代码区域
+                nextTick(() => {
+                    scrollToFirstFilteredCodeRange();
+                });
             } else if (type === 'code') {
                 const documentId = selectedCodeFile.value;
                 filterAlignmentsByMultipleCodeRanges(overlappingRanges, documentId);
+                
+                // 点击代码高亮块后，滚动到第一个筛选结果的文档区域
+                nextTick(() => {
+                    scrollToFirstFilteredDocRange();
+                });
             }
         };
 
@@ -1333,6 +1343,74 @@ const app = createApp({
                 // 如果是当前文档，直接查找和高亮
                 const highlightElements = findIntersectingHighlightElements(docRange.start, docRange.end);
                 const parseElements = findIntersectingParseElements(docRange.start, docRange.end);
+                
+                // 合并所有相关元素
+                const allElements = [...highlightElements, ...parseElements];
+                
+                // 去重（可能有重复的元素）
+                const uniqueElements = [...new Set(allElements)];
+                
+                scrollToFirstAndHighlightAll(uniqueElements);
+            }
+        };
+
+        // 滚动到第一个筛选结果的代码区域
+        const scrollToFirstFilteredCodeRange = () => {
+            if (!filteredAlignments.value || filteredAlignments.value.length === 0) return;
+            
+            const firstAlignment = filteredAlignments.value[0];
+            if (!firstAlignment.codeRanges || firstAlignment.codeRanges.length === 0) return;
+            
+            const firstCodeRange = firstAlignment.codeRanges[0];
+            
+            // 确保当前显示的是对应的代码文件
+            if (selectedCodeFile.value !== firstCodeRange.documentId) {
+                // 如果不是当前代码文件，先切换到对应文件
+                fetchFileContent(firstCodeRange.documentId, 'code').then(() => {
+                    // 文件加载完成后再查找和高亮
+                    setTimeout(() => {
+                        const highlightElements = findIntersectingCodeHighlightElements(firstCodeRange.start, firstCodeRange.end);
+                        scrollToFirstAndHighlightAllCode(highlightElements);
+                    }, 100);
+                });
+            } else {
+                // 如果是当前代码文件，直接查找和高亮
+                const highlightElements = findIntersectingCodeHighlightElements(firstCodeRange.start, firstCodeRange.end);
+                scrollToFirstAndHighlightAllCode(highlightElements);
+            }
+        };
+
+        // 滚动到第一个筛选结果的文档区域
+        const scrollToFirstFilteredDocRange = () => {
+            if (!filteredAlignments.value || filteredAlignments.value.length === 0) return;
+            
+            const firstAlignment = filteredAlignments.value[0];
+            if (!firstAlignment.docRanges || firstAlignment.docRanges.length === 0) return;
+            
+            const firstDocRange = firstAlignment.docRanges[0];
+            
+            // 确保当前显示的是对应的文档
+            if (selectedDocFile.value !== firstDocRange.documentId) {
+                // 如果不是当前文档，先切换到对应文档
+                fetchFileContent(firstDocRange.documentId, 'doc').then(() => {
+                    // 文档加载完成后再查找和高亮
+                    setTimeout(() => {
+                        const highlightElements = findIntersectingHighlightElements(firstDocRange.start, firstDocRange.end);
+                        const parseElements = findIntersectingParseElements(firstDocRange.start, firstDocRange.end);
+                        
+                        // 合并所有相关元素
+                        const allElements = [...highlightElements, ...parseElements];
+                        
+                        // 去重（可能有重复的元素）
+                        const uniqueElements = [...new Set(allElements)];
+                        
+                        scrollToFirstAndHighlightAll(uniqueElements);
+                    }, 100);
+                });
+            } else {
+                // 如果是当前文档，直接查找和高亮
+                const highlightElements = findIntersectingHighlightElements(firstDocRange.start, firstDocRange.end);
+                const parseElements = findIntersectingParseElements(firstDocRange.start, firstDocRange.end);
                 
                 // 合并所有相关元素
                 const allElements = [...highlightElements, ...parseElements];
