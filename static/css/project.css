@@ -1602,11 +1602,17 @@
 }
 
 .highlight-block {
-    position: absolute;
-    background-color: rgba(244, 244, 244, 0.2); 
-    pointer-events: none;
+    pointer-events: auto;
     z-index: 1;
     mix-blend-mode: multiply;
+    cursor: pointer;
+}
+
+.content-text-doc,
+.content-text-code {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
 }
 
 .code-content,

@@ -571,7 +571,7 @@ function createHighlightBlock(start, end, type, annotationId) {
     highlightBlock.style.right = '0';
     highlightBlock.style.top = `${blockInfo.top}px`;
     highlightBlock.style.height = `${blockInfo.height}px`;
-    highlightBlock.style.pointerEvents = 'none';
+    highlightBlock.style.pointerEvents = 'auto';
     highlightBlock.style.zIndex = '1';
 
     return highlightBlock;

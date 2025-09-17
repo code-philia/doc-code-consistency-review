@@ -933,7 +933,7 @@ const app = createApp({
                     parent.normalize();
                 });
 
-                // 重新应用所有对齐关系的需求高亮
+                // 重新应用所有对齐关系的文档高亮
                 alignmentResults.value.forEach(alignment => {
                     if (alignment.docRanges && alignment.docRanges.length > 0) {
                         alignment.docRanges.forEach(range => {
@@ -1047,6 +1047,103 @@ const app = createApp({
         const showAllAlignments = () => {
             filteredAlignments.value = null;
             isFiltered.value = false;
+        };
+
+        // 根据多个文档范围筛选对齐关系（支持重叠高亮块）
+        const filterAlignmentsByMultipleDocRanges = (ranges) => {
+            const overlappingAlignments = alignmentResults.value.filter(alignment => {
+                // 检查是否与任意一个范围有交集
+                return ranges.some(range => {
+                    return alignment.docRanges && alignment.docRanges.some(docRange =>
+                        docRange.documentId === selectedDocFile.value &&
+                        docRange.end > range.start && docRange.start < range.end
+                    );
+                });
+            });
+
+            filteredAlignments.value = overlappingAlignments;
+            isFiltered.value = true;
+
+            // 如果没有找到匹配的对齐关系，显示提示
+            if (overlappingAlignments.length === 0) {
+                ElMessage.info('未找到包含此范围的对齐关系');
+            }
+        };
+
+        // 根据多个代码范围筛选对齐关系（支持重叠高亮块）
+        const filterAlignmentsByMultipleCodeRanges = (ranges, documentId) => {
+            const overlappingAlignments = alignmentResults.value.filter(alignment => {
+                // 检查是否与任意一个范围有交集
+                return ranges.some(range => {
+                    return alignment.codeRanges && alignment.codeRanges.some(codeRange =>
+                        codeRange.documentId === documentId &&
+                        codeRange.end > range.start && codeRange.start < range.end
+                    );
+                });
+            });
+
+            filteredAlignments.value = overlappingAlignments;
+            isFiltered.value = true;
+
+            // 如果没有找到匹配的对齐关系，显示提示
+            if (overlappingAlignments.length === 0) {
+                ElMessage.info('未找到包含此范围的对齐关系');
+            }
+        };
+
+        // 处理新高亮块的点击事件
+        const handleHighlightBlockClick = (event) => {
+            const target = event.target;
+            if (!target.classList.contains('highlight-block')) return;
+
+            const type = target.getAttribute('data-type');
+            const rangeStart = parseInt(target.getAttribute('data-range-start'));
+            const rangeEnd = parseInt(target.getAttribute('data-range-end'));
+
+            if (isNaN(rangeStart) || isNaN(rangeEnd)) return;
+
+            // 查找所有与点击位置重叠的高亮块
+            const panel = type === 'doc' 
+                ? document.querySelector('.content-text-doc')
+                : document.querySelector('.content-text-code');
+            
+            if (!panel) return;
+
+            const allHighlightBlocks = panel.querySelectorAll('.highlight-block');
+            const overlappingRanges = [];
+
+            // 检查所有高亮块是否与点击的高亮块重叠
+            allHighlightBlocks.forEach(block => {
+                const blockStart = parseInt(block.getAttribute('data-range-start'));
+                const blockEnd = parseInt(block.getAttribute('data-range-end'));
+                const blockType = block.getAttribute('data-type');
+
+                if (blockType === type && !isNaN(blockStart) && !isNaN(blockEnd)) {
+                    // 检查是否与点击的高亮块有交集
+                    if (Math.max(blockStart, rangeStart) < Math.min(blockEnd, rangeEnd)) {
+                        overlappingRanges.push({
+                            start: blockStart,
+                            end: blockEnd
+                        });
+                    }
+                }
+            });
+
+            // 如果没有找到重叠的范围，至少包含点击的范围
+            if (overlappingRanges.length === 0) {
+                overlappingRanges.push({
+                    start: rangeStart,
+                    end: rangeEnd
+                });
+            }
+
+            // 根据类型调用相应的筛选函数
+            if (type === 'doc') {
+                filterAlignmentsByMultipleDocRanges(overlappingRanges);
+            } else if (type === 'code') {
+                const documentId = selectedCodeFile.value;
+                filterAlignmentsByMultipleCodeRanges(overlappingRanges, documentId);
+            }
         };
 
         // 根据docRange查找文档中所有有交集的高亮元素
@@ -1244,84 +1341,6 @@ const app = createApp({
                 const uniqueElements = [...new Set(allElements)];
                 
                 scrollToFirstAndHighlightAll(uniqueElements);
-            }
-        };
-
-        // 处理点击高亮需求片段事件
-        const handleRequirementClick = (event) => {
-            let target = event.target;
-            while (target && !target.classList.contains('requirement-highlight')) {
-                target = target.parentElement;
-            }
-
-            if (!target) return;
-
-            // 获取高亮块的对齐关系ID
-            const alignmentId = target.getAttribute('data-alignment-id');
-            if (!alignmentId) return;
-
-            // 查找对应的对齐关系
-            const alignment = alignmentResults.value.find(a => a.id === alignmentId);
-            if (!alignment) return;
-
-            // 查找高亮块对应的范围
-            let rangeStart = null;
-            let rangeEnd = null;
-
-            // 尝试从高亮块的自定义属性获取范围
-            if (target.hasAttribute('data-range-start') && target.hasAttribute('data-range-end')) {
-                rangeStart = parseInt(target.getAttribute('data-range-start'));
-                rangeEnd = parseInt(target.getAttribute('data-range-end'));
-            } else {
-                // 如果没有自定义属性，尝试从父元素获取
-                const parentWithAttrs = target.closest('[parse-start][parse-end]');
-                if (parentWithAttrs) {
-                    rangeStart = parseInt(parentWithAttrs.getAttribute('parse-start'));
-                    rangeEnd = parseInt(parentWithAttrs.getAttribute('parse-end'));
-                }
-            }
-
-            if (rangeStart !== null && rangeEnd !== null) {
-                filterAlignmentsByDocRange(rangeStart, rangeEnd);
-            }
-        };
-
-        // 处理点击高亮代码片段事件
-        const handleCodeClick = (event) => {
-            let target = event.target;
-            while (target && !target.classList.contains('code-highlight')) {
-                target = target.parentElement;
-            }
-
-            if (!target) return;
-
-            // 获取高亮块的对齐关系ID
-            const alignmentId = target.getAttribute('data-alignment-id');
-            if (!alignmentId) return;
-
-            // 查找对应的对齐关系
-            const alignment = alignmentResults.value.find(a => a.id === alignmentId);
-            if (!alignment) return;
-
-            // 查找高亮块对应的范围
-            let rangeStart = null;
-            let rangeEnd = null;
-
-            // 尝试从高亮块的自定义属性获取范围
-            if (target.hasAttribute('data-range-start') && target.hasAttribute('data-range-end')) {
-                rangeStart = parseInt(target.getAttribute('data-range-start'));
-                rangeEnd = parseInt(target.getAttribute('data-range-end'));
-            } else {
-                // 如果没有自定义属性，尝试从父元素获取
-                const parentWithAttrs = target.closest('[parse-start][parse-end]');
-                if (parentWithAttrs) {
-                    rangeStart = parseInt(parentWithAttrs.getAttribute('parse-start'));
-                    rangeEnd = parseInt(parentWithAttrs.getAttribute('parse-end'));
-                }
-            }
-
-            if (rangeStart !== null && rangeEnd !== null) {
-                filterAlignmentsByCodeRange(rangeStart, rangeEnd, selectedCodeFile.value);
             }
         };
 
@@ -1765,13 +1784,13 @@ const app = createApp({
             // 添加点击高亮需求片段的事件监听器
             const docPanel = document.querySelector('.content-text-doc');
             if (docPanel) {
-                docPanel.addEventListener('click', handleRequirementClick);
+                docPanel.addEventListener('click', handleHighlightBlockClick);
             }
             
             // 添加点击高亮代码片段的事件监听器
             const codePanel = document.querySelector('.content-text-code');
             if (codePanel) {
-                codePanel.addEventListener('click', handleCodeClick);
+                codePanel.addEventListener('click', handleHighlightBlockClick);
             }
         });
 
