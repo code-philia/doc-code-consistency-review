@@ -30,9 +30,7 @@
             <div class="menu-item">
                 项目
                 <div class="dropdown">
-                    <div class="dropdown-item"><i class="fas fa-folder-plus"></i> 新的项目</div>
-                    <div class="dropdown-item"><i class="fas fa-folder-open"></i> 打开项目</div>
-                    <div class="dropdown-item" onclick="window.history.back()">
+                    <div class="dropdown-item" style="cursor: pointer;" onclick="closeProject()">
                         <i class="fas fa-times-circle"></i> 关闭项目
                     </div>
                 </div>
@@ -310,7 +308,7 @@
                                             @click="showAllAlignments" 
                                             size="small" 
                                             type="primary" 
-                                            style="margin-left: auto; font-size: 12px;"
+                                            style="margin-left: auto; font-size: 11px;"
                                         >
                                             全部
                                         </el-button>

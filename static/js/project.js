@@ -1736,6 +1736,67 @@ const app = createApp({
             }
         });
 
+        // 重置当前项目内存数据（不会修改后端文件），并移除页面高亮
+        const resetProjectState = () => {
+            // 基本信息
+            projectName.value = '未命名项目';
+            projectPath.value = '';
+
+            // 文件列表
+            projectFiles.value = { code_files: [], doc_files: [], meta_files: ['metadata.json'] };
+
+            // 选中与内容
+            selectedDocFile.value = '';
+            selectedCodeFile.value = '';
+            selectedDocContent.value = '';
+            selectedCodeContent.value = '';
+            selectedDocRawContent.value = '';
+            selectedCodeRawContent.value = '';
+
+            // 对齐与审查状态
+            alignmentResults.value = [];
+            allAlignments.value = {};
+            filteredAlignments.value = null;
+            isFiltered.value = false;
+            currentSelection.value = null;
+            newAlignmentName.value = '';
+
+            // 问题单
+            issues.value = [];
+            selectedIssue.value = null;
+
+            // 任务与进度
+            isAutoAligning.value = false;
+            isAutoReviewing.value = false;
+            alignmentProgress.value = { current: 0, total: 0 };
+            reviewProgress.value = { current: 0, total: 0 };
+
+            // 弹窗
+            showAlignmentDialog.value = false;
+            showCodeSelectionDialog.value = false;
+            showReviewDialog.value = false;
+            selectedReviewAlignment.value = null;
+
+            // 清理页面上的高亮元素
+            try {
+                const highlights = document.querySelectorAll('.requirement-highlight, .code-highlight');
+                highlights.forEach(el => {
+                    const parent = el.parentNode;
+                    parent.insertBefore(document.createTextNode(el.textContent), el);
+                    parent.removeChild(el);
+                    parent.normalize();
+                });
+            } catch (e) {
+                console.warn('清理高亮时出错:', e);
+            }
+
+            // 如果有必要，关闭上下文菜单
+            try { contextMenu.value.visible = false; } catch (e) {}
+
+            // 暴露到全局，供外部调用（如关闭按钮）
+            window.resetProjectState = resetProjectState;
+        };
+
         /***********************
          * 暴露到模板
          ***********************/
@@ -1821,7 +1882,8 @@ const app = createApp({
             // 反向映射功能
             handleAlignmentDocRangeClick,
             handleAlignmentCodeRangeClick,
-
+            
+            resetProjectState,
             activeReviewTab
         };
     }
@@ -1833,3 +1895,17 @@ const app = createApp({
  ****************************/
 app.use(ElementPlus);
 app.mount('#app');
+
+// 全局关闭项目函数：调用组件内的重置函数，然后跳转到欢迎页
+window.closeProject = async () => {
+    try {
+        if (window.resetProjectState && typeof window.resetProjectState === 'function') {
+            window.resetProjectState();
+        }
+    } catch (err) {
+        console.error('resetProjectState 调用失败:', err);
+    }
+
+    // 跳转到欢迎页面（根路径或 /welcome 可根据后端路由调整）
+    window.location.href = '/';
+};
