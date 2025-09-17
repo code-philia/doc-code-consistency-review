@@ -86,6 +86,7 @@ def create_blank_project(project_name, project_location):
             "code_files": [],
             "doc_files": [],
             "code_scale": 0,
+            "code_file_lines": {}
         }
         
         metadata_file = os.path.join(project_path, 'metadata.json')
@@ -121,9 +122,12 @@ def create_project_from_folder(project_name, folder_path):
         # 对 doc_repo 目录下的文档进行格式转换
         convert_doc_to_markdown(doc_repo_path)
         
+        code_file_lines = {}
         total_loc = 0
         for file in code_files:
-            total_loc += count_lines_of_code(os.path.join(code_repo_path, file))
+            loc = count_lines_of_code(os.path.join(code_repo_path, file))
+            code_file_lines[file] = loc
+            total_loc += loc
 
         metadata = {
             "project_name": project_name,
@@ -134,6 +138,7 @@ def create_project_from_folder(project_name, folder_path):
             "code_files": code_files,
             "doc_files": doc_files,
             "code_scale": total_loc,
+            "code_file_lines": code_file_lines
         }
         
         metadata_file = os.path.join(project_path, 'metadata.json')
@@ -301,8 +306,14 @@ def upload_files():
 
             # 更新元数据
             metadata['code_files'] = get_all_files_with_relative_paths(code_repo_path, type='code')
-            total_loc = sum(count_lines_of_code(os.path.join(code_repo_path, f)) for f in metadata['code_files'])
+            code_file_lines = {}
+            total_loc = 0
+            for f in metadata['code_files']:
+                loc = count_lines_of_code(os.path.join(code_repo_path, f))
+                code_file_lines[f] = loc
+                total_loc += loc
             metadata['code_scale'] = total_loc
+            metadata['code_file_lines'] = code_file_lines
 
         elif file_type == 'doc':
             doc_repo_path = metadata.get('doc_repo')

@@ -79,6 +79,9 @@ const app = createApp({
         const filteredAlignments = ref(null);
         const isFiltered = ref(false);
 
+        const codeFileLines = ref({});
+        const codeScale = ref(0);
+
         /***********************
          * 文件加载相关方法
          ***********************/
@@ -337,6 +340,8 @@ const app = createApp({
                     projectFiles.value.code_files = metadata.code_files || [];
                     projectFiles.value.doc_files = metadata.doc_files || [];
                     projectName.value = metadata.project_name || projectName.value;
+                    codeFileLines.value = metadata.code_file_lines || {};
+                    codeScale.value = metadata.code_scale || 0;
 
                     // 加载所有文档的对齐数据用于统计
                     await fetchAllAlignments();
@@ -1920,7 +1925,9 @@ const app = createApp({
             
             resetProjectState,
             activeReviewTab,
-            issueLevelText
+            issueLevelText,
+            codeFileLines,
+            codeScale
         };
     }
 });

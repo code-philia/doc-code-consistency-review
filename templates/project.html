@@ -168,6 +168,9 @@
                             </div>
                             <div class="stat-value">${ projectFiles.code_files.length }</div>
                             <div class="stat-description">当前项目中的代码文件总数</div>
+                            <div class="stat-description" style="margin-top: 4px;">
+                                总行数：<span style="font-weight: bold;">${ codeScale }</span>
+                            </div>
                         </div>
                         
                         <div class="stat-card">
@@ -221,15 +224,15 @@
                             <tr>
                                 <th class="file-icon-cell"></th>
                                 <th>文件名</th>
-                                <th>对齐进度</th>
-                                <th>对齐需求数</th>
+                                <th class="align-center">对齐进度</th>
+                                <th class="align-center">对齐需求数</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="file in projectFiles.doc_files" :key="file">
                                 <td class="file-icon-cell"><i class="fas fa-file-alt file-icon"></i></td>
                                 <td>${ file }</td>
-                                <td class="file-progress-cell">
+                                <td class="file-progress-cell align-center">
                                     <div class="file-progress">
                                         <span class="file-progress-value">${ requirementStats[file] ? Math.round((requirementStats[file].alignedRequirements / Math.max(requirementStats[file].totalRequirements, 1)) * 100) : 0 }%</span>
                                         <div class="file-progress-bar">
@@ -237,7 +240,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>${ requirementStats[file] ? requirementStats[file].alignedRequirements : 0 }/${ requirementStats[file] ? requirementStats[file].totalRequirements : 0 }</td>
+                                <td class="align-center">${ requirementStats[file] ? requirementStats[file].alignedRequirements : 0 }/${ requirementStats[file] ? requirementStats[file].totalRequirements : 0 }</td>
                             </tr>
                             <tr v-if="projectFiles.doc_files.length === 0">
                                 <td colspan="4" class="empty-message">暂无需求文档</td>
@@ -253,26 +256,17 @@
                             <tr>
                                 <th class="file-icon-cell"></th>
                                 <th>文件名</th>
-                                <th>对齐进度</th>
-                                <th>覆盖需求数</th>
+                                <th class="align-center">代码行数</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="file in projectFiles.code_files" :key="file">
                                 <td class="file-icon-cell"><i class="fas fa-file-code file-icon"></i></td>
                                 <td>${ file }</td>
-                                <td class="file-progress-cell">
-                                    <div class="file-progress">
-                                        <span class="file-progress-value">${ codeFileStats[file] && codeFileStats[file].totalAlignments > 0 ? Math.round((codeFileStats[file].coveredRequirements / codeFileStats[file].totalAlignments) * 100) : 0 }%</span>
-                                        <div class="file-progress-bar">
-                                            <div class="file-progress-fill" :style="`width: ${codeFileStats[file] && codeFileStats[file].totalAlignments > 0 ? Math.round((codeFileStats[file].coveredRequirements / codeFileStats[file].totalAlignments) * 100) : 0}%`"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>${ codeFileStats[file] ? codeFileStats[file].coveredRequirements : 0 }/${ codeFileStats[file] ? codeFileStats[file].totalAlignments : 0 }</td>
+                                <td class="code-lines-cell align-center">${ codeFileLines[file] || 0 }</td>
                             </tr>
                             <tr v-if="projectFiles.code_files.length === 0">
-                                <td colspan="4" class="empty-message">暂无代码文件</td>
+                                <td colspan="3" class="empty-message">暂无代码文件</td>
                             </tr>
                         </tbody>
                     </table>
