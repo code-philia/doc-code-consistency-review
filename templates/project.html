@@ -383,6 +383,9 @@
                                 <div class="issue-header-bar">
                                     <div class="issue-title-bar">
                                         <h3><i class="fas fa-exclamation-triangle"></i> 问题单列表 (${issues.length})</h3>
+                                        <button class="export-btn" @click="exportConfirmedIssues" title="导出已确认的问题单">
+                                            <i class="fas fa-download"></i> 导出问题单
+                                        </button>
                                     </div>
                                     <div class="issue-actions">
                                         <button class="action-btn" @click="confirmIssue">

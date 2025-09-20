@@ -836,8 +836,10 @@
 }
 
 .issue-actions {
+    width: 300px;
     display: flex;
     gap: 8px;
+    justify-content: flex-end;
 }
 
 .issue-table {
@@ -1623,4 +1625,37 @@
 .highlight-block + * {
     position: relative;
     z-index: 2;
+}
+
+.export-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 12px;
+    transition: background-color 0.2s ease;
+}
+
+.export-btn:hover {
+    background-color: #218838;
+}
+
+.export-btn:active {
+    background-color: #1e7e34;
+}
+
+.export-btn i {
+    font-size: 11px;
+}
+
+.issue-title-bar {
+    display: flex;
+    align-items: center;
+    width: 100%;
 }

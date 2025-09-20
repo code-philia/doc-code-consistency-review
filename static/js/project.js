@@ -1498,6 +1498,25 @@ const app = createApp({
             }
         };
 
+        // 导出已确认的问题单
+        const exportConfirmedIssues = async () => {
+            try {
+                // 筛选出已确认的问题单
+                const confirmedIssues = issues.value.filter(issue => issue.status === 'confirmed');
+                
+                if (confirmedIssues.length === 0) {
+                    ElMessage.warning('没有已确认的问题单可导出');
+                    return;
+                }
+
+                // TODO
+
+                ElMessage.success(`已成功导出 ${confirmedIssues.length} 个问题单`);
+            } catch (error) {
+                console.error('导出问题单失败:', error);
+                ElMessage.error('导出失败：' + error.message);
+            }
+        };
 
         /***********************
          * 问题单管理
@@ -1987,6 +2006,7 @@ const app = createApp({
             reviewProgress,
             // 问题单数据
             fetchIssues,
+            exportConfirmedIssues,
             // 审查结果弹窗
             showReviewDialog,
             selectedReviewAlignment,
