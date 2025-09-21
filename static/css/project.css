@@ -1659,3 +1659,107 @@
     align-items: center;
     width: 100%;
 }
+
+/* 导出表单对话框样式 */
+.el-dialog__header {
+    background-color: #f8f9fa;
+    color: var(--text-primary);
+    padding: 16px 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.el-dialog__title {
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.el-dialog__headerbtn .el-dialog__close {
+    color: var(--text-light);
+}
+
+.el-dialog__headerbtn .el-dialog__close:hover {
+    color: var(--accent-color);
+}
+
+.el-dialog__body {
+    padding: 20px;
+}
+
+.el-form-item__label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.el-input__inner {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.el-input__inner:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.el-radio__label {
+    color: var(--text-primary);
+}
+
+.el-checkbox__label {
+    color: var(--text-primary);
+}
+
+.el-radio__input.is-checked .el-radio__inner {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.el-checkbox__input.is-checked .el-checkbox__inner {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.el-dialog__footer {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid var(--border-color);
+}
+
+.el-button--primary {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.el-button--primary:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+/* 表单行间距调整 */
+.el-form .el-row {
+    margin-bottom: 10px;
+}
+
+.el-form-item {
+    margin-bottom: 18px;
+}
+
+/* 单选框和复选框组样式 */
+.el-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.el-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.el-radio {
+    margin-right: 0;
+}
+
+.el-checkbox {
+    margin-right: 0;
+}

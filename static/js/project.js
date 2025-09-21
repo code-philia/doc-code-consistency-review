@@ -1498,6 +1498,19 @@ const app = createApp({
             }
         };
 
+        // 导出表单相关状态
+        const showExportDialog = ref(false);
+        const exportForm = ref({
+            productName: 'AAA软件',
+            issueId: 'BBB',
+            productId: 'CCC',
+            discoveryMethod: '代码审查',
+            issueTracking: 'DDD',
+            issueCategories: ['文档', '编码'],
+            issueLevel: '一般',
+            exportPath: projectPath.value || ''
+        });
+
         // 导出已确认的问题单
         const exportConfirmedIssues = async () => {
             try {
@@ -1509,9 +1522,40 @@ const app = createApp({
                     return;
                 }
 
-                // TODO
+                // 重置表单并显示对话框
+                exportForm.value.exportPath = projectPath.value || '';
+                showExportDialog.value = true;
+            } catch (error) {
+                console.error('导出问题单失败:', error);
+                ElMessage.error('导出失败：' + error.message);
+            }
+        };
 
-                ElMessage.success(`已成功导出 ${confirmedIssues.length} 个问题单`);
+        // 确认导出
+        const confirmExport = async () => {
+            try {
+                // 筛选出已确认的问题单
+                const confirmedIssues = issues.value.filter(issue => issue.status === 'confirmed');
+                
+                if (confirmedIssues.length === 0) {
+                    ElMessage.warning('没有已确认的问题单可导出');
+                    showExportDialog.value = false;
+                    return;
+                }
+
+                // 调用后端API导出问题单
+                const response = await axios.post('/project/export-issues', {
+                    issues: confirmedIssues,
+                    formData: exportForm.value,
+                    projectPath: projectPath.value
+                });
+
+                if (response.data.status === 'success') {
+                    ElMessage.success(`已成功导出 ${confirmedIssues.length} 个问题单到 ${exportForm.value.exportPath}`);
+                    showExportDialog.value = false;
+                } else {
+                    ElMessage.error('导出失败：' + response.data.message);
+                }
             } catch (error) {
                 console.error('导出问题单失败:', error);
                 ElMessage.error('导出失败：' + error.message);
@@ -2007,6 +2051,10 @@ const app = createApp({
             // 问题单数据
             fetchIssues,
             exportConfirmedIssues,
+            // 导出表单相关
+            showExportDialog,
+            exportForm,
+            confirmExport,
             // 审查结果弹窗
             showReviewDialog,
             selectedReviewAlignment,

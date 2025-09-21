@@ -630,6 +630,86 @@
             </template>
         </el-dialog>
 
+        <!-- 导出问题单表单对话框 -->
+        <el-dialog
+            v-model="showExportDialog"
+            title="导出问题单"
+            width="800px"
+            :close-on-click-modal="false"
+            custom-class="export-issues-dialog"
+        >
+            <el-form :model="exportForm" label-width="120px" label-position="left">
+                <!-- 第一行：被测产品名称和问题单标识 -->
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="被测产品名称">
+                            <el-input v-model="exportForm.productName" placeholder="请输入被测产品名称"></el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="问题单标识">
+                            <el-input v-model="exportForm.issueId" placeholder="请输入问题单标识"></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <!-- 第二行：被测产品标识和发现手段 -->
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="被测产品标识">
+                            <el-input v-model="exportForm.productId" placeholder="请输入被测产品标识"></el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="发现手段">
+                            <el-radio-group v-model="exportForm.discoveryMethod">
+                                <el-radio value="文档审查">文档审查</el-radio>
+                                <el-radio value="代码审查">代码审查</el-radio>
+                                <el-radio value="静态分析">静态分析</el-radio>
+                                <el-radio value="动态分析">动态分析</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <!-- 第三行：问题追踪 -->
+                <el-form-item label="问题追踪">
+                    <el-input v-model="exportForm.issueTracking" placeholder="对应的测试用例标识"></el-input>
+                </el-form-item>
+
+                <!-- 第四行：问题类别 -->
+                <el-form-item label="问题类别">
+                    <el-checkbox-group v-model="exportForm.issueCategories">
+                        <el-checkbox value="需求">需求</el-checkbox>
+                        <el-checkbox value="设计">设计</el-checkbox>
+                        <el-checkbox value="文档">文档</el-checkbox>
+                        <el-checkbox value="编码">编码</el-checkbox>
+                        <el-checkbox value="数据">数据</el-checkbox>
+                        <el-checkbox value="其他">其他</el-checkbox>
+                    </el-checkbox-group>
+                </el-form-item>
+
+                <!-- 第五行：问题级别 -->
+                <el-form-item label="问题级别">
+                    <el-radio-group v-model="exportForm.issueLevel">
+                        <el-radio value="重大">重大</el-radio>
+                        <el-radio value="严重">严重</el-radio>
+                        <el-radio value="一般">一般</el-radio>
+                    </el-radio-group>
+                </el-form-item>
+
+                <!-- 第六行：导出路径 -->
+                <el-form-item label="导出路径">
+                    <el-input v-model="exportForm.exportPath" placeholder="请输入导出路径"></el-input>
+                </el-form-item>
+            </el-form>
+
+            <template #footer>
+                <el-button @click="showExportDialog = false">取消</el-button>
+                <el-button type="primary" @click="confirmExport">确认导出</el-button>
+            </template>
+        </el-dialog>
+
     </div>
 </div>
 
