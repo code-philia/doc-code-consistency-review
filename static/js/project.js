@@ -1507,7 +1507,6 @@ const app = createApp({
             discoveryMethod: '代码审查',
             issueTracking: 'DDD',
             issueCategories: ['文档', '编码'],
-            issueLevel: '一般',
             exportPath: projectPath.value || ''
         });
 
@@ -1523,7 +1522,7 @@ const app = createApp({
                 }
 
                 // 重置表单并显示对话框
-                exportForm.value.exportPath = projectPath.value || '';
+                exportForm.value.exportPath = (projectPath.value ? `${projectPath.value}/问题单` : '') || '';
                 showExportDialog.value = true;
             } catch (error) {
                 console.error('导出问题单失败:', error);
@@ -1865,7 +1864,8 @@ const app = createApp({
                 const response = await axios.post('/project/issue/update', {
                     path: projectPath.value,
                     issueId: issue.id,
-                    description: issue.description
+                    description: issue.description,
+                    level: issue.level
                 });
                 if (response.data.status === 'success') {
                     ElMessage.success('问题单已更新');

@@ -286,3 +286,123 @@ def chunk_list(lst, limit):
     for i in range(0, len(lst), limit):
         result.append(lst[i:i+limit])
     return result
+
+
+def replace_text_in_docx(doc, replacements):
+    """在DOCX文档中替换文本，保持原有格式"""
+    
+    def replace_text_in_runs(paragraph, old_text, new_text):
+        """在段落的runs中替换文本，保持格式"""
+        full_text = paragraph.text
+        if old_text not in full_text:
+            return False
+        
+        # 找到替换位置
+        start_pos = full_text.find(old_text)
+        end_pos = start_pos + len(old_text)
+        
+        # 遍历runs，找到包含目标文本的runs
+        current_pos = 0
+        runs_to_modify = []
+        
+        for i, run in enumerate(paragraph.runs):
+            run_start = current_pos
+            run_end = current_pos + len(run.text)
+            
+            # 检查这个run是否与目标文本有重叠
+            if run_start < end_pos and run_end > start_pos:
+                runs_to_modify.append({
+                    'index': i,
+                    'run': run,
+                    'start': run_start,
+                    'end': run_end,
+                    'text': run.text
+                })
+            
+            current_pos = run_end
+        
+        if not runs_to_modify:
+            return False
+        
+        # 执行替换
+        # 如果替换文本完全在一个run内
+        if len(runs_to_modify) == 1:
+            run_info = runs_to_modify[0]
+            run = run_info['run']
+            relative_start = start_pos - run_info['start']
+            relative_end = end_pos - run_info['start']
+            
+            new_run_text = (run.text[:relative_start] + 
+                           new_text + 
+                           run.text[relative_end:])
+            run.text = new_run_text
+        else:
+            # 替换文本跨越多个runs
+            for i, run_info in enumerate(runs_to_modify):
+                run = run_info['run']
+                
+                if i == 0:  # 第一个run
+                    relative_start = start_pos - run_info['start']
+                    run.text = run.text[:relative_start] + new_text
+                elif i == len(runs_to_modify) - 1:  # 最后一个run
+                    relative_end = end_pos - run_info['start']
+                    run.text = run.text[relative_end:]
+                else:  # 中间的runs
+                    run.text = ""
+        
+        return True
+    
+    # 替换段落中的文本
+    for paragraph in doc.paragraphs:
+        for old_text, new_text in replacements.items():
+            if old_text in paragraph.text:
+                replace_text_in_runs(paragraph, old_text, new_text)
+    
+    # 替换表格中的文本
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for old_text, new_text in replacements.items():
+                        if old_text in paragraph.text:
+                            replace_text_in_runs(paragraph, old_text, new_text)
+
+def generate_issue_content(issue, form_data):
+    """生成问题单文件内容"""
+    content = []
+    
+    # 表单信息
+    content.append("=" * 50)
+    content.append("问题单信息")
+    content.append("=" * 50)
+    content.append(f"被测产品名称: {form_data.get('productName', '')}")
+    content.append(f"问题单标识: {form_data.get('issueId', '')}")
+    content.append(f"被测产品标识: {form_data.get('productId', '')}")
+    content.append(f"发现手段: {form_data.get('discoveryMethod', '')}")
+    content.append(f"问题追踪: {form_data.get('issueTracking', '')}")
+    content.append(f"问题类别: {', '.join(form_data.get('issueCategories', []))}")
+    content.append(f"问题级别: {issue.get('level', '')}")
+    content.append("")
+    
+    # 问题单详细信息
+    content.append("=" * 50)
+    content.append("问题详情")
+    content.append("=" * 50)
+    content.append(f"问题ID: {issue.get('id', '')}")
+    content.append(f"问题摘要: {issue.get('summary', '')}")
+    content.append(f"问题级别: {issue.get('level', '')}")
+    content.append(f"相关文档: {issue.get('relatedDocFile', '')}")
+    content.append(f"相关代码: {issue.get('relatedCodeFile', '')}")
+    content.append(f"创建时间: {issue.get('createdDate', '')}")
+    content.append(f"状态: {issue.get('status', '')}")
+    content.append("")
+    
+    # 问题描述
+    content.append("=" * 50)
+    content.append("问题描述")
+    content.append("=" * 50)
+    description = issue.get('description', '暂无描述')
+    content.append(description)
+    content.append("")
+    
+    return "\n".join(content)

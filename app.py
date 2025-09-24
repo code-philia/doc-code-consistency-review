@@ -10,10 +10,10 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 import uuid
 from docx import Document
-from docx.shared import Inches
 import io
 
 from code_block import get_all_code_blocks
+from utils import replace_text_in_docx, generate_issue_content
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
@@ -583,6 +583,95 @@ def requirement_decomposition():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
+
+@app.route('/project/export-issues', methods=['POST'])
+def export_issues():
+    try:
+        data = request.json
+        issues = data.get('issues', [])
+        form_data = data.get('formData', {})
+        project_path = data.get('projectPath', '')
+        
+        template_path = os.path.join(os.path.dirname(__file__), 'templates', '问题单模板.docx')
+        
+        if not issues:
+            return jsonify({'status': 'error', 'message': '没有问题单可导出'})
+        
+        export_path = form_data.get('exportPath', project_path)
+        if not export_path:
+            return jsonify({'status': 'error', 'message': '导出路径不能为空'})
+        
+        # 确保导出路径存在
+        if not os.path.exists(export_path):
+            os.makedirs(export_path, exist_ok=True)
+        
+        exported_files = []
+        
+        # 检查是否提供了DOCX模板路径
+        if template_path and os.path.exists(template_path):
+            # 使用DOCX模板导出
+            for i, issue in enumerate(issues, 1):
+                filename = f"问题单_{form_data.get('issueId', 'BBB')}_{i:03d}.docx"
+                file_path = os.path.join(export_path, filename)
+                
+                # 加载DOCX模板
+                doc = Document(template_path)
+                # 生成当前日期（格式：20220121）
+                current_date = datetime.now().strftime("%Y%m%d")
+                
+                replacements = {}
+                
+                replacements["AAAAA软件"] = form_data.get('productName', '')
+                replacements["BBBBB"] = f"{form_data.get('issueId', '')}_{i}"
+                replacements["CCCCC"] = form_data.get('productId', '')
+                replacements["DDDDD"] = form_data.get('discoveryMethod', '')
+                replacements["EEEEE"] = form_data.get('issueTracking', '')
+                replacements["GGGGG"] = current_date
+                
+                issue_categories = form_data.get('issueCategories', [])
+                for category in ['设计', '编码', '测试', '文档', '数据', '其他']:
+                    if category in issue_categories:
+                        replacements[f"□{category}"] = f"■{category}"
+                
+                issue_level = issue.get('level', '')
+                # 将英文级别转换为中文
+                level_mapping = {
+                    'high': '重大',
+                    'medium': '严重', 
+                    'low': '一般'
+                }
+                chinese_level = level_mapping.get(issue_level.lower(), issue_level)
+                
+                for level in ['重大', '严重', '一般']:
+                    if level == chinese_level:
+                        replacements[f"□{level}"] = f"■{level}"
+                
+                replacements["CONTENTCONTENT"] = issue.get('description', '')
+
+                replace_text_in_docx(doc, replacements)
+
+                doc.save(file_path)
+                exported_files.append(filename)
+        else:
+            for i, issue in enumerate(issues, 1):
+                filename = f"问题单_{form_data.get('issueId', 'BBB')}_{i:03d}.txt"
+                file_path = os.path.join(export_path, filename)
+                content = generate_issue_content(issue, form_data)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                exported_files.append(filename)
+        
+        return jsonify({
+            'status': 'success', 
+            'message': f'成功导出 {len(issues)} 个问题单',
+            'files': exported_files,
+            'exportPath': export_path
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 @app.route('/api/align-requirement-to-project', methods=['POST'])
 def align_requirement_to_project():
     """
@@ -999,6 +1088,7 @@ def update_issue_content():
     issue_id = data.get('issueId')
     new_description = data.get('description')
     new_status = data.get('status')
+    new_level = data.get('level')  # 添加问题级别参数
 
     if not all([project_path, issue_id]):
         return jsonify({"status": "error", "message": "缺少项目路径或问题单ID"}), 400
@@ -1018,6 +1108,8 @@ def update_issue_content():
                     issue['description'] = new_description
                 if new_status is not None:
                     issue['status'] = new_status
+                if new_level is not None:
+                    issue['level'] = new_level
                 issue['updatedDate'] = datetime.now().isoformat()
                 issue_found = True
                 break
