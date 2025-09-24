@@ -406,3 +406,66 @@ def generate_issue_content(issue, form_data):
     content.append("")
     
     return "\n".join(content)
+
+def include_related_blocks(related_code, all_code_blocks):
+    """
+    检查查询结果中每个 code_block 的 related_id，将缺失的相关 block 加入结果
+    
+    参数:
+        related_code: 查询返回的相关代码块列表，格式为 [{"file": "xxx", "range": [start, end]}, ...]
+        all_code_blocks: 所有代码块的列表，包含完整的代码块信息
+        
+    返回:
+        包含相关块的完整代码块列表
+    """
+    # 创建一个字典，以便快速查找代码块
+    block_dict = {}
+    for block in all_code_blocks:
+        # 使用文件名和行号范围作为唯一标识
+        key = (block['file'], tuple(block['range']))
+        block_dict[key] = block
+    
+    # 首先根据 file 和 range 匹配到完整的代码块
+    matched_blocks = []
+    for related_item in related_code:
+        file_name = related_item['file']
+        range_info = related_item['range']
+        key = (file_name, tuple(range_info))
+        
+        if key in block_dict:
+            matched_blocks.append(block_dict[key])
+        else:
+            # 如果精确匹配失败，尝试找到包含该范围的代码块
+            for block in all_code_blocks:
+                if (block['file'] == file_name and 
+                    block['range'][0] <= range_info[0] and 
+                    block['range'][1] >= range_info[1]):
+                    matched_blocks.append(block)
+                    break
+    
+    # 创建结果集合，避免重复
+    result_blocks = []
+    added_keys = set()
+    
+    # 添加匹配到的代码块
+    for block in matched_blocks:
+        key = (block['file'], tuple(block['range']))
+        if key not in added_keys:
+            result_blocks.append(block)
+            added_keys.add(key)
+    
+    # 仅检查匹配到的代码块的一层 related_id，不递归
+    for matched_block in matched_blocks:
+        # 检查当前块的 related_id
+        if 'related_id' in matched_block and matched_block['related_id']:
+            for related_id in matched_block['related_id']:
+                # 在所有代码块中查找对应的 related_id
+                for block in all_code_blocks:
+                    if block.get('id') == related_id:
+                        key = (block['file'], tuple(block['range']))
+                        if key not in added_keys:
+                            result_blocks.append(block)
+                            added_keys.add(key)
+                        break
+    
+    return result_blocks

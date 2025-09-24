@@ -13,7 +13,7 @@ from docx import Document
 import io
 
 from code_block import get_all_code_blocks
-from utils import replace_text_in_docx, generate_issue_content
+from utils import replace_text_in_docx, generate_issue_content, include_related_blocks
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
@@ -697,6 +697,9 @@ def align_requirement_to_project():
 
         # 调用对齐函数获取相关代码
         related_code = query_related_code(requirement_text, all_code_blocks, block_limit=50)
+        
+        # 检查并添加 related_id 对应的代码块
+        related_code = include_related_blocks(related_code, all_code_blocks)
         
         # 转换为codeRanges格式
         code_ranges = []
