@@ -145,7 +145,6 @@ def query_review_result(requirement, related_code):
         print(f"审查过程中出错: {str(e)}")
         return f"审查过程中发生错误: {e}", None
 
-
 def parse_review_output(response):
     """
     解析审查输出的JSON
@@ -216,7 +215,41 @@ def query_generated_requirement(related_code):
     
     return output
     
+def query_flow_chart(code_content):
+    prompt = f"""请分析以下代码，生成一个清晰的Mermaid流程图来展示代码的执行流程。
+    代码内容：
+    {code_content}
 
+    要求：
+    1. 使用Mermaid flowchart语法
+    2. 展示主要的执行流程和逻辑分支，包含关键的函数调用和数据流
+    3. 只返回Mermaid代码，不要包含其他解释文字
+    4. 对于输入多段的代码，只考虑主要的部分，不需要为每一段都绘制流程图
+
+    示例：
+    ```mermaid
+    graph TD;
+    A["开始"] --> B["处理数据"];
+    B --> C{{"检查条件?"}};
+    C -->|"是"| D["执行操作"];
+    C -->|"否"| B;
+    D --> E["结束"];
+    ```
+    **注意**所有节点内容需要用引号包围，例如A("..."), B["..."], C{{"..."}}, |"..."|
+    请直接返回Mermaid流程图代码，不要包含其他解释文字和思考过程。"""
+
+    response = query_llm(prompt)
+    mermaid_code = response.content
+
+    mermaid_pattern = r'```(?:mermaid)?\s*\n?(.*?)\n?```'
+    match = re.search(mermaid_pattern, mermaid_code, re.DOTALL)
+    
+    if match:
+        mermaid_code = match.group(1).strip()
+    else:
+        mermaid_code = mermaid_code.strip()
+    
+    return mermaid_code
 
 
 if __name__ == '__main__':

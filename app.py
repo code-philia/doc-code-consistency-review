@@ -2,8 +2,9 @@ import os
 import time
 from flask import Flask, json, render_template, request, jsonify, send_file
 import socket
-from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension
-from agent import query_generated_requirement, query_related_code, query_review_result
+from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension,\
+    replace_text_in_docx, generate_issue_content, include_related_blocks
+from agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart
 import random
 import string
 from datetime import datetime, timedelta
@@ -13,7 +14,6 @@ from docx import Document
 import io
 
 from code_block import get_all_code_blocks
-from utils import replace_text_in_docx, generate_issue_content, include_related_blocks
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
@@ -744,6 +744,26 @@ def align_requirement_to_project():
             "message": f"对齐过程中出错: {str(e)}"
         }), 500
 
+
+@app.route('/api/generate-flowchart', methods=['POST'])
+def generate_flowchart():
+    try:
+        data = request.get_json()
+        code_content = data.get('codeContent')
+        
+        if not code_content:
+            return jsonify({"status": "error", "message": "Missing code content"}), 400
+        
+        mermaid_code = query_flow_chart(code_content)
+
+        return jsonify({
+            "status": "success",
+            "mermaidCode": mermaid_code
+        })
+
+    except Exception as e:
+        print(f"Error generating flowchart: {str(e)}")
+        return jsonify({"status": "error", "message": f"Failed to generate flowchart: {str(e)}"}), 500
 
 @app.route('/api/review-alignment', methods=['POST'])
 def review_alignment():

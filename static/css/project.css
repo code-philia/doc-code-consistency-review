@@ -1780,3 +1780,49 @@
 .el-checkbox {
     margin-right: 0;
 }
+
+.flowchart-container {
+    width: 100%;
+}
+
+.flowchart-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 6px;
+}
+
+.flowchart-actions .el-button {
+    width: 100%;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    padding: 12px 20px;
+}
+
+.flowchart-display {
+    width: 100%;
+}
+
+.mermaid-diagram {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    min-height: 300px;
+}
+
+.mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
+    transform: scale(0.8);
+    transform-origin: center;
+}
+
+.error-message {
+    width: 100%;
+    margin-top: 20px;
+}

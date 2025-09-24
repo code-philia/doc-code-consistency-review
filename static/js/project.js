@@ -82,6 +82,11 @@ const app = createApp({
         const codeFileLines = ref({});
         const codeScale = ref(0);
 
+        // 流程图相关状态
+        const currentFlowchart = ref(null);
+        const isGeneratingFlowchart = ref(false);
+        const flowchartError = ref(null);
+
         /***********************
          * 文件加载相关方法
          ***********************/
@@ -1975,6 +1980,11 @@ const app = createApp({
             showCodeSelectionDialog.value = false;
             showReviewDialog.value = false;
             selectedReviewAlignment.value = null;
+            
+            // 清理流程图状态
+            currentFlowchart.value = null;
+            isGeneratingFlowchart.value = false;
+            flowchartError.value = null;
 
             // 清理页面上的高亮元素
             try {
@@ -1994,6 +2004,88 @@ const app = createApp({
 
             // 暴露到全局，供外部调用（如关闭按钮）
             window.resetProjectState = resetProjectState;
+        };
+
+        /***********************
+         * 流程图相关方法
+         ***********************/
+        const generateFlowchart = async () => {
+            if (!selectedReviewAlignment.value) {
+                ElMessage.error('未选择对齐关系');
+                return;
+            }
+
+            isGeneratingFlowchart.value = true;
+            flowchartError.value = null;
+
+            try {
+                // 构建代码内容字符串
+                const codeRanges = selectedReviewAlignment.value.codeRanges || [];
+                if (codeRanges.length === 0) {
+                    flowchartError.value = '未找到相关代码范围';
+                    ElMessage.error('未找到相关代码范围');
+                    return;
+                }
+
+                let codeContent = "";
+                for (const codeRange of codeRanges) {
+                    codeContent += `文件: ${codeRange.filename}\n`;
+                    codeContent += `代码:\n${codeRange.content}\n\n`;
+                }
+
+                const response = await axios.post('/api/generate-flowchart', {
+                    codeContent: codeContent
+                });
+
+                if (response.data.status === 'success') {
+                    // 将转义的换行符转换为真正的换行符，并清理代码
+                    let mermaidCode = response.data.mermaidCode.replace(/\\n/g, '\n');
+                    
+                    // 清理可能的额外字符和格式问题
+                    mermaidCode = mermaidCode.trim();
+                    
+                    currentFlowchart.value = mermaidCode;
+                    
+                    // 等待DOM更新后渲染Mermaid图表
+                    await nextTick();
+                    try {
+                        const element = document.getElementById('mermaid-flowchart');
+                        if (element) {
+                            // 清空元素内容
+                            element.innerHTML = '';
+                            
+                            // 使用Mermaid 10.x的新API
+                            const { svg } = await mermaid.render('mermaid-graph', mermaidCode);
+                            element.innerHTML = svg;
+                        }
+                    } catch (mermaidError) {
+                        console.error('Mermaid渲染错误:', mermaidError);
+                        console.error('错误的Mermaid代码:', mermaidCode);
+                        flowchartError.value = 'Mermaid图表渲染失败: ' + mermaidError.message;
+                    }
+                    
+                    ElMessage.success('流程图生成成功');
+                } else {
+                    flowchartError.value = response.data.message || '生成流程图失败';
+                    ElMessage.error(flowchartError.value);
+                }
+            } catch (error) {
+                console.error('生成流程图时出错:', error);
+                flowchartError.value = '网络错误或服务器异常';
+                ElMessage.error('生成流程图失败');
+            } finally {
+                isGeneratingFlowchart.value = false;
+            }
+        };
+
+        const regenerateFlowchart = () => {
+            currentFlowchart.value = null;
+            generateFlowchart();
+        };
+
+        const clearFlowchart = () => {
+            currentFlowchart.value = null;
+            flowchartError.value = null;
         };
 
         /***********************
@@ -2092,7 +2184,15 @@ const app = createApp({
             activeReviewTab,
             issueLevelText,
             codeFileLines,
-            codeScale
+            codeScale,
+            
+            // 流程图相关
+            currentFlowchart,
+            isGeneratingFlowchart,
+            flowchartError,
+            generateFlowchart,
+            regenerateFlowchart,
+            clearFlowchart
         };
     }
 });

@@ -21,6 +21,7 @@
     <script src="../static/js/thirdParty/highlight/highlight.min.js"></script>
     <script src="../static/js/thirdParty/texmath.min.js"></script>
     <script src="../static/js/thirdParty/markdown-it.min.js"></script>
+    <script src="../static/js/thirdParty/mermaid.min.js"></script>
 </head>
 <body>
 <div id="app">
@@ -576,8 +577,37 @@
                             </div>
                         </el-tab-pane>
                         <el-tab-pane label="代码流程图" name="flowchart">
-                            <div class="empty-message">
-                                代码流程图功能正在开发中...
+                            <div class="flowchart-container">
+                                <div v-if="!currentFlowchart" class="flowchart-actions">
+                                    <el-button 
+                                        type="plain" 
+                                        @click="generateFlowchart" 
+                                        :loading="isGeneratingFlowchart"
+                                    >
+                                        <span v-if="!isGeneratingFlowchart">生成流程图</span>
+                                        <span v-else>生成中...</span>
+                                    </el-button>
+                                </div>
+                                <div v-if="currentFlowchart" class="flowchart-display">
+                                    <div class="flowchart-actions" style="margin-bottom: 10px;">
+                                        <el-button 
+                                            type="plain" 
+                                            @click="regenerateFlowchart" 
+                                            :loading="isGeneratingFlowchart"
+                                        >
+                                            重新生成
+                                        </el-button>
+                                    </div>
+                                    <div id="mermaid-flowchart" class="mermaid-diagram"></div>
+                                </div>
+                                <div v-if="flowchartError" class="error-message">
+                                    <el-alert 
+                                        :title="flowchartError" 
+                                        type="error" 
+                                        show-icon 
+                                        :closable="false"
+                                    ></el-alert>
+                                </div>
                             </div>
                         </el-tab-pane>
                     </el-tabs>
