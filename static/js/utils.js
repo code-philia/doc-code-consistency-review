@@ -421,8 +421,30 @@ export function scrollToRange(targetStart, targetEnd, type = 'doc') {
     }
 
     if (firstHighlightedElement) {
-        firstHighlightedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        scrollElementIntoContainer(firstHighlightedElement, editorDiv);
     }
+}
+
+function scrollElementIntoContainer(element, container) {
+    if (!element || !container) return;
+    
+    const elementRect = element.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    
+    const elementTop = elementRect.top - containerRect.top + container.scrollTop;
+    
+    const containerCenter = container.clientHeight / 2;
+    const elementCenter = elementRect.height / 2;
+    
+    let targetScrollTop = elementTop - containerCenter + elementCenter;
+    
+    const maxScrollTop = container.scrollHeight - container.clientHeight;
+    targetScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+    
+    container.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+    });
 }
 
 function createTemporaryHighlightInElement(element, start, end) {

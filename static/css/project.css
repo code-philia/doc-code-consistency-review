@@ -37,6 +37,22 @@
     overflow: hidden;
 }
 
+.el-splitter,
+.el-splitter-panel,
+.split-panel,
+.alignment-view,
+.split-view {
+    overflow: hidden !important;
+}
+
+.split-panel.req-panel,
+.split-panel.code-panel,
+.split-panel.right-sidebar {
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+}
+
 .header {
     background-color: var(--header-bg);
     color: var(--text-light);
@@ -185,7 +201,7 @@
 .main-container {
     display: flex;
     flex: 1;
-    overflow: hidden;
+    overflow: hidden !important;
 }
 
 .sidebar {
@@ -322,7 +338,7 @@
     display: flex;
     flex-direction: column;
     background-color: white;
-    overflow: hidden;
+    overflow: hidden !important;
 }
 
 .stats-view {
@@ -524,13 +540,14 @@
 }
 
 .content-card {
-    height: 95%;
+    height: calc(100% - 10px);
     background-color: white;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     padding: 4px;
-    margin-bottom: 16px;
-    overflow: hidden;
+    overflow: hidden !important;
+    position: relative;
+    flex: 1;
 }
 
 .content-header {
