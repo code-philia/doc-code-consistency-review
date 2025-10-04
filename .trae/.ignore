@@ -1,0 +1,7 @@
+__pycache__
+doc2md/
+images/
+markdown-bundler/
+static/assets/
+static/fontawesome/
+static/js/thirdParty/
