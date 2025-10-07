@@ -596,6 +596,35 @@ header {
     box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
 }
 
+/* 文件夹选择按钮组样式 */
+.folder-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.folder-input-group .el-input {
+    flex: 1;
+}
+
+.folder-select-btn {
+    flex-shrink: 0;
+    padding: 8px 16px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    color: white !important;
+    transition: all 0.3s ease !important;
+}
+
+.folder-select-btn:hover {
+    background-color: var(--accent-hover) !important;
+    border-color: var(--accent-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 120, 212, 0.3) !important;
+}
+
 /* Dialog footer简洁样式 */
 .new-project-dialog .el-dialog__footer,
 .el-dialog .el-dialog__footer {

@@ -12,12 +12,16 @@ from werkzeug.utils import secure_filename
 import uuid
 from docx import Document
 import io
+import shutil
 
 from code_block import get_all_code_blocks
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
 MAX_HISTORY_ITEMS = 15 # 最多记录15条历史
+
+# 定义testdata目录路径
+TESTDATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'testdata')
 
 app = Flask(__name__)
 
@@ -339,6 +343,70 @@ def upload_files():
     except Exception as e:
         print(f"Error during file upload: {e}")
         return jsonify({"status": "error", "message": f"服务器处理文件上传时出错: {e}"}), 500
+
+
+@app.route('/project/upload-folder', methods=['POST'])
+def upload_folder():
+    """处理文件夹上传功能"""
+    try:
+        # 获取上传的文件和文件夹名称
+        files = request.files.getlist('files')
+        paths = request.form.getlist('paths')
+        folder_name = request.form.get('folderName')
+        
+        if not files or not folder_name:
+            return jsonify({"status": "error", "message": "没有接收到文件或文件夹名称"}), 400
+        
+        # 确保testdata目录存在
+        os.makedirs(TESTDATA_DIR, exist_ok=True)
+        
+        # 创建目标文件夹路径
+        target_folder_path = os.path.join(TESTDATA_DIR, folder_name)
+        
+        # 如果目标文件夹已存在，添加时间戳后缀
+        if os.path.exists(target_folder_path):
+            timestamp = int(time.time())
+            target_folder_path = os.path.join(TESTDATA_DIR, f"{folder_name}_{timestamp}")
+        
+        # 创建目标文件夹
+        os.makedirs(target_folder_path, exist_ok=True)
+        
+        # 保存所有文件，保持目录结构
+        for file, relative_path in zip(files, paths):
+            if not file.filename:
+                continue
+                
+            # 移除文件夹名称前缀，获取相对路径
+            if relative_path.startswith(folder_name + '/'):
+                file_relative_path = relative_path[len(folder_name) + 1:]
+            else:
+                file_relative_path = relative_path
+            
+            # 构建完整的目标文件路径
+            target_file_path = os.path.join(target_folder_path, file_relative_path)
+            
+            # 安全检查：确保目标路径在目标文件夹内
+            target_file_path = os.path.abspath(target_file_path)
+            if not target_file_path.startswith(os.path.abspath(target_folder_path)):
+                return jsonify({"status": "error", "message": f"检测到不安全的路径: {relative_path}"}), 400
+            
+            # 创建目标目录
+            target_dir = os.path.dirname(target_file_path)
+            os.makedirs(target_dir, exist_ok=True)
+            
+            # 保存文件
+            file.save(target_file_path)
+        
+        return jsonify({
+            "status": "success", 
+            "message": f"文件夹 '{folder_name}' 上传成功",
+            "serverPath": target_folder_path,
+            "folderName": os.path.basename(target_folder_path)
+        }), 200
+        
+    except Exception as e:
+        print(f"Error during folder upload: {e}")
+        return jsonify({"status": "error", "message": f"文件夹上传失败: {str(e)}"}), 500
 
 
 @app.route('/project/file-content', methods=['GET'])

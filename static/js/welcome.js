@@ -48,6 +48,7 @@ const app = createApp({
         const showImportDialog = ref(false);
         const importPath = ref('');
         const isImporting = ref(false);
+        const folderUpload = ref(null);
 
         // ====== 方法 ======
         const fetchRecentProjects = async () => {
@@ -140,6 +141,59 @@ const app = createApp({
                 });
         };
 
+        const triggerFolderUpload = () => {
+            folderUpload.value.click();
+        };
+
+        const handleFolderUpload = async (event) => {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+
+            try {
+                // 创建FormData对象
+                const formData = new FormData();
+                
+                // 获取文件夹名称（从第一个文件的路径中提取）
+                const firstFile = files[0];
+                const pathParts = firstFile.webkitRelativePath.split('/');
+                const folderName = pathParts[0];
+                
+                // 添加所有文件到FormData
+                files.forEach(file => {
+                    formData.append('files', file);
+                    formData.append('paths', file.webkitRelativePath);
+                });
+                
+                formData.append('folderName', folderName);
+                
+                ElMessage.info('正在上传文件夹，请稍候...');
+                
+                // 发送到后端
+                const response = await axios.post('/project/upload-folder', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                
+                if (response.data.status === 'success') {
+                    // 自动填充项目信息
+                    projectForm.projectName = folderName;
+                    projectForm.projectLocation = response.data.serverPath;
+                    
+                    ElMessage.success(`文件夹 "${folderName}" 上传成功！`);
+                } else {
+                    ElMessage.error(response.data.message || '上传失败');
+                }
+                
+            } catch (error) {
+                console.error('文件夹上传失败:', error);
+                ElMessage.error(`上传失败: ${error.response?.data?.message || error.message}`);
+            }
+            
+            // 清空文件选择
+            event.target.value = '';
+        };
+
         // ====== 监听 ======
         watch(() => projectForm.projectLocation, (newPath) => {
             if (creationType.value === 'folder' && newPath) {
@@ -170,6 +224,9 @@ const app = createApp({
             isImporting,
             openImportDialog,
             handleImportProject,
+            folderUpload,
+            triggerFolderUpload,
+            handleFolderUpload,
         };
     }
 });

@@ -129,7 +129,13 @@
                                         <p class="form-description">选择一个包含 `code_repo` 和 `doc_repo` 子目录的文件夹。系统将扫描并生成元数据。</p>
                                         <el-form :model="projectForm" label-position="top" class="project-form">
                                             <el-form-item label="项目文件夹路径">
-                                                <el-input v-model="projectForm.projectLocation" placeholder="请粘贴或输入项目文件夹的完整路径"></el-input>
+                                                <div class="folder-input-group">
+                                                    <el-input v-model="projectForm.projectLocation" placeholder="请粘贴或输入项目文件夹的完整路径"></el-input>
+                                                        <el-button type="primary" @click="triggerFolderUpload" class="folder-select-btn">
+                                                            <i class="fas fa-folder-open"></i> 选择文件夹
+                                                        </el-button>
+                                                </div>
+                                                <input type="file" ref="folderUpload" @change="handleFolderUpload" webkitdirectory multiple style="display: none;">
                                             </el-form-item>
                                             <el-form-item label="项目名称">
                                                 <el-input v-model="projectForm.projectName" placeholder="（可选）默认为文件夹名称"></el-input>
