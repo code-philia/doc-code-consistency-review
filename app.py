@@ -3,7 +3,7 @@ import time
 from flask import Flask, json, render_template, request, jsonify, send_file
 import socket
 from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension,\
-    replace_text_in_docx, generate_issue_content, include_related_blocks
+    replace_text_in_docx, generate_issue_content, include_related_blocks, split_markdown_to_blocks
 from agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart
 import random
 import string
@@ -13,6 +13,7 @@ import uuid
 from docx import Document
 import io
 import shutil
+import re
 
 from code_block import get_all_code_blocks
 
@@ -645,6 +646,102 @@ def requirement_decomposition():
         return jsonify({
             'status': 'success',
             'message': '需求分解完成',
+            'processedCount': processed_count
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+@app.route('/api/auto-markdown-split', methods=['POST'])
+def auto_markdown_split():
+    """处理自动Markdown分解请求"""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        
+        if not project_path:
+            return jsonify({'status':'error', 'message': '缺少项目路径'})
+
+        # 获取项目中的文档文件
+        doc_repo_path = os.path.join(project_path, 'doc_repo')
+        if not os.path.exists(doc_repo_path):
+            return jsonify({'status':'error', 'message': '文档目录不存在'})
+
+        # 查找所有markdown文件
+        md_files = []
+        for root, dirs, files in os.walk(doc_repo_path):
+            for file in files:
+                if file.lower().endswith('.md'):
+                    md_files.append(os.path.join(root, file))
+        
+        if not md_files:
+            return jsonify({'status':'error', 'message': '未找到Markdown文档'})
+
+        # 确保results目录存在
+        results_dir = os.path.join(project_path, 'results')
+        os.makedirs(results_dir, exist_ok=True)
+        
+        processed_count = 0
+        
+        # 处理每个markdown文件
+        for md_file in md_files:
+            with open(md_file, 'r', encoding='utf-8') as f:
+                md_content = f.read()
+            
+            # 分解markdown内容
+            blocks = split_markdown_to_blocks(md_content)
+            
+            if not blocks:
+                continue
+            
+            # 构建需求点
+            doc_name = os.path.basename(md_file)
+            doc_base_name = get_filename_without_extension(doc_name)
+            alignment_file = os.path.join(results_dir, f'{doc_base_name}.json')
+            
+            # 读取现有的对齐结果（如果存在）
+            existing_alignments = {}
+            if os.path.exists(alignment_file):
+                try:
+                    with open(alignment_file, 'r', encoding='utf-8') as f:
+                        existing_alignments = json.load(f)
+                except:
+                    existing_alignments = {}
+            
+            # 为每个块创建需求点
+            for i, block_info in enumerate(blocks):
+                req_id = f"auto_{doc_base_name}_{i+1}"
+                
+                # 提取标题作为需求点名称
+                lines = block_info['content'].split('\n')
+                title = lines[0].strip('#').strip() if lines else f"需求点 {i+1}"
+                
+                requirement_point = {
+                    'id': req_id,
+                    'name': title,
+                    'docRanges': [{
+                        'filename': doc_name,
+                        'documentId': doc_name,
+                        'content': block_info['content'],
+                        'start': block_info['start'],
+                        'end': block_info['end']
+                    }],
+                    'codeRanges': [],
+                    'isReviewed': False,
+                    'reviewThoughts': ''
+                }
+                
+                existing_alignments[req_id] = requirement_point
+                processed_count += 1
+            
+            # 保存更新后的对齐结果
+            with open(alignment_file, 'w', encoding='utf-8') as f:
+                json.dump(existing_alignments, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            'status': 'success',
+            'message': '自动分解完成',
             'processedCount': processed_count
         })
         

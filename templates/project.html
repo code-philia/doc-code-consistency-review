@@ -48,8 +48,16 @@
             <div class="menu-item">
                 智能工具
                 <div class="dropdown">
-                    <div class="dropdown-item" @click="startAutoSplit">
+                    <div class="dropdown-item has-submenu">
                         <i class="fas fa-sitemap"></i> 需求分解
+                        <div class="submenu">
+                            <div class="submenu-item" @click="startAutoSplit">
+                                <i class="fas fa-file-import"></i> 从标注文件
+                            </div>
+                            <div class="submenu-item" @click="startAutoMarkdownSplit">
+                                <i class="fas fa-magic"></i> 自动分解
+                            </div>
+                        </div>
                     </div>
                     <div class="dropdown-item" @click="startAutoAlignment" :class="{disabled: isAutoAligning}">
                         <i class="fas fa-link"></i> 

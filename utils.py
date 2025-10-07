@@ -469,3 +469,50 @@ def include_related_blocks(related_code, all_code_blocks):
                         break
     
     return result_blocks
+
+def split_markdown_to_blocks(md_content):
+    """
+    将Markdown内容按标题分解为块，返回包含内容和字符偏移量的块信息
+    参考split_markdown.py的实现逻辑
+    """
+    original_content = md_content
+    target_flag = '# <div class="page"></div>'
+    content_start_offset = 0
+    
+    # 如果存在目标标志，从标志后开始处理
+    if target_flag in md_content:
+        parts = md_content.split(target_flag, 1)
+        if len(parts) > 1:
+            content_start_offset = len(parts[0]) + len(target_flag)
+            md_content = parts[1]
+    
+    # 匹配所有标题
+    heading_pattern = re.compile(r'^(#{1,}) (.*)$', re.M)
+    headings = [(match.start(), len(match.group(1)), match.group(0))
+                for match in heading_pattern.finditer(md_content)]
+    
+    blocks = []
+    n = len(headings)
+    
+    # 处理每个标题间的内容，筛选叶子标题
+    for i in range(n):
+        cur_pos, cur_level, cur_heading = headings[i]
+        # 确定当前标题的结束位置
+        next_pos = headings[i+1][0] if (i+1 < n) else len(md_content)
+        # 提取当前标题到下一个标题之间的内容
+        content = md_content[cur_pos:next_pos].strip()
+        
+        if '\n' not in content:  # 只有标题没有内容，不保存
+            continue
+            
+        # 计算在原始文档中的字符偏移量
+        actual_start = content_start_offset + cur_pos
+        actual_end = content_start_offset + cur_pos + len(content)
+        
+        blocks.append({
+            'content': content,
+            'start': actual_start,
+            'end': actual_end
+        })
+    
+    return blocks

@@ -184,6 +184,11 @@
     border-bottom: 1px solid #eee;
     font-size: 10px;
     cursor: pointer;
+    position: relative;
+}
+
+.dropdown-item.has-submenu:hover .submenu {
+    display: block;
 }
 
 .dropdown-item i {

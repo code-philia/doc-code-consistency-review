@@ -642,6 +642,30 @@ const app = createApp({
             }
         }
 
+        const startAutoMarkdownSplit = async () => {
+            if (projectFiles.value.doc_files.length === 0) {
+                ElMessage.warning('请先添加需求文档');
+                return;
+            }
+            ElMessage.info('开始自动分解需求文档...');
+            try {
+                const response = await axios.post('api/auto-markdown-split',{
+                    projectPath: projectPath.value
+                });
+                if(response.data.status==='success'){
+                    ElMessage.success('自动分解完成！');
+                    await fetchAlignments();
+                }
+                else{
+                    ElMessage.error(`自动分解失败: ${response.data.message}`);
+                }
+
+            } catch (error) {
+                console.error('自动分解过程中出现错误:', error);
+                ElMessage.error(`自动分解失败: ${error.message}`);
+            }
+        }
+
         /***********************
          * 自动对齐功能
          ***********************/
@@ -2126,6 +2150,7 @@ const app = createApp({
             showCodeSelectionDialog,
             // 需求分解功能
             startAutoSplit,
+            startAutoMarkdownSplit,
             // 自动对齐功能
             startAutoAlignment,
             isAutoAligning,
