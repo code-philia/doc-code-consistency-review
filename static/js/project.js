@@ -8,6 +8,7 @@ const { ElMessage, ElMessageBox } = ElementPlus;
 import {
     regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike
 } from './utils.js';
+import { mermaid } from './thirdParty/bundle.js';
 
 /****************************
  * 工具函数
