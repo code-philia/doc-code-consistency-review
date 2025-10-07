@@ -837,7 +837,130 @@ def export_issues():
         return jsonify({'status': 'error', 'message': str(e)})
 
 
-@app.route('/api/align-requirement-to-project', methods=['POST'])
+@app.route('/project/export-issues-download', methods=['POST'])
+def export_issues_download():
+    """新的导出API，生成文件但不保存到服务器，返回文件信息供前端下载"""
+    try:
+        data = request.json
+        issues = data.get('issues', [])
+        form_data = data.get('formData', {})
+        project_path = data.get('projectPath', '')
+        
+        template_path = os.path.join(os.path.dirname(__file__), 'templates', '问题单模板.docx')
+        
+        if not issues:
+            return jsonify({'status': 'error', 'message': '没有问题单可导出'})
+        
+        # 创建临时目录存储文件
+        temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir, exist_ok=True)
+        
+        exported_files = []
+        
+        # 检查是否提供了DOCX模板路径
+        if template_path and os.path.exists(template_path):
+            # 使用DOCX模板导出
+            for i, issue in enumerate(issues, 1):
+                filename = f"问题单_{form_data.get('issueId', 'BBB')}_{i:03d}.docx"
+                file_path = os.path.join(temp_dir, filename)
+                
+                # 加载DOCX模板
+                doc = Document(template_path)
+                # 生成当前日期（格式：20220121）
+                current_date = datetime.now().strftime("%Y%m%d")
+                
+                replacements = {}
+                
+                replacements["AAAAA软件"] = form_data.get('productName', '')
+                replacements["BBBBB"] = f"{form_data.get('issueId', '')}_{i}"
+                replacements["CCCCC"] = form_data.get('productId', '')
+                replacements["DDDDD"] = form_data.get('discoveryMethod', '')
+                replacements["EEEEE"] = form_data.get('issueTracking', '')
+                replacements["GGGGG"] = current_date
+                
+                issue_categories = form_data.get('issueCategories', [])
+                for category in ['设计', '编码', '测试', '文档', '数据', '其他']:
+                    if category in issue_categories:
+                        replacements[f"□{category}"] = f"■{category}"
+                
+                issue_level = issue.get('level', '')
+                # 将英文级别转换为中文
+                level_mapping = {
+                    'high': '重大',
+                    'medium': '严重', 
+                    'low': '一般'
+                }
+                chinese_level = level_mapping.get(issue_level.lower(), issue_level)
+                
+                for level in ['重大', '严重', '一般']:
+                    if level == chinese_level:
+                        replacements[f"□{level}"] = f"■{level}"
+                
+                replacements["CONTENTCONTENT"] = issue.get('description', '')
+
+                replace_text_in_docx(doc, replacements)
+
+                doc.save(file_path)
+                exported_files.append({
+                    'filename': filename,
+                    'path': file_path
+                })
+        else:
+            for i, issue in enumerate(issues, 1):
+                filename = f"问题单_{form_data.get('issueId', 'BBB')}_{i:03d}.txt"
+                file_path = os.path.join(temp_dir, filename)
+                content = generate_issue_content(issue, form_data)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                exported_files.append({
+                    'filename': filename,
+                    'path': file_path
+                })
+        
+        return jsonify({
+            'status': 'success', 
+            'message': f'成功生成 {len(issues)} 个问题单文件',
+            'files': exported_files
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+@app.route('/project/download-file/<filename>', methods=['GET'])
+def download_file(filename):
+    """下载临时文件并在下载后删除"""
+    try:
+        temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
+        file_path = os.path.join(temp_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'status': 'error', 'message': '文件不存在'}), 404
+        
+        # 读取文件内容到内存
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+        
+        # 立即删除临时文件
+        try:
+            os.remove(file_path)
+            print(f"已删除临时文件: {file_path}")
+        except Exception as e:
+            print(f"删除临时文件失败: {e}")
+        
+        # 从内存返回文件
+        return send_file(
+            io.BytesIO(file_data),
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document' if filename.endswith('.docx') else 'text/plain'
+        )
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 def align_requirement_to_project():
     """
     为单个需求点在项目中查找相关代码并返回codeRanges格式的结果
