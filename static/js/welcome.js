@@ -194,6 +194,12 @@ const app = createApp({
             event.target.value = '';
         };
 
+        const refreshHistory = async () => {
+            ElMessage.info('正在刷新历史记录...');
+            await fetchRecentProjects();
+            ElMessage.success('历史记录已刷新！');
+        };
+
         // ====== 监听 ======
         watch(() => projectForm.projectLocation, (newPath) => {
             if (creationType.value === 'folder' && newPath) {
@@ -227,6 +233,7 @@ const app = createApp({
             folderUpload,
             triggerFolderUpload,
             handleFolderUpload,
+            refreshHistory,
         };
     }
 });
