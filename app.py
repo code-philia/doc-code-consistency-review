@@ -199,6 +199,40 @@ def get_project_history():
         except json.JSONDecodeError:
             return jsonify([])
 
+@app.route('/project/history', methods=['DELETE'])
+def delete_project_history():
+    """删除指定的历史记录"""
+    data = request.json
+    project_path = data.get('path')
+    
+    if not project_path:
+        return jsonify({"status": "error", "message": "项目路径不能为空"}), 400
+    
+    if not os.path.exists(HISTORY_FILE):
+        return jsonify({"status": "error", "message": "历史记录文件不存在"}), 404
+    
+    try:
+        with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+            history = json.load(f)
+        
+        # 查找并删除指定的历史记录
+        original_length = len(history)
+        history = [item for item in history if item.get('path') != project_path]
+        
+        if len(history) == original_length:
+            return jsonify({"status": "error", "message": "未找到指定的历史记录"}), 404
+        
+        # 写回文件
+        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(history, f, indent=4, ensure_ascii=False)
+        
+        return jsonify({"status": "success", "message": "历史记录删除成功"})
+    
+    except json.JSONDecodeError:
+        return jsonify({"status": "error", "message": "历史记录文件格式错误"}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"删除历史记录时出错: {e}"}), 500
+
 @app.route('/project/open', methods=['POST'])
 def open_project():
     """当用户打开一个项目时，更新其历史记录"""
@@ -960,7 +994,7 @@ def download_file(filename):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
+@app.route('/api/align-requirement-to-project', methods=['POST'])
 def align_requirement_to_project():
     """
     为单个需求点在项目中查找相关代码并返回codeRanges格式的结果
@@ -1042,7 +1076,15 @@ def generate_flowchart():
         if not code_content:
             return jsonify({"status": "error", "message": "Missing code content"}), 400
         
-        mermaid_code = query_flow_chart(code_content)
+        # mermaid_code = query_flow_chart(code_content)
+        mermaid_code = """
+        graph TD;
+        A["开始"] --> B["处理数据"];
+        B --> C{{"检查条件?"}};
+        C -->|"是"| D["执行操作"];
+        C -->|"否"| B;
+        D --> E["结束"];
+        """
 
         return jsonify({
             "status": "success",

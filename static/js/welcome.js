@@ -50,6 +50,14 @@ const app = createApp({
         const isImporting = ref(false);
         const folderUpload = ref(null);
 
+        // 上下文菜单状态
+        const contextMenu = reactive({
+            show: false,
+            x: 0,
+            y: 0,
+            project: null
+        });
+
         // ====== 方法 ======
         const fetchRecentProjects = async () => {
             try {
@@ -200,6 +208,37 @@ const app = createApp({
             ElMessage.success('历史记录已刷新！');
         };
 
+        // 上下文菜单方法
+        const showContextMenu = (event, project) => {
+            event.preventDefault();
+            contextMenu.show = true;
+            contextMenu.x = event.clientX;
+            contextMenu.y = event.clientY;
+            contextMenu.project = project;
+        };
+
+        const hideContextMenu = () => {
+            contextMenu.show = false;
+            contextMenu.project = null;
+        };
+
+        const deleteHistoryItem = async () => {
+            if (!contextMenu.project) return;
+            
+            try {
+                await axios.delete('/project/history', {
+                    data: { path: contextMenu.project.path }
+                });
+                ElMessage.success('历史记录已删除！');
+                await fetchRecentProjects(); // 刷新列表
+            } catch (err) {
+                console.error('删除历史记录失败:', err);
+                ElMessage.error(`删除失败: ${err.response?.data?.message || err.message}`);
+            } finally {
+                hideContextMenu();
+            }
+        };
+
         // ====== 监听 ======
         watch(() => projectForm.projectLocation, (newPath) => {
             if (creationType.value === 'folder' && newPath) {
@@ -234,6 +273,10 @@ const app = createApp({
             triggerFolderUpload,
             handleFolderUpload,
             refreshHistory,
+            contextMenu,
+            showContextMenu,
+            hideContextMenu,
+            deleteHistoryItem,
         };
     }
 });

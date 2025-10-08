@@ -58,13 +58,12 @@
                             </div>
                             <div class="history-actions">
                                 <button class="history-btn" @click="refreshHistory"><i class="fas fa-sync"></i> 刷新</button>
-                                <button class="history-btn"><i class="fas fa-filter"></i> 筛选</button>
                             </div>
                         </div>
                         
                         <div class="history-list">
                             <div v-if="recentProjects.length > 0" class="recent-list">
-                                <div v-for="project in recentProjects" :key="project.path" class="recent-item" @click="openProject(project)">
+                                <div v-for="project in recentProjects" :key="project.path" class="recent-item" @click="openProject(project)" @contextmenu.prevent="showContextMenu($event, project)">
                                     <div class="recent-icon">
                                         <i class="fas fa-folder"></i>
                                     </div>
@@ -80,6 +79,17 @@
                                 <p>还没有项目历史记录，快去创建一个新项目吧！</p>
                             </div>
                         </div>
+                        
+                        <!-- 右键上下文菜单 -->
+                        <div v-if="contextMenu.show" class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
+                            <div class="context-menu-item" @click="deleteHistoryItem">
+                                <i class="fas fa-trash"></i>
+                                <span>删除历史记录</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 上下文菜单遮罩层 -->
+                        <div v-if="contextMenu.show" class="context-menu-overlay" @click="hideContextMenu"></div>
                     </div>
                     
                     <!-- 右侧操作区域 -->
