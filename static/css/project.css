@@ -1848,7 +1848,7 @@
 }
 
 .el-tree-node.is-current > .el-tree-node__content {
-    background-color: #edfeff !important;
+    background-color: #ffffff !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 

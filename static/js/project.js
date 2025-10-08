@@ -926,9 +926,9 @@ const app = createApp({
         const highlightRequirementRange = (start, end, alignmentId) => {
             const highlights = highlightRange(start, end, 'doc', alignmentId);
             
-            // 设置浅灰色背景和标识属性
+            // 设置淡雅的蓝色背景和标识属性
             highlights.forEach(highlight => {
-                highlight.style.backgroundColor = 'rgba(189, 195, 199, 0.3)';
+                highlight.style.backgroundColor = 'rgba(173, 216, 230, 0.25)';
                 highlight.classList.add('requirement-highlight');
                 highlight.setAttribute('data-alignment-id', alignmentId);
                 highlight.setAttribute('data-range-start', start);
@@ -940,9 +940,9 @@ const app = createApp({
         const highlightCodeRange = (start, end, alignmentId) => {
             const highlights = highlightRange(start, end, 'code', alignmentId);
             
-            // 设置浅灰色背景和标识属性
+            // 设置淡雅的绿色背景和标识属性
             highlights.forEach(highlight => {
-                highlight.style.backgroundColor = 'rgba(189, 195, 199, 0.3)';
+                highlight.style.backgroundColor = 'rgba(173, 216, 230, 0.25)';
                 highlight.classList.add('code-highlight');
                 highlight.setAttribute('data-alignment-id', alignmentId);
                 highlight.setAttribute('data-range-start', start);
@@ -1272,8 +1272,8 @@ const app = createApp({
                     transition: element.style.transition
                 };
                 
-                // 添加醒目的黄色高亮
-                element.style.backgroundColor = '#ffff00'; // 醒目的黄色
+                // 添加淡雅的黄色高亮
+                element.style.backgroundColor = 'rgba(255, 255, 183, 0.8)'; // 淡雅的黄色
                 element.style.transition = 'background-color 0.3s ease';
             });
             
@@ -1309,8 +1309,8 @@ const app = createApp({
                     transition: element.style.transition
                 };
                 
-                // 添加醒目的黄色高亮
-                element.style.backgroundColor = '#ffff00'; // 醒目的黄色
+                // 添加淡雅的黄色高亮
+                element.style.backgroundColor = 'rgba(255, 255, 183, 0.8)'; // 淡雅的黄色
                 element.style.transition = 'background-color 0.3s ease';
             });
             

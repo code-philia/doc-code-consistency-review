@@ -404,8 +404,7 @@ export function scrollToRange(targetStart, targetEnd, type = 'doc') {
                     boxShadow: highlight.style.boxShadow
                 };
 
-                highlight.style.backgroundColor = 'rgba(255, 217, 0, 0.4)';
-                highlight.style.boxShadow = '0 0 8px 4px rgba(255, 215, 0, 0.5)';
+                highlight.style.backgroundColor = 'rgba(255, 255, 183, 0.8)';
 
                 currentTemporaryHighlights[type].push(highlight);
 
