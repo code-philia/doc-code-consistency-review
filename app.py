@@ -234,6 +234,41 @@ def delete_project_history():
     except Exception as e:
         return jsonify({"status": "error", "message": f"删除历史记录时出错: {e}"}), 500
 
+@app.route('/project/delete', methods=['POST'])
+def delete_project():
+    """删除项目目录和历史记录"""
+    data = request.json
+    project_path = data.get('path')
+    
+    if not project_path:
+        return jsonify({"status": "error", "message": "项目路径不能为空"}), 400
+    
+    if not os.path.exists(project_path):
+        return jsonify({"status": "error", "message": "项目路径不存在"}), 404
+    
+    try:
+        # 删除项目目录
+        shutil.rmtree(project_path)
+        
+        # 从历史记录中删除项目条目
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+                history = json.load(f)
+            
+            # 过滤掉要删除的项目
+            history = [item for item in history if item.get('path') != project_path]
+            
+            # 写回历史记录文件
+            with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+                json.dump(history, f, indent=4, ensure_ascii=False)
+        
+        return jsonify({"status": "success", "message": "项目删除成功"})
+        
+    except PermissionError:
+        return jsonify({"status": "error", "message": "没有权限删除项目文件"}), 403
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"删除项目时出错: {str(e)}"}), 500
+
 @app.route('/project/open', methods=['POST'])
 def open_project():
     """当用户打开一个项目时，更新其历史记录"""

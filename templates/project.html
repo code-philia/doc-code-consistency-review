@@ -33,6 +33,9 @@
                     <div class="dropdown-item" style="cursor: pointer;" onclick="closeProject()">
                         <i class="fas fa-times-circle"></i> 关闭项目
                     </div>
+                    <div class="dropdown-item" style="cursor: pointer;" @click="deleteProject()">
+                        <i class="fas fa-trash-alt"></i> 删除项目
+                    </div>
                 </div>
             </div>
             <div class="menu-item">
@@ -733,20 +736,18 @@
                     </el-checkbox-group>
                 </el-form-item>
 
-                <!-- 第五行：导出文件夹 -->
-                <el-form-item label="导出文件夹">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <el-input 
-                            v-model="exportForm.selectedFolderName" 
-                            placeholder="请选择导出文件夹" 
-                            readonly
-                            style="flex: 1;"
-                        ></el-input>
-                        <el-button type="primary" @click="selectExportFolder" :icon="'folder'">
-                            <i class="fas fa-folder-open"></i> 选择文件夹
-                        </el-button>
-                    </div>
-                </el-form-item>
+                <!-- 导出说明 -->
+                <el-alert
+                    title="导出说明"
+                    type="info"
+                    :closable="false"
+                    show-icon
+                    style="margin-bottom: 20px;"
+                >
+                    <template #default>
+                        <p style="margin: 0;">所有已确认的问题单将被打包成zip文件并自动下载到浏览器默认下载目录。</p>
+                    </template>
+                </el-alert>
             </el-form>
 
             <template #footer>

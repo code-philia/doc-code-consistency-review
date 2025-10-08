@@ -1605,6 +1605,42 @@ const app = createApp({
             }
         };
 
+        // 删除项目
+        const deleteProject = async () => {
+            try {
+                const result = await ElMessageBox.confirm(
+                    '这将删除服务器上的项目文件，确认删除？',
+                    '删除项目',
+                    {
+                        confirmButtonText: '确认删除',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
+                    }
+                );
+
+                if (result === 'confirm') {
+                    // 调用后端API删除项目
+                    const response = await axios.post('/project/delete', {
+                        path: projectPath.value
+                    });
+                    
+                    if (response.data.status === 'success') {
+                        ElMessage.success('项目删除成功');
+                        // 跳转到欢迎页面
+                        window.location.href = '/';
+                    } else {
+                        ElMessage.error('删除失败：' + response.data.message);
+                    }
+                }
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('删除项目失败:', error);
+                    ElMessage.error('删除失败：' + (error.response?.data?.message || error.message));
+                }
+            }
+        };
+
         /***********************
          * 问题单管理
          ***********************/
@@ -2245,6 +2281,7 @@ const app = createApp({
             // 问题单数据
             fetchIssues,
             exportConfirmedIssues,
+            deleteProject,
             // 导出表单相关
             showExportDialog,
             exportForm,
