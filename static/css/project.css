@@ -1847,14 +1847,14 @@
     background-color: #f5f5f5 !important;
 }
 
-.el-tree-node.is-current > .el-tree-node__content {
+/* .el-tree-node.is-current > .el-tree-node__content {
     background-color: #ffffff !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content {
     background-color: #ffffff !important;
-}
+} */
 
 .el-tree-node__label {
     font-size: 12px;
@@ -1862,5 +1862,15 @@
 }
 
 .file-item.selected {
-    background-color: transparent !important;
+    background-color: rgba(52, 152, 219, 0.1) !important;
+    border-left: 3px solid var(--accent-color);
+    font-weight: 600;
+}
+
+.file-item.selected .file-name {
+    color: var(--accent-color);
+}
+
+.file-item:hover {
+    background-color: rgba(52, 152, 219, 0.05);
 }
