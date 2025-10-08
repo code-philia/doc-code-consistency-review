@@ -6,7 +6,7 @@ let activeView = 'statsView'; // 当前活动视图
 const { createApp, ref, onMounted, computed, nextTick } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
-    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike
+    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike, updateHighlightPositions
 } from './utils.js';
 import { mermaid } from './thirdParty/bundle.js';
 
@@ -1998,6 +1998,47 @@ const app = createApp({
         };
 
         /***********************
+         * Split Panel 宽度变化监听器
+         ***********************/
+        // 设置split-panel宽度变化监听器
+        const setupSplitPanelResizeListener = () => {
+            // 使用ResizeObserver监听面板尺寸变化
+            const resizeObserver = new ResizeObserver((entries) => {
+                // 延迟执行，避免频繁触发
+                setTimeout(() => {
+                    recalculateHighlightPositions();
+                }, 100);
+            });
+
+            // 监听需求文档面板
+            const docPanel = document.querySelector('.req-panel');
+            if (docPanel) {
+                resizeObserver.observe(docPanel);
+            }
+
+            // 监听代码面板
+            const codePanel = document.querySelector('.code-panel');
+            if (codePanel) {
+                resizeObserver.observe(codePanel);
+            }
+
+            // 监听整个splitter容器
+            const splitterContainer = document.querySelector('.el-splitter');
+            if (splitterContainer) {
+                resizeObserver.observe(splitterContainer);
+            }
+        };
+
+        // 重新计算所有高亮块的位置
+        const recalculateHighlightPositions = () => {
+            // 重新计算需求文档的高亮位置
+            updateHighlightPositions('doc');
+            
+            // 重新计算代码的高亮位置
+            updateHighlightPositions('code');
+        };
+
+        /***********************
          * 生命周期
          ***********************/
         onMounted(async () => {
@@ -2015,6 +2056,9 @@ const app = createApp({
             if (codePanel) {
                 codePanel.addEventListener('click', handleHighlightBlockClick);
             }
+
+            // 添加split-panel宽度变化监听器
+            setupSplitPanelResizeListener();
         });
 
         // 重置当前项目内存数据（不会修改后端文件），并移除页面高亮
@@ -2165,6 +2209,24 @@ const app = createApp({
             flowchartError.value = null;
         };
 
+        // 刷新高亮功能
+        const refreshHighlights = () => {
+            try {
+                // 调用utils.js中的updateHighlightPositions函数重新计算高亮位置
+                if (typeof updateHighlightPositions === 'function') {
+                    updateHighlightPositions('doc');
+                    updateHighlightPositions('code');
+                    ElMessage.success('高亮位置已刷新');
+                } else {
+                    console.error('updateHighlightPositions函数未找到');
+                    ElMessage.error('刷新失败：函数未找到');
+                }
+            } catch (error) {
+                console.error('刷新高亮时出错:', error);
+                ElMessage.error('刷新高亮失败');
+            }
+        };
+
         /***********************
          * 暴露到模板
          ***********************/
@@ -2271,7 +2333,10 @@ const app = createApp({
             flowchartError,
             generateFlowchart,
             regenerateFlowchart,
-            clearFlowchart
+            clearFlowchart,
+            
+            // 刷新高亮功能
+            refreshHighlights
         };
     }
 });
