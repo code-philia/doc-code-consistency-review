@@ -1543,25 +1543,6 @@ const app = createApp({
         });
 
         // 选择导出文件夹
-        const selectExportFolder = async () => {
-            try {
-                // 检查浏览器是否支持File System Access API
-                if ('showDirectoryPicker' in window) {
-                    const directoryHandle = await window.showDirectoryPicker();
-                    exportForm.value.selectedFolderHandle = directoryHandle;
-                    exportForm.value.selectedFolderName = directoryHandle.name;
-                    exportForm.value.exportPath = directoryHandle.name; // 用于显示
-                } else {
-                    ElMessage.error('您的浏览器不支持文件夹选择功能，请使用Chrome 86+或Edge 86+');
-                }
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.error('选择文件夹失败:', error);
-                    ElMessage.error('选择文件夹失败：' + error.message);
-                }
-            }
-        };
-
         // 导出已确认的问题单
         const exportConfirmedIssues = async () => {
             try {
@@ -1573,10 +1554,7 @@ const app = createApp({
                     return;
                 }
 
-                // 重置表单并显示对话框
-                exportForm.value.selectedFolderName = '';
-                exportForm.value.selectedFolderHandle = null;
-                exportForm.value.exportPath = '';
+                // 显示导出对话框
                 showExportDialog.value = true;
             } catch (error) {
                 console.error('导出问题单失败:', error);
@@ -1596,13 +1574,7 @@ const app = createApp({
                     return;
                 }
 
-                // 检查是否选择了文件夹
-                if (!exportForm.value.selectedFolderHandle) {
-                    ElMessage.warning('请先选择导出文件夹');
-                    return;
-                }
-
-                // 调用后端API获取问题单文件
+                // 调用后端API生成zip文件
                 const response = await axios.post('/project/export-issues-download', {
                     issues: confirmedIssues,
                     formData: exportForm.value,
@@ -1610,29 +1582,19 @@ const app = createApp({
                 });
 
                 if (response.data.status === 'success') {
-                    // 批量下载文件到选择的文件夹
-                    const files = response.data.files;
-                    let successCount = 0;
+                    // 直接下载zip文件
+                    const zipFilename = response.data.zipFile;
                     
-                    for (const fileInfo of files) {
-                        try {
-                            // 获取文件内容
-                            const fileResponse = await axios.get(`/project/download-file/${fileInfo.filename}`, {
-                                responseType: 'blob'
-                            });
-                            
-                            // 写入到选择的文件夹
-                            const fileHandle = await exportForm.value.selectedFolderHandle.getFileHandle(fileInfo.filename, { create: true });
-                            const writable = await fileHandle.createWritable();
-                            await writable.write(fileResponse.data);
-                            await writable.close();
-                            successCount++;
-                        } catch (error) {
-                            console.error(`下载文件 ${fileInfo.filename} 失败:`, error);
-                        }
-                    }
+                    // 创建下载链接
+                    const downloadUrl = `/project/download-file/${zipFilename}`;
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = zipFilename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                     
-                    ElMessage.success(`成功下载 ${successCount}/${files.length} 个问题单到 ${exportForm.value.selectedFolderName} 文件夹`);
+                    ElMessage.success(`成功生成并下载问题单zip文件：${zipFilename}`);
                     showExportDialog.value = false;
                 } else {
                     ElMessage.error('导出失败：' + response.data.message);
@@ -2286,7 +2248,6 @@ const app = createApp({
             // 导出表单相关
             showExportDialog,
             exportForm,
-            selectExportFolder,
             confirmExport,
             // 审查结果弹窗
             showReviewDialog,
