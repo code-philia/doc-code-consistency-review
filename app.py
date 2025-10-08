@@ -1034,15 +1034,7 @@ def generate_flowchart():
         if not code_content:
             return jsonify({"status": "error", "message": "Missing code content"}), 400
         
-        # mermaid_code = query_flow_chart(code_content)
-        mermaid_code = """
-        graph TD;
-        A["开始"] --> B["处理数据"];
-        B --> C{{"检查条件?"}};
-        C -->|"是"| D["执行操作"];
-        C -->|"否"| B;
-        D --> E["结束"];
-        """
+        mermaid_code = query_flow_chart(code_content)
 
         return jsonify({
             "status": "success",
