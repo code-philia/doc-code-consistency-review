@@ -1,9 +1,38 @@
 var __create = Object.create;
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key2, value2) => key2 in obj ? __defProp(obj, key2, { enumerable: true, configurable: true, writable: true, value: value2 }) : obj[key2] = value2;
+var __spreadValues = (a2, b3) => {
+  for (var prop in b3 || (b3 = {}))
+    if (__hasOwnProp.call(b3, prop))
+      __defNormalProp(a2, prop, b3[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b3)) {
+      if (__propIsEnum.call(b3, prop))
+        __defNormalProp(a2, prop, b3[prop]);
+    }
+  return a2;
+};
+var __spreadProps = (a2, b3) => __defProps(a2, __getOwnPropDescs(b3));
+var __objRest = (source, exclude) => {
+  var target = {};
+  for (var prop in source)
+    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
+      target[prop] = source[prop];
+  if (source != null && __getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(source)) {
+      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
+        target[prop] = source[prop];
+    }
+  return target;
+};
 var __esm = (fn3, res) => function __init() {
   return fn3 && (res = (0, fn3[__getOwnPropNames(fn3)[0]])(fn3 = 0)), res;
 };
@@ -31,6 +60,45 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __publicField = (obj, key2, value2) => __defNormalProp(obj, typeof key2 !== "symbol" ? key2 + "" : key2, value2);
+
+// polyfill.js
+var require_polyfill = __commonJS({
+  "polyfill.js"() {
+    if (!Object.hasOwn) {
+      Object.defineProperty(Object, "hasOwn", {
+        value: function(object3, property2) {
+          if (object3 == null) {
+            throw new TypeError("Cannot convert undefined or null to object");
+          }
+          return Object.prototype.hasOwnProperty.call(Object(object3), property2);
+        },
+        configurable: true,
+        enumerable: false,
+        writable: true
+      });
+    }
+    if (!Array.prototype.at) {
+      Object.defineProperty(Array.prototype, "at", {
+        value: function(index2) {
+          const O2 = Object(this);
+          const len = O2.length >>> 0;
+          let k3 = index2 >> 0;
+          if (k3 < 0) {
+            k3 += len;
+          }
+          if (k3 < 0 || k3 >= len) {
+            return void 0;
+          }
+          return O2[k3];
+        },
+        configurable: true,
+        enumerable: false,
+        writable: true
+      });
+    }
+  }
+});
 
 // node_modules/extend/index.js
 var require_extend = __commonJS({
@@ -17078,13 +17146,15 @@ var init_purify_es = __esm({
 function setupDompurifyHooks() {
   const TEMPORARY_ATTRIBUTE = "data-temp-href-target";
   purify.addHook("beforeSanitizeAttributes", (node3) => {
+    var _a58;
     if (node3.tagName === "A" && node3.hasAttribute("target")) {
-      node3.setAttribute(TEMPORARY_ATTRIBUTE, node3.getAttribute("target") ?? "");
+      node3.setAttribute(TEMPORARY_ATTRIBUTE, (_a58 = node3.getAttribute("target")) != null ? _a58 : "");
     }
   });
   purify.addHook("afterSanitizeAttributes", (node3) => {
+    var _a58;
     if (node3.tagName === "A" && node3.hasAttribute(TEMPORARY_ATTRIBUTE)) {
-      node3.setAttribute("target", node3.getAttribute(TEMPORARY_ATTRIBUTE) ?? "");
+      node3.setAttribute("target", (_a58 = node3.getAttribute(TEMPORARY_ATTRIBUTE)) != null ? _a58 : "");
       node3.removeAttribute(TEMPORARY_ATTRIBUTE);
       if (node3.getAttribute("target") === "_blank") {
         node3.setAttribute("rel", "noopener");
@@ -17092,7 +17162,7 @@ function setupDompurifyHooks() {
     }
   });
 }
-var frontMatterRegex, directiveRegex, anyCommentRegex, UnknownDiagramError, detectors, detectType, registerLazyLoadedDiagrams, addDetector, getDiagramLoader, assignWithDepth, assignWithDepth_default, oldAttributeBackgroundColorOdd, oldAttributeBackgroundColorEven, mkBorder, Theme, getThemeVariables, Theme2, getThemeVariables2, Theme3, getThemeVariables3, Theme4, getThemeVariables4, Theme5, getThemeVariables5, themes_default, config_schema_default, config, keyify, configKeys, defaultConfig_default, sanitizeDirective, sanitizeCss, defaultConfig, siteConfig, configFromInitialize, directives, currentConfig, updateCurrentConfig, setSiteConfig, saveConfigFromInitialize, updateSiteConfig, getSiteConfig, setConfig, getConfig, sanitize, addDirective, reset, ConfigWarning, issuedWarnings, issueWarning, checkConfig, getUserDefinedConfig, lineBreakRegex, getRows, setupDompurifyHooksIfNotSetup, removeScript, sanitizeMore, sanitizeText, sanitizeTextOrArray, hasBreaks, splitBreaks, placeholderToBreak, breakToPlaceholder, getUrl, evaluate, getMax, getMin, parseGenericTypes, countOccurrence, shouldCombineSets, processSet, isMathMLSupported, katexRegex, hasKatex, calculateMathMLDimensions, renderKatexUnsanitized, renderKatexSanitized, common_default, d3Attrs, calculateSvgSizeAttrs, configureSvgSize, setupGraphViewbox, themes, getStyles, addStylesForDiagram, styles_default, commonDb_exports, accTitle, diagramTitle, accDescription, sanitizeText2, clear, setAccTitle, getAccTitle, setAccDescription, getAccDescription, setDiagramTitle, getDiagramTitle, log2, setLogLevel2, getConfig2, setConfig2, defaultConfig2, sanitizeText3, setupGraphViewbox2, getCommonDb, diagrams, registerDiagram, getDiagram, DiagramNotFoundError;
+var frontMatterRegex, directiveRegex, anyCommentRegex, _a, UnknownDiagramError, detectors, detectType, registerLazyLoadedDiagrams, addDetector, getDiagramLoader, assignWithDepth, assignWithDepth_default, oldAttributeBackgroundColorOdd, oldAttributeBackgroundColorEven, mkBorder, _a2, Theme, getThemeVariables, _a3, Theme2, getThemeVariables2, _a4, Theme3, getThemeVariables3, _a5, Theme4, getThemeVariables4, _a6, Theme5, getThemeVariables5, themes_default, config_schema_default, config, keyify, configKeys, defaultConfig_default, sanitizeDirective, sanitizeCss, defaultConfig, siteConfig, configFromInitialize, directives, currentConfig, updateCurrentConfig, setSiteConfig, saveConfigFromInitialize, updateSiteConfig, getSiteConfig, setConfig, getConfig, sanitize, addDirective, reset, ConfigWarning, issuedWarnings, issueWarning, checkConfig, getUserDefinedConfig, lineBreakRegex, getRows, setupDompurifyHooksIfNotSetup, removeScript, sanitizeMore, sanitizeText, sanitizeTextOrArray, hasBreaks, splitBreaks, placeholderToBreak, breakToPlaceholder, getUrl, evaluate, getMax, getMin, parseGenericTypes, countOccurrence, shouldCombineSets, processSet, isMathMLSupported, katexRegex, hasKatex, calculateMathMLDimensions, renderKatexUnsanitized, renderKatexSanitized, common_default, d3Attrs, calculateSvgSizeAttrs, configureSvgSize, setupGraphViewbox, themes, getStyles, addStylesForDiagram, styles_default, commonDb_exports, accTitle, diagramTitle, accDescription, sanitizeText2, clear, setAccTitle, getAccTitle, setAccDescription, getAccDescription, setDiagramTitle, getDiagramTitle, log2, setLogLevel2, getConfig2, setConfig2, defaultConfig2, sanitizeText3, setupGraphViewbox2, getCommonDb, diagrams, registerDiagram, getDiagram, _a7, DiagramNotFoundError;
 var init_chunk_ABZYJK2D = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/chunk-ABZYJK2D.mjs"() {
     init_chunk_AGHRB4JF();
@@ -17103,18 +17173,15 @@ var init_chunk_ABZYJK2D = __esm({
     init_dist();
     init_dist();
     init_purify_es();
-    frontMatterRegex = /^-{3}\s*[\n\r](.*?)[\n\r]-{3}\s*[\n\r]+/s;
+    frontMatterRegex = new RegExp("^-{3}\\s*[\\n\\r](.*?)[\\n\\r]-{3}\\s*[\\n\\r]+", "s");
     directiveRegex = /%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*))?\s*(?:}%{2})?/gi;
     anyCommentRegex = /\s*%%.*\n/gm;
-    UnknownDiagramError = class extends Error {
-      static {
-        __name(this, "UnknownDiagramError");
-      }
+    UnknownDiagramError = (_a = class extends Error {
       constructor(message) {
         super(message);
         this.name = "UnknownDiagramError";
       }
-    };
+    }, __name(_a, "UnknownDiagramError"), _a);
     detectors = {};
     detectType = /* @__PURE__ */ __name(function(text11, config22) {
       text11 = text11.replace(frontMatterRegex, "").replace(directiveRegex, "").replace(anyCommentRegex, "\n");
@@ -17181,10 +17248,7 @@ var init_chunk_ABZYJK2D = __esm({
     oldAttributeBackgroundColorOdd = "#ffffff";
     oldAttributeBackgroundColorEven = "#f2f2f2";
     mkBorder = /* @__PURE__ */ __name((col, darkMode) => darkMode ? adjust_default(col, { s: -40, l: 10 }) : adjust_default(col, { s: -40, l: -10 }), "mkBorder");
-    Theme = class {
-      static {
-        __name(this, "Theme");
-      }
+    Theme = (_a2 = class {
       constructor() {
         this.background = "#f4f4f4";
         this.primaryColor = "#fff4dd";
@@ -17195,6 +17259,7 @@ var init_chunk_ABZYJK2D = __esm({
         this.fontSize = "16px";
       }
       updateColors() {
+        var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
         this.primaryTextColor = this.primaryTextColor || (this.darkMode ? "#eee" : "#333");
         this.secondaryColor = this.secondaryColor || adjust_default(this.primaryColor, { h: -120 });
         this.tertiaryColor = this.tertiaryColor || adjust_default(this.primaryColor, { h: 180, l: 5 });
@@ -17350,16 +17415,16 @@ var init_chunk_ABZYJK2D = __esm({
         this.pieOuterStrokeColor = this.pieOuterStrokeColor || "black";
         this.pieOpacity = this.pieOpacity || "0.7";
         this.radar = {
-          axisColor: this.radar?.axisColor || this.lineColor,
-          axisStrokeWidth: this.radar?.axisStrokeWidth || 2,
-          axisLabelFontSize: this.radar?.axisLabelFontSize || 12,
-          curveOpacity: this.radar?.curveOpacity || 0.5,
-          curveStrokeWidth: this.radar?.curveStrokeWidth || 2,
-          graticuleColor: this.radar?.graticuleColor || "#DEDEDE",
-          graticuleStrokeWidth: this.radar?.graticuleStrokeWidth || 1,
-          graticuleOpacity: this.radar?.graticuleOpacity || 0.3,
-          legendBoxSize: this.radar?.legendBoxSize || 12,
-          legendFontSize: this.radar?.legendFontSize || 12
+          axisColor: ((_a58 = this.radar) == null ? void 0 : _a58.axisColor) || this.lineColor,
+          axisStrokeWidth: ((_b2 = this.radar) == null ? void 0 : _b2.axisStrokeWidth) || 2,
+          axisLabelFontSize: ((_c2 = this.radar) == null ? void 0 : _c2.axisLabelFontSize) || 12,
+          curveOpacity: ((_d = this.radar) == null ? void 0 : _d.curveOpacity) || 0.5,
+          curveStrokeWidth: ((_e2 = this.radar) == null ? void 0 : _e2.curveStrokeWidth) || 2,
+          graticuleColor: ((_f = this.radar) == null ? void 0 : _f.graticuleColor) || "#DEDEDE",
+          graticuleStrokeWidth: ((_g = this.radar) == null ? void 0 : _g.graticuleStrokeWidth) || 1,
+          graticuleOpacity: ((_h = this.radar) == null ? void 0 : _h.graticuleOpacity) || 0.3,
+          legendBoxSize: ((_i = this.radar) == null ? void 0 : _i.legendBoxSize) || 12,
+          legendFontSize: ((_j = this.radar) == null ? void 0 : _j.legendFontSize) || 12
         };
         this.archEdgeColor = this.archEdgeColor || "#777";
         this.archEdgeArrowColor = this.archEdgeArrowColor || "#777";
@@ -17382,17 +17447,17 @@ var init_chunk_ABZYJK2D = __esm({
         this.quadrantExternalBorderStrokeFill = this.quadrantExternalBorderStrokeFill || this.primaryBorderColor;
         this.quadrantTitleFill = this.quadrantTitleFill || this.primaryTextColor;
         this.xyChart = {
-          backgroundColor: this.xyChart?.backgroundColor || this.background,
-          titleColor: this.xyChart?.titleColor || this.primaryTextColor,
-          xAxisTitleColor: this.xyChart?.xAxisTitleColor || this.primaryTextColor,
-          xAxisLabelColor: this.xyChart?.xAxisLabelColor || this.primaryTextColor,
-          xAxisTickColor: this.xyChart?.xAxisTickColor || this.primaryTextColor,
-          xAxisLineColor: this.xyChart?.xAxisLineColor || this.primaryTextColor,
-          yAxisTitleColor: this.xyChart?.yAxisTitleColor || this.primaryTextColor,
-          yAxisLabelColor: this.xyChart?.yAxisLabelColor || this.primaryTextColor,
-          yAxisTickColor: this.xyChart?.yAxisTickColor || this.primaryTextColor,
-          yAxisLineColor: this.xyChart?.yAxisLineColor || this.primaryTextColor,
-          plotColorPalette: this.xyChart?.plotColorPalette || "#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0"
+          backgroundColor: ((_k = this.xyChart) == null ? void 0 : _k.backgroundColor) || this.background,
+          titleColor: ((_l = this.xyChart) == null ? void 0 : _l.titleColor) || this.primaryTextColor,
+          xAxisTitleColor: ((_m = this.xyChart) == null ? void 0 : _m.xAxisTitleColor) || this.primaryTextColor,
+          xAxisLabelColor: ((_n = this.xyChart) == null ? void 0 : _n.xAxisLabelColor) || this.primaryTextColor,
+          xAxisTickColor: ((_o = this.xyChart) == null ? void 0 : _o.xAxisTickColor) || this.primaryTextColor,
+          xAxisLineColor: ((_p = this.xyChart) == null ? void 0 : _p.xAxisLineColor) || this.primaryTextColor,
+          yAxisTitleColor: ((_q = this.xyChart) == null ? void 0 : _q.yAxisTitleColor) || this.primaryTextColor,
+          yAxisLabelColor: ((_r = this.xyChart) == null ? void 0 : _r.yAxisLabelColor) || this.primaryTextColor,
+          yAxisTickColor: ((_s = this.xyChart) == null ? void 0 : _s.yAxisTickColor) || this.primaryTextColor,
+          yAxisLineColor: ((_t = this.xyChart) == null ? void 0 : _t.yAxisLineColor) || this.primaryTextColor,
+          plotColorPalette: ((_u = this.xyChart) == null ? void 0 : _u.plotColorPalette) || "#FFF4DD,#FFD8B1,#FFA07A,#ECEFF1,#D6DBDF,#C3E0A8,#FFB6A4,#FFD74D,#738FA7,#FFFFF0"
         };
         this.requirementBackground = this.requirementBackground || this.primaryColor;
         this.requirementBorderColor = this.requirementBorderColor || this.primaryBorderColor;
@@ -17469,16 +17534,13 @@ var init_chunk_ABZYJK2D = __esm({
           this[k3] = overrides[k3];
         });
       }
-    };
+    }, __name(_a2, "Theme"), _a2);
     getThemeVariables = /* @__PURE__ */ __name((userOverrides) => {
       const theme = new Theme();
       theme.calculate(userOverrides);
       return theme;
     }, "getThemeVariables");
-    Theme2 = class {
-      static {
-        __name(this, "Theme");
-      }
+    Theme2 = (_a3 = class {
       constructor() {
         this.background = "#333";
         this.primaryColor = "#1f2020";
@@ -17562,6 +17624,7 @@ var init_chunk_ABZYJK2D = __esm({
         this.errorTextColor = "#ddd";
       }
       updateColors() {
+        var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
         this.secondBkg = lighten_default(this.mainBkg, 16);
         this.lineColor = this.mainContrastColor;
         this.arrowheadColor = this.mainContrastColor;
@@ -17685,17 +17748,17 @@ var init_chunk_ABZYJK2D = __esm({
         this.quadrantExternalBorderStrokeFill = this.quadrantExternalBorderStrokeFill || this.primaryBorderColor;
         this.quadrantTitleFill = this.quadrantTitleFill || this.primaryTextColor;
         this.xyChart = {
-          backgroundColor: this.xyChart?.backgroundColor || this.background,
-          titleColor: this.xyChart?.titleColor || this.primaryTextColor,
-          xAxisTitleColor: this.xyChart?.xAxisTitleColor || this.primaryTextColor,
-          xAxisLabelColor: this.xyChart?.xAxisLabelColor || this.primaryTextColor,
-          xAxisTickColor: this.xyChart?.xAxisTickColor || this.primaryTextColor,
-          xAxisLineColor: this.xyChart?.xAxisLineColor || this.primaryTextColor,
-          yAxisTitleColor: this.xyChart?.yAxisTitleColor || this.primaryTextColor,
-          yAxisLabelColor: this.xyChart?.yAxisLabelColor || this.primaryTextColor,
-          yAxisTickColor: this.xyChart?.yAxisTickColor || this.primaryTextColor,
-          yAxisLineColor: this.xyChart?.yAxisLineColor || this.primaryTextColor,
-          plotColorPalette: this.xyChart?.plotColorPalette || "#3498db,#2ecc71,#e74c3c,#f1c40f,#bdc3c7,#ffffff,#34495e,#9b59b6,#1abc9c,#e67e22"
+          backgroundColor: ((_a58 = this.xyChart) == null ? void 0 : _a58.backgroundColor) || this.background,
+          titleColor: ((_b2 = this.xyChart) == null ? void 0 : _b2.titleColor) || this.primaryTextColor,
+          xAxisTitleColor: ((_c2 = this.xyChart) == null ? void 0 : _c2.xAxisTitleColor) || this.primaryTextColor,
+          xAxisLabelColor: ((_d = this.xyChart) == null ? void 0 : _d.xAxisLabelColor) || this.primaryTextColor,
+          xAxisTickColor: ((_e2 = this.xyChart) == null ? void 0 : _e2.xAxisTickColor) || this.primaryTextColor,
+          xAxisLineColor: ((_f = this.xyChart) == null ? void 0 : _f.xAxisLineColor) || this.primaryTextColor,
+          yAxisTitleColor: ((_g = this.xyChart) == null ? void 0 : _g.yAxisTitleColor) || this.primaryTextColor,
+          yAxisLabelColor: ((_h = this.xyChart) == null ? void 0 : _h.yAxisLabelColor) || this.primaryTextColor,
+          yAxisTickColor: ((_i = this.xyChart) == null ? void 0 : _i.yAxisTickColor) || this.primaryTextColor,
+          yAxisLineColor: ((_j = this.xyChart) == null ? void 0 : _j.yAxisLineColor) || this.primaryTextColor,
+          plotColorPalette: ((_k = this.xyChart) == null ? void 0 : _k.plotColorPalette) || "#3498db,#2ecc71,#e74c3c,#f1c40f,#bdc3c7,#ffffff,#34495e,#9b59b6,#1abc9c,#e67e22"
         };
         this.packet = {
           startByteColor: this.primaryTextColor,
@@ -17706,16 +17769,16 @@ var init_chunk_ABZYJK2D = __esm({
           blockFillColor: this.background
         };
         this.radar = {
-          axisColor: this.radar?.axisColor || this.lineColor,
-          axisStrokeWidth: this.radar?.axisStrokeWidth || 2,
-          axisLabelFontSize: this.radar?.axisLabelFontSize || 12,
-          curveOpacity: this.radar?.curveOpacity || 0.5,
-          curveStrokeWidth: this.radar?.curveStrokeWidth || 2,
-          graticuleColor: this.radar?.graticuleColor || "#DEDEDE",
-          graticuleStrokeWidth: this.radar?.graticuleStrokeWidth || 1,
-          graticuleOpacity: this.radar?.graticuleOpacity || 0.3,
-          legendBoxSize: this.radar?.legendBoxSize || 12,
-          legendFontSize: this.radar?.legendFontSize || 12
+          axisColor: ((_l = this.radar) == null ? void 0 : _l.axisColor) || this.lineColor,
+          axisStrokeWidth: ((_m = this.radar) == null ? void 0 : _m.axisStrokeWidth) || 2,
+          axisLabelFontSize: ((_n = this.radar) == null ? void 0 : _n.axisLabelFontSize) || 12,
+          curveOpacity: ((_o = this.radar) == null ? void 0 : _o.curveOpacity) || 0.5,
+          curveStrokeWidth: ((_p = this.radar) == null ? void 0 : _p.curveStrokeWidth) || 2,
+          graticuleColor: ((_q = this.radar) == null ? void 0 : _q.graticuleColor) || "#DEDEDE",
+          graticuleStrokeWidth: ((_r = this.radar) == null ? void 0 : _r.graticuleStrokeWidth) || 1,
+          graticuleOpacity: ((_s = this.radar) == null ? void 0 : _s.graticuleOpacity) || 0.3,
+          legendBoxSize: ((_t = this.radar) == null ? void 0 : _t.legendBoxSize) || 12,
+          legendFontSize: ((_u = this.radar) == null ? void 0 : _u.legendFontSize) || 12
         };
         this.classText = this.primaryTextColor;
         this.requirementBackground = this.requirementBackground || this.primaryColor;
@@ -17774,16 +17837,13 @@ var init_chunk_ABZYJK2D = __esm({
           this[k3] = overrides[k3];
         });
       }
-    };
+    }, __name(_a3, "Theme"), _a3);
     getThemeVariables2 = /* @__PURE__ */ __name((userOverrides) => {
       const theme = new Theme2();
       theme.calculate(userOverrides);
       return theme;
     }, "getThemeVariables");
-    Theme3 = class {
-      static {
-        __name(this, "Theme");
-      }
+    Theme3 = (_a4 = class {
       constructor() {
         this.background = "#f4f4f4";
         this.primaryColor = "#ECECFF";
@@ -17887,6 +17947,7 @@ var init_chunk_ABZYJK2D = __esm({
         this.updateColors();
       }
       updateColors() {
+        var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
         this.cScale0 = this.cScale0 || this.primaryColor;
         this.cScale1 = this.cScale1 || this.secondaryColor;
         this.cScale2 = this.cScale2 || this.tertiaryColor;
@@ -18006,29 +18067,29 @@ var init_chunk_ABZYJK2D = __esm({
         this.quadrantExternalBorderStrokeFill = this.quadrantExternalBorderStrokeFill || this.primaryBorderColor;
         this.quadrantTitleFill = this.quadrantTitleFill || this.primaryTextColor;
         this.radar = {
-          axisColor: this.radar?.axisColor || this.lineColor,
-          axisStrokeWidth: this.radar?.axisStrokeWidth || 2,
-          axisLabelFontSize: this.radar?.axisLabelFontSize || 12,
-          curveOpacity: this.radar?.curveOpacity || 0.5,
-          curveStrokeWidth: this.radar?.curveStrokeWidth || 2,
-          graticuleColor: this.radar?.graticuleColor || "#DEDEDE",
-          graticuleStrokeWidth: this.radar?.graticuleStrokeWidth || 1,
-          graticuleOpacity: this.radar?.graticuleOpacity || 0.3,
-          legendBoxSize: this.radar?.legendBoxSize || 12,
-          legendFontSize: this.radar?.legendFontSize || 12
+          axisColor: ((_a58 = this.radar) == null ? void 0 : _a58.axisColor) || this.lineColor,
+          axisStrokeWidth: ((_b2 = this.radar) == null ? void 0 : _b2.axisStrokeWidth) || 2,
+          axisLabelFontSize: ((_c2 = this.radar) == null ? void 0 : _c2.axisLabelFontSize) || 12,
+          curveOpacity: ((_d = this.radar) == null ? void 0 : _d.curveOpacity) || 0.5,
+          curveStrokeWidth: ((_e2 = this.radar) == null ? void 0 : _e2.curveStrokeWidth) || 2,
+          graticuleColor: ((_f = this.radar) == null ? void 0 : _f.graticuleColor) || "#DEDEDE",
+          graticuleStrokeWidth: ((_g = this.radar) == null ? void 0 : _g.graticuleStrokeWidth) || 1,
+          graticuleOpacity: ((_h = this.radar) == null ? void 0 : _h.graticuleOpacity) || 0.3,
+          legendBoxSize: ((_i = this.radar) == null ? void 0 : _i.legendBoxSize) || 12,
+          legendFontSize: ((_j = this.radar) == null ? void 0 : _j.legendFontSize) || 12
         };
         this.xyChart = {
-          backgroundColor: this.xyChart?.backgroundColor || this.background,
-          titleColor: this.xyChart?.titleColor || this.primaryTextColor,
-          xAxisTitleColor: this.xyChart?.xAxisTitleColor || this.primaryTextColor,
-          xAxisLabelColor: this.xyChart?.xAxisLabelColor || this.primaryTextColor,
-          xAxisTickColor: this.xyChart?.xAxisTickColor || this.primaryTextColor,
-          xAxisLineColor: this.xyChart?.xAxisLineColor || this.primaryTextColor,
-          yAxisTitleColor: this.xyChart?.yAxisTitleColor || this.primaryTextColor,
-          yAxisLabelColor: this.xyChart?.yAxisLabelColor || this.primaryTextColor,
-          yAxisTickColor: this.xyChart?.yAxisTickColor || this.primaryTextColor,
-          yAxisLineColor: this.xyChart?.yAxisLineColor || this.primaryTextColor,
-          plotColorPalette: this.xyChart?.plotColorPalette || "#ECECFF,#8493A6,#FFC3A0,#DCDDE1,#B8E994,#D1A36F,#C3CDE6,#FFB6C1,#496078,#F8F3E3"
+          backgroundColor: ((_k = this.xyChart) == null ? void 0 : _k.backgroundColor) || this.background,
+          titleColor: ((_l = this.xyChart) == null ? void 0 : _l.titleColor) || this.primaryTextColor,
+          xAxisTitleColor: ((_m = this.xyChart) == null ? void 0 : _m.xAxisTitleColor) || this.primaryTextColor,
+          xAxisLabelColor: ((_n = this.xyChart) == null ? void 0 : _n.xAxisLabelColor) || this.primaryTextColor,
+          xAxisTickColor: ((_o = this.xyChart) == null ? void 0 : _o.xAxisTickColor) || this.primaryTextColor,
+          xAxisLineColor: ((_p = this.xyChart) == null ? void 0 : _p.xAxisLineColor) || this.primaryTextColor,
+          yAxisTitleColor: ((_q = this.xyChart) == null ? void 0 : _q.yAxisTitleColor) || this.primaryTextColor,
+          yAxisLabelColor: ((_r = this.xyChart) == null ? void 0 : _r.yAxisLabelColor) || this.primaryTextColor,
+          yAxisTickColor: ((_s = this.xyChart) == null ? void 0 : _s.yAxisTickColor) || this.primaryTextColor,
+          yAxisLineColor: ((_t = this.xyChart) == null ? void 0 : _t.yAxisLineColor) || this.primaryTextColor,
+          plotColorPalette: ((_u = this.xyChart) == null ? void 0 : _u.plotColorPalette) || "#ECECFF,#8493A6,#FFC3A0,#DCDDE1,#B8E994,#D1A36F,#C3CDE6,#FFB6C1,#496078,#F8F3E3"
         };
         this.requirementBackground = this.requirementBackground || this.primaryColor;
         this.requirementBorderColor = this.requirementBorderColor || this.primaryBorderColor;
@@ -18109,16 +18170,13 @@ var init_chunk_ABZYJK2D = __esm({
           this[k3] = overrides[k3];
         });
       }
-    };
+    }, __name(_a4, "Theme"), _a4);
     getThemeVariables3 = /* @__PURE__ */ __name((userOverrides) => {
       const theme = new Theme3();
       theme.calculate(userOverrides);
       return theme;
     }, "getThemeVariables");
-    Theme4 = class {
-      static {
-        __name(this, "Theme");
-      }
+    Theme4 = (_a5 = class {
       constructor() {
         this.background = "#f4f4f4";
         this.primaryColor = "#cde498";
@@ -18197,6 +18255,7 @@ var init_chunk_ABZYJK2D = __esm({
         this.errorTextColor = "#552222";
       }
       updateColors() {
+        var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
         this.actorBorder = darken_default(this.mainBkg, 20);
         this.actorBkg = this.mainBkg;
         this.labelBoxBkgColor = this.actorBkg;
@@ -18318,29 +18377,29 @@ var init_chunk_ABZYJK2D = __esm({
           blockFillColor: this.mainBkg
         };
         this.radar = {
-          axisColor: this.radar?.axisColor || this.lineColor,
-          axisStrokeWidth: this.radar?.axisStrokeWidth || 2,
-          axisLabelFontSize: this.radar?.axisLabelFontSize || 12,
-          curveOpacity: this.radar?.curveOpacity || 0.5,
-          curveStrokeWidth: this.radar?.curveStrokeWidth || 2,
-          graticuleColor: this.radar?.graticuleColor || "#DEDEDE",
-          graticuleStrokeWidth: this.radar?.graticuleStrokeWidth || 1,
-          graticuleOpacity: this.radar?.graticuleOpacity || 0.3,
-          legendBoxSize: this.radar?.legendBoxSize || 12,
-          legendFontSize: this.radar?.legendFontSize || 12
+          axisColor: ((_a58 = this.radar) == null ? void 0 : _a58.axisColor) || this.lineColor,
+          axisStrokeWidth: ((_b2 = this.radar) == null ? void 0 : _b2.axisStrokeWidth) || 2,
+          axisLabelFontSize: ((_c2 = this.radar) == null ? void 0 : _c2.axisLabelFontSize) || 12,
+          curveOpacity: ((_d = this.radar) == null ? void 0 : _d.curveOpacity) || 0.5,
+          curveStrokeWidth: ((_e2 = this.radar) == null ? void 0 : _e2.curveStrokeWidth) || 2,
+          graticuleColor: ((_f = this.radar) == null ? void 0 : _f.graticuleColor) || "#DEDEDE",
+          graticuleStrokeWidth: ((_g = this.radar) == null ? void 0 : _g.graticuleStrokeWidth) || 1,
+          graticuleOpacity: ((_h = this.radar) == null ? void 0 : _h.graticuleOpacity) || 0.3,
+          legendBoxSize: ((_i = this.radar) == null ? void 0 : _i.legendBoxSize) || 12,
+          legendFontSize: ((_j = this.radar) == null ? void 0 : _j.legendFontSize) || 12
         };
         this.xyChart = {
-          backgroundColor: this.xyChart?.backgroundColor || this.background,
-          titleColor: this.xyChart?.titleColor || this.primaryTextColor,
-          xAxisTitleColor: this.xyChart?.xAxisTitleColor || this.primaryTextColor,
-          xAxisLabelColor: this.xyChart?.xAxisLabelColor || this.primaryTextColor,
-          xAxisTickColor: this.xyChart?.xAxisTickColor || this.primaryTextColor,
-          xAxisLineColor: this.xyChart?.xAxisLineColor || this.primaryTextColor,
-          yAxisTitleColor: this.xyChart?.yAxisTitleColor || this.primaryTextColor,
-          yAxisLabelColor: this.xyChart?.yAxisLabelColor || this.primaryTextColor,
-          yAxisTickColor: this.xyChart?.yAxisTickColor || this.primaryTextColor,
-          yAxisLineColor: this.xyChart?.yAxisLineColor || this.primaryTextColor,
-          plotColorPalette: this.xyChart?.plotColorPalette || "#CDE498,#FF6B6B,#A0D2DB,#D7BDE2,#F0F0F0,#FFC3A0,#7FD8BE,#FF9A8B,#FAF3E0,#FFF176"
+          backgroundColor: ((_k = this.xyChart) == null ? void 0 : _k.backgroundColor) || this.background,
+          titleColor: ((_l = this.xyChart) == null ? void 0 : _l.titleColor) || this.primaryTextColor,
+          xAxisTitleColor: ((_m = this.xyChart) == null ? void 0 : _m.xAxisTitleColor) || this.primaryTextColor,
+          xAxisLabelColor: ((_n = this.xyChart) == null ? void 0 : _n.xAxisLabelColor) || this.primaryTextColor,
+          xAxisTickColor: ((_o = this.xyChart) == null ? void 0 : _o.xAxisTickColor) || this.primaryTextColor,
+          xAxisLineColor: ((_p = this.xyChart) == null ? void 0 : _p.xAxisLineColor) || this.primaryTextColor,
+          yAxisTitleColor: ((_q = this.xyChart) == null ? void 0 : _q.yAxisTitleColor) || this.primaryTextColor,
+          yAxisLabelColor: ((_r = this.xyChart) == null ? void 0 : _r.yAxisLabelColor) || this.primaryTextColor,
+          yAxisTickColor: ((_s = this.xyChart) == null ? void 0 : _s.yAxisTickColor) || this.primaryTextColor,
+          yAxisLineColor: ((_t = this.xyChart) == null ? void 0 : _t.yAxisLineColor) || this.primaryTextColor,
+          plotColorPalette: ((_u = this.xyChart) == null ? void 0 : _u.plotColorPalette) || "#CDE498,#FF6B6B,#A0D2DB,#D7BDE2,#F0F0F0,#FFC3A0,#7FD8BE,#FF9A8B,#FAF3E0,#FFF176"
         };
         this.requirementBackground = this.requirementBackground || this.primaryColor;
         this.requirementBorderColor = this.requirementBorderColor || this.primaryBorderColor;
@@ -18416,16 +18475,13 @@ var init_chunk_ABZYJK2D = __esm({
           this[k3] = overrides[k3];
         });
       }
-    };
+    }, __name(_a5, "Theme"), _a5);
     getThemeVariables4 = /* @__PURE__ */ __name((userOverrides) => {
       const theme = new Theme4();
       theme.calculate(userOverrides);
       return theme;
     }, "getThemeVariables");
-    Theme5 = class {
-      static {
-        __name(this, "Theme");
-      }
+    Theme5 = (_a6 = class {
       constructor() {
         this.primaryColor = "#eee";
         this.contrast = "#707070";
@@ -18510,6 +18566,7 @@ var init_chunk_ABZYJK2D = __esm({
         this.errorTextColor = "#552222";
       }
       updateColors() {
+        var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
         this.secondBkg = lighten_default(this.contrast, 55);
         this.border2 = this.contrast;
         this.actorBorder = lighten_default(this.border1, 23);
@@ -18634,29 +18691,29 @@ var init_chunk_ABZYJK2D = __esm({
         this.quadrantExternalBorderStrokeFill = this.quadrantExternalBorderStrokeFill || this.primaryBorderColor;
         this.quadrantTitleFill = this.quadrantTitleFill || this.primaryTextColor;
         this.xyChart = {
-          backgroundColor: this.xyChart?.backgroundColor || this.background,
-          titleColor: this.xyChart?.titleColor || this.primaryTextColor,
-          xAxisTitleColor: this.xyChart?.xAxisTitleColor || this.primaryTextColor,
-          xAxisLabelColor: this.xyChart?.xAxisLabelColor || this.primaryTextColor,
-          xAxisTickColor: this.xyChart?.xAxisTickColor || this.primaryTextColor,
-          xAxisLineColor: this.xyChart?.xAxisLineColor || this.primaryTextColor,
-          yAxisTitleColor: this.xyChart?.yAxisTitleColor || this.primaryTextColor,
-          yAxisLabelColor: this.xyChart?.yAxisLabelColor || this.primaryTextColor,
-          yAxisTickColor: this.xyChart?.yAxisTickColor || this.primaryTextColor,
-          yAxisLineColor: this.xyChart?.yAxisLineColor || this.primaryTextColor,
-          plotColorPalette: this.xyChart?.plotColorPalette || "#EEE,#6BB8E4,#8ACB88,#C7ACD6,#E8DCC2,#FFB2A8,#FFF380,#7E8D91,#FFD8B1,#FAF3E0"
+          backgroundColor: ((_a58 = this.xyChart) == null ? void 0 : _a58.backgroundColor) || this.background,
+          titleColor: ((_b2 = this.xyChart) == null ? void 0 : _b2.titleColor) || this.primaryTextColor,
+          xAxisTitleColor: ((_c2 = this.xyChart) == null ? void 0 : _c2.xAxisTitleColor) || this.primaryTextColor,
+          xAxisLabelColor: ((_d = this.xyChart) == null ? void 0 : _d.xAxisLabelColor) || this.primaryTextColor,
+          xAxisTickColor: ((_e2 = this.xyChart) == null ? void 0 : _e2.xAxisTickColor) || this.primaryTextColor,
+          xAxisLineColor: ((_f = this.xyChart) == null ? void 0 : _f.xAxisLineColor) || this.primaryTextColor,
+          yAxisTitleColor: ((_g = this.xyChart) == null ? void 0 : _g.yAxisTitleColor) || this.primaryTextColor,
+          yAxisLabelColor: ((_h = this.xyChart) == null ? void 0 : _h.yAxisLabelColor) || this.primaryTextColor,
+          yAxisTickColor: ((_i = this.xyChart) == null ? void 0 : _i.yAxisTickColor) || this.primaryTextColor,
+          yAxisLineColor: ((_j = this.xyChart) == null ? void 0 : _j.yAxisLineColor) || this.primaryTextColor,
+          plotColorPalette: ((_k = this.xyChart) == null ? void 0 : _k.plotColorPalette) || "#EEE,#6BB8E4,#8ACB88,#C7ACD6,#E8DCC2,#FFB2A8,#FFF380,#7E8D91,#FFD8B1,#FAF3E0"
         };
         this.radar = {
-          axisColor: this.radar?.axisColor || this.lineColor,
-          axisStrokeWidth: this.radar?.axisStrokeWidth || 2,
-          axisLabelFontSize: this.radar?.axisLabelFontSize || 12,
-          curveOpacity: this.radar?.curveOpacity || 0.5,
-          curveStrokeWidth: this.radar?.curveStrokeWidth || 2,
-          graticuleColor: this.radar?.graticuleColor || "#DEDEDE",
-          graticuleStrokeWidth: this.radar?.graticuleStrokeWidth || 1,
-          graticuleOpacity: this.radar?.graticuleOpacity || 0.3,
-          legendBoxSize: this.radar?.legendBoxSize || 12,
-          legendFontSize: this.radar?.legendFontSize || 12
+          axisColor: ((_l = this.radar) == null ? void 0 : _l.axisColor) || this.lineColor,
+          axisStrokeWidth: ((_m = this.radar) == null ? void 0 : _m.axisStrokeWidth) || 2,
+          axisLabelFontSize: ((_n = this.radar) == null ? void 0 : _n.axisLabelFontSize) || 12,
+          curveOpacity: ((_o = this.radar) == null ? void 0 : _o.curveOpacity) || 0.5,
+          curveStrokeWidth: ((_p = this.radar) == null ? void 0 : _p.curveStrokeWidth) || 2,
+          graticuleColor: ((_q = this.radar) == null ? void 0 : _q.graticuleColor) || "#DEDEDE",
+          graticuleStrokeWidth: ((_r = this.radar) == null ? void 0 : _r.graticuleStrokeWidth) || 1,
+          graticuleOpacity: ((_s = this.radar) == null ? void 0 : _s.graticuleOpacity) || 0.3,
+          legendBoxSize: ((_t = this.radar) == null ? void 0 : _t.legendBoxSize) || 12,
+          legendFontSize: ((_u = this.radar) == null ? void 0 : _u.legendFontSize) || 12
         };
         this.requirementBackground = this.requirementBackground || this.primaryColor;
         this.requirementBorderColor = this.requirementBorderColor || this.primaryBorderColor;
@@ -18714,7 +18771,7 @@ var init_chunk_ABZYJK2D = __esm({
           this[k3] = overrides[k3];
         });
       }
-    };
+    }, __name(_a6, "Theme"), _a6);
     getThemeVariables5 = /* @__PURE__ */ __name((userOverrides) => {
       const theme = new Theme5();
       theme.calculate(userOverrides);
@@ -19231,8 +19288,7 @@ var init_chunk_ABZYJK2D = __esm({
       "markdownAutoWrap": true,
       "suppressErrorRendering": false
     };
-    config = {
-      ...config_schema_default,
+    config = __spreadProps(__spreadValues({}, config_schema_default), {
       // Set, even though they're `undefined` so that `configKeys` finds these keys
       // TODO: Should we replace these with `null` so that they can go in the JSON Schema?
       deterministicIDSeed: void 0,
@@ -19246,8 +19302,7 @@ var init_chunk_ABZYJK2D = __esm({
       themeCSS: void 0,
       // add non-JSON default config values
       themeVariables: themes_default.default.getThemeVariables(),
-      sequence: {
-        ...config_schema_default.sequence,
+      sequence: __spreadProps(__spreadValues({}, config_schema_default.sequence), {
         messageFont: /* @__PURE__ */ __name(function() {
           return {
             fontFamily: this.messageFontFamily,
@@ -19269,18 +19324,16 @@ var init_chunk_ABZYJK2D = __esm({
             fontWeight: this.actorFontWeight
           };
         }, "actorFont")
-      },
+      }),
       class: {
         hideEmptyMembersBox: false
       },
-      gantt: {
-        ...config_schema_default.gantt,
+      gantt: __spreadProps(__spreadValues({}, config_schema_default.gantt), {
         tickInterval: void 0,
         useWidth: void 0
         // can probably be removed since `configKeys` already includes this
-      },
-      c4: {
-        ...config_schema_default.c4,
+      }),
+      c4: __spreadProps(__spreadValues({}, config_schema_default.c4), {
         useWidth: void 0,
         personFont: /* @__PURE__ */ __name(function() {
           return {
@@ -19289,11 +19342,10 @@ var init_chunk_ABZYJK2D = __esm({
             fontWeight: this.personFontWeight
           };
         }, "personFont"),
-        flowchart: {
-          ...config_schema_default.flowchart,
+        flowchart: __spreadProps(__spreadValues({}, config_schema_default.flowchart), {
           inheritDir: false
           // default to legacy behavior
-        },
+        }),
         external_personFont: /* @__PURE__ */ __name(function() {
           return {
             fontFamily: this.external_personFontFamily,
@@ -19441,25 +19493,18 @@ var init_chunk_ABZYJK2D = __esm({
             fontWeight: this.messageFontWeight
           };
         }, "messageFont")
-      },
-      pie: {
-        ...config_schema_default.pie,
+      }),
+      pie: __spreadProps(__spreadValues({}, config_schema_default.pie), {
         useWidth: 984
-      },
-      xyChart: {
-        ...config_schema_default.xyChart,
+      }),
+      xyChart: __spreadProps(__spreadValues({}, config_schema_default.xyChart), {
         useWidth: void 0
-      },
-      requirement: {
-        ...config_schema_default.requirement,
+      }),
+      requirement: __spreadProps(__spreadValues({}, config_schema_default.requirement), {
         useWidth: void 0
-      },
-      packet: {
-        ...config_schema_default.packet
-      },
-      radar: {
-        ...config_schema_default.radar
-      },
+      }),
+      packet: __spreadValues({}, config_schema_default.packet),
+      radar: __spreadValues({}, config_schema_default.radar),
       treemap: {
         useMaxWidth: true,
         padding: 10,
@@ -19472,7 +19517,7 @@ var init_chunk_ABZYJK2D = __esm({
         labelFontSize: 14,
         valueFormat: ","
       }
-    };
+    });
     keyify = /* @__PURE__ */ __name((obj, prefix = "") => Object.keys(obj).reduce((res, el) => {
       if (Array.isArray(obj[el])) {
         return res;
@@ -19515,7 +19560,7 @@ var init_chunk_ABZYJK2D = __esm({
       if (args.themeVariables) {
         for (const k3 of Object.keys(args.themeVariables)) {
           const val = args.themeVariables[k3];
-          if (val?.match && !val.match(/^[\d "#%(),.;A-Za-z]+$/)) {
+          if ((val == null ? void 0 : val.match) && !val.match(/^[\d "#%(),.;A-Za-z]+$/)) {
             args.themeVariables[k3] = "";
           }
         }
@@ -19595,10 +19640,11 @@ var init_chunk_ABZYJK2D = __esm({
       return assignWithDepth_default({}, currentConfig);
     }, "getConfig");
     sanitize = /* @__PURE__ */ __name((options2) => {
+      var _a58;
       if (!options2) {
         return;
       }
-      ["secure", ...siteConfig.secure ?? []].forEach((key2) => {
+      ["secure", ...(_a58 = siteConfig.secure) != null ? _a58 : []].forEach((key2) => {
         if (Object.hasOwn(options2, key2)) {
           log.debug(`Denied attempt to modify a secure key ${key2}`, options2[key2]);
           delete options2[key2];
@@ -19619,12 +19665,12 @@ var init_chunk_ABZYJK2D = __esm({
       });
     }, "sanitize");
     addDirective = /* @__PURE__ */ __name((directive) => {
+      var _a58;
       sanitizeDirective(directive);
-      if (directive.fontFamily && !directive.themeVariables?.fontFamily) {
-        directive.themeVariables = {
-          ...directive.themeVariables,
+      if (directive.fontFamily && !((_a58 = directive.themeVariables) == null ? void 0 : _a58.fontFamily)) {
+        directive.themeVariables = __spreadProps(__spreadValues({}, directive.themeVariables), {
           fontFamily: directive.fontFamily
-        };
+        });
       }
       directives.push(directive);
       updateCurrentConfig(siteConfig, directives);
@@ -19686,7 +19732,8 @@ var init_chunk_ABZYJK2D = __esm({
       return sanitizedText;
     }, "removeScript");
     sanitizeMore = /* @__PURE__ */ __name((text11, config22) => {
-      if (config22.flowchart?.htmlLabels !== false) {
+      var _a58;
+      if (((_a58 = config22.flowchart) == null ? void 0 : _a58.htmlLabels) !== false) {
         const level = config22.securityLevel;
         if (level === "antiscript" || level === "strict") {
           text11 = removeScript(text11);
@@ -19803,7 +19850,10 @@ var init_chunk_ABZYJK2D = __esm({
     }, "processSet");
     isMathMLSupported = /* @__PURE__ */ __name(() => window.MathMLElement !== void 0, "isMathMLSupported");
     katexRegex = /\$\$(.*)\$\$/g;
-    hasKatex = /* @__PURE__ */ __name((text11) => (text11.match(katexRegex)?.length ?? 0) > 0, "hasKatex");
+    hasKatex = /* @__PURE__ */ __name((text11) => {
+      var _a58, _b2;
+      return ((_b2 = (_a58 = text11.match(katexRegex)) == null ? void 0 : _a58.length) != null ? _b2 : 0) > 0;
+    }, "hasKatex");
     calculateMathMLDimensions = /* @__PURE__ */ __name(async (text11, config22) => {
       const divElem = document.createElement("div");
       divElem.innerHTML = await renderKatexSanitized(text11, config22);
@@ -19812,7 +19862,7 @@ var init_chunk_ABZYJK2D = __esm({
       divElem.style.position = "absolute";
       divElem.style.top = "0";
       const body3 = document.querySelector("body");
-      body3?.insertAdjacentElement("beforeend", divElem);
+      body3 == null ? void 0 : body3.insertAdjacentElement("beforeend", divElem);
       const dim = { width: divElem.clientWidth, height: divElem.clientHeight };
       divElem.remove();
       return dim;
@@ -20029,6 +20079,7 @@ var init_chunk_ABZYJK2D = __esm({
     }, "getCommonDb");
     diagrams = {};
     registerDiagram = /* @__PURE__ */ __name((id28, diagram27, detector28) => {
+      var _a58;
       if (diagrams[id28]) {
         log2.warn(`Diagram with id ${id28} already registered. Overwriting.`);
       }
@@ -20037,7 +20088,8 @@ var init_chunk_ABZYJK2D = __esm({
         addDetector(id28, detector28);
       }
       addStylesForDiagram(id28, diagram27.styles);
-      diagram27.injectUtils?.(
+      (_a58 = diagram27.injectUtils) == null ? void 0 : _a58.call(
+        diagram27,
         log2,
         setLogLevel2,
         getConfig2,
@@ -20054,14 +20106,11 @@ var init_chunk_ABZYJK2D = __esm({
       }
       throw new DiagramNotFoundError(name);
     }, "getDiagram");
-    DiagramNotFoundError = class extends Error {
-      static {
-        __name(this, "DiagramNotFoundError");
-      }
+    DiagramNotFoundError = (_a7 = class extends Error {
       constructor(name) {
         super(`Diagram ${name} not found.`);
       }
-    };
+    }, __name(_a7, "DiagramNotFoundError"), _a7);
   }
 });
 
@@ -27515,11 +27564,12 @@ var init_chunk_EXTU4WIE = __esm({
     init_chunk_AGHRB4JF();
     init_src32();
     selectSvgElement = /* @__PURE__ */ __name((id28) => {
+      var _a58, _b2;
       const { securityLevel } = getConfig2();
       let root7 = select_default2("body");
       if (securityLevel === "sandbox") {
         const sandboxElement = select_default2(`#i${id28}`);
-        const doc = sandboxElement.node()?.contentDocument ?? document;
+        const doc = (_b2 = (_a58 = sandboxElement.node()) == null ? void 0 : _a58.contentDocument) != null ? _b2 : document;
         root7 = select_default2(doc.body);
       }
       const svg4 = root7.select(`#${id28}`);
@@ -30396,8 +30446,9 @@ var init_chunk_CVBHYZKI = __esm({
     getSubGraphTitleMargins = /* @__PURE__ */ __name(({
       flowchart
     }) => {
-      const subGraphTitleTopMargin = flowchart?.subGraphTitleMargin?.top ?? 0;
-      const subGraphTitleBottomMargin = flowchart?.subGraphTitleMargin?.bottom ?? 0;
+      var _a58, _b2, _c2, _d;
+      const subGraphTitleTopMargin = (_b2 = (_a58 = flowchart == null ? void 0 : flowchart.subGraphTitleMargin) == null ? void 0 : _a58.top) != null ? _b2 : 0;
+      const subGraphTitleBottomMargin = (_d = (_c2 = flowchart == null ? void 0 : flowchart.subGraphTitleMargin) == null ? void 0 : _c2.bottom) != null ? _d : 0;
       const subGraphTitleTotalMargin = subGraphTitleTopMargin + subGraphTitleBottomMargin;
       return {
         subGraphTitleTopMargin,
@@ -30439,7 +30490,7 @@ var init_chunk_ATLVNIR6 = __esm({
       const styleMap2 = /* @__PURE__ */ new Map();
       styles4.forEach((style4) => {
         const [key2, value2] = style4.split(":");
-        styleMap2.set(key2.trim(), value2?.trim());
+        styleMap2.set(key2.trim(), value2 == null ? void 0 : value2.trim());
       });
       return styleMap2;
     }, "styles2Map");
@@ -30475,6 +30526,7 @@ var init_chunk_ATLVNIR6 = __esm({
       };
     }, "styles2String");
     userNodeOverrides = /* @__PURE__ */ __name((node3, options2) => {
+      var _a58;
       const { themeVariables, handDrawnSeed } = getConfig2();
       const { nodeBorder, mainBkg } = themeVariables;
       const { stylesMap } = compileStyles(node3);
@@ -30488,7 +30540,7 @@ var init_chunk_ATLVNIR6 = __esm({
           hachureGap: 5.2,
           stroke: stylesMap.get("stroke") || nodeBorder,
           seed: handDrawnSeed,
-          strokeWidth: stylesMap.get("stroke-width")?.replace("px", "") || 1.3,
+          strokeWidth: ((_a58 = stylesMap.get("stroke-width")) == null ? void 0 : _a58.replace("px", "")) || 1.3,
           fillLineDash: [0, 0],
           strokeLineDash: getStrokeDashArray(stylesMap.get("stroke-dasharray"))
         },
@@ -32301,11 +32353,12 @@ var init_merge3 = __esm({
 
 // node_modules/mermaid/dist/chunks/mermaid.core/chunk-S3R3BYOJ.mjs
 function interpolateToCurve(interpolate, defaultCurve) {
+  var _a58;
   if (!interpolate) {
     return defaultCurve;
   }
   const curveName = `curve${interpolate.charAt(0).toUpperCase() + interpolate.slice(1)}`;
-  return d3CurveTypes[curveName] ?? defaultCurve;
+  return (_a58 = d3CurveTypes[curveName]) != null ? _a58 : defaultCurve;
 }
 function formatUrl(linkStr, config5) {
   const url = linkStr.trim();
@@ -32401,7 +32454,7 @@ function cleanAndMerge(defaultData, data5) {
   return merge_default3({}, defaultData, data5);
 }
 function handleUndefinedAttr(attrValue) {
-  return attrValue ?? null;
+  return attrValue != null ? attrValue : null;
 }
 function isLabelCoordinateInPath(point11, dAttr) {
   const roundedX = Math.round(point11.x);
@@ -32412,7 +32465,7 @@ function isLabelCoordinateInPath(point11, dAttr) {
   );
   return sanitizedD.includes(roundedX.toString()) || sanitizedD.includes(roundedY.toString());
 }
-var import_sanitize_url, ZERO_WIDTH_SPACE, d3CurveTypes, directiveWithoutOpen, detectInit, detectDirective, removeDirectives, isSubstringInArray, runFunc, roundNumber, calculatePoint, calcCardinalityPosition, cnt, generateId, random, getTextObj, drawSimpleText, wrapLabel, breakString, calculateTextDimensions, InitIDGenerator, decoder, entityDecode, insertTitle, parseFontSize, utils_default2, encodeEntities, decodeEntities, getEdgeId;
+var import_sanitize_url, ZERO_WIDTH_SPACE, d3CurveTypes, directiveWithoutOpen, detectInit, detectDirective, removeDirectives, isSubstringInArray, runFunc, roundNumber, calculatePoint, calcCardinalityPosition, cnt, generateId, random, getTextObj, drawSimpleText, wrapLabel, breakString, calculateTextDimensions, _a8, InitIDGenerator, decoder, entityDecode, insertTitle, parseFontSize, utils_default2, encodeEntities, decodeEntities, getEdgeId;
 var init_chunk_S3R3BYOJ = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/chunk-S3R3BYOJ.mjs"() {
     init_chunk_ABZYJK2D();
@@ -32470,6 +32523,7 @@ var init_chunk_S3R3BYOJ = __esm({
       return results;
     }, "detectInit");
     detectDirective = /* @__PURE__ */ __name(function(text11, type3 = null) {
+      var _a58, _b2;
       try {
         const commentWithoutDirectives = new RegExp(
           `[%]{2}(?![{]${directiveWithoutOpen.source})(?=[}][%]{2}).*
@@ -32486,7 +32540,7 @@ var init_chunk_S3R3BYOJ = __esm({
           if (match2.index === directiveRegex.lastIndex) {
             directiveRegex.lastIndex++;
           }
-          if (match2 && !type3 || type3 && match2[1]?.match(type3) || type3 && match2[2]?.match(type3)) {
+          if (match2 && !type3 || type3 && ((_a58 = match2[1]) == null ? void 0 : _a58.match(type3)) || type3 && ((_b2 = match2[2]) == null ? void 0 : _b2.match(type3))) {
             const type22 = match2[1] ? match2[1] : match2[2];
             const args = match2[3] ? match2[3].trim() : match2[4] ? JSON.parse(match2[4].trim()) : null;
             result.push({ type: type22, args });
@@ -32734,16 +32788,13 @@ var init_chunk_S3R3BYOJ = __esm({
       },
       (text11, config5) => `${text11}${config5.fontSize}${config5.fontWeight}${config5.fontFamily}`
     );
-    InitIDGenerator = class {
+    InitIDGenerator = (_a8 = class {
       constructor(deterministic = false, seed) {
         this.count = 0;
         this.count = seed ? seed.length : 0;
         this.next = deterministic ? () => this.count++ : () => Date.now();
       }
-      static {
-        __name(this, "InitIDGenerator");
-      }
-    };
+    }, __name(_a8, "InitIDGenerator"), _a8);
     entityDecode = /* @__PURE__ */ __name(function(html8) {
       decoder = decoder || document.createElement("div");
       html8 = escape(html8).replace(/%26/g, "&").replace(/%23/g, "#").replace(/%3B/g, ";");
@@ -32752,10 +32803,11 @@ var init_chunk_S3R3BYOJ = __esm({
     }, "entityDecode");
     __name(isDetailedError, "isDetailedError");
     insertTitle = /* @__PURE__ */ __name((parent4, cssClass, titleTopMargin, title2) => {
+      var _a58;
       if (!title2) {
         return;
       }
-      const bounds4 = parent4.node()?.getBBox();
+      const bounds4 = (_a58 = parent4.node()) == null ? void 0 : _a58.getBBox();
       if (!bounds4) {
         return;
       }
@@ -32765,7 +32817,7 @@ var init_chunk_S3R3BYOJ = __esm({
       if (typeof fontSize === "number") {
         return [fontSize, fontSize + "px"];
       }
-      const fontSizeNumber = parseInt(fontSize ?? "", 10);
+      const fontSizeNumber = parseInt(fontSize != null ? fontSize : "", 10);
       if (Number.isNaN(fontSizeNumber)) {
         return [void 0, void 0];
       } else if (fontSize === String(fontSizeNumber)) {
@@ -32852,15 +32904,11 @@ var init_defaults = __esm({
       vFlip: false,
       hFlip: false
     });
-    defaultIconProps = Object.freeze({
-      ...defaultIconDimensions,
-      ...defaultIconTransformations
-    });
-    defaultExtendedIconProps = Object.freeze({
-      ...defaultIconProps,
+    defaultIconProps = Object.freeze(__spreadValues(__spreadValues({}, defaultIconDimensions), defaultIconTransformations));
+    defaultExtendedIconProps = Object.freeze(__spreadProps(__spreadValues({}, defaultIconProps), {
       body: "",
       hidden: false
-    });
+    }));
   }
 });
 
@@ -32873,10 +32921,7 @@ var init_defaults2 = __esm({
       width: null,
       height: null
     });
-    defaultIconCustomisations = Object.freeze({
-      ...defaultIconSizeCustomisations,
-      ...defaultIconTransformations
-    });
+    defaultIconCustomisations = Object.freeze(__spreadValues(__spreadValues({}, defaultIconSizeCustomisations), defaultIconTransformations));
   }
 });
 
@@ -33067,14 +33112,8 @@ var init_defs = __esm({
 
 // node_modules/@iconify/utils/lib/svg/build.js
 function iconToSVG(icon2, customisations) {
-  const fullIcon = {
-    ...defaultIconProps,
-    ...icon2
-  };
-  const fullCustomisations = {
-    ...defaultIconCustomisations,
-    ...customisations
-  };
+  const fullIcon = __spreadValues(__spreadValues({}, defaultIconProps), icon2);
+  const fullCustomisations = __spreadValues(__spreadValues({}, defaultIconCustomisations), customisations);
   const box = {
     left: fullIcon.left,
     top: fullIcon.top,
@@ -33240,18 +33279,19 @@ function w(u4, e3) {
 function J(u4) {
   try {
     u4 = encodeURI(u4).replace(m.percentDecode, "%");
-  } catch {
+  } catch (e3) {
     return null;
   }
   return u4;
 }
 function V(u4, e3) {
+  var _a58;
   let t4 = u4.replace(m.findPipe, (i3, s3, o2) => {
     let a2 = false, l2 = s3;
     for (; --l2 >= 0 && o2[l2] === "\\"; ) a2 = !a2;
     return a2 ? "|" : " |";
   }), n2 = t4.split(m.splitPipe), r2 = 0;
-  if (n2[0].trim() || n2.shift(), n2.length > 0 && !n2.at(-1)?.trim() && n2.pop(), e3) if (n2.length > e3) n2.splice(e3);
+  if (n2[0].trim() || n2.shift(), n2.length > 0 && !((_a58 = n2.at(-1)) == null ? void 0 : _a58.trim()) && n2.pop(), e3) if (n2.length > e3) n2.splice(e3);
   else for (; n2.length < e3; ) n2.push("");
   for (; r2 < n2.length; r2++) n2[r2] = n2[r2].trim().replace(m.slashPipe, "|");
   return n2;
@@ -33298,7 +33338,7 @@ function Ve(u4, e3, t4) {
 function k(u4, e3) {
   return _.parse(u4, e3);
 }
-var T2, I, m, be, Re, Te, E, Oe, F, ie, oe, we, j, ye, Q, Pe, Se, v, U, $e, ae, _e, K2, re3, Le, Me, ze, Ae, le, Ie, D2, W, ue, Ee, pe, Ce, Be, qe, ce, ve, De, he, He, Ze, Ge, Ne, Fe, je, Qe, q, Ue, de, ke, Ke, se, X2, We, N, Xe, C, M, Je, ge, y2, x2, P, $, b, S2, B, _, Ht, Zt, Gt, Nt, Ft, Qt, Ut;
+var T2, I, m, be, Re, Te, E, Oe, F, ie, oe, we, j, ye, Q, Pe, Se, v, U, $e, ae, _e, K2, re3, Le, Me, ze, Ae, le, Ie, D2, W, ue, Ee, pe, Ce, Be, qe, ce, ve, De, he, He, Ze, Ge, Ne, Fe, je, Qe, q, Ue, de, ke, Ke, se, X2, We, N, Xe, C, M, Je, ge, y2, x2, P, $, b, _a9, S2, B, _, Ht, Zt, Gt, Nt, Ft, Qt, Ut;
 var init_marked_esm = __esm({
   "node_modules/marked/lib/marked.esm.js"() {
     T2 = L();
@@ -33325,9 +33365,9 @@ var init_marked_esm = __esm({
     _e = d(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", ae).getRegex();
     K2 = { blockquote: _e, code: Re, def: Pe, fences: Te, heading: Oe, hr: E, html: $e, lheading: oe, list: Se, newline: be, paragraph: ae, table: I, text: ye };
     re3 = d("^ *([^\\n ].*)\\n {0,3}((?:\\| *)?:?-+:? *(?:\\| *:?-+:? *)*(?:\\| *)?)(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)").replace("hr", E).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("blockquote", " {0,3}>").replace("code", "(?: {4}| {0,3}	)[^\\n]").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v).getRegex();
-    Le = { ...K2, lheading: we, table: re3, paragraph: d(j).replace("hr", E).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("table", re3).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v).getRegex() };
-    Me = { ...K2, html: d(`^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`).replace("comment", U).replace(/tag/g, "(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(), def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/, heading: /^(#{1,6})(.*)(?:\n+|$)/, fences: I, lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/, paragraph: d(j).replace("hr", E).replace("heading", ` *#{1,6} *[^
-]`).replace("lheading", oe).replace("|table", "").replace("blockquote", " {0,3}>").replace("|fences", "").replace("|list", "").replace("|html", "").replace("|tag", "").getRegex() };
+    Le = __spreadProps(__spreadValues({}, K2), { lheading: we, table: re3, paragraph: d(j).replace("hr", E).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("table", re3).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v).getRegex() });
+    Me = __spreadProps(__spreadValues({}, K2), { html: d(`^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`).replace("comment", U).replace(/tag/g, "(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(), def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/, heading: /^(#{1,6})(.*)(?:\n+|$)/, fences: I, lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/, paragraph: d(j).replace("hr", E).replace("heading", ` *#{1,6} *[^
+]`).replace("lheading", oe).replace("|table", "").replace("blockquote", " {0,3}>").replace("|fences", "").replace("|list", "").replace("|html", "").replace("|tag", "").getRegex() });
     ze = /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/;
     Ae = /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/;
     le = /^( {2,}|\\)\n(?!\s*$)/;
@@ -33358,18 +33398,18 @@ var init_marked_esm = __esm({
     Ke = d("reflink|nolink(?!\\()", "g").replace("reflink", de).replace("nolink", ke).getRegex();
     se = /[hH][tT][tT][pP][sS]?|[fF][tT][pP]/;
     X2 = { _backpedal: I, anyPunctuation: Ne, autolink: Fe, blockSkip: qe, br: le, code: Ae, del: I, emStrongLDelim: ve, emStrongRDelimAst: He, emStrongRDelimUnd: Ge, escape: ze, link: Ue, nolink: ke, punctuation: Ee, reflink: de, reflinkSearch: Ke, tag: Qe, text: Ie, url: I };
-    We = { ...X2, link: d(/^!?\[(label)\]\((.*?)\)/).replace("label", q).getRegex(), reflink: d(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label", q).getRegex() };
-    N = { ...X2, emStrongRDelimAst: Ze, emStrongLDelim: De, url: d(/^((?:protocol):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/).replace("protocol", se).replace("email", /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/).getRegex(), _backpedal: /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/, del: /^(~~?)(?=[^\s~])((?:\\[\s\S]|[^\\])*?(?:\\[\s\S]|[^\s~\\]))\1(?=[^~]|$)/, text: d(/^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|protocol:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/).replace("protocol", se).getRegex() };
-    Xe = { ...N, br: d(le).replace("{2,}", "*").getRegex(), text: d(N.text).replace("\\b_", "\\b_| {2,}\\n").replace(/\{2,\}/g, "*").getRegex() };
+    We = __spreadProps(__spreadValues({}, X2), { link: d(/^!?\[(label)\]\((.*?)\)/).replace("label", q).getRegex(), reflink: d(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label", q).getRegex() });
+    N = __spreadProps(__spreadValues({}, X2), { emStrongRDelimAst: Ze, emStrongLDelim: De, url: d(/^((?:protocol):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/).replace("protocol", se).replace("email", /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/).getRegex(), _backpedal: /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/, del: /^(~~?)(?=[^\s~])((?:\\[\s\S]|[^\\])*?(?:\\[\s\S]|[^\s~\\]))\1(?=[^~]|$)/, text: d(/^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|protocol:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/).replace("protocol", se).getRegex() });
+    Xe = __spreadProps(__spreadValues({}, N), { br: d(le).replace("{2,}", "*").getRegex(), text: d(N.text).replace("\\b_", "\\b_| {2,}\\n").replace(/\{2,\}/g, "*").getRegex() });
     C = { normal: K2, gfm: Le, pedantic: Me };
     M = { normal: X2, gfm: N, breaks: Xe, pedantic: We };
     Je = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
     ge = (u4) => Je[u4];
     y2 = class {
-      options;
-      rules;
-      lexer;
       constructor(e3) {
+        __publicField(this, "options");
+        __publicField(this, "rules");
+        __publicField(this, "lexer");
         this.options = e3 || T2;
       }
       space(e3) {
@@ -33428,14 +33468,14 @@ ${p5}` : p5;
             let g2 = this.lexer.state.top;
             if (this.lexer.state.top = true, this.lexer.blockTokens(p5, s3, true), this.lexer.state.top = g2, n2.length === 0) break;
             let h3 = s3.at(-1);
-            if (h3?.type === "code") break;
-            if (h3?.type === "blockquote") {
+            if ((h3 == null ? void 0 : h3.type) === "code") break;
+            if ((h3 == null ? void 0 : h3.type) === "blockquote") {
               let R2 = h3, f2 = R2.raw + `
 ` + n2.join(`
 `), O2 = this.blockquote(f2);
               s3[s3.length - 1] = O2, r2 = r2.substring(0, r2.length - R2.raw.length) + O2.raw, i3 = i3.substring(0, i3.length - R2.text.length) + O2.text;
               break;
-            } else if (h3?.type === "list") {
+            } else if ((h3 == null ? void 0 : h3.type) === "list") {
               let R2 = h3, f2 = R2.raw + `
 ` + n2.join(`
 `), O2 = this.list(f2);
@@ -33506,9 +33546,10 @@ ${p5}` : p5;
         }
       }
       table(e3) {
+        var _a58;
         let t4 = this.rules.block.table.exec(e3);
         if (!t4 || !this.rules.other.tableDelimiter.test(t4[2])) return;
-        let n2 = V(t4[1]), r2 = t4[2].replace(this.rules.other.tableAlignChars, "").split("|"), i3 = t4[3]?.trim() ? t4[3].replace(this.rules.other.tableRowBlankLine, "").split(`
+        let n2 = V(t4[1]), r2 = t4[2].replace(this.rules.other.tableAlignChars, "").split("|"), i3 = ((_a58 = t4[3]) == null ? void 0 : _a58.trim()) ? t4[3].replace(this.rules.other.tableRowBlankLine, "").split(`
 `) : [], s3 = { type: "table", raw: t4[0], header: [], align: [], rows: [] };
         if (n2.length === r2.length) {
           for (let o2 of r2) this.rules.other.tableAlignRight.test(o2) ? s3.align.push("right") : this.rules.other.tableAlignCenter.test(o2) ? s3.align.push("center") : this.rules.other.tableAlignLeft.test(o2) ? s3.align.push("left") : s3.align.push(null);
@@ -33625,6 +33666,7 @@ ${p5}` : p5;
         }
       }
       url(e3) {
+        var _a58, _b2;
         let t4;
         if (t4 = this.rules.inline.url.exec(e3)) {
           let n2, r2;
@@ -33632,7 +33674,7 @@ ${p5}` : p5;
           else {
             let i3;
             do
-              i3 = t4[0], t4[0] = this.rules.inline._backpedal.exec(t4[0])?.[0] ?? "";
+              i3 = t4[0], t4[0] = (_b2 = (_a58 = this.rules.inline._backpedal.exec(t4[0])) == null ? void 0 : _a58[0]) != null ? _b2 : "";
             while (i3 !== t4[0]);
             n2 = t4[0], t4[1] === "www." ? r2 = "http://" + t4[0] : r2 = t4[0];
           }
@@ -33648,12 +33690,12 @@ ${p5}` : p5;
       }
     };
     x2 = class u {
-      tokens;
-      options;
-      state;
-      tokenizer;
-      inlineQueue;
       constructor(e3) {
+        __publicField(this, "tokens");
+        __publicField(this, "options");
+        __publicField(this, "state");
+        __publicField(this, "tokenizer");
+        __publicField(this, "inlineQueue");
         this.tokens = [], this.tokens.links = /* @__PURE__ */ Object.create(null), this.options = e3 || T2, this.options.tokenizer = this.options.tokenizer || new y2(), this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, top: true };
         let t4 = { other: m, block: C.normal, inline: M.normal };
         this.options.pedantic ? (t4.block = C.pedantic, t4.inline = M.pedantic) : this.options.gfm && (t4.block = C.gfm, this.options.breaks ? t4.inline = M.breaks : t4.inline = M.gfm), this.tokenizer.rules = t4;
@@ -33677,9 +33719,10 @@ ${p5}` : p5;
         return this.inlineQueue = [], this.tokens;
       }
       blockTokens(e3, t4 = [], n2 = false) {
+        var _a58, _b2, _c2;
         for (this.options.pedantic && (e3 = e3.replace(m.tabCharGlobal, "    ").replace(m.spaceLine, "")); e3; ) {
           let r2;
-          if (this.options.extensions?.block?.some((s3) => (r2 = s3.call({ lexer: this }, e3, t4)) ? (e3 = e3.substring(r2.raw.length), t4.push(r2), true) : false)) continue;
+          if ((_b2 = (_a58 = this.options.extensions) == null ? void 0 : _a58.block) == null ? void 0 : _b2.some((s3) => (r2 = s3.call({ lexer: this }, e3, t4)) ? (e3 = e3.substring(r2.raw.length), t4.push(r2), true) : false)) continue;
           if (r2 = this.tokenizer.space(e3)) {
             e3 = e3.substring(r2.raw.length);
             let s3 = t4.at(-1);
@@ -33690,7 +33733,7 @@ ${p5}` : p5;
           if (r2 = this.tokenizer.code(e3)) {
             e3 = e3.substring(r2.raw.length);
             let s3 = t4.at(-1);
-            s3?.type === "paragraph" || s3?.type === "text" ? (s3.raw += (s3.raw.endsWith(`
+            (s3 == null ? void 0 : s3.type) === "paragraph" || (s3 == null ? void 0 : s3.type) === "text" ? (s3.raw += (s3.raw.endsWith(`
 `) ? "" : `
 `) + r2.raw, s3.text += `
 ` + r2.text, this.inlineQueue.at(-1).src = s3.text) : t4.push(r2);
@@ -33723,7 +33766,7 @@ ${p5}` : p5;
           if (r2 = this.tokenizer.def(e3)) {
             e3 = e3.substring(r2.raw.length);
             let s3 = t4.at(-1);
-            s3?.type === "paragraph" || s3?.type === "text" ? (s3.raw += (s3.raw.endsWith(`
+            (s3 == null ? void 0 : s3.type) === "paragraph" || (s3 == null ? void 0 : s3.type) === "text" ? (s3.raw += (s3.raw.endsWith(`
 `) ? "" : `
 `) + r2.raw, s3.text += `
 ` + r2.raw, this.inlineQueue.at(-1).src = s3.text) : this.tokens.links[r2.tag] || (this.tokens.links[r2.tag] = { href: r2.href, title: r2.title }, t4.push(r2));
@@ -33738,7 +33781,7 @@ ${p5}` : p5;
             continue;
           }
           let i3 = e3;
-          if (this.options.extensions?.startBlock) {
+          if ((_c2 = this.options.extensions) == null ? void 0 : _c2.startBlock) {
             let s3 = 1 / 0, o2 = e3.slice(1), a2;
             this.options.extensions.startBlock.forEach((l2) => {
               a2 = l2.call({ lexer: this }, o2), typeof a2 == "number" && a2 >= 0 && (s3 = Math.min(s3, a2));
@@ -33746,7 +33789,7 @@ ${p5}` : p5;
           }
           if (this.state.top && (r2 = this.tokenizer.paragraph(i3))) {
             let s3 = t4.at(-1);
-            n2 && s3?.type === "paragraph" ? (s3.raw += (s3.raw.endsWith(`
+            n2 && (s3 == null ? void 0 : s3.type) === "paragraph" ? (s3.raw += (s3.raw.endsWith(`
 `) ? "" : `
 `) + r2.raw, s3.text += `
 ` + r2.text, this.inlineQueue.pop(), this.inlineQueue.at(-1).src = s3.text) : t4.push(r2), n2 = i3.length !== e3.length, e3 = e3.substring(r2.raw.length);
@@ -33755,7 +33798,7 @@ ${p5}` : p5;
           if (r2 = this.tokenizer.text(e3)) {
             e3 = e3.substring(r2.raw.length);
             let s3 = t4.at(-1);
-            s3?.type === "text" ? (s3.raw += (s3.raw.endsWith(`
+            (s3 == null ? void 0 : s3.type) === "text" ? (s3.raw += (s3.raw.endsWith(`
 `) ? "" : `
 `) + r2.raw, s3.text += `
 ` + r2.text, this.inlineQueue.pop(), this.inlineQueue.at(-1).src = s3.text) : t4.push(r2);
@@ -33775,6 +33818,7 @@ ${p5}` : p5;
         return this.inlineQueue.push({ src: e3, tokens: t4 }), t4;
       }
       inlineTokens(e3, t4 = []) {
+        var _a58, _b2, _c2, _d, _e2, _f;
         let n2 = e3, r2 = null;
         if (this.tokens.links) {
           let o2 = Object.keys(this.tokens.links);
@@ -33782,12 +33826,12 @@ ${p5}` : p5;
         }
         for (; (r2 = this.tokenizer.rules.inline.anyPunctuation.exec(n2)) != null; ) n2 = n2.slice(0, r2.index) + "++" + n2.slice(this.tokenizer.rules.inline.anyPunctuation.lastIndex);
         for (; (r2 = this.tokenizer.rules.inline.blockSkip.exec(n2)) != null; ) n2 = n2.slice(0, r2.index) + "[" + "a".repeat(r2[0].length - 2) + "]" + n2.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
-        n2 = this.options.hooks?.emStrongMask?.call({ lexer: this }, n2) ?? n2;
+        n2 = (_c2 = (_b2 = (_a58 = this.options.hooks) == null ? void 0 : _a58.emStrongMask) == null ? void 0 : _b2.call({ lexer: this }, n2)) != null ? _c2 : n2;
         let i3 = false, s3 = "";
         for (; e3; ) {
           i3 || (s3 = ""), i3 = false;
           let o2;
-          if (this.options.extensions?.inline?.some((l2) => (o2 = l2.call({ lexer: this }, e3, t4)) ? (e3 = e3.substring(o2.raw.length), t4.push(o2), true) : false)) continue;
+          if ((_e2 = (_d = this.options.extensions) == null ? void 0 : _d.inline) == null ? void 0 : _e2.some((l2) => (o2 = l2.call({ lexer: this }, e3, t4)) ? (e3 = e3.substring(o2.raw.length), t4.push(o2), true) : false)) continue;
           if (o2 = this.tokenizer.escape(e3)) {
             e3 = e3.substring(o2.raw.length), t4.push(o2);
             continue;
@@ -33803,7 +33847,7 @@ ${p5}` : p5;
           if (o2 = this.tokenizer.reflink(e3, this.tokens.links)) {
             e3 = e3.substring(o2.raw.length);
             let l2 = t4.at(-1);
-            o2.type === "text" && l2?.type === "text" ? (l2.raw += o2.raw, l2.text += o2.text) : t4.push(o2);
+            o2.type === "text" && (l2 == null ? void 0 : l2.type) === "text" ? (l2.raw += o2.raw, l2.text += o2.text) : t4.push(o2);
             continue;
           }
           if (o2 = this.tokenizer.emStrong(e3, n2, s3)) {
@@ -33831,7 +33875,7 @@ ${p5}` : p5;
             continue;
           }
           let a2 = e3;
-          if (this.options.extensions?.startInline) {
+          if ((_f = this.options.extensions) == null ? void 0 : _f.startInline) {
             let l2 = 1 / 0, c3 = e3.slice(1), p5;
             this.options.extensions.startInline.forEach((g2) => {
               p5 = g2.call({ lexer: this }, c3), typeof p5 == "number" && p5 >= 0 && (l2 = Math.min(l2, p5));
@@ -33840,7 +33884,7 @@ ${p5}` : p5;
           if (o2 = this.tokenizer.inlineText(a2)) {
             e3 = e3.substring(o2.raw.length), o2.raw.slice(-1) !== "_" && (s3 = o2.raw.slice(-1)), i3 = true;
             let l2 = t4.at(-1);
-            l2?.type === "text" ? (l2.raw += o2.raw, l2.text += o2.text) : t4.push(o2);
+            (l2 == null ? void 0 : l2.type) === "text" ? (l2.raw += o2.raw, l2.text += o2.text) : t4.push(o2);
             continue;
           }
           if (e3) {
@@ -33855,16 +33899,17 @@ ${p5}` : p5;
       }
     };
     P = class {
-      options;
-      parser;
       constructor(e3) {
+        __publicField(this, "options");
+        __publicField(this, "parser");
         this.options = e3 || T2;
       }
       space(e3) {
         return "";
       }
       code({ text: e3, lang: t4, escaped: n2 }) {
-        let r2 = (t4 || "").match(m.notSpaceStart)?.[0], i3 = e3.replace(m.endingNewline, "") + `
+        var _a58;
+        let r2 = (_a58 = (t4 || "").match(m.notSpaceStart)) == null ? void 0 : _a58[0], i3 = e3.replace(m.endingNewline, "") + `
 `;
         return r2 ? '<pre><code class="language-' + w(r2) + '">' + (n2 ? i3 : w(i3, true)) + `</code></pre>
 ` : "<pre><code>" + (n2 ? i3 : w(i3, true)) + `</code></pre>
@@ -33901,10 +33946,11 @@ ${this.parser.parse(e3)}</blockquote>
 `;
       }
       listitem(e3) {
+        var _a58;
         let t4 = "";
         if (e3.task) {
           let n2 = this.checkbox({ checked: !!e3.checked });
-          e3.loose ? e3.tokens[0]?.type === "paragraph" ? (e3.tokens[0].text = n2 + " " + e3.tokens[0].text, e3.tokens[0].tokens && e3.tokens[0].tokens.length > 0 && e3.tokens[0].tokens[0].type === "text" && (e3.tokens[0].tokens[0].text = n2 + " " + w(e3.tokens[0].tokens[0].text), e3.tokens[0].tokens[0].escaped = true)) : e3.tokens.unshift({ type: "text", raw: n2 + " ", text: n2 + " ", escaped: true }) : t4 += n2 + " ";
+          e3.loose ? ((_a58 = e3.tokens[0]) == null ? void 0 : _a58.type) === "paragraph" ? (e3.tokens[0].text = n2 + " " + e3.tokens[0].text, e3.tokens[0].tokens && e3.tokens[0].tokens.length > 0 && e3.tokens[0].tokens[0].type === "text" && (e3.tokens[0].tokens[0].text = n2 + " " + w(e3.tokens[0].tokens[0].text), e3.tokens[0].tokens[0].escaped = true)) : e3.tokens.unshift({ type: "text", raw: n2 + " ", text: n2 + " ", escaped: true }) : t4 += n2 + " ";
         }
         return t4 += this.parser.parse(e3.tokens, !!e3.loose), `<li>${t4}</li>
 `;
@@ -34007,10 +34053,10 @@ ${e3}</tr>
       }
     };
     b = class u2 {
-      options;
-      renderer;
-      textRenderer;
       constructor(e3) {
+        __publicField(this, "options");
+        __publicField(this, "renderer");
+        __publicField(this, "textRenderer");
         this.options = e3 || T2, this.options.renderer = this.options.renderer || new P(), this.renderer = this.options.renderer, this.renderer.options = this.options, this.renderer.parser = this, this.textRenderer = new $();
       }
       static parse(e3, t4) {
@@ -34020,10 +34066,11 @@ ${e3}</tr>
         return new u2(t4).parseInline(e3);
       }
       parse(e3, t4 = true) {
+        var _a58, _b2;
         let n2 = "";
         for (let r2 = 0; r2 < e3.length; r2++) {
           let i3 = e3[r2];
-          if (this.options.extensions?.renderers?.[i3.type]) {
+          if ((_b2 = (_a58 = this.options.extensions) == null ? void 0 : _a58.renderers) == null ? void 0 : _b2[i3.type]) {
             let o2 = i3, a2 = this.options.extensions.renderers[o2.type].call({ parser: this }, o2);
             if (a2 !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "html", "def", "paragraph", "text"].includes(o2.type)) {
               n2 += a2 || "";
@@ -34089,10 +34136,11 @@ ${e3}</tr>
         return n2;
       }
       parseInline(e3, t4 = this.renderer) {
+        var _a58, _b2;
         let n2 = "";
         for (let r2 = 0; r2 < e3.length; r2++) {
           let i3 = e3[r2];
-          if (this.options.extensions?.renderers?.[i3.type]) {
+          if ((_b2 = (_a58 = this.options.extensions) == null ? void 0 : _a58.renderers) == null ? void 0 : _b2[i3.type]) {
             let o2 = this.options.extensions.renderers[i3.type].call({ parser: this }, i3);
             if (o2 !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(i3.type)) {
               n2 += o2 || "";
@@ -34151,14 +34199,12 @@ ${e3}</tr>
         return n2;
       }
     };
-    S2 = class {
-      options;
-      block;
+    S2 = (_a9 = class {
       constructor(e3) {
+        __publicField(this, "options");
+        __publicField(this, "block");
         this.options = e3 || T2;
       }
-      static passThroughHooks = /* @__PURE__ */ new Set(["preprocess", "postprocess", "processAllTokens", "emStrongMask"]);
-      static passThroughHooksRespectAsync = /* @__PURE__ */ new Set(["preprocess", "postprocess", "processAllTokens"]);
       preprocess(e3) {
         return e3;
       }
@@ -34177,22 +34223,23 @@ ${e3}</tr>
       provideParser() {
         return this.block ? b.parse : b.parseInline;
       }
-    };
+    }, __publicField(_a9, "passThroughHooks", /* @__PURE__ */ new Set(["preprocess", "postprocess", "processAllTokens", "emStrongMask"])), __publicField(_a9, "passThroughHooksRespectAsync", /* @__PURE__ */ new Set(["preprocess", "postprocess", "processAllTokens"])), _a9);
     B = class {
-      defaults = L();
-      options = this.setOptions;
-      parse = this.parseMarkdown(true);
-      parseInline = this.parseMarkdown(false);
-      Parser = b;
-      Renderer = P;
-      TextRenderer = $;
-      Lexer = x2;
-      Tokenizer = y2;
-      Hooks = S2;
       constructor(...e3) {
+        __publicField(this, "defaults", L());
+        __publicField(this, "options", this.setOptions);
+        __publicField(this, "parse", this.parseMarkdown(true));
+        __publicField(this, "parseInline", this.parseMarkdown(false));
+        __publicField(this, "Parser", b);
+        __publicField(this, "Renderer", P);
+        __publicField(this, "TextRenderer", $);
+        __publicField(this, "Lexer", x2);
+        __publicField(this, "Tokenizer", y2);
+        __publicField(this, "Hooks", S2);
         this.use(...e3);
       }
       walkTokens(e3, t4) {
+        var _a58, _b2;
         let n2 = [];
         for (let r2 of e3) switch (n2 = n2.concat(t4.call(this, r2)), r2.type) {
           case "table": {
@@ -34208,7 +34255,7 @@ ${e3}</tr>
           }
           default: {
             let i3 = r2;
-            this.defaults.extensions?.childTokens?.[i3.type] ? this.defaults.extensions.childTokens[i3.type].forEach((s3) => {
+            ((_b2 = (_a58 = this.defaults.extensions) == null ? void 0 : _a58.childTokens) == null ? void 0 : _b2[i3.type]) ? this.defaults.extensions.childTokens[i3.type].forEach((s3) => {
               let o2 = i3[s3].flat(1 / 0);
               n2 = n2.concat(this.walkTokens(o2, t4));
             }) : i3.tokens && (n2 = n2.concat(this.walkTokens(i3.tokens, t4)));
@@ -34219,7 +34266,7 @@ ${e3}</tr>
       use(...e3) {
         let t4 = this.defaults.extensions || { renderers: {}, childTokens: {} };
         return e3.forEach((n2) => {
-          let r2 = { ...n2 };
+          let r2 = __spreadValues({}, n2);
           if (r2.async = this.defaults.async || r2.async || false, n2.extensions && (n2.extensions.forEach((i3) => {
             if (!i3.name) throw new Error("extension name required");
             if ("renderer" in i3) {
@@ -34292,21 +34339,21 @@ ${e3}</tr>
               return a2.push(s3.call(this, o2)), i3 && (a2 = a2.concat(i3.call(this, o2))), a2;
             };
           }
-          this.defaults = { ...this.defaults, ...r2 };
+          this.defaults = __spreadValues(__spreadValues({}, this.defaults), r2);
         }), this;
       }
       setOptions(e3) {
-        return this.defaults = { ...this.defaults, ...e3 }, this;
+        return this.defaults = __spreadValues(__spreadValues({}, this.defaults), e3), this;
       }
       lexer(e3, t4) {
-        return x2.lex(e3, t4 ?? this.defaults);
+        return x2.lex(e3, t4 != null ? t4 : this.defaults);
       }
       parser(e3, t4) {
-        return b.parse(e3, t4 ?? this.defaults);
+        return b.parse(e3, t4 != null ? t4 : this.defaults);
       }
       parseMarkdown(e3) {
         return (n2, r2) => {
-          let i3 = { ...r2 }, s3 = { ...this.defaults, ...i3 }, o2 = this.onError(!!s3.silent, !!s3.async);
+          let i3 = __spreadValues({}, r2), s3 = __spreadValues(__spreadValues({}, this.defaults), i3), o2 = this.onError(!!s3.silent, !!s3.async);
           if (this.defaults.async === true && i3.async === false) return o2(new Error("marked(): The async option was set to true by an extension. Remove async: false from the parse options object to return a Promise."));
           if (typeof n2 > "u" || n2 === null) return o2(new Error("marked(): input parameter is undefined or null"));
           if (typeof n2 != "string") return o2(new Error("marked(): input parameter is of type " + Object.prototype.toString.call(n2) + ", string expected"));
@@ -34383,8 +34430,8 @@ function dedent(templ) {
     var matches33 = str2.match(/\n([\t ]+|(?!\s).)/g);
     if (matches33) {
       return arr.concat(matches33.map(function(match2) {
-        var _a, _b;
-        return (_b = (_a = match2.match(/[\t ]/g)) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0;
+        var _a58, _b2;
+        return (_b2 = (_a58 = match2.match(/[\t ]/g)) === null || _a58 === void 0 ? void 0 : _a58.length) !== null && _b2 !== void 0 ? _b2 : 0;
       }));
     }
     return arr;
@@ -34455,8 +34502,9 @@ function markdownToLines(markdown, config5 = {}) {
   }
   __name(processNode, "processNode");
   nodes5.forEach((treeNode) => {
+    var _a58;
     if (treeNode.type === "paragraph") {
-      treeNode.tokens?.forEach((contentNode) => {
+      (_a58 = treeNode.tokens) == null ? void 0 : _a58.forEach((contentNode) => {
         processNode(contentNode);
       });
     } else if (treeNode.type === "html") {
@@ -34470,17 +34518,18 @@ function markdownToLines(markdown, config5 = {}) {
 function markdownToHTML(markdown, { markdownAutoWrap } = {}) {
   const nodes5 = k.lexer(markdown);
   function output2(node3) {
+    var _a58, _b2, _c2;
     if (node3.type === "text") {
       if (markdownAutoWrap === false) {
         return node3.text.replace(/\n */g, "<br/>").replace(/ /g, "&nbsp;");
       }
       return node3.text.replace(/\n */g, "<br/>");
     } else if (node3.type === "strong") {
-      return `<strong>${node3.tokens?.map(output2).join("")}</strong>`;
+      return `<strong>${(_a58 = node3.tokens) == null ? void 0 : _a58.map(output2).join("")}</strong>`;
     } else if (node3.type === "em") {
-      return `<em>${node3.tokens?.map(output2).join("")}</em>`;
+      return `<em>${(_b2 = node3.tokens) == null ? void 0 : _b2.map(output2).join("")}</em>`;
     } else if (node3.type === "paragraph") {
-      return `<p>${node3.tokens?.map(output2).join("")}</p>`;
+      return `<p>${(_c2 = node3.tokens) == null ? void 0 : _c2.map(output2).join("")}</p>`;
     } else if (node3.type === "space") {
       return "";
     } else if (node3.type === "html") {
@@ -34532,6 +34581,7 @@ function splitLineToFitWidth(line2, checkFit) {
   return splitLineToFitWidthRecursion(line2, checkFit);
 }
 function splitLineToFitWidthRecursion(words, checkFit, lines = [], newLine = []) {
+  var _a58;
   if (words.length === 0) {
     if (newLine.length > 0) {
       lines.push(newLine);
@@ -34543,7 +34593,7 @@ function splitLineToFitWidthRecursion(words, checkFit, lines = [], newLine = [])
     joiner = " ";
     words.shift();
   }
-  const nextWord = words.shift() ?? { content: " ", type: "normal" };
+  const nextWord = (_a58 = words.shift()) != null ? _a58 : { content: " ", type: "normal" };
   const lineWithNextWord = [...newLine];
   if (joiner !== "") {
     lineWithNextWord.push({ content: joiner, type: "normal" });
@@ -34611,10 +34661,11 @@ function computeWidthOfText(parentNode, lineHeight, line2) {
   return textLength;
 }
 function computeDimensionOfText(parentNode, lineHeight, text11) {
+  var _a58;
   const testElement = parentNode.append("text");
   const testSpan = createTspan(testElement, 1, lineHeight);
   updateTextContentAndStyles(testSpan, [{ content: text11, type: "normal" }]);
-  const textDimension = testSpan.node()?.getBoundingClientRect();
+  const textDimension = (_a58 = testSpan.node()) == null ? void 0 : _a58.getBoundingClientRect();
   if (textDimension) {
     testElement.remove();
   }
@@ -34671,7 +34722,10 @@ async function replaceIconSubstring(text11, config5 = {}) {
     return fullMatch;
   });
   const replacements = await Promise.all(pendingReplacements);
-  return text11.replace(/(fa[bklrs]?):fa-([\w-]+)/g, () => replacements.shift() ?? "");
+  return text11.replace(/(fa[bklrs]?):fa-([\w-]+)/g, () => {
+    var _a58;
+    return (_a58 = replacements.shift()) != null ? _a58 : "";
+  });
 }
 var unknownIcon, iconsStore, loaderStore, registerIconPacks, getRegisteredIconData, isIconAvailable, getIconSVG, createText;
 var init_chunk_JA3XYJ7Z = __esm({
@@ -34725,7 +34779,7 @@ var init_chunk_JA3XYJ7Z = __esm({
         }
         try {
           const loaded = await loader28();
-          icons = { ...loaded, prefix };
+          icons = __spreadProps(__spreadValues({}, loaded), { prefix });
           iconsStore.set(prefix, icons);
         } catch (e3) {
           log.error(e3);
@@ -34742,23 +34796,20 @@ var init_chunk_JA3XYJ7Z = __esm({
       try {
         await getRegisteredIconData(iconName);
         return true;
-      } catch {
+      } catch (e3) {
         return false;
       }
     }, "isIconAvailable");
     getIconSVG = /* @__PURE__ */ __name(async (iconName, customisations, extraAttributes) => {
       let iconData;
       try {
-        iconData = await getRegisteredIconData(iconName, customisations?.fallbackPrefix);
+        iconData = await getRegisteredIconData(iconName, customisations == null ? void 0 : customisations.fallbackPrefix);
       } catch (e3) {
         log.error(e3);
         iconData = unknownIcon;
       }
       const renderData = iconToSVG(iconData, customisations);
-      const svg4 = iconToHTML(replaceIDs(renderData.body), {
-        ...renderData.attributes,
-        ...extraAttributes
-      });
+      const svg4 = iconToHTML(replaceIDs(renderData.body), __spreadValues(__spreadValues({}, renderData.attributes), extraAttributes));
       return sanitizeText(svg4, getConfig());
     }, "getIconSVG");
     __name(preprocessMarkdown, "preprocessMarkdown");
@@ -36161,11 +36212,12 @@ async function card(parent4, node3) {
   return shapeSvg;
 }
 function choice(parent4, node3) {
+  var _a58, _b2;
   const { nodeStyles } = styles2String(node3);
   node3.label = "";
-  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", node3.domId ?? node3.id);
+  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", (_a58 = node3.domId) != null ? _a58 : node3.id);
   const { cssStyles } = node3;
-  const s3 = Math.max(28, node3.width ?? 0);
+  const s3 = Math.max(28, (_b2 = node3.width) != null ? _b2 : 0);
   const points = [
     { x: 0, y: s3 / 2 },
     { x: s3 / 2, y: 0 },
@@ -36195,10 +36247,11 @@ function choice(parent4, node3) {
   return shapeSvg;
 }
 async function circle(parent4, node3, options2) {
+  var _a58;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, halfPadding } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const padding2 = options2?.padding ?? halfPadding;
+  const padding2 = (_a58 = options2 == null ? void 0 : options2.padding) != null ? _a58 : halfPadding;
   const radius2 = bbox.width / 2 + padding2;
   let circleElem;
   const { cssStyles } = node3;
@@ -36234,11 +36287,12 @@ function createLine(r2) {
                    M ${pointQ1.x},${pointQ1.y} L ${pointQ3.x},${pointQ3.y}`;
 }
 function crossedCircle(parent4, node3) {
+  var _a58, _b2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   node3.label = "";
-  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", node3.domId ?? node3.id);
-  const radius2 = Math.max(30, node3?.width ?? 0);
+  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", (_a58 = node3.domId) != null ? _a58 : node3.id);
+  const radius2 = Math.max(30, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
   const { cssStyles } = node3;
   const rc = at.svg(shapeSvg);
   const options2 = userNodeOverrides(node3, {});
@@ -36280,11 +36334,12 @@ function generateCirclePoints2(centerX, centerY, radius2, numPoints = 100, start
   return points;
 }
 async function curlyBraceLeft(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = bbox.width + (node3.padding ?? 0);
-  const h3 = bbox.height + (node3.padding ?? 0);
+  const w4 = bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0);
+  const h3 = bbox.height + ((_b2 = node3.padding) != null ? _b2 : 0);
   const radius2 = Math.max(5, h3 * 0.1);
   const { cssStyles } = node3;
   const points = [
@@ -36317,7 +36372,7 @@ async function curlyBraceLeft(parent4, node3) {
   const newCurlyBracePath = curlyBraceLeftPath.replace("Z", "");
   const curlyBraceLeftNode = rc.path(newCurlyBracePath, options2);
   const rectPath = createPathFromPoints(rectPoints);
-  const rectShape = rc.path(rectPath, { ...options2 });
+  const rectShape = rc.path(rectPath, __spreadValues({}, options2));
   const curlyBraceLeftShape = shapeSvg.insert("g", ":first-child");
   curlyBraceLeftShape.insert(() => rectShape, ":first-child").attr("stroke-opacity", 0);
   curlyBraceLeftShape.insert(() => curlyBraceLeftNode, ":first-child");
@@ -36331,7 +36386,7 @@ async function curlyBraceLeft(parent4, node3) {
   curlyBraceLeftShape.attr("transform", `translate(${radius2}, 0)`);
   label.attr(
     "transform",
-    `translate(${-w4 / 2 + radius2 - (bbox.x - (bbox.left ?? 0))},${-h3 / 2 + (node3.padding ?? 0) / 2 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-w4 / 2 + radius2 - (bbox.x - ((_c2 = bbox.left) != null ? _c2 : 0))},${-h3 / 2 + ((_d = node3.padding) != null ? _d : 0) / 2 - (bbox.y - ((_e2 = bbox.top) != null ? _e2 : 0))})`
   );
   updateNodeBounds(node3, curlyBraceLeftShape);
   node3.intersect = function(point11) {
@@ -36355,11 +36410,12 @@ function generateCirclePoints3(centerX, centerY, radius2, numPoints = 100, start
   return points;
 }
 async function curlyBraceRight(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = bbox.width + (node3.padding ?? 0);
-  const h3 = bbox.height + (node3.padding ?? 0);
+  const w4 = bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0);
+  const h3 = bbox.height + ((_b2 = node3.padding) != null ? _b2 : 0);
   const radius2 = Math.max(5, h3 * 0.1);
   const { cssStyles } = node3;
   const points = [
@@ -36392,7 +36448,7 @@ async function curlyBraceRight(parent4, node3) {
   const newCurlyBracePath = curlyBraceRightPath.replace("Z", "");
   const curlyBraceRightNode = rc.path(newCurlyBracePath, options2);
   const rectPath = createPathFromPoints(rectPoints);
-  const rectShape = rc.path(rectPath, { ...options2 });
+  const rectShape = rc.path(rectPath, __spreadValues({}, options2));
   const curlyBraceRightShape = shapeSvg.insert("g", ":first-child");
   curlyBraceRightShape.insert(() => rectShape, ":first-child").attr("stroke-opacity", 0);
   curlyBraceRightShape.insert(() => curlyBraceRightNode, ":first-child");
@@ -36406,7 +36462,7 @@ async function curlyBraceRight(parent4, node3) {
   curlyBraceRightShape.attr("transform", `translate(${-radius2}, 0)`);
   label.attr(
     "transform",
-    `translate(${-w4 / 2 + (node3.padding ?? 0) / 2 - (bbox.x - (bbox.left ?? 0))},${-h3 / 2 + (node3.padding ?? 0) / 2 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-w4 / 2 + ((_c2 = node3.padding) != null ? _c2 : 0) / 2 - (bbox.x - ((_d = bbox.left) != null ? _d : 0))},${-h3 / 2 + ((_e2 = node3.padding) != null ? _e2 : 0) / 2 - (bbox.y - ((_f = bbox.top) != null ? _f : 0))})`
   );
   updateNodeBounds(node3, curlyBraceRightShape);
   node3.intersect = function(point11) {
@@ -36430,11 +36486,12 @@ function generateCirclePoints4(centerX, centerY, radius2, numPoints = 100, start
   return points;
 }
 async function curlyBraces(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = bbox.width + (node3.padding ?? 0);
-  const h3 = bbox.height + (node3.padding ?? 0);
+  const w4 = bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0);
+  const h3 = bbox.height + ((_b2 = node3.padding) != null ? _b2 : 0);
   const radius2 = Math.max(5, h3 * 0.1);
   const { cssStyles } = node3;
   const leftCurlyBracePoints = [
@@ -36484,7 +36541,7 @@ async function curlyBraces(parent4, node3) {
   const newRightCurlyBracePath = rightCurlyBracePath.replace("Z", "");
   const rightCurlyBraceNode = rc.path(newRightCurlyBracePath, options2);
   const rectPath = createPathFromPoints(rectPoints);
-  const rectShape = rc.path(rectPath, { ...options2 });
+  const rectShape = rc.path(rectPath, __spreadValues({}, options2));
   const curlyBracesShape = shapeSvg.insert("g", ":first-child");
   curlyBracesShape.insert(() => rectShape, ":first-child").attr("stroke-opacity", 0);
   curlyBracesShape.insert(() => leftCurlyBraceNode, ":first-child");
@@ -36499,7 +36556,7 @@ async function curlyBraces(parent4, node3) {
   curlyBracesShape.attr("transform", `translate(${radius2 - radius2 / 4}, 0)`);
   label.attr(
     "transform",
-    `translate(${-w4 / 2 + (node3.padding ?? 0) / 2 - (bbox.x - (bbox.left ?? 0))},${-h3 / 2 + (node3.padding ?? 0) / 2 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-w4 / 2 + ((_c2 = node3.padding) != null ? _c2 : 0) / 2 - (bbox.x - ((_d = bbox.left) != null ? _d : 0))},${-h3 / 2 + ((_e2 = node3.padding) != null ? _e2 : 0) / 2 - (bbox.y - ((_f = bbox.top) != null ? _f : 0))})`
   );
   updateNodeBounds(node3, curlyBracesShape);
   node3.intersect = function(point11) {
@@ -36509,12 +36566,13 @@ async function curlyBraces(parent4, node3) {
   return shapeSvg;
 }
 async function curvedTrapezoid(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
   const minWidth = 80, minHeight = 20;
-  const w4 = Math.max(minWidth, (bbox.width + (node3.padding ?? 0) * 2) * 1.25, node3?.width ?? 0);
-  const h3 = Math.max(minHeight, bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(minWidth, (bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2) * 1.25, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(minHeight, bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const radius2 = h3 / 2;
   const { cssStyles } = node3;
   const rc = at.svg(shapeSvg);
@@ -36553,13 +36611,14 @@ async function curvedTrapezoid(parent4, node3) {
   return shapeSvg;
 }
 async function cylinder(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + node3.padding, node3.width ?? 0);
+  const w4 = Math.max(bbox.width + node3.padding, (_a58 = node3.width) != null ? _a58 : 0);
   const rx = w4 / 2;
   const ry = rx / (2.5 + w4 / 50);
-  const h3 = Math.max(bbox.height + ry + node3.padding, node3.height ?? 0);
+  const h3 = Math.max(bbox.height + ry + node3.padding, (_b2 = node3.height) != null ? _b2 : 0);
   let cylinder22;
   const { cssStyles } = node3;
   if (node3.look === "handDrawn") {
@@ -36583,18 +36642,19 @@ async function cylinder(parent4, node3) {
   updateNodeBounds(node3, cylinder22);
   label.attr(
     "transform",
-    `translate(${-(bbox.width / 2) - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) + (node3.padding ?? 0) / 1.5 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-(bbox.width / 2) - (bbox.x - ((_c2 = bbox.left) != null ? _c2 : 0))}, ${-(bbox.height / 2) + ((_d = node3.padding) != null ? _d : 0) / 1.5 - (bbox.y - ((_e2 = bbox.top) != null ? _e2 : 0))})`
   );
   node3.intersect = function(point11) {
+    var _a59, _b3, _c3, _d2, _e3, _f;
     const pos = intersect_default.rect(node3, point11);
-    const x6 = pos.x - (node3.x ?? 0);
-    if (rx != 0 && (Math.abs(x6) < (node3.width ?? 0) / 2 || Math.abs(x6) == (node3.width ?? 0) / 2 && Math.abs(pos.y - (node3.y ?? 0)) > (node3.height ?? 0) / 2 - ry)) {
+    const x6 = pos.x - ((_a59 = node3.x) != null ? _a59 : 0);
+    if (rx != 0 && (Math.abs(x6) < ((_b3 = node3.width) != null ? _b3 : 0) / 2 || Math.abs(x6) == ((_c3 = node3.width) != null ? _c3 : 0) / 2 && Math.abs(pos.y - ((_d2 = node3.y) != null ? _d2 : 0)) > ((_e3 = node3.height) != null ? _e3 : 0) / 2 - ry)) {
       let y6 = ry * ry * (1 - x6 * x6 / (rx * rx));
       if (y6 > 0) {
         y6 = Math.sqrt(y6);
       }
       y6 = ry - y6;
-      if (point11.y - (node3.y ?? 0) > 0) {
+      if (point11.y - ((_f = node3.y) != null ? _f : 0) > 0) {
         y6 = -y6;
       }
       pos.y += y6;
@@ -36604,6 +36664,7 @@ async function cylinder(parent4, node3) {
   return shapeSvg;
 }
 async function dividedRectangle(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
@@ -36642,7 +36703,7 @@ async function dividedRectangle(parent4, node3) {
   }
   label.attr(
     "transform",
-    `translate(${x6 + (node3.padding ?? 0) / 2 - (bbox.x - (bbox.left ?? 0))}, ${y6 + rectOffset + (node3.padding ?? 0) / 2 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${x6 + ((_a58 = node3.padding) != null ? _a58 : 0) / 2 - (bbox.x - ((_b2 = bbox.left) != null ? _b2 : 0))}, ${y6 + rectOffset + ((_c2 = node3.padding) != null ? _c2 : 0) / 2 - (bbox.y - ((_d = bbox.top) != null ? _d : 0))})`
   );
   updateNodeBounds(node3, polygon2);
   node3.intersect = function(point11) {
@@ -36652,6 +36713,7 @@ async function dividedRectangle(parent4, node3) {
   return shapeSvg;
 }
 async function doublecircle(parent4, node3) {
+  var _a58, _b2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, halfPadding } = await labelHelper(parent4, node3, getNodeClasses(node3));
@@ -36668,8 +36730,8 @@ async function doublecircle(parent4, node3) {
     const innerRoughNode = rc.circle(0, 0, innerRadius * 2, innerOptions);
     circleGroup = shapeSvg.insert("g", ":first-child");
     circleGroup.attr("class", handleUndefinedAttr(node3.cssClasses)).attr("style", handleUndefinedAttr(cssStyles));
-    circleGroup.node()?.appendChild(outerRoughNode);
-    circleGroup.node()?.appendChild(innerRoughNode);
+    (_a58 = circleGroup.node()) == null ? void 0 : _a58.appendChild(outerRoughNode);
+    (_b2 = circleGroup.node()) == null ? void 0 : _b2.appendChild(innerRoughNode);
   } else {
     circleGroup = shapeSvg.insert("g", ":first-child");
     const outerCircle = circleGroup.insert("circle", ":first-child");
@@ -36686,10 +36748,11 @@ async function doublecircle(parent4, node3) {
   return shapeSvg;
 }
 function filledCircle(parent4, node3, { config: { themeVariables } }) {
+  var _a58;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.label = "";
   node3.labelStyle = labelStyles;
-  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", node3.domId ?? node3.id);
+  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", (_a58 = node3.domId) != null ? _a58 : node3.id);
   const radius2 = 7;
   const { cssStyles } = node3;
   const rc = at.svg(shapeSvg);
@@ -36716,10 +36779,11 @@ function filledCircle(parent4, node3, { config: { themeVariables } }) {
   return shapeSvg;
 }
 async function flippedTriangle(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = bbox.width + (node3.padding ?? 0);
+  const w4 = bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0);
   const h3 = w4 + bbox.height;
   const tw = w4 + bbox.height;
   const points = [
@@ -36748,7 +36812,7 @@ async function flippedTriangle(parent4, node3) {
   updateNodeBounds(node3, flippedTriangle2);
   label.attr(
     "transform",
-    `translate(${-bbox.width / 2 - (bbox.x - (bbox.left ?? 0))}, ${-h3 / 2 + (node3.padding ?? 0) / 2 + (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-bbox.width / 2 - (bbox.x - ((_b2 = bbox.left) != null ? _b2 : 0))}, ${-h3 / 2 + ((_c2 = node3.padding) != null ? _c2 : 0) / 2 + (bbox.y - ((_d = bbox.top) != null ? _d : 0))})`
   );
   node3.intersect = function(point11) {
     log.info("Triangle intersect", node3, points, point11);
@@ -36757,15 +36821,16 @@ async function flippedTriangle(parent4, node3) {
   return shapeSvg;
 }
 function forkJoin(parent4, node3, { dir: dir2, config: { state: state22, themeVariables } }) {
+  var _a58, _b2, _c2, _d, _e2, _f;
   const { nodeStyles } = styles2String(node3);
   node3.label = "";
-  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", node3.domId ?? node3.id);
+  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", (_a58 = node3.domId) != null ? _a58 : node3.id);
   const { cssStyles } = node3;
-  let width3 = Math.max(70, node3?.width ?? 0);
-  let height2 = Math.max(10, node3?.height ?? 0);
+  let width3 = Math.max(70, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  let height2 = Math.max(10, (_c2 = node3 == null ? void 0 : node3.height) != null ? _c2 : 0);
   if (dir2 === "LR") {
-    width3 = Math.max(10, node3?.width ?? 0);
-    height2 = Math.max(70, node3?.height ?? 0);
+    width3 = Math.max(10, (_d = node3 == null ? void 0 : node3.width) != null ? _d : 0);
+    height2 = Math.max(70, (_e2 = node3 == null ? void 0 : node3.height) != null ? _e2 : 0);
   }
   const x6 = -1 * width3 / 2;
   const y6 = -1 * height2 / 2;
@@ -36787,7 +36852,7 @@ function forkJoin(parent4, node3, { dir: dir2, config: { state: state22, themeVa
     shape.selectAll("path").attr("style", nodeStyles);
   }
   updateNodeBounds(node3, shape);
-  const padding2 = state22?.padding ?? 0;
+  const padding2 = (_f = state22 == null ? void 0 : state22.padding) != null ? _f : 0;
   if (node3.width && node3.height) {
     node3.width += padding2 / 2 || 0;
     node3.height += padding2 / 2 || 0;
@@ -36798,12 +36863,13 @@ function forkJoin(parent4, node3, { dir: dir2, config: { state: state22, themeVa
   return shapeSvg;
 }
 async function halfRoundedRectangle(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const minWidth = 80, minHeight = 50;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(minWidth, bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(minHeight, bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(minWidth, bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(minHeight, bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const radius2 = h3 / 2;
   const { cssStyles } = node3;
   const rc = at.svg(shapeSvg);
@@ -36838,11 +36904,12 @@ async function halfRoundedRectangle(parent4, node3) {
   return shapeSvg;
 }
 async function hexagon(parent4, node3) {
+  var _a58, _b2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const h3 = bbox.height + (node3.padding ?? 0);
-  const w4 = bbox.width + (node3.padding ?? 0) * 2.5;
+  const h3 = bbox.height + ((_a58 = node3.padding) != null ? _a58 : 0);
+  const w4 = bbox.width + ((_b2 = node3.padding) != null ? _b2 : 0) * 2.5;
   const { cssStyles } = node3;
   const rc = at.svg(shapeSvg);
   const options2 = userNodeOverrides(node3, {});
@@ -36885,12 +36952,13 @@ async function hexagon(parent4, node3) {
   return shapeSvg;
 }
 async function hourglass(parent4, node3) {
+  var _a58, _b2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.label = "";
   node3.labelStyle = labelStyles;
   const { shapeSvg } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(30, node3?.width ?? 0);
-  const h3 = Math.max(30, node3?.height ?? 0);
+  const w4 = Math.max(30, (_a58 = node3 == null ? void 0 : node3.width) != null ? _a58 : 0);
+  const h3 = Math.max(30, (_b2 = node3 == null ? void 0 : node3.height) != null ? _b2 : 0);
   const { cssStyles } = node3;
   const rc = at.svg(shapeSvg);
   const options2 = userNodeOverrides(node3, {});
@@ -36924,13 +36992,14 @@ async function hourglass(parent4, node3) {
   return shapeSvg;
 }
 async function icon(parent4, node3, { config: { themeVariables, flowchart } }) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
-  const assetHeight = node3.assetHeight ?? 48;
-  const assetWidth = node3.assetWidth ?? 48;
+  const assetHeight = (_a58 = node3.assetHeight) != null ? _a58 : 48;
+  const assetWidth = (_b2 = node3.assetWidth) != null ? _b2 : 48;
   const iconSize = Math.max(assetHeight, assetWidth);
-  const defaultWidth = flowchart?.wrappingWidth;
-  node3.width = Math.max(iconSize, defaultWidth ?? 0);
+  const defaultWidth = flowchart == null ? void 0 : flowchart.wrappingWidth;
+  node3.width = Math.max(iconSize, defaultWidth != null ? defaultWidth : 0);
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, "icon-shape default");
   const topLabel = node3.pos === "t";
   const height2 = iconSize;
@@ -36949,11 +37018,10 @@ async function icon(parent4, node3, { config: { themeVariables, flowchart } }) {
   const iconNode = rc.rectangle(x6, y6, width3, height2, options2);
   const outerWidth = Math.max(width3, bbox.width);
   const outerHeight = height2 + bbox.height + labelPadding;
-  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, {
-    ...options2,
+  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, __spreadProps(__spreadValues({}, options2), {
     fill: "transparent",
     stroke: "none"
-  });
+  }));
   const iconShape = shapeSvg.insert(() => iconNode, ":first-child");
   const outerShape = shapeSvg.insert(() => outerNode);
   if (node3.icon) {
@@ -36974,11 +37042,11 @@ async function icon(parent4, node3, { config: { themeVariables, flowchart } }) {
       "transform",
       `translate(${-iconWidth / 2 - iconX},${topLabel ? bbox.height / 2 + labelPadding / 2 - iconHeight / 2 - iconY : -bbox.height / 2 - labelPadding / 2 - iconHeight / 2 - iconY})`
     );
-    iconElem.attr("style", `color: ${stylesMap.get("stroke") ?? nodeBorder};`);
+    iconElem.attr("style", `color: ${(_c2 = stylesMap.get("stroke")) != null ? _c2 : nodeBorder};`);
   }
   label.attr(
     "transform",
-    `translate(${-bbox.width / 2 - (bbox.x - (bbox.left ?? 0))},${topLabel ? -outerHeight / 2 : outerHeight / 2 - bbox.height})`
+    `translate(${-bbox.width / 2 - (bbox.x - ((_d = bbox.left) != null ? _d : 0))},${topLabel ? -outerHeight / 2 : outerHeight / 2 - bbox.height})`
   );
   iconShape.attr(
     "transform",
@@ -36986,13 +37054,14 @@ async function icon(parent4, node3, { config: { themeVariables, flowchart } }) {
   );
   updateNodeBounds(node3, outerShape);
   node3.intersect = function(point11) {
+    var _a59, _b3, _c3;
     log.info("iconSquare intersect", node3, point11);
     if (!node3.label) {
       return intersect_default.rect(node3, point11);
     }
-    const dx = node3.x ?? 0;
-    const dy = node3.y ?? 0;
-    const nodeHeight = node3.height ?? 0;
+    const dx = (_a59 = node3.x) != null ? _a59 : 0;
+    const dy = (_b3 = node3.y) != null ? _b3 : 0;
+    const nodeHeight = (_c3 = node3.height) != null ? _c3 : 0;
     let points = [];
     if (topLabel) {
       points = [
@@ -37023,13 +37092,14 @@ async function icon(parent4, node3, { config: { themeVariables, flowchart } }) {
   return shapeSvg;
 }
 async function iconCircle(parent4, node3, { config: { themeVariables, flowchart } }) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
-  const assetHeight = node3.assetHeight ?? 48;
-  const assetWidth = node3.assetWidth ?? 48;
+  const assetHeight = (_a58 = node3.assetHeight) != null ? _a58 : 48;
+  const assetWidth = (_b2 = node3.assetWidth) != null ? _b2 : 48;
   const iconSize = Math.max(assetHeight, assetWidth);
-  const defaultWidth = flowchart?.wrappingWidth;
-  node3.width = Math.max(iconSize, defaultWidth ?? 0);
+  const defaultWidth = flowchart == null ? void 0 : flowchart.wrappingWidth;
+  node3.width = Math.max(iconSize, defaultWidth != null ? defaultWidth : 0);
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, "icon-shape default");
   const padding2 = 20;
   const labelPadding = node3.label ? 8 : 0;
@@ -37043,7 +37113,7 @@ async function iconCircle(parent4, node3, { config: { themeVariables, flowchart 
     options2.fillStyle = "solid";
   }
   const fill = stylesMap.get("fill");
-  options2.stroke = fill ?? mainBkg;
+  options2.stroke = fill != null ? fill : mainBkg;
   const iconElem = shapeSvg.append("g");
   if (node3.icon) {
     iconElem.html(
@@ -37063,21 +37133,20 @@ async function iconCircle(parent4, node3, { config: { themeVariables, flowchart 
   const iconNode = rc.circle(0, 0, diameter, options2);
   const outerWidth = Math.max(diameter, bbox.width);
   const outerHeight = diameter + bbox.height + labelPadding;
-  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, {
-    ...options2,
+  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, __spreadProps(__spreadValues({}, options2), {
     fill: "transparent",
     stroke: "none"
-  });
+  }));
   const iconShape = shapeSvg.insert(() => iconNode, ":first-child");
   const outerShape = shapeSvg.insert(() => outerNode);
   iconElem.attr(
     "transform",
     `translate(${-iconWidth / 2 - iconX},${topLabel ? bbox.height / 2 + labelPadding / 2 - iconHeight / 2 - iconY : -bbox.height / 2 - labelPadding / 2 - iconHeight / 2 - iconY})`
   );
-  iconElem.attr("style", `color: ${stylesMap.get("stroke") ?? nodeBorder};`);
+  iconElem.attr("style", `color: ${(_c2 = stylesMap.get("stroke")) != null ? _c2 : nodeBorder};`);
   label.attr(
     "transform",
-    `translate(${-bbox.width / 2 - (bbox.x - (bbox.left ?? 0))},${topLabel ? -outerHeight / 2 : outerHeight / 2 - bbox.height})`
+    `translate(${-bbox.width / 2 - (bbox.x - ((_d = bbox.left) != null ? _d : 0))},${topLabel ? -outerHeight / 2 : outerHeight / 2 - bbox.height})`
   );
   iconShape.attr(
     "transform",
@@ -37092,13 +37161,14 @@ async function iconCircle(parent4, node3, { config: { themeVariables, flowchart 
   return shapeSvg;
 }
 async function iconRounded(parent4, node3, { config: { themeVariables, flowchart } }) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
-  const assetHeight = node3.assetHeight ?? 48;
-  const assetWidth = node3.assetWidth ?? 48;
+  const assetHeight = (_a58 = node3.assetHeight) != null ? _a58 : 48;
+  const assetWidth = (_b2 = node3.assetWidth) != null ? _b2 : 48;
   const iconSize = Math.max(assetHeight, assetWidth);
-  const defaultWidth = flowchart?.wrappingWidth;
-  node3.width = Math.max(iconSize, defaultWidth ?? 0);
+  const defaultWidth = flowchart == null ? void 0 : flowchart.wrappingWidth;
+  node3.width = Math.max(iconSize, defaultWidth != null ? defaultWidth : 0);
   const { shapeSvg, bbox, halfPadding, label } = await labelHelper(
     parent4,
     node3,
@@ -37119,15 +37189,14 @@ async function iconRounded(parent4, node3, { config: { themeVariables, flowchart
     options2.fillStyle = "solid";
   }
   const fill = stylesMap.get("fill");
-  options2.stroke = fill ?? mainBkg;
+  options2.stroke = fill != null ? fill : mainBkg;
   const iconNode = rc.path(createRoundedRectPathD(x6, y6, width3, height2, 5), options2);
   const outerWidth = Math.max(width3, bbox.width);
   const outerHeight = height2 + bbox.height + labelPadding;
-  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, {
-    ...options2,
+  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, __spreadProps(__spreadValues({}, options2), {
     fill: "transparent",
     stroke: "none"
-  });
+  }));
   const iconShape = shapeSvg.insert(() => iconNode, ":first-child").attr("class", "icon-shape2");
   const outerShape = shapeSvg.insert(() => outerNode);
   if (node3.icon) {
@@ -37148,11 +37217,11 @@ async function iconRounded(parent4, node3, { config: { themeVariables, flowchart
       "transform",
       `translate(${-iconWidth / 2 - iconX},${topLabel ? bbox.height / 2 + labelPadding / 2 - iconHeight / 2 - iconY : -bbox.height / 2 - labelPadding / 2 - iconHeight / 2 - iconY})`
     );
-    iconElem.attr("style", `color: ${stylesMap.get("stroke") ?? nodeBorder};`);
+    iconElem.attr("style", `color: ${(_c2 = stylesMap.get("stroke")) != null ? _c2 : nodeBorder};`);
   }
   label.attr(
     "transform",
-    `translate(${-bbox.width / 2 - (bbox.x - (bbox.left ?? 0))},${topLabel ? -outerHeight / 2 : outerHeight / 2 - bbox.height})`
+    `translate(${-bbox.width / 2 - (bbox.x - ((_d = bbox.left) != null ? _d : 0))},${topLabel ? -outerHeight / 2 : outerHeight / 2 - bbox.height})`
   );
   iconShape.attr(
     "transform",
@@ -37160,13 +37229,14 @@ async function iconRounded(parent4, node3, { config: { themeVariables, flowchart
   );
   updateNodeBounds(node3, outerShape);
   node3.intersect = function(point11) {
+    var _a59, _b3, _c3;
     log.info("iconSquare intersect", node3, point11);
     if (!node3.label) {
       return intersect_default.rect(node3, point11);
     }
-    const dx = node3.x ?? 0;
-    const dy = node3.y ?? 0;
-    const nodeHeight = node3.height ?? 0;
+    const dx = (_a59 = node3.x) != null ? _a59 : 0;
+    const dy = (_b3 = node3.y) != null ? _b3 : 0;
+    const nodeHeight = (_c3 = node3.height) != null ? _c3 : 0;
     let points = [];
     if (topLabel) {
       points = [
@@ -37197,13 +37267,14 @@ async function iconRounded(parent4, node3, { config: { themeVariables, flowchart
   return shapeSvg;
 }
 async function iconSquare(parent4, node3, { config: { themeVariables, flowchart } }) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
-  const assetHeight = node3.assetHeight ?? 48;
-  const assetWidth = node3.assetWidth ?? 48;
+  const assetHeight = (_a58 = node3.assetHeight) != null ? _a58 : 48;
+  const assetWidth = (_b2 = node3.assetWidth) != null ? _b2 : 48;
   const iconSize = Math.max(assetHeight, assetWidth);
-  const defaultWidth = flowchart?.wrappingWidth;
-  node3.width = Math.max(iconSize, defaultWidth ?? 0);
+  const defaultWidth = flowchart == null ? void 0 : flowchart.wrappingWidth;
+  node3.width = Math.max(iconSize, defaultWidth != null ? defaultWidth : 0);
   const { shapeSvg, bbox, halfPadding, label } = await labelHelper(
     parent4,
     node3,
@@ -37224,15 +37295,14 @@ async function iconSquare(parent4, node3, { config: { themeVariables, flowchart 
     options2.fillStyle = "solid";
   }
   const fill = stylesMap.get("fill");
-  options2.stroke = fill ?? mainBkg;
+  options2.stroke = fill != null ? fill : mainBkg;
   const iconNode = rc.path(createRoundedRectPathD(x6, y6, width3, height2, 0.1), options2);
   const outerWidth = Math.max(width3, bbox.width);
   const outerHeight = height2 + bbox.height + labelPadding;
-  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, {
-    ...options2,
+  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, __spreadProps(__spreadValues({}, options2), {
     fill: "transparent",
     stroke: "none"
-  });
+  }));
   const iconShape = shapeSvg.insert(() => iconNode, ":first-child");
   const outerShape = shapeSvg.insert(() => outerNode);
   if (node3.icon) {
@@ -37253,11 +37323,11 @@ async function iconSquare(parent4, node3, { config: { themeVariables, flowchart 
       "transform",
       `translate(${-iconWidth / 2 - iconX},${topLabel ? bbox.height / 2 + labelPadding / 2 - iconHeight / 2 - iconY : -bbox.height / 2 - labelPadding / 2 - iconHeight / 2 - iconY})`
     );
-    iconElem.attr("style", `color: ${stylesMap.get("stroke") ?? nodeBorder};`);
+    iconElem.attr("style", `color: ${(_c2 = stylesMap.get("stroke")) != null ? _c2 : nodeBorder};`);
   }
   label.attr(
     "transform",
-    `translate(${-bbox.width / 2 - (bbox.x - (bbox.left ?? 0))},${topLabel ? -outerHeight / 2 : outerHeight / 2 - bbox.height})`
+    `translate(${-bbox.width / 2 - (bbox.x - ((_d = bbox.left) != null ? _d : 0))},${topLabel ? -outerHeight / 2 : outerHeight / 2 - bbox.height})`
   );
   iconShape.attr(
     "transform",
@@ -37265,13 +37335,14 @@ async function iconSquare(parent4, node3, { config: { themeVariables, flowchart 
   );
   updateNodeBounds(node3, outerShape);
   node3.intersect = function(point11) {
+    var _a59, _b3, _c3;
     log.info("iconSquare intersect", node3, point11);
     if (!node3.label) {
       return intersect_default.rect(node3, point11);
     }
-    const dx = node3.x ?? 0;
-    const dy = node3.y ?? 0;
-    const nodeHeight = node3.height ?? 0;
+    const dx = (_a59 = node3.x) != null ? _a59 : 0;
+    const dy = (_b3 = node3.y) != null ? _b3 : 0;
+    const nodeHeight = (_c3 = node3.height) != null ? _c3 : 0;
     let points = [];
     if (topLabel) {
       points = [
@@ -37302,23 +37373,24 @@ async function iconSquare(parent4, node3, { config: { themeVariables, flowchart 
   return shapeSvg;
 }
 async function imageSquare(parent4, node3, { config: { flowchart } }) {
+  var _a58, _b2, _c2, _d;
   const img = new Image();
-  img.src = node3?.img ?? "";
+  img.src = (_a58 = node3 == null ? void 0 : node3.img) != null ? _a58 : "";
   await img.decode();
   const imageNaturalWidth = Number(img.naturalWidth.toString().replace("px", ""));
   const imageNaturalHeight = Number(img.naturalHeight.toString().replace("px", ""));
   node3.imageAspectRatio = imageNaturalWidth / imageNaturalHeight;
   const { labelStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
-  const defaultWidth = flowchart?.wrappingWidth;
-  node3.defaultWidth = flowchart?.wrappingWidth;
+  const defaultWidth = flowchart == null ? void 0 : flowchart.wrappingWidth;
+  node3.defaultWidth = flowchart == null ? void 0 : flowchart.wrappingWidth;
   const imageRawWidth = Math.max(
-    node3.label ? defaultWidth ?? 0 : 0,
-    node3?.assetWidth ?? imageNaturalWidth
+    node3.label ? defaultWidth != null ? defaultWidth : 0 : 0,
+    (_b2 = node3 == null ? void 0 : node3.assetWidth) != null ? _b2 : imageNaturalWidth
   );
-  const imageWidth = node3.constraint === "on" ? node3?.assetHeight ? node3.assetHeight * node3.imageAspectRatio : imageRawWidth : imageRawWidth;
-  const imageHeight = node3.constraint === "on" ? imageWidth / node3.imageAspectRatio : node3?.assetHeight ?? imageNaturalHeight;
-  node3.width = Math.max(imageWidth, defaultWidth ?? 0);
+  const imageWidth = node3.constraint === "on" ? (node3 == null ? void 0 : node3.assetHeight) ? node3.assetHeight * node3.imageAspectRatio : imageRawWidth : imageRawWidth;
+  const imageHeight = node3.constraint === "on" ? imageWidth / node3.imageAspectRatio : (_c2 = node3 == null ? void 0 : node3.assetHeight) != null ? _c2 : imageNaturalHeight;
+  node3.width = Math.max(imageWidth, defaultWidth != null ? defaultWidth : 0);
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, "image-shape default");
   const topLabel = node3.pos === "t";
   const x6 = -imageWidth / 2;
@@ -37333,11 +37405,10 @@ async function imageSquare(parent4, node3, { config: { flowchart } }) {
   const imageNode = rc.rectangle(x6, y6, imageWidth, imageHeight, options2);
   const outerWidth = Math.max(imageWidth, bbox.width);
   const outerHeight = imageHeight + bbox.height + labelPadding;
-  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, {
-    ...options2,
+  const outerNode = rc.rectangle(-outerWidth / 2, -outerHeight / 2, outerWidth, outerHeight, __spreadProps(__spreadValues({}, options2), {
     fill: "none",
     stroke: "none"
-  });
+  }));
   const iconShape = shapeSvg.insert(() => imageNode, ":first-child");
   const outerShape = shapeSvg.insert(() => outerNode);
   if (node3.img) {
@@ -37353,7 +37424,7 @@ async function imageSquare(parent4, node3, { config: { flowchart } }) {
   }
   label.attr(
     "transform",
-    `translate(${-bbox.width / 2 - (bbox.x - (bbox.left ?? 0))},${topLabel ? -imageHeight / 2 - bbox.height / 2 - labelPadding / 2 : imageHeight / 2 - bbox.height / 2 + labelPadding / 2})`
+    `translate(${-bbox.width / 2 - (bbox.x - ((_d = bbox.left) != null ? _d : 0))},${topLabel ? -imageHeight / 2 - bbox.height / 2 - labelPadding / 2 : imageHeight / 2 - bbox.height / 2 + labelPadding / 2})`
   );
   iconShape.attr(
     "transform",
@@ -37361,13 +37432,14 @@ async function imageSquare(parent4, node3, { config: { flowchart } }) {
   );
   updateNodeBounds(node3, outerShape);
   node3.intersect = function(point11) {
+    var _a59, _b3, _c3;
     log.info("iconSquare intersect", node3, point11);
     if (!node3.label) {
       return intersect_default.rect(node3, point11);
     }
-    const dx = node3.x ?? 0;
-    const dy = node3.y ?? 0;
-    const nodeHeight = node3.height ?? 0;
+    const dx = (_a59 = node3.x) != null ? _a59 : 0;
+    const dy = (_b3 = node3.y) != null ? _b3 : 0;
+    const nodeHeight = (_c3 = node3.height) != null ? _c3 : 0;
     let points = [];
     if (topLabel) {
       points = [
@@ -37398,11 +37470,12 @@ async function imageSquare(parent4, node3, { config: { flowchart } }) {
   return shapeSvg;
 }
 async function inv_trapezoid(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const points = [
     { x: 0, y: 0 },
     { x: w4, y: 0 },
@@ -37438,14 +37511,14 @@ async function drawRect(parent4, node3, options2) {
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const totalWidth = Math.max(bbox.width + options2.labelPaddingX * 2, node3?.width || 0);
-  const totalHeight = Math.max(bbox.height + options2.labelPaddingY * 2, node3?.height || 0);
+  const totalWidth = Math.max(bbox.width + options2.labelPaddingX * 2, (node3 == null ? void 0 : node3.width) || 0);
+  const totalHeight = Math.max(bbox.height + options2.labelPaddingY * 2, (node3 == null ? void 0 : node3.height) || 0);
   const x6 = -totalWidth / 2;
   const y6 = -totalHeight / 2;
   let rect22;
   let { rx, ry } = node3;
   const { cssStyles } = node3;
-  if (options2?.rx && options2.ry) {
+  if ((options2 == null ? void 0 : options2.rx) && options2.ry) {
     rx = options2.rx;
     ry = options2.ry;
   }
@@ -37469,6 +37542,7 @@ async function drawRect(parent4, node3, options2) {
   return shapeSvg;
 }
 async function labelRect(parent4, node3) {
+  var _a58, _b2;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, "label");
   const rect22 = shapeSvg.insert("rect", ":first-child");
   const totalWidth = 0.1;
@@ -37477,7 +37551,7 @@ async function labelRect(parent4, node3) {
   shapeSvg.attr("class", "label edgeLabel");
   label.attr(
     "transform",
-    `translate(${-(bbox.width / 2) - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-(bbox.width / 2) - (bbox.x - ((_a58 = bbox.left) != null ? _a58 : 0))}, ${-(bbox.height / 2) - (bbox.y - ((_b2 = bbox.top) != null ? _b2 : 0))})`
   );
   updateNodeBounds(node3, rect22);
   node3.intersect = function(point11) {
@@ -37486,11 +37560,12 @@ async function labelRect(parent4, node3) {
   return shapeSvg;
 }
 async function lean_left(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0), node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0), node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0), (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0), (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const points = [
     { x: 0, y: 0 },
     { x: w4 + 3 * h3 / 6, y: 0 },
@@ -37523,11 +37598,12 @@ async function lean_left(parent4, node3) {
   return shapeSvg;
 }
 async function lean_right(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0), node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0), node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0), (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0), (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const points = [
     { x: -3 * h3 / 6, y: 0 },
     { x: w4, y: 0 },
@@ -37560,13 +37636,14 @@ async function lean_right(parent4, node3) {
   return shapeSvg;
 }
 function lightningBolt(parent4, node3) {
+  var _a58, _b2, _c2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.label = "";
   node3.labelStyle = labelStyles;
-  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", node3.domId ?? node3.id);
+  const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", (_a58 = node3.domId) != null ? _a58 : node3.id);
   const { cssStyles } = node3;
-  const width3 = Math.max(35, node3?.width ?? 0);
-  const height2 = Math.max(35, node3?.height ?? 0);
+  const width3 = Math.max(35, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const height2 = Math.max(35, (_c2 = node3 == null ? void 0 : node3.height) != null ? _c2 : 0);
   const gap = 7;
   const points = [
     { x: width3, y: 0 },
@@ -37601,13 +37678,14 @@ function lightningBolt(parent4, node3) {
   return shapeSvg;
 }
 async function linedCylinder(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0), node3.width ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0), (_b2 = node3.width) != null ? _b2 : 0);
   const rx = w4 / 2;
   const ry = rx / (2.5 + w4 / 50);
-  const h3 = Math.max(bbox.height + ry + (node3.padding ?? 0), node3.height ?? 0);
+  const h3 = Math.max(bbox.height + ry + ((_c2 = node3.padding) != null ? _c2 : 0), (_d = node3.height) != null ? _d : 0);
   const outerOffset = h3 * 0.1;
   let cylinder22;
   const { cssStyles } = node3;
@@ -37634,18 +37712,19 @@ async function linedCylinder(parent4, node3) {
   updateNodeBounds(node3, cylinder22);
   label.attr(
     "transform",
-    `translate(${-(bbox.width / 2) - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) + ry - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-(bbox.width / 2) - (bbox.x - ((_e2 = bbox.left) != null ? _e2 : 0))}, ${-(bbox.height / 2) + ry - (bbox.y - ((_f = bbox.top) != null ? _f : 0))})`
   );
   node3.intersect = function(point11) {
+    var _a59, _b3, _c3, _d2, _e3, _f2;
     const pos = intersect_default.rect(node3, point11);
-    const x6 = pos.x - (node3.x ?? 0);
-    if (rx != 0 && (Math.abs(x6) < (node3.width ?? 0) / 2 || Math.abs(x6) == (node3.width ?? 0) / 2 && Math.abs(pos.y - (node3.y ?? 0)) > (node3.height ?? 0) / 2 - ry)) {
+    const x6 = pos.x - ((_a59 = node3.x) != null ? _a59 : 0);
+    if (rx != 0 && (Math.abs(x6) < ((_b3 = node3.width) != null ? _b3 : 0) / 2 || Math.abs(x6) == ((_c3 = node3.width) != null ? _c3 : 0) / 2 && Math.abs(pos.y - ((_d2 = node3.y) != null ? _d2 : 0)) > ((_e3 = node3.height) != null ? _e3 : 0) / 2 - ry)) {
       let y6 = ry * ry * (1 - x6 * x6 / (rx * rx));
       if (y6 > 0) {
         y6 = Math.sqrt(y6);
       }
       y6 = ry - y6;
-      if (point11.y - (node3.y ?? 0) > 0) {
+      if (point11.y - ((_f2 = node3.y) != null ? _f2 : 0) > 0) {
         y6 = -y6;
       }
       pos.y += y6;
@@ -37655,11 +37734,12 @@ async function linedCylinder(parent4, node3) {
   return shapeSvg;
 }
 async function linedWaveEdgedRect(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g, _h;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const waveAmplitude = h3 / 4;
   const finalH = h3 + waveAmplitude;
   const { cssStyles } = node3;
@@ -37701,7 +37781,7 @@ async function linedWaveEdgedRect(parent4, node3) {
   waveEdgeRect.attr("transform", `translate(0,${-waveAmplitude / 2})`);
   label.attr(
     "transform",
-    `translate(${-w4 / 2 + (node3.padding ?? 0) + w4 / 2 * 0.1 / 2 - (bbox.x - (bbox.left ?? 0))},${-h3 / 2 + (node3.padding ?? 0) - waveAmplitude / 2 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-w4 / 2 + ((_e2 = node3.padding) != null ? _e2 : 0) + w4 / 2 * 0.1 / 2 - (bbox.x - ((_f = bbox.left) != null ? _f : 0))},${-h3 / 2 + ((_g = node3.padding) != null ? _g : 0) - waveAmplitude / 2 - (bbox.y - ((_h = bbox.top) != null ? _h : 0))})`
   );
   updateNodeBounds(node3, waveEdgeRect);
   node3.intersect = function(point11) {
@@ -37711,11 +37791,12 @@ async function linedWaveEdgedRect(parent4, node3) {
   return shapeSvg;
 }
 async function multiRect(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const rectOffset = 5;
   const x6 = -w4 / 2;
   const y6 = -h3 / 2;
@@ -37751,7 +37832,7 @@ async function multiRect(parent4, node3) {
   const outerPath = createPathFromPoints(outerPathPoints);
   const outerNode = rc.path(outerPath, options2);
   const innerPath3 = createPathFromPoints(innerPathPoints);
-  const innerNode = rc.path(innerPath3, { ...options2, fill: "none" });
+  const innerNode = rc.path(innerPath3, __spreadProps(__spreadValues({}, options2), { fill: "none" }));
   const multiRect2 = shapeSvg.insert(() => innerNode, ":first-child");
   multiRect2.insert(() => outerNode, ":first-child");
   multiRect2.attr("class", "basic label-container");
@@ -37763,7 +37844,7 @@ async function multiRect(parent4, node3) {
   }
   label.attr(
     "transform",
-    `translate(${-(bbox.width / 2) - rectOffset - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) + rectOffset - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-(bbox.width / 2) - rectOffset - (bbox.x - ((_e2 = bbox.left) != null ? _e2 : 0))}, ${-(bbox.height / 2) + rectOffset - (bbox.y - ((_f = bbox.top) != null ? _f : 0))})`
   );
   updateNodeBounds(node3, multiRect2);
   node3.intersect = function(point11) {
@@ -37773,11 +37854,12 @@ async function multiRect(parent4, node3) {
   return shapeSvg;
 }
 async function multiWaveEdgedRectangle(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const waveAmplitude = h3 / 4;
   const finalH = h3 + waveAmplitude;
   const x6 = -w4 / 2;
@@ -37792,7 +37874,7 @@ async function multiWaveEdgedRectangle(parent4, node3) {
     waveAmplitude,
     0.8
   );
-  const lastWavePoint = wavePoints?.[wavePoints.length - 1];
+  const lastWavePoint = wavePoints == null ? void 0 : wavePoints[wavePoints.length - 1];
   const outerPathPoints = [
     { x: x6 - rectOffset, y: y6 + rectOffset },
     { x: x6 - rectOffset, y: y6 + finalH + rectOffset },
@@ -37837,7 +37919,7 @@ async function multiWaveEdgedRectangle(parent4, node3) {
   shape.attr("transform", `translate(0,${-waveAmplitude / 2})`);
   label.attr(
     "transform",
-    `translate(${-(bbox.width / 2) - rectOffset - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) + rectOffset - waveAmplitude / 2 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-(bbox.width / 2) - rectOffset - (bbox.x - ((_e2 = bbox.left) != null ? _e2 : 0))}, ${-(bbox.height / 2) + rectOffset - waveAmplitude / 2 - (bbox.y - ((_f = bbox.top) != null ? _f : 0))})`
   );
   updateNodeBounds(node3, shape);
   node3.intersect = function(point11) {
@@ -37847,15 +37929,16 @@ async function multiWaveEdgedRectangle(parent4, node3) {
   return shapeSvg;
 }
 async function note(parent4, node3, { config: { themeVariables } }) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
-  const useHtmlLabels = node3.useHtmlLabels || getConfig().flowchart?.htmlLabels !== false;
+  const useHtmlLabels = node3.useHtmlLabels || ((_a58 = getConfig().flowchart) == null ? void 0 : _a58.htmlLabels) !== false;
   if (!useHtmlLabels) {
     node3.centerLabel = true;
   }
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const totalWidth = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const totalHeight = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const totalWidth = Math.max(bbox.width + ((_b2 = node3.padding) != null ? _b2 : 0) * 2, (_c2 = node3 == null ? void 0 : node3.width) != null ? _c2 : 0);
+  const totalHeight = Math.max(bbox.height + ((_d = node3.padding) != null ? _d : 0) * 2, (_e2 = node3 == null ? void 0 : node3.height) != null ? _e2 : 0);
   const x6 = -totalWidth / 2;
   const y6 = -totalHeight / 2;
   const { cssStyles } = node3;
@@ -37879,7 +37962,7 @@ async function note(parent4, node3, { config: { themeVariables } }) {
   }
   label.attr(
     "transform",
-    `translate(${-bbox.width / 2 - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-bbox.width / 2 - (bbox.x - ((_f = bbox.left) != null ? _f : 0))}, ${-(bbox.height / 2) - (bbox.y - ((_g = bbox.top) != null ? _g : 0))})`
   );
   updateNodeBounds(node3, rect22);
   node3.intersect = function(point11) {
@@ -37937,11 +38020,12 @@ async function question(parent4, node3) {
   return shapeSvg;
 }
 async function rect_left_inv_arrow(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0), node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0), node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0), (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0), (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const x6 = -w4 / 2;
   const y6 = -h3 / 2;
   const notch = y6 / 2;
@@ -37972,7 +38056,7 @@ async function rect_left_inv_arrow(parent4, node3) {
   polygon2.attr("transform", `translate(${-notch / 2},0)`);
   label.attr(
     "transform",
-    `translate(${-notch / 2 - bbox.width / 2 - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-notch / 2 - bbox.width / 2 - (bbox.x - ((_e2 = bbox.left) != null ? _e2 : 0))}, ${-(bbox.height / 2) - (bbox.y - ((_f = bbox.top) != null ? _f : 0))})`
   );
   updateNodeBounds(node3, polygon2);
   node3.intersect = function(point11) {
@@ -37981,6 +38065,7 @@ async function rect_left_inv_arrow(parent4, node3) {
   return shapeSvg;
 }
 async function rectWithTitle(parent4, node3) {
+  var _a58, _b2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   let classes3;
@@ -37996,7 +38081,7 @@ async function rectWithTitle(parent4, node3) {
   const title2 = node3.label;
   const text22 = label.node().appendChild(await createLabel_default(title2, node3.labelStyle, true, true));
   let bbox = { width: 0, height: 0 };
-  if (evaluate(getConfig2()?.flowchart?.htmlLabels)) {
+  if (evaluate((_b2 = (_a58 = getConfig2()) == null ? void 0 : _a58.flowchart) == null ? void 0 : _b2.htmlLabels)) {
     const div2 = text22.children[0];
     const dv2 = select_default2(text22);
     bbox = div2.getBoundingClientRect();
@@ -38109,13 +38194,14 @@ function generateArcPoints2(x1, y1, x22, y22, rx, ry, clockwise) {
   return points;
 }
 async function roundedRect(parent4, node3) {
+  var _a58, _b2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const labelPaddingX = node3?.padding ?? 0;
-  const labelPaddingY = node3?.padding ?? 0;
-  const w4 = (node3?.width ? node3?.width : bbox.width) + labelPaddingX * 2;
-  const h3 = (node3?.height ? node3?.height : bbox.height) + labelPaddingY * 2;
+  const labelPaddingX = (_a58 = node3 == null ? void 0 : node3.padding) != null ? _a58 : 0;
+  const labelPaddingY = (_b2 = node3 == null ? void 0 : node3.padding) != null ? _b2 : 0;
+  const w4 = ((node3 == null ? void 0 : node3.width) ? node3 == null ? void 0 : node3.width : bbox.width) + labelPaddingX * 2;
+  const h3 = ((node3 == null ? void 0 : node3.height) ? node3 == null ? void 0 : node3.height : bbox.height) + labelPaddingY * 2;
   const radius2 = node3.radius || 5;
   const taper = node3.taper || 5;
   const { cssStyles } = node3;
@@ -38176,12 +38262,13 @@ async function roundedRect(parent4, node3) {
   return shapeSvg;
 }
 async function shadedProcess(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const halfPadding = node3?.padding ?? 0;
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const halfPadding = (_a58 = node3 == null ? void 0 : node3.padding) != null ? _a58 : 0;
+  const w4 = Math.max(bbox.width + ((_b2 = node3.padding) != null ? _b2 : 0) * 2, (_c2 = node3 == null ? void 0 : node3.width) != null ? _c2 : 0);
+  const h3 = Math.max(bbox.height + ((_d = node3.padding) != null ? _d : 0) * 2, (_e2 = node3 == null ? void 0 : node3.height) != null ? _e2 : 0);
   const x6 = -bbox.width / 2 - halfPadding;
   const y6 = -bbox.height / 2 - halfPadding;
   const { cssStyles } = node3;
@@ -38214,7 +38301,7 @@ async function shadedProcess(parent4, node3) {
   }
   label.attr(
     "transform",
-    `translate(${-w4 / 2 + 4 + (node3.padding ?? 0) - (bbox.x - (bbox.left ?? 0))},${-h3 / 2 + (node3.padding ?? 0) - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-w4 / 2 + 4 + ((_f = node3.padding) != null ? _f : 0) - (bbox.x - ((_g = bbox.left) != null ? _g : 0))},${-h3 / 2 + ((_h = node3.padding) != null ? _h : 0) - (bbox.y - ((_i = bbox.top) != null ? _i : 0))})`
   );
   updateNodeBounds(node3, rect22);
   node3.intersect = function(point11) {
@@ -38223,11 +38310,12 @@ async function shadedProcess(parent4, node3) {
   return shapeSvg;
 }
 async function slopedRect(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g, _h;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const x6 = -w4 / 2;
   const y6 = -h3 / 2;
   const { cssStyles } = node3;
@@ -38256,7 +38344,7 @@ async function slopedRect(parent4, node3) {
   polygon2.attr("transform", `translate(0, ${h3 / 4})`);
   label.attr(
     "transform",
-    `translate(${-w4 / 2 + (node3.padding ?? 0) - (bbox.x - (bbox.left ?? 0))}, ${-h3 / 4 + (node3.padding ?? 0) - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-w4 / 2 + ((_e2 = node3.padding) != null ? _e2 : 0) - (bbox.x - ((_f = bbox.left) != null ? _f : 0))}, ${-h3 / 4 + ((_g = node3.padding) != null ? _g : 0) - (bbox.y - ((_h = bbox.top) != null ? _h : 0))})`
   );
   updateNodeBounds(node3, polygon2);
   node3.intersect = function(point11) {
@@ -38266,12 +38354,13 @@ async function slopedRect(parent4, node3) {
   return shapeSvg;
 }
 async function squareRect2(parent4, node3) {
+  var _a58;
   const options2 = {
     rx: 0,
     ry: 0,
     classes: "",
-    labelPaddingX: node3.labelPaddingX ?? (node3?.padding || 0) * 2,
-    labelPaddingY: (node3?.padding || 0) * 1
+    labelPaddingX: (_a58 = node3.labelPaddingX) != null ? _a58 : ((node3 == null ? void 0 : node3.padding) || 0) * 2,
+    labelPaddingY: ((node3 == null ? void 0 : node3.padding) || 0) * 1
   };
   return drawRect(parent4, node3, options2);
 }
@@ -38333,19 +38422,17 @@ function stateEnd(parent4, node3, { config: { themeVariables } }) {
     options2.roughness = 0;
     options2.fillStyle = "solid";
   }
-  const roughNode = rc.circle(0, 0, 14, {
-    ...options2,
+  const roughNode = rc.circle(0, 0, 14, __spreadProps(__spreadValues({}, options2), {
     stroke: lineColor,
     strokeWidth: 2
-  });
-  const innerFill = stateBorder ?? nodeBorder;
-  const roughInnerNode = rc.circle(0, 0, 5, {
-    ...options2,
+  }));
+  const innerFill = stateBorder != null ? stateBorder : nodeBorder;
+  const roughInnerNode = rc.circle(0, 0, 5, __spreadProps(__spreadValues({}, options2), {
     fill: innerFill,
     stroke: innerFill,
     strokeWidth: 2,
     fillStyle: "solid"
-  });
+  }));
   const circle23 = shapeSvg.insert(() => roughNode, ":first-child");
   circle23.insert(() => roughInnerNode);
   if (cssStyles) {
@@ -38383,7 +38470,7 @@ async function subroutine(parent4, node3) {
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const halfPadding = (node3?.padding || 0) / 2;
+  const halfPadding = ((node3 == null ? void 0 : node3.padding) || 0) / 2;
   const w4 = bbox.width + node3.padding;
   const h3 = bbox.height + node3.padding;
   const x6 = -bbox.width / 2 - halfPadding;
@@ -38425,11 +38512,12 @@ async function subroutine(parent4, node3) {
   return shapeSvg;
 }
 async function taggedRect(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const x6 = -w4 / 2;
   const y6 = -h3 / 2;
   const tagWidth = 0.2 * h3;
@@ -38455,7 +38543,7 @@ async function taggedRect(parent4, node3) {
   const rectPath = createPathFromPoints(rectPoints);
   const rectNode = rc.path(rectPath, options2);
   const tagPath = createPathFromPoints(tagPoints);
-  const tagNode = rc.path(tagPath, { ...options2, fillStyle: "solid" });
+  const tagNode = rc.path(tagPath, __spreadProps(__spreadValues({}, options2), { fillStyle: "solid" }));
   const taggedRect2 = shapeSvg.insert(() => tagNode, ":first-child");
   taggedRect2.insert(() => rectNode, ":first-child");
   taggedRect2.attr("class", "basic label-container");
@@ -38473,11 +38561,12 @@ async function taggedRect(parent4, node3) {
   return shapeSvg;
 }
 async function taggedWaveEdgedRectangle(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g, _h;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const waveAmplitude = h3 / 4;
   const tagWidth = 0.2 * w4;
   const tagHeight = 0.2 * h3;
@@ -38520,10 +38609,9 @@ async function taggedWaveEdgedRectangle(parent4, node3) {
   const waveEdgeRectPath = createPathFromPoints(points);
   const waveEdgeRectNode = rc.path(waveEdgeRectPath, options2);
   const taggedWaveEdgeRectPath = createPathFromPoints(tagPoints);
-  const taggedWaveEdgeRectNode = rc.path(taggedWaveEdgeRectPath, {
-    ...options2,
+  const taggedWaveEdgeRectNode = rc.path(taggedWaveEdgeRectPath, __spreadProps(__spreadValues({}, options2), {
     fillStyle: "solid"
-  });
+  }));
   const waveEdgeRect = shapeSvg.insert(() => taggedWaveEdgeRectNode, ":first-child");
   waveEdgeRect.insert(() => waveEdgeRectNode, ":first-child");
   waveEdgeRect.attr("class", "basic label-container");
@@ -38536,7 +38624,7 @@ async function taggedWaveEdgedRectangle(parent4, node3) {
   waveEdgeRect.attr("transform", `translate(0,${-waveAmplitude / 2})`);
   label.attr(
     "transform",
-    `translate(${-w4 / 2 + (node3.padding ?? 0) - (bbox.x - (bbox.left ?? 0))},${-h3 / 2 + (node3.padding ?? 0) - waveAmplitude / 2 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-w4 / 2 + ((_e2 = node3.padding) != null ? _e2 : 0) - (bbox.x - ((_f = bbox.left) != null ? _f : 0))},${-h3 / 2 + ((_g = node3.padding) != null ? _g : 0) - waveAmplitude / 2 - (bbox.y - ((_h = bbox.top) != null ? _h : 0))})`
   );
   updateNodeBounds(node3, waveEdgeRect);
   node3.intersect = function(point11) {
@@ -38549,8 +38637,8 @@ async function text10(parent4, node3) {
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const totalWidth = Math.max(bbox.width + node3.padding, node3?.width || 0);
-  const totalHeight = Math.max(bbox.height + node3.padding, node3?.height || 0);
+  const totalWidth = Math.max(bbox.width + node3.padding, (node3 == null ? void 0 : node3.width) || 0);
+  const totalHeight = Math.max(bbox.height + node3.padding, (node3 == null ? void 0 : node3.height) || 0);
   const x6 = -totalWidth / 2;
   const y6 = -totalHeight / 2;
   const rect22 = shapeSvg.insert("rect", ":first-child");
@@ -38562,6 +38650,7 @@ async function text10(parent4, node3) {
   return shapeSvg;
 }
 async function tiltedCylinder(parent4, node3) {
+  var _a58, _b2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label, halfPadding } = await labelHelper(
@@ -38603,19 +38692,20 @@ async function tiltedCylinder(parent4, node3) {
   cylinder22.attr("transform", `translate(${-w4 / 2}, ${h3 / 2} )`);
   label.attr(
     "transform",
-    `translate(${-(bbox.width / 2) - rx - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-(bbox.width / 2) - rx - (bbox.x - ((_a58 = bbox.left) != null ? _a58 : 0))}, ${-(bbox.height / 2) - (bbox.y - ((_b2 = bbox.top) != null ? _b2 : 0))})`
   );
   updateNodeBounds(node3, cylinder22);
   node3.intersect = function(point11) {
+    var _a59, _b3, _c2, _d, _e2, _f;
     const pos = intersect_default.rect(node3, point11);
-    const y6 = pos.y - (node3.y ?? 0);
-    if (ry != 0 && (Math.abs(y6) < (node3.height ?? 0) / 2 || Math.abs(y6) == (node3.height ?? 0) / 2 && Math.abs(pos.x - (node3.x ?? 0)) > (node3.width ?? 0) / 2 - rx)) {
+    const y6 = pos.y - ((_a59 = node3.y) != null ? _a59 : 0);
+    if (ry != 0 && (Math.abs(y6) < ((_b3 = node3.height) != null ? _b3 : 0) / 2 || Math.abs(y6) == ((_c2 = node3.height) != null ? _c2 : 0) / 2 && Math.abs(pos.x - ((_d = node3.x) != null ? _d : 0)) > ((_e2 = node3.width) != null ? _e2 : 0) / 2 - rx)) {
       let x6 = rx * rx * (1 - y6 * y6 / (ry * ry));
       if (x6 != 0) {
         x6 = Math.sqrt(Math.abs(x6));
       }
       x6 = rx - x6;
-      if (point11.x - (node3.x ?? 0) > 0) {
+      if (point11.x - ((_f = node3.x) != null ? _f : 0) > 0) {
         x6 = -x6;
       }
       pos.x += x6;
@@ -38662,12 +38752,13 @@ async function trapezoid(parent4, node3) {
   return shapeSvg;
 }
 async function trapezoidalPentagon(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
   const minWidth = 60, minHeight = 20;
-  const w4 = Math.max(minWidth, bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(minHeight, bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(minWidth, bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(minHeight, bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const { cssStyles } = node3;
   const rc = at.svg(shapeSvg);
   const options2 = userNodeOverrides(node3, {});
@@ -38701,11 +38792,12 @@ async function trapezoidalPentagon(parent4, node3) {
   return shapeSvg;
 }
 async function triangle(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const useHtmlLabels = evaluate(getConfig2().flowchart?.htmlLabels);
-  const w4 = bbox.width + (node3.padding ?? 0);
+  const useHtmlLabels = evaluate((_a58 = getConfig2().flowchart) == null ? void 0 : _a58.htmlLabels);
+  const w4 = bbox.width + ((_b2 = node3.padding) != null ? _b2 : 0);
   const h3 = w4 + bbox.height;
   const tw = w4 + bbox.height;
   const points = [
@@ -38734,7 +38826,7 @@ async function triangle(parent4, node3) {
   updateNodeBounds(node3, polygon2);
   label.attr(
     "transform",
-    `translate(${-bbox.width / 2 - (bbox.x - (bbox.left ?? 0))}, ${h3 / 2 - (bbox.height + (node3.padding ?? 0) / (useHtmlLabels ? 2 : 1) - (bbox.y - (bbox.top ?? 0)))})`
+    `translate(${-bbox.width / 2 - (bbox.x - ((_c2 = bbox.left) != null ? _c2 : 0))}, ${h3 / 2 - (bbox.height + ((_d = node3.padding) != null ? _d : 0) / (useHtmlLabels ? 2 : 1) - (bbox.y - ((_e2 = bbox.top) != null ? _e2 : 0)))})`
   );
   node3.intersect = function(point11) {
     log.info("Triangle intersect", node3, points, point11);
@@ -38743,11 +38835,12 @@ async function triangle(parent4, node3) {
   return shapeSvg;
 }
 async function waveEdgedRectangle(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g, _h;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const waveAmplitude = h3 / 8;
   const finalH = h3 + waveAmplitude;
   const { cssStyles } = node3;
@@ -38786,7 +38879,7 @@ async function waveEdgedRectangle(parent4, node3) {
   waveEdgeRect.attr("transform", `translate(0,${-waveAmplitude / 2})`);
   label.attr(
     "transform",
-    `translate(${-w4 / 2 + (node3.padding ?? 0) - (bbox.x - (bbox.left ?? 0))},${-h3 / 2 + (node3.padding ?? 0) - waveAmplitude - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-w4 / 2 + ((_e2 = node3.padding) != null ? _e2 : 0) - (bbox.x - ((_f = bbox.left) != null ? _f : 0))},${-h3 / 2 + ((_g = node3.padding) != null ? _g : 0) - waveAmplitude - (bbox.y - ((_h = bbox.top) != null ? _h : 0))})`
   );
   updateNodeBounds(node3, waveEdgeRect);
   node3.intersect = function(point11) {
@@ -38796,13 +38889,14 @@ async function waveEdgedRectangle(parent4, node3) {
   return shapeSvg;
 }
 async function waveRectangle(parent4, node3) {
+  var _a58, _b2, _c2, _d;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox } = await labelHelper(parent4, node3, getNodeClasses(node3));
   const minWidth = 100;
   const minHeight = 50;
-  const baseWidth = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const baseHeight = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const baseWidth = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const baseHeight = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const aspectRatio = baseWidth / baseHeight;
   let w4 = baseWidth;
   let h3 = baseHeight;
@@ -38846,11 +38940,12 @@ async function waveRectangle(parent4, node3) {
   return shapeSvg;
 }
 async function windowPane(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const { shapeSvg, bbox, label } = await labelHelper(parent4, node3, getNodeClasses(node3));
-  const w4 = Math.max(bbox.width + (node3.padding ?? 0) * 2, node3?.width ?? 0);
-  const h3 = Math.max(bbox.height + (node3.padding ?? 0) * 2, node3?.height ?? 0);
+  const w4 = Math.max(bbox.width + ((_a58 = node3.padding) != null ? _a58 : 0) * 2, (_b2 = node3 == null ? void 0 : node3.width) != null ? _b2 : 0);
+  const h3 = Math.max(bbox.height + ((_c2 = node3.padding) != null ? _c2 : 0) * 2, (_d = node3 == null ? void 0 : node3.height) != null ? _d : 0);
   const rectOffset = 5;
   const x6 = -w4 / 2;
   const y6 = -h3 / 2;
@@ -38882,7 +38977,7 @@ async function windowPane(parent4, node3) {
   }
   label.attr(
     "transform",
-    `translate(${-(bbox.width / 2) + rectOffset / 2 - (bbox.x - (bbox.left ?? 0))}, ${-(bbox.height / 2) + rectOffset / 2 - (bbox.y - (bbox.top ?? 0))})`
+    `translate(${-(bbox.width / 2) + rectOffset / 2 - (bbox.x - ((_e2 = bbox.left) != null ? _e2 : 0))}, ${-(bbox.height / 2) + rectOffset / 2 - (bbox.y - ((_f = bbox.top) != null ? _f : 0))})`
   );
   updateNodeBounds(node3, windowPane2);
   node3.intersect = function(point11) {
@@ -38892,6 +38987,7 @@ async function windowPane(parent4, node3) {
   return shapeSvg;
 }
 async function erBox(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g;
   const entityNode = node3;
   if (entityNode.alias) {
     node3.label = entityNode.alias;
@@ -38899,18 +38995,17 @@ async function erBox(parent4, node3) {
   if (node3.look === "handDrawn") {
     const { themeVariables: themeVariables2 } = getConfig();
     const { background } = themeVariables2;
-    const backgroundNode = {
-      ...node3,
+    const backgroundNode = __spreadProps(__spreadValues({}, node3), {
       id: node3.id + "-background",
       look: "default",
       cssStyles: ["stroke: none", `fill: ${background}`]
-    };
+    });
     await erBox(parent4, backgroundNode);
   }
   const config5 = getConfig();
   node3.useHtmlLabels = config5.htmlLabels;
-  let PADDING = config5.er?.diagramPadding ?? 10;
-  let TEXT_PADDING = config5.er?.entityPadding ?? 6;
+  let PADDING = (_b2 = (_a58 = config5.er) == null ? void 0 : _a58.diagramPadding) != null ? _b2 : 10;
+  let TEXT_PADDING = (_d = (_c2 = config5.er) == null ? void 0 : _c2.entityPadding) != null ? _d : 6;
   const { cssStyles } = node3;
   const { labelStyles, nodeStyles } = styles2String(node3);
   if (entityNode.attributes.length === 0 && node3.label) {
@@ -38927,7 +39022,7 @@ async function erBox(parent4, node3) {
     const shapeSvg2 = await drawRect(parent4, node3, options22);
     if (!evaluate(config5.htmlLabels)) {
       const textElement = shapeSvg2.select("text");
-      const bbox = textElement.node()?.getBBox();
+      const bbox = (_e2 = textElement.node()) == null ? void 0 : _e2.getBBox();
       textElement.attr("transform", `translate(${-bbox.width / 2}, 0)`);
     }
     return shapeSvg2;
@@ -38941,7 +39036,7 @@ async function erBox(parent4, node3) {
     cssClasses = "node default";
   }
   const shapeSvg = parent4.insert("g").attr("class", cssClasses).attr("id", node3.domId || node3.id);
-  const nameBBox = await addText(shapeSvg, node3.label ?? "", config5, 0, 0, ["name"], labelStyles);
+  const nameBBox = await addText(shapeSvg, (_f = node3.label) != null ? _f : "", config5, 0, 0, ["name"], labelStyles);
   nameBBox.height += TEXT_PADDING;
   let yOffset = 0;
   const yOffsets = [];
@@ -39029,10 +39124,13 @@ async function erBox(parent4, node3) {
   }
   let totalShapeBBoxHeight = 0;
   if (rows.length > 0) {
-    totalShapeBBoxHeight = rows.reduce((sum2, row2) => sum2 + (row2?.rowHeight ?? 0), 0);
+    totalShapeBBoxHeight = rows.reduce((sum2, row2) => {
+      var _a59;
+      return sum2 + ((_a59 = row2 == null ? void 0 : row2.rowHeight) != null ? _a59 : 0);
+    }, 0);
   }
-  const w4 = Math.max(shapeBBox.width + PADDING * 2, node3?.width || 0, maxWidth2);
-  const h3 = Math.max((totalShapeBBoxHeight ?? 0) + nameBBox.height, node3?.height || 0);
+  const w4 = Math.max(shapeBBox.width + PADDING * 2, (node3 == null ? void 0 : node3.width) || 0, maxWidth2);
+  const h3 = Math.max((totalShapeBBoxHeight != null ? totalShapeBBoxHeight : 0) + nameBBox.height, (node3 == null ? void 0 : node3.height) || 0);
   const x6 = -w4 / 2;
   const y6 = -h3 / 2;
   shapeSvg.selectAll("g:not(:first-child)").each((_3, i3, nodes5) => {
@@ -39069,11 +39167,10 @@ async function erBox(parent4, node3) {
   for (const [i3, row2] of rows.entries()) {
     const contentRowIndex = i3 + 1;
     const isEven = contentRowIndex % 2 === 0 && row2.yOffset !== 0;
-    const roughRect2 = rc.rectangle(x6, nameBBox.height + y6 + row2?.yOffset, w4, row2?.rowHeight, {
-      ...options2,
+    const roughRect2 = rc.rectangle(x6, nameBBox.height + y6 + (row2 == null ? void 0 : row2.yOffset), w4, row2 == null ? void 0 : row2.rowHeight, __spreadProps(__spreadValues({}, options2), {
       fill: isEven ? rowEven : rowOdd,
       stroke: nodeBorder
-    });
+    }));
     shapeSvg.insert(() => roughRect2, "g.label").attr("style", cssStyles.join("")).attr("class", `row-rect-${isEven ? "even" : "odd"}`);
   }
   let roughLine = rc.line(x6, nameBBox.height + y6, w4 + x6, nameBBox.height + y6, options2);
@@ -39113,10 +39210,10 @@ async function erBox(parent4, node3) {
   updateNodeBounds(node3, rect22);
   if (nodeStyles && node3.look !== "handDrawn") {
     const allStyle = nodeStyles.split(";");
-    const strokeStyles = allStyle?.filter((e3) => {
+    const strokeStyles = (_g = allStyle == null ? void 0 : allStyle.filter((e3) => {
       return e3.includes("stroke");
-    })?.map((s3) => `${s3}`).join("; ");
-    shapeSvg.selectAll("path").attr("style", strokeStyles ?? "");
+    })) == null ? void 0 : _g.map((s3) => `${s3}`).join("; ");
+    shapeSvg.selectAll("path").attr("style", strokeStyles != null ? strokeStyles : "");
     shapeSvg.selectAll(".row-rect-even path").attr("style", nodeStyles);
   }
   node3.intersect = function(point11) {
@@ -39161,7 +39258,7 @@ async function addText(shapeSvg, labelText, config5, translateX2 = 0, translateY
   }
   return bbox;
 }
-async function textHelper(parent4, node3, config5, useHtmlLabels, GAP = config5.class.padding ?? 12) {
+async function textHelper(parent4, node3, config5, useHtmlLabels, GAP = ((_a58) => (_a58 = config5.class.padding) != null ? _a58 : 12)()) {
   const TEXT_PADDING = !useHtmlLabels ? 3 : 0;
   const shapeSvg = parent4.insert("g").attr("class", getNodeClasses(node3)).attr("id", node3.domId || node3.id);
   let annotationGroup = null;
@@ -39218,9 +39315,10 @@ async function textHelper(parent4, node3, config5, useHtmlLabels, GAP = config5.
   return { shapeSvg, bbox };
 }
 async function addText2(parentGroup, node3, yOffset, styles4 = []) {
+  var _a58;
   const textEl = parentGroup.insert("g").attr("class", "label").attr("style", styles4.join("; "));
   const config5 = getConfig();
-  let useHtmlLabels = "useHtmlLabels" in node3 ? node3.useHtmlLabels : evaluate(config5.htmlLabels) ?? true;
+  let useHtmlLabels = "useHtmlLabels" in node3 ? node3.useHtmlLabels : (_a58 = evaluate(config5.htmlLabels)) != null ? _a58 : true;
   let textContent = "";
   if ("text" in node3) {
     textContent = node3.text;
@@ -39277,10 +39375,11 @@ async function addText2(parentGroup, node3, yOffset, styles4 = []) {
         [...images].map(
           (img) => new Promise((res) => {
             function setupImage() {
+              var _a59, _b2;
               img.style.display = "flex";
               img.style.flexDirection = "column";
               if (noImgText) {
-                const bodyFontSize = config5.fontSize?.toString() ?? window.getComputedStyle(document.body).fontSize;
+                const bodyFontSize = (_b2 = (_a59 = config5.fontSize) == null ? void 0 : _a59.toString()) != null ? _b2 : window.getComputedStyle(document.body).fontSize;
                 const enlargingFactor = 5;
                 const width3 = parseInt(bodyFontSize, 10) * enlargingFactor + "px";
                 img.style.minWidth = width3;
@@ -39310,23 +39409,24 @@ async function addText2(parentGroup, node3, yOffset, styles4 = []) {
   return bbox.height;
 }
 async function classBox(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g, _h;
   const config5 = getConfig2();
-  const PADDING = config5.class.padding ?? 12;
+  const PADDING = (_a58 = config5.class.padding) != null ? _a58 : 12;
   const GAP = PADDING;
-  const useHtmlLabels = node3.useHtmlLabels ?? evaluate(config5.htmlLabels) ?? true;
+  const useHtmlLabels = (_c2 = (_b2 = node3.useHtmlLabels) != null ? _b2 : evaluate(config5.htmlLabels)) != null ? _c2 : true;
   const classNode = node3;
-  classNode.annotations = classNode.annotations ?? [];
-  classNode.members = classNode.members ?? [];
-  classNode.methods = classNode.methods ?? [];
+  classNode.annotations = (_d = classNode.annotations) != null ? _d : [];
+  classNode.members = (_e2 = classNode.members) != null ? _e2 : [];
+  classNode.methods = (_f = classNode.methods) != null ? _f : [];
   const { shapeSvg, bbox } = await textHelper(parent4, node3, config5, useHtmlLabels, GAP);
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   node3.cssStyles = classNode.styles || "";
-  const styles4 = classNode.styles?.join(";") || nodeStyles || "";
+  const styles4 = ((_g = classNode.styles) == null ? void 0 : _g.join(";")) || nodeStyles || "";
   if (!node3.cssStyles) {
     node3.cssStyles = styles4.replaceAll("!important", "").split(";");
   }
-  const renderExtraBox = classNode.members.length === 0 && classNode.methods.length === 0 && !config5.class?.hideEmptyMembersBox;
+  const renderExtraBox = classNode.members.length === 0 && classNode.methods.length === 0 && !((_h = config5.class) == null ? void 0 : _h.hideEmptyMembersBox);
   const rc = at.svg(shapeSvg);
   const options2 = userNodeOverrides(node3, {});
   if (node3.look !== "handDrawn") {
@@ -39353,6 +39453,7 @@ async function classBox(parent4, node3) {
   rect22.attr("class", "basic label-container");
   const rectBBox = rect22.node().getBBox();
   shapeSvg.selectAll(".text").each((_3, i3, nodes5) => {
+    var _a59;
     const text22 = select_default2(nodes5[i3]);
     const transform9 = text22.attr("transform");
     let translateY2 = 0;
@@ -39369,7 +39470,7 @@ async function classBox(parent4, node3) {
     }
     let newTranslateX = x6;
     if (text22.attr("class").includes("label-group") || text22.attr("class").includes("annotation-group")) {
-      newTranslateX = -text22.node()?.getBBox().width / 2 || 0;
+      newTranslateX = -((_a59 = text22.node()) == null ? void 0 : _a59.getBBox().width) / 2 || 0;
       shapeSvg.selectAll("text").each(function(_22, i22, nodes22) {
         if (window.getComputedStyle(nodes22[i22]).textAnchor === "middle") {
           newTranslateX = 0;
@@ -39434,6 +39535,7 @@ async function classBox(parent4, node3) {
   return shapeSvg;
 }
 async function requirementBox(parent4, node3) {
+  var _a58, _b2, _c2, _d, _e2;
   const { labelStyles, nodeStyles } = styles2String(node3);
   node3.labelStyle = labelStyles;
   const requirementNode = node3;
@@ -39442,7 +39544,7 @@ async function requirementBox(parent4, node3) {
   const gap = 20;
   const isRequirementNode = "verifyMethod" in node3;
   const classes3 = getNodeClasses(node3);
-  const shapeSvg = parent4.insert("g").attr("class", classes3).attr("id", node3.domId ?? node3.id);
+  const shapeSvg = parent4.insert("g").attr("class", classes3).attr("id", (_a58 = node3.domId) != null ? _a58 : node3.id);
   let typeHeight;
   if (isRequirementNode) {
     typeHeight = await addText3(
@@ -39505,8 +39607,8 @@ async function requirementBox(parent4, node3) {
       node3.labelStyle
     );
   }
-  const totalWidth = (shapeSvg.node()?.getBBox().width ?? 200) + padding2;
-  const totalHeight = (shapeSvg.node()?.getBBox().height ?? 200) + padding2;
+  const totalWidth = ((_c2 = (_b2 = shapeSvg.node()) == null ? void 0 : _b2.getBBox().width) != null ? _c2 : 200) + padding2;
+  const totalHeight = ((_e2 = (_d = shapeSvg.node()) == null ? void 0 : _d.getBBox().height) != null ? _e2 : 200) + padding2;
   const x6 = -totalWidth / 2;
   const y6 = -totalHeight / 2;
   const rc = at.svg(shapeSvg);
@@ -39556,12 +39658,13 @@ async function requirementBox(parent4, node3) {
   return shapeSvg;
 }
 async function addText3(parentGroup, inputText, yOffset, style4 = "") {
+  var _a58;
   if (inputText === "") {
     return 0;
   }
   const textEl = parentGroup.insert("g").attr("class", "label").attr("style", style4);
   const config5 = getConfig2();
-  const useHtmlLabels = config5.htmlLabels ?? true;
+  const useHtmlLabels = (_a58 = config5.htmlLabels) != null ? _a58 : true;
   const text22 = await createText(
     textEl,
     sanitizeText3(decodeEntities(inputText)),
@@ -39596,11 +39699,12 @@ async function addText3(parentGroup, inputText, yOffset, style4 = "") {
   return bbox.height;
 }
 async function kanbanItem(parent4, kanbanNode, { config: config5 }) {
+  var _a58, _b2, _c2;
   const { labelStyles, nodeStyles } = styles2String(kanbanNode);
   kanbanNode.labelStyle = labelStyles || "";
   const labelPaddingX = 10;
   const orgWidth = kanbanNode.width;
-  kanbanNode.width = (kanbanNode.width ?? 200) - 10;
+  kanbanNode.width = ((_a58 = kanbanNode.width) != null ? _a58 : 200) - 10;
   const {
     shapeSvg,
     bbox,
@@ -39609,8 +39713,8 @@ async function kanbanItem(parent4, kanbanNode, { config: config5 }) {
   const padding2 = kanbanNode.padding || 10;
   let ticketUrl = "";
   let link4;
-  if ("ticket" in kanbanNode && kanbanNode.ticket && config5?.kanban?.ticketBaseUrl) {
-    ticketUrl = config5?.kanban?.ticketBaseUrl.replace("#TICKET#", kanbanNode.ticket);
+  if ("ticket" in kanbanNode && kanbanNode.ticket && ((_b2 = config5 == null ? void 0 : config5.kanban) == null ? void 0 : _b2.ticketBaseUrl)) {
+    ticketUrl = (_c2 = config5 == null ? void 0 : config5.kanban) == null ? void 0 : _c2.ticketBaseUrl.replace("#TICKET#", kanbanNode.ticket);
     link4 = shapeSvg.insert("svg:a", ":first-child").attr("class", "kanban-ticket-link").attr("xlink:href", ticketUrl).attr("target", "_blank");
   }
   const options2 = {
@@ -39642,9 +39746,9 @@ async function kanbanItem(parent4, kanbanNode, { config: config5 }) {
   );
   kanbanNode.width = orgWidth;
   const labelPaddingY = 10;
-  const totalWidth = kanbanNode?.width || 0;
+  const totalWidth = (kanbanNode == null ? void 0 : kanbanNode.width) || 0;
   const heightAdj = Math.max(bbox2.height, bboxAssigned.height) / 2;
-  const totalHeight = Math.max(bbox.height + labelPaddingY * 2, kanbanNode?.height || 0) + heightAdj;
+  const totalHeight = Math.max(bbox.height + labelPaddingY * 2, (kanbanNode == null ? void 0 : kanbanNode.height) || 0) + heightAdj;
   const x6 = -totalWidth / 2;
   const y6 = -totalHeight / 2;
   labelElTitle.attr(
@@ -39670,13 +39774,13 @@ async function kanbanItem(parent4, kanbanNode, { config: config5 }) {
     rect22.attr("class", "basic label-container").attr("style", cssStyles ? cssStyles : null);
   } else {
     rect22 = shapeSvg.insert("rect", ":first-child");
-    rect22.attr("class", "basic label-container __APA__").attr("style", nodeStyles).attr("rx", rx ?? 5).attr("ry", ry ?? 5).attr("x", x6).attr("y", y6).attr("width", totalWidth).attr("height", totalHeight);
+    rect22.attr("class", "basic label-container __APA__").attr("style", nodeStyles).attr("rx", rx != null ? rx : 5).attr("ry", ry != null ? ry : 5).attr("x", x6).attr("y", y6).attr("width", totalWidth).attr("height", totalHeight);
     const priority3 = "priority" in kanbanNode && kanbanNode.priority;
     if (priority3) {
       const line2 = shapeSvg.append("line");
       const lineX = x6 + 2;
-      const y1 = y6 + Math.floor((rx ?? 0) / 2);
-      const y22 = y6 + totalHeight - Math.floor((rx ?? 0) / 2);
+      const y1 = y6 + Math.floor((rx != null ? rx : 0) / 2);
+      const y22 = y6 + totalHeight - Math.floor((rx != null ? rx : 0) / 2);
       line2.attr("x1", lineX).attr("y1", y1).attr("x2", lineX).attr("y2", y22).attr("stroke-width", "4").attr("stroke", colorFromPriority(priority3));
     }
   }
@@ -39833,8 +39937,9 @@ async function defaultMindmapNode(parent4, node3) {
   return shapeSvg;
 }
 async function mindmapCircle(parent4, node3) {
+  var _a58;
   const options2 = {
-    padding: node3.padding ?? 0
+    padding: (_a58 = node3.padding) != null ? _a58 : 0
   };
   return circle(parent4, node3, options2);
 }
@@ -39862,7 +39967,7 @@ async function insertNode(elem, node3, renderOptions) {
     } else if (node3.linkTarget) {
       target = node3.linkTarget || "_blank";
     }
-    newEl = elem.insert("svg:a").attr("xlink:href", node3.link).attr("target", target ?? null);
+    newEl = elem.insert("svg:a").attr("xlink:href", node3.link).attr("target", target != null ? target : null);
     el = await shapeHandler(newEl, node3, renderOptions);
   } else {
     el = await shapeHandler(elem, node3, renderOptions);
@@ -39955,8 +40060,9 @@ var init_chunk_JZLCHNYA = __esm({
     init_rough_esm();
     init_rough_esm();
     labelHelper = /* @__PURE__ */ __name(async (parent4, node3, _classes) => {
+      var _a58, _b2, _c2;
       let cssClasses;
-      const useHtmlLabels = node3.useHtmlLabels || evaluate(getConfig2()?.htmlLabels);
+      const useHtmlLabels = node3.useHtmlLabels || evaluate((_a58 = getConfig2()) == null ? void 0 : _a58.htmlLabels);
       if (!_classes) {
         cssClasses = "node default";
       } else {
@@ -39972,14 +40078,14 @@ var init_chunk_JZLCHNYA = __esm({
       }
       const text22 = await createText(labelEl, sanitizeText(decodeEntities(label), getConfig2()), {
         useHtmlLabels,
-        width: node3.width || getConfig2().flowchart?.wrappingWidth,
+        width: node3.width || ((_b2 = getConfig2().flowchart) == null ? void 0 : _b2.wrappingWidth),
         // @ts-expect-error -- This is currently not used. Should this be `classes` instead?
         cssClasses: "markdown-node-label",
         style: node3.labelStyle,
         addSvgBackground: !!node3.icon || !!node3.img
       });
       let bbox = text22.getBBox();
-      const halfPadding = (node3?.padding ?? 0) / 2;
+      const halfPadding = ((_c2 = node3 == null ? void 0 : node3.padding) != null ? _c2 : 0) / 2;
       if (useHtmlLabels) {
         const div = text22.children[0];
         const dv = select_default2(text22);
@@ -40032,17 +40138,18 @@ var init_chunk_JZLCHNYA = __esm({
       return { shapeSvg, bbox, halfPadding, label: labelEl };
     }, "labelHelper");
     insertLabel = /* @__PURE__ */ __name(async (parent4, label, options2) => {
-      const useHtmlLabels = options2.useHtmlLabels || evaluate(getConfig2()?.flowchart?.htmlLabels);
+      var _a58, _b2, _c2, _d, _e2, _f;
+      const useHtmlLabels = options2.useHtmlLabels || evaluate((_b2 = (_a58 = getConfig2()) == null ? void 0 : _a58.flowchart) == null ? void 0 : _b2.htmlLabels);
       const labelEl = parent4.insert("g").attr("class", "label").attr("style", options2.labelStyle || "");
       const text22 = await createText(labelEl, sanitizeText(decodeEntities(label), getConfig2()), {
         useHtmlLabels,
-        width: options2.width || getConfig2()?.flowchart?.wrappingWidth,
+        width: options2.width || ((_d = (_c2 = getConfig2()) == null ? void 0 : _c2.flowchart) == null ? void 0 : _d.wrappingWidth),
         style: options2.labelStyle,
         addSvgBackground: !!options2.icon || !!options2.img
       });
       let bbox = text22.getBBox();
       const halfPadding = options2.padding / 2;
-      if (evaluate(getConfig2()?.flowchart?.htmlLabels)) {
+      if (evaluate((_f = (_e2 = getConfig2()) == null ? void 0 : _e2.flowchart) == null ? void 0 : _f.htmlLabels)) {
         const div = text22.children[0];
         const dv = select_default2(text22);
         bbox = div.getBoundingClientRect();
@@ -41222,7 +41329,7 @@ function calculateDeltaAndAngle2(point1, point22) {
   return { angle: angle2, deltaX, deltaY };
 }
 function applyMarkerOffsetsToPoints(points, edge) {
-  const newPoints = points.map((point22) => ({ ...point22 }));
+  const newPoints = points.map((point22) => __spreadValues({}, point22));
   if (points.length >= 2 && markerOffsets[edge.arrowTypeStart]) {
     const offsetValue = markerOffsets[edge.arrowTypeStart];
     const point1 = points[0];
@@ -41285,6 +41392,7 @@ var init_chunk_QXUST7PY = __esm({
       requirement_contains: { type: "requirement_contains", fill: false }
     };
     addEdgeMarker = /* @__PURE__ */ __name((svgPath, position7, arrowType, url, id28, diagramType, strokeColor) => {
+      var _a58;
       const arrowTypeInfo = arrowTypesMap[arrowType];
       if (!arrowTypeInfo) {
         log.warn(`Unknown arrow type: ${arrowType}`);
@@ -41308,7 +41416,7 @@ var init_chunk_QXUST7PY = __esm({
                 path5.setAttribute("fill", strokeColor);
               }
             });
-            originalMarker.parentNode?.appendChild(coloredMarker);
+            (_a58 = originalMarker.parentNode) == null ? void 0 : _a58.appendChild(coloredMarker);
           }
         }
         svgPath.attr(`marker-${position7}`, `url(${url}#${coloredMarkerId})`);
@@ -41657,6 +41765,7 @@ var init_chunk_QXUST7PY = __esm({
       return dashArray;
     }, "generateDashArray");
     insertEdge = /* @__PURE__ */ __name(function(elem, edge, clusterDb2, diagramType, startNode, endNode, id28, skipIntersect = false) {
+      var _a58;
       const { handDrawnSeed } = getConfig2();
       let points = edge.points;
       let pointsHasChanged = false;
@@ -41775,7 +41884,7 @@ var init_chunk_QXUST7PY = __esm({
       let svgPath;
       let linePath = edge.curve === "rounded" ? generateRoundedPath(applyMarkerOffsetsToPoints(lineData, edge), 5) : lineFunction(lineData);
       const edgeStyles = Array.isArray(edge.style) ? edge.style : [edge.style];
-      let strokeColor = edgeStyles.find((style4) => style4?.startsWith("stroke:"));
+      let strokeColor = edgeStyles.find((style4) => style4 == null ? void 0 : style4.startsWith("stroke:"));
       let animatedEdge = false;
       if (edge.look === "handDrawn") {
         const rc = at.svg(elem);
@@ -41802,9 +41911,9 @@ var init_chunk_QXUST7PY = __esm({
         const pathStyle = (stylesFromClasses ? stylesFromClasses + ";" + styles4 + ";" : styles4) + ";" + (edgeStyles ? edgeStyles.reduce((acc, style4) => acc + ";" + style4, "") : "");
         svgPath = elem.append("path").attr("d", linePath).attr("id", edge.id).attr(
           "class",
-          " " + strokeClasses + (edge.classes ? " " + edge.classes : "") + (animationClass ?? "")
+          " " + strokeClasses + (edge.classes ? " " + edge.classes : "") + (animationClass != null ? animationClass : "")
         ).attr("style", pathStyle);
-        strokeColor = pathStyle.match(/stroke:([^;]+)/)?.[1];
+        strokeColor = (_a58 = pathStyle.match(/stroke:([^;]+)/)) == null ? void 0 : _a58[1];
         animatedEdge = edge.animate === true || !!edge.animation || stylesFromClasses.includes("animation");
         const pathNode = svgPath.node();
         const len = typeof pathNode.getTotalLength === "function" ? pathNode.getTotalLength() : 0;
@@ -48365,6 +48474,7 @@ var init_dagre_6UL2VRFP = __esm({
       log.trace(clusterDb);
     }, "adjustClustersAndEdges");
     extractor = /* @__PURE__ */ __name((graph, depth) => {
+      var _a58, _b2;
       log.warn("extractor - ", depth, write(graph), graph.children("D"));
       if (depth > 10) {
         log.error("Bailing out");
@@ -48403,7 +48513,7 @@ var init_dagre_6UL2VRFP = __esm({
           );
           const graphSettings = graph.graph();
           let dir2 = graphSettings.rankdir === "TB" ? "LR" : "TB";
-          if (clusterDb.get(node3)?.clusterData?.dir) {
+          if ((_b2 = (_a58 = clusterDb.get(node3)) == null ? void 0 : _a58.clusterData) == null ? void 0 : _b2.dir) {
             dir2 = clusterDb.get(node3).clusterData.dir;
             log.warn("Fixing dir", clusterDb.get(node3).clusterData.dir, dir2);
           }
@@ -48451,7 +48561,7 @@ var init_dagre_6UL2VRFP = __esm({
       for (const node3 of nodes5) {
         const data5 = graph.node(node3);
         log.warn(" Now next level", node3, data5);
-        if (data5?.clusterNode) {
+        if (data5 == null ? void 0 : data5.clusterNode) {
           extractor(data5.graph, depth + 1);
         }
       }
@@ -48506,14 +48616,13 @@ var init_dagre_6UL2VRFP = __esm({
             }
           }
           log.info("(Insert) Node XXX" + v3 + ": " + JSON.stringify(graph.node(v3)));
-          if (node3?.clusterNode) {
+          if (node3 == null ? void 0 : node3.clusterNode) {
             log.info("Cluster identified XBX", v3, node3.width, graph.node(v3));
             const { ranksep, nodesep } = graph.graph();
-            node3.graph.setGraph({
-              ...node3.graph.graph(),
+            node3.graph.setGraph(__spreadProps(__spreadValues({}, node3.graph.graph()), {
               ranksep: ranksep + 25,
               nodesep
-            });
+            }));
             const o2 = await recursiveRender(
               nodes5,
               node3.graph,
@@ -48587,6 +48696,7 @@ var init_dagre_6UL2VRFP = __esm({
       let { subGraphTitleTotalMargin } = getSubGraphTitleMargins(siteConfig2);
       await Promise.all(
         sortNodesByHierarchy(graph).map(async function(v3) {
+          var _a58;
           const node3 = graph.node(v3);
           log.info(
             "Position XBX => " + v3 + ": (" + node3.x,
@@ -48596,7 +48706,7 @@ var init_dagre_6UL2VRFP = __esm({
             " height: ",
             node3.height
           );
-          if (node3?.clusterNode) {
+          if (node3 == null ? void 0 : node3.clusterNode) {
             node3.y += subGraphTitleTotalMargin;
             log.info(
               "A tainted cluster node XBX1",
@@ -48624,8 +48734,8 @@ var init_dagre_6UL2VRFP = __esm({
               );
               node3.height += subGraphTitleTotalMargin;
               graph.node(node3.parentId);
-              const halfPadding = node3?.padding / 2 || 0;
-              const labelHeight = node3?.labelBBox?.height || 0;
+              const halfPadding = (node3 == null ? void 0 : node3.padding) / 2 || 0;
+              const labelHeight = ((_a58 = node3 == null ? void 0 : node3.labelBBox) == null ? void 0 : _a58.height) || 0;
               const offsetY = labelHeight - halfPadding || 0;
               log.debug("OffsetY", offsetY, "labelHeight", labelHeight, "halfPadding", halfPadding);
               await insertCluster(clusters, node3);
@@ -48646,7 +48756,7 @@ var init_dagre_6UL2VRFP = __esm({
                 node3.offsetY,
                 "parent",
                 parent4,
-                parent4?.offsetY,
+                parent4 == null ? void 0 : parent4.offsetY,
                 node3
               );
               positionNode(node3);
@@ -48674,13 +48784,14 @@ var init_dagre_6UL2VRFP = __esm({
       return { elem, diff: diff2 };
     }, "recursiveRender");
     render3 = /* @__PURE__ */ __name(async (data4Layout, svg4) => {
+      var _a58, _b2, _c2, _d, _e2, _f;
       const graph = new Graph({
         multigraph: true,
         compound: true
       }).setGraph({
         rankdir: data4Layout.direction,
-        nodesep: data4Layout.config?.nodeSpacing || data4Layout.config?.flowchart?.nodeSpacing || data4Layout.nodeSpacing,
-        ranksep: data4Layout.config?.rankSpacing || data4Layout.config?.flowchart?.rankSpacing || data4Layout.rankSpacing,
+        nodesep: ((_a58 = data4Layout.config) == null ? void 0 : _a58.nodeSpacing) || ((_c2 = (_b2 = data4Layout.config) == null ? void 0 : _b2.flowchart) == null ? void 0 : _c2.nodeSpacing) || data4Layout.nodeSpacing,
+        ranksep: ((_d = data4Layout.config) == null ? void 0 : _d.rankSpacing) || ((_f = (_e2 = data4Layout.config) == null ? void 0 : _e2.flowchart) == null ? void 0 : _f.rankSpacing) || data4Layout.rankSpacing,
         marginx: 8,
         marginy: 8
       }).setDefaultEdgeLabel(function() {
@@ -48693,7 +48804,7 @@ var init_dagre_6UL2VRFP = __esm({
       clear2();
       clear4();
       data4Layout.nodes.forEach((node3) => {
-        graph.setNode(node3.id, { ...node3 });
+        graph.setNode(node3.id, __spreadValues({}, node3));
         if (node3.parentId) {
           graph.setParent(node3.id, node3.parentId);
         }
@@ -48753,7 +48864,7 @@ var init_dagre_6UL2VRFP = __esm({
           graph.setEdge(specialId1, specialId2, edgeMid, nodeId + "-cyclic-special-1");
           graph.setEdge(specialId2, nodeId, edge2, nodeId + "-cyc<lic-special-2");
         } else {
-          graph.setEdge(edge.start, edge.end, { ...edge }, edge.id);
+          graph.setEdge(edge.start, edge.end, __spreadValues({}, edge), edge.id);
         }
       });
       log.warn("Graph at first:", JSON.stringify(write(graph)));
@@ -55971,15 +56082,15 @@ var init_cytoscape_esm = __esm({
           weight8[n2][c3] = Math.pow(U3[n2][c3], opts.m);
         }
       }
-      for (var _c = 0; _c < centroids.length; _c++) {
+      for (var _c2 = 0; _c2 < centroids.length; _c2++) {
         for (var dim = 0; dim < opts.attributes.length; dim++) {
           numerator = 0;
           denominator = 0;
           for (var _n2 = 0; _n2 < nodes5.length; _n2++) {
-            numerator += weight8[_n2][_c] * opts.attributes[dim](nodes5[_n2]);
-            denominator += weight8[_n2][_c];
+            numerator += weight8[_n2][_c2] * opts.attributes[dim](nodes5[_n2]);
+            denominator += weight8[_n2][_c2];
           }
-          centroids[_c][dim] = numerator / denominator;
+          centroids[_c2][dim] = numerator / denominator;
         }
       }
     };
@@ -56554,8 +56665,8 @@ var init_cytoscape_esm = __esm({
         }
       }
       var retClusters = new Array(exemplarsIndices.length);
-      for (var _c = 0; _c < exemplarsIndices.length; _c++) {
-        retClusters[_c] = cy.collection(clusters[exemplarsIndices[_c]]);
+      for (var _c2 = 0; _c2 < exemplarsIndices.length; _c2++) {
+        retClusters[_c2] = cy.collection(clusters[exemplarsIndices[_c2]]);
       }
       return retClusters;
     };
@@ -74077,9 +74188,9 @@ var init_cytoscape_esm = __esm({
         var lowerCache;
         if (!deqing && !highQualityReq && !downscaleReq) {
           for (var _l2 = lvl - 1; _l2 >= minLvl$1; _l2--) {
-            var _c = lookup2.get(ele, _l2);
-            if (_c) {
-              lowerCache = _c;
+            var _c2 = lookup2.get(ele, _l2);
+            if (_c2) {
+              lowerCache = _c2;
               break;
             }
           }
@@ -83584,12 +83695,13 @@ __export(cose_bilkent_S5V4N54A_exports, {
 });
 function addNodes(nodes5, cy) {
   nodes5.forEach((node3) => {
+    var _a58, _b2, _c2;
     const nodeData2 = {
       id: node3.id,
       labelText: node3.label,
       height: node3.height,
       width: node3.width,
-      padding: node3.padding ?? 0
+      padding: (_a58 = node3.padding) != null ? _a58 : 0
     };
     Object.keys(node3).forEach((key2) => {
       if (!["id", "label", "height", "width", "padding", "x", "y"].includes(key2)) {
@@ -83600,8 +83712,8 @@ function addNodes(nodes5, cy) {
       group: "nodes",
       data: nodeData2,
       position: {
-        x: node3.x ?? 0,
-        y: node3.y ?? 0
+        x: (_b2 = node3.x) != null ? _b2 : 0,
+        y: (_c2 = node3.y) != null ? _c2 : 0
       }
     });
   });
@@ -83773,12 +83885,12 @@ var init_cose_bilkent_S5V4N54A = __esm({
       await Promise.all(
         data4Layout.nodes.map(async (node3) => {
           if (node3.isGroup) {
-            const clusterNode = { ...node3 };
+            const clusterNode = __spreadValues({}, node3);
             clusterDb2[node3.id] = clusterNode;
             nodeDb2[node3.id] = clusterNode;
             await insertCluster2(subGraphsEl, node3);
           } else {
-            const nodeWithPosition = { ...node3 };
+            const nodeWithPosition = __spreadValues({}, node3);
             nodeDb2[node3.id] = nodeWithPosition;
             const nodeEl = await insertNode3(nodes5, node3, {
               config: data4Layout.config,
@@ -83793,22 +83905,20 @@ var init_cose_bilkent_S5V4N54A = __esm({
         })
       );
       log23.debug("Running cose-bilkent layout algorithm");
-      const updatedLayoutData = {
-        ...data4Layout,
+      const updatedLayoutData = __spreadProps(__spreadValues({}, data4Layout), {
         nodes: data4Layout.nodes.map((node3) => {
           const nodeWithDimensions = nodeDb2[node3.id];
-          return {
-            ...node3,
+          return __spreadProps(__spreadValues({}, node3), {
             width: nodeWithDimensions.width,
             height: nodeWithDimensions.height
-          };
+          });
         })
-      };
+      });
       const layoutResult = await executeCoseBilkentLayout(updatedLayoutData, data4Layout.config);
       log23.debug("Positioning nodes based on layout results");
       layoutResult.nodes.forEach((positionedNode) => {
         const node3 = nodeDb2[positionedNode.id];
-        if (node3?.domId) {
+        if (node3 == null ? void 0 : node3.domId) {
           node3.domId.attr(
             "transform",
             `translate(${positionedNode.x}, ${positionedNode.y})`
@@ -83831,14 +83941,15 @@ var init_cose_bilkent_S5V4N54A = __esm({
       log23.debug("Inserting and positioning edges");
       await Promise.all(
         data4Layout.edges.map(async (edge) => {
+          var _a58, _b2;
           const _edgeLabel = await insertEdgeLabel3(edgeLabels3, edge);
-          const startNode = nodeDb2[edge.start ?? ""];
-          const endNode = nodeDb2[edge.end ?? ""];
+          const startNode = nodeDb2[(_a58 = edge.start) != null ? _a58 : ""];
+          const endNode = nodeDb2[(_b2 = edge.end) != null ? _b2 : ""];
           if (startNode && endNode) {
             const positionedEdge = layoutResult.edges.find((e3) => e3.id === edge.id);
             if (positionedEdge) {
               log23.debug("APA01 positionedEdge", positionedEdge);
-              const edgeWithPath = { ...edge };
+              const edgeWithPath = __spreadValues({}, edge);
               const paths = insertEdge3(
                 edgePaths,
                 edgeWithPath,
@@ -83850,13 +83961,12 @@ var init_cose_bilkent_S5V4N54A = __esm({
               );
               positionEdgeLabel3(edgeWithPath, paths);
             } else {
-              const edgeWithPath = {
-                ...edge,
+              const edgeWithPath = __spreadProps(__spreadValues({}, edge), {
                 points: [
                   { x: startNode.x || 0, y: startNode.y || 0 },
                   { x: endNode.x || 0, y: endNode.y || 0 }
                 ]
-              };
+              });
               const paths = insertEdge3(
                 edgePaths,
                 edgeWithPath,
@@ -84177,7 +84287,7 @@ function drawInsideBoundary(diagram27, parentBoundaryAlias, parentBounds, curren
     globalBoundaryMaxY = Math.max(globalBoundaryMaxY, parentBounds.data.stopy);
   }
 }
-var import_sanitize_url3, parser2, c4Diagram_default, c4ShapeArray, boundaryParseStack, currentBoundaryParse, parentBoundaryParse, boundaries, rels, title, wrapEnabled, c4ShapeInRow, c4BoundaryInRow, c4Type, getC4Type, setC4Type, addRel, addPersonOrSystem, addContainer, addComponent, addPersonOrSystemBoundary, addContainerBoundary, addDeploymentNode, popBoundaryParseStack, updateElStyle, updateRelStyle, updateLayoutConfig, getC4ShapeInRow, getC4BoundaryInRow, getCurrentBoundaryParse, getParentBoundaryParse, getC4ShapeArray, getC4Shape, getC4ShapeKeys, getBoundaries, getBoundarys, getRels, getTitle, setWrap, autoWrap, clear5, LINETYPE, ARROWTYPE, PLACEMENT, setTitle, c4Db_default, drawRect22, drawImage2, drawRels, drawBoundary, drawC4Shape, insertDatabaseIcon, insertComputerIcon, insertClockIcon, insertArrowHead, insertArrowEnd, insertArrowFilledHead, insertDynamicNumber, insertArrowCrossHead, getC4ShapeFont, _drawTextCandidateFunc, svgDraw_default, globalBoundaryMaxX, globalBoundaryMaxY, c4ShapeInRow2, c4BoundaryInRow2, conf, Bounds, setConf, c4ShapeFont, boundaryFont, messageFont, drawBoundary2, drawC4ShapeArray, Point2, getIntersectPoint, getIntersectPoints, drawRels2, draw, c4Renderer_default, getStyles2, styles_default2, diagram;
+var import_sanitize_url3, parser2, c4Diagram_default, c4ShapeArray, boundaryParseStack, currentBoundaryParse, parentBoundaryParse, boundaries, rels, title, wrapEnabled, c4ShapeInRow, c4BoundaryInRow, c4Type, getC4Type, setC4Type, addRel, addPersonOrSystem, addContainer, addComponent, addPersonOrSystemBoundary, addContainerBoundary, addDeploymentNode, popBoundaryParseStack, updateElStyle, updateRelStyle, updateLayoutConfig, getC4ShapeInRow, getC4BoundaryInRow, getCurrentBoundaryParse, getParentBoundaryParse, getC4ShapeArray, getC4Shape, getC4ShapeKeys, getBoundaries, getBoundarys, getRels, getTitle, setWrap, autoWrap, clear5, LINETYPE, ARROWTYPE, PLACEMENT, setTitle, c4Db_default, drawRect22, drawImage2, drawRels, drawBoundary, drawC4Shape, insertDatabaseIcon, insertComputerIcon, insertClockIcon, insertArrowHead, insertArrowEnd, insertArrowFilledHead, insertDynamicNumber, insertArrowCrossHead, getC4ShapeFont, _drawTextCandidateFunc, svgDraw_default, globalBoundaryMaxX, globalBoundaryMaxY, c4ShapeInRow2, c4BoundaryInRow2, conf, _a10, Bounds, setConf, c4ShapeFont, boundaryFont, messageFont, drawBoundary2, drawC4ShapeArray, _a11, Point2, getIntersectPoint, getIntersectPoints, drawRels2, draw, c4Renderer_default, getStyles2, styles_default2, diagram;
 var init_c4Diagram_YG6GDRKO = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/c4Diagram-YG6GDRKO.mjs"() {
     init_chunk_TZMSLE5B();
@@ -86011,6 +86121,7 @@ var init_c4Diagram_YG6GDRKO = __esm({
       }
     }, "drawBoundary");
     drawC4Shape = /* @__PURE__ */ __name(function(elem, c4Shape, conf22) {
+      var _a58;
       let fillColor = c4Shape.bgColor ? c4Shape.bgColor : conf22[c4Shape.typeC4Shape.text + "_bg_color"];
       let strokeColor = c4Shape.borderColor ? c4Shape.borderColor : conf22[c4Shape.typeC4Shape.text + "_border_color"];
       let fontColor = c4Shape.fontColor ? c4Shape.fontColor : "#FFFFFF";
@@ -86108,7 +86219,7 @@ var init_c4Diagram_YG6GDRKO = __esm({
       );
       textFontConf = conf22[c4Shape.typeC4Shape.text + "Font"]();
       textFontConf.fontColor = fontColor;
-      if (c4Shape.techn && c4Shape.techn?.text !== "") {
+      if (c4Shape.techn && ((_a58 = c4Shape.techn) == null ? void 0 : _a58.text) !== "") {
         _drawTextCandidateFunc(conf22)(
           c4Shape.techn.text,
           c4ShapeElem,
@@ -86249,10 +86360,7 @@ var init_c4Diagram_YG6GDRKO = __esm({
     c4BoundaryInRow2 = 2;
     parser2.yy = c4Db_default;
     conf = {};
-    Bounds = class {
-      static {
-        __name(this, "Bounds");
-      }
+    Bounds = (_a10 = class {
       constructor(diagObj) {
         this.name = "";
         this.data = {};
@@ -86329,7 +86437,7 @@ var init_c4Diagram_YG6GDRKO = __esm({
         this.data.stopx += margin;
         this.data.stopy += margin;
       }
-    };
+    }, __name(_a10, "Bounds"), _a10);
     setConf = /* @__PURE__ */ __name(function(cnf) {
       assignWithDepth_default(conf, cnf);
       if (cnf.fontFamily) {
@@ -86448,15 +86556,12 @@ var init_c4Diagram_YG6GDRKO = __esm({
       }
       currentBounds.bumpLastMargin(conf.c4ShapeMargin);
     }, "drawC4ShapeArray");
-    Point2 = class {
-      static {
-        __name(this, "Point");
-      }
+    Point2 = (_a11 = class {
       constructor(x6, y6) {
         this.x = x6;
         this.y = y6;
       }
-    };
+    }, __name(_a11, "Point"), _a11);
     getIntersectPoint = /* @__PURE__ */ __name(function(fromNode, endPoint) {
       let x1 = fromNode.x;
       let y1 = fromNode.y;
@@ -86684,7 +86789,8 @@ var init_chunk_QN33PNHL = __esm({
       log.debug(`viewBox configured: ${viewBox} with padding: ${padding2}`);
     }, "setupViewPortForSVG");
     calculateDimensionsWithPadding = /* @__PURE__ */ __name((svg4, padding2) => {
-      const bounds4 = svg4.node()?.getBBox() || { width: 0, height: 0, x: 0, y: 0 };
+      var _a58;
+      const bounds4 = ((_a58 = svg4.node()) == null ? void 0 : _a58.getBBox()) || { width: 0, height: 0, x: 0, y: 0 };
       return {
         width: bounds4.width + padding2 * 2,
         height: bounds4.height + padding2 * 2,
@@ -86703,7 +86809,7 @@ var flowDiagram_NV44I4VS_exports = {};
 __export(flowDiagram_NV44I4VS_exports, {
   diagram: () => diagram2
 });
-var MERMAID_DOM_ID_PREFIX, FlowDB, getClasses, draw2, flowRenderer_v3_unified_default, parser3, flow_default, newParser, flowParser_default, fade, getStyles3, styles_default3, diagram2;
+var MERMAID_DOM_ID_PREFIX, _a12, FlowDB, getClasses, draw2, flowRenderer_v3_unified_default, parser3, flow_default, newParser, flowParser_default, fade, getStyles3, styles_default3, diagram2;
 var init_flowDiagram_NV44I4VS = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/flowDiagram-NV44I4VS.mjs"() {
     init_chunk_FMBD7UC4();
@@ -86724,7 +86830,7 @@ var init_flowDiagram_NV44I4VS = __esm({
     init_src32();
     init_dist();
     MERMAID_DOM_ID_PREFIX = "flowchart-";
-    FlowDB = class {
+    FlowDB = (_a12 = class {
       // cspell:ignore funs
       constructor() {
         this.vertexCounter = 0;
@@ -86768,9 +86874,6 @@ var init_flowDiagram_NV44I4VS = __esm({
         this.clear();
         this.setGen("gen-2");
       }
-      static {
-        __name(this, "FlowDB");
-      }
       sanitizeText(txt) {
         return common_default.sanitizeText(txt, this.config);
       }
@@ -86791,6 +86894,7 @@ var init_flowDiagram_NV44I4VS = __esm({
        * Function called by parser when a node definition has been found
        */
       addVertex(id28, textObj, type3, style4, classes3, dir2, props = {}, metadata) {
+        var _a58, _b2;
         if (!id28 || id28.trim().length === 0) {
           return;
         }
@@ -86807,13 +86911,13 @@ var init_flowDiagram_NV44I4VS = __esm({
         const edge = this.edges.find((e3) => e3.id === id28);
         if (edge) {
           const edgeDoc = doc;
-          if (edgeDoc?.animate !== void 0) {
+          if ((edgeDoc == null ? void 0 : edgeDoc.animate) !== void 0) {
             edge.animate = edgeDoc.animate;
           }
-          if (edgeDoc?.animation !== void 0) {
+          if ((edgeDoc == null ? void 0 : edgeDoc.animation) !== void 0) {
             edge.animation = edgeDoc.animation;
           }
-          if (edgeDoc?.curve !== void 0) {
+          if ((edgeDoc == null ? void 0 : edgeDoc.curve) !== void 0) {
             edge.interpolate = edgeDoc.curve;
           }
           return;
@@ -86872,30 +86976,30 @@ var init_flowDiagram_NV44I4VS = __esm({
             } else if (!isValidShape(doc.shape)) {
               throw new Error(`No such shape: ${doc.shape}.`);
             }
-            vertex.type = doc?.shape;
+            vertex.type = doc == null ? void 0 : doc.shape;
           }
-          if (doc?.label) {
-            vertex.text = doc?.label;
+          if (doc == null ? void 0 : doc.label) {
+            vertex.text = doc == null ? void 0 : doc.label;
           }
-          if (doc?.icon) {
-            vertex.icon = doc?.icon;
-            if (!doc.label?.trim() && vertex.text === id28) {
+          if (doc == null ? void 0 : doc.icon) {
+            vertex.icon = doc == null ? void 0 : doc.icon;
+            if (!((_a58 = doc.label) == null ? void 0 : _a58.trim()) && vertex.text === id28) {
               vertex.text = "";
             }
           }
-          if (doc?.form) {
-            vertex.form = doc?.form;
+          if (doc == null ? void 0 : doc.form) {
+            vertex.form = doc == null ? void 0 : doc.form;
           }
-          if (doc?.pos) {
-            vertex.pos = doc?.pos;
+          if (doc == null ? void 0 : doc.pos) {
+            vertex.pos = doc == null ? void 0 : doc.pos;
           }
-          if (doc?.img) {
-            vertex.img = doc?.img;
-            if (!doc.label?.trim() && vertex.text === id28) {
+          if (doc == null ? void 0 : doc.img) {
+            vertex.img = doc == null ? void 0 : doc.img;
+            if (!((_b2 = doc.label) == null ? void 0 : _b2.trim()) && vertex.text === id28) {
               vertex.text = "";
             }
           }
-          if (doc?.constraint) {
+          if (doc == null ? void 0 : doc.constraint) {
             vertex.constraint = doc.constraint;
           }
           if (doc.w) {
@@ -86911,6 +87015,7 @@ var init_flowDiagram_NV44I4VS = __esm({
        *
        */
       addSingleLink(_start, _end, type3, id28) {
+        var _a58;
         const start3 = _start;
         const end2 = _end;
         const edge = {
@@ -86951,7 +87056,7 @@ var init_flowDiagram_NV44I4VS = __esm({
             });
           }
         }
-        if (this.edges.length < (this.config.maxEdges ?? 500)) {
+        if (this.edges.length < ((_a58 = this.config.maxEdges) != null ? _a58 : 500)) {
           log.info("Pushing edge...");
           this.edges.push(edge);
         } else {
@@ -87000,6 +87105,7 @@ You have to call mermaid.initialize.`
        */
       updateLink(positions2, style4) {
         positions2.forEach((pos) => {
+          var _a58, _b2, _c2, _d, _e2, _f, _g;
           if (typeof pos === "number" && pos >= this.edges.length) {
             throw new Error(
               `The index ${pos} for linkStyle is out of bounds. Valid indices for linkStyle are between 0 and ${this.edges.length - 1}. (Help: Ensure that the index is within the range of existing edges.)`
@@ -87009,8 +87115,8 @@ You have to call mermaid.initialize.`
             this.edges.defaultStyle = style4;
           } else {
             this.edges[pos].style = style4;
-            if ((this.edges[pos]?.style?.length ?? 0) > 0 && !this.edges[pos]?.style?.some((s3) => s3?.startsWith("fill"))) {
-              this.edges[pos]?.style?.push("fill:none");
+            if (((_c2 = (_b2 = (_a58 = this.edges[pos]) == null ? void 0 : _a58.style) == null ? void 0 : _b2.length) != null ? _c2 : 0) > 0 && !((_e2 = (_d = this.edges[pos]) == null ? void 0 : _d.style) == null ? void 0 : _e2.some((s3) => s3 == null ? void 0 : s3.startsWith("fill")))) {
+              (_g = (_f = this.edges[pos]) == null ? void 0 : _f.style) == null ? void 0 : _g.push("fill:none");
             }
           }
         });
@@ -87165,7 +87271,8 @@ You have to call mermaid.initialize.`
         });
       }
       getDirection() {
-        return this.direction?.trim();
+        var _a58;
+        return (_a58 = this.direction) == null ? void 0 : _a58.trim();
       }
       /**
        * Retrieval function for fetching the found nodes after parsing has completed.
@@ -87196,12 +87303,13 @@ You have to call mermaid.initialize.`
         const svg4 = select_default2(element7).select("svg");
         const nodes5 = svg4.selectAll("g.node");
         nodes5.on("mouseover", (e3) => {
+          var _a58;
           const el = select_default2(e3.currentTarget);
           const title2 = el.attr("title");
           if (title2 === null) {
             return;
           }
-          const rect3 = e3.currentTarget?.getBoundingClientRect();
+          const rect3 = (_a58 = e3.currentTarget) == null ? void 0 : _a58.getBoundingClientRect();
           tooltipElem.transition().duration(200).style("opacity", ".9");
           tooltipElem.text(el.attr("title")).style("left", window.scrollX + rect3.left + (rect3.right - rect3.left) / 2 + "px").style("top", window.scrollY + rect3.bottom + "px");
           tooltipElem.html(tooltipElem.html().replace(/&lt;br\/&gt;/g, "<br/>"));
@@ -87237,6 +87345,7 @@ You have to call mermaid.initialize.`
         return "fill:#ffa;stroke: #f66; stroke-width: 3px; stroke-dasharray: 5, 5;fill:#ffa;stroke: #666;";
       }
       addSubGraph(_id, list4, _title) {
+        var _a58, _b2, _c2;
         let id28 = _id.text.trim();
         let title2 = _title.text;
         if (_id === _title && /\s/.exec(_title.text)) {
@@ -87266,14 +87375,14 @@ You have to call mermaid.initialize.`
         const result = uniq2(list4.flat());
         const nodeList = result.nodeList;
         let dir2 = result.dir;
-        const flowchartConfig = getConfig2().flowchart ?? {};
-        dir2 = dir2 ?? (flowchartConfig.inheritDir ? this.getDirection() ?? getConfig2().direction ?? void 0 : void 0);
+        const flowchartConfig = (_a58 = getConfig2().flowchart) != null ? _a58 : {};
+        dir2 = dir2 != null ? dir2 : flowchartConfig.inheritDir ? (_c2 = (_b2 = this.getDirection()) != null ? _b2 : getConfig2().direction) != null ? _c2 : void 0 : void 0;
         if (this.version === "gen-1") {
           for (let i3 = 0; i3 < nodeList.length; i3++) {
             nodeList[i3] = this.lookUpDomId(nodeList[i3]);
           }
         }
-        id28 = id28 ?? "subGraph" + this.subCount;
+        id28 = id28 != null ? id28 : "subGraph" + this.subCount;
         title2 = title2 || "";
         title2 = this.sanitizeText(title2);
         this.subCount = this.subCount + 1;
@@ -87530,8 +87639,9 @@ You have to call mermaid.initialize.`
         return { arrowTypeStart, arrowTypeEnd };
       }
       addNodeFromVertex(vertex, nodes5, parentDB, subGraphDB, config5, look) {
+        var _a58, _b2;
         const parentId = parentDB.get(vertex.id);
-        const isGroup2 = subGraphDB.get(vertex.id) ?? false;
+        const isGroup2 = (_a58 = subGraphDB.get(vertex.id)) != null ? _a58 : false;
         const node3 = this.findNode(nodes5, vertex.id);
         if (node3) {
           node3.cssStyles = vertex.styles;
@@ -87543,7 +87653,7 @@ You have to call mermaid.initialize.`
             label: vertex.text,
             labelStyle: "",
             parentId,
-            padding: config5.flowchart?.padding || 8,
+            padding: ((_b2 = config5.flowchart) == null ? void 0 : _b2.padding) || 8,
             cssStyles: vertex.styles,
             cssCompiledStyles: this.getCompiledStyles(["default", "node", ...vertex.classes]),
             cssClasses: "default " + vertex.classes.join(" "),
@@ -87561,29 +87671,28 @@ You have to call mermaid.initialize.`
             constraint: vertex.constraint
           };
           if (isGroup2) {
-            nodes5.push({
-              ...baseNode,
+            nodes5.push(__spreadProps(__spreadValues({}, baseNode), {
               isGroup: true,
               shape: "rect"
-            });
+            }));
           } else {
-            nodes5.push({
-              ...baseNode,
+            nodes5.push(__spreadProps(__spreadValues({}, baseNode), {
               isGroup: false,
               shape: this.getTypeFromVertex(vertex)
-            });
+            }));
           }
         }
       }
       getCompiledStyles(classDefs) {
+        var _a58, _b2;
         let compiledStyles = [];
         for (const customClass of classDefs) {
           const cssClass = this.classes.get(customClass);
-          if (cssClass?.styles) {
-            compiledStyles = [...compiledStyles, ...cssClass.styles ?? []].map((s3) => s3.trim());
+          if (cssClass == null ? void 0 : cssClass.styles) {
+            compiledStyles = [...compiledStyles, ...(_a58 = cssClass.styles) != null ? _a58 : []].map((s3) => s3.trim());
           }
-          if (cssClass?.textStyles) {
-            compiledStyles = [...compiledStyles, ...cssClass.textStyles ?? []].map((s3) => s3.trim());
+          if (cssClass == null ? void 0 : cssClass.textStyles) {
+            compiledStyles = [...compiledStyles, ...(_b2 = cssClass.textStyles) != null ? _b2 : []].map((s3) => s3.trim());
           }
         }
         return compiledStyles;
@@ -87626,8 +87735,9 @@ You have to call mermaid.initialize.`
         });
         const e3 = this.getEdges();
         e3.forEach((rawEdge, index2) => {
+          var _a58, _b2, _c2;
           const { arrowTypeStart, arrowTypeEnd } = this.destructEdgeType(rawEdge.type);
-          const styles4 = [...e3.defaultStyle ?? []];
+          const styles4 = [...(_a58 = e3.defaultStyle) != null ? _a58 : []];
           if (rawEdge.style) {
             styles4.push(...rawEdge.style);
           }
@@ -87636,14 +87746,14 @@ You have to call mermaid.initialize.`
             isUserDefinedId: rawEdge.isUserDefinedId,
             start: rawEdge.start,
             end: rawEdge.end,
-            type: rawEdge.type ?? "normal",
+            type: (_b2 = rawEdge.type) != null ? _b2 : "normal",
             label: rawEdge.text,
             labelpos: "c",
             thickness: rawEdge.stroke,
             minlen: rawEdge.length,
-            classes: rawEdge?.stroke === "invisible" ? "" : "edge-thickness-normal edge-pattern-solid flowchart-link",
-            arrowTypeStart: rawEdge?.stroke === "invisible" || rawEdge?.type === "arrow_open" ? "none" : arrowTypeStart,
-            arrowTypeEnd: rawEdge?.stroke === "invisible" || rawEdge?.type === "arrow_open" ? "none" : arrowTypeEnd,
+            classes: (rawEdge == null ? void 0 : rawEdge.stroke) === "invisible" ? "" : "edge-thickness-normal edge-pattern-solid flowchart-link",
+            arrowTypeStart: (rawEdge == null ? void 0 : rawEdge.stroke) === "invisible" || (rawEdge == null ? void 0 : rawEdge.type) === "arrow_open" ? "none" : arrowTypeStart,
+            arrowTypeEnd: (rawEdge == null ? void 0 : rawEdge.stroke) === "invisible" || (rawEdge == null ? void 0 : rawEdge.type) === "arrow_open" ? "none" : arrowTypeEnd,
             arrowheadStyle: "fill: #333",
             cssCompiledStyles: this.getCompiledStyles(rawEdge.classes),
             labelStyle: styles4,
@@ -87652,7 +87762,7 @@ You have to call mermaid.initialize.`
             look: config5.look,
             animate: rawEdge.animate,
             animation: rawEdge.animation,
-            curve: rawEdge.interpolate || this.edges.defaultInterpolate || config5.flowchart?.curve
+            curve: rawEdge.interpolate || this.edges.defaultInterpolate || ((_c2 = config5.flowchart) == null ? void 0 : _c2.curve)
           };
           edges3.push(edge);
         });
@@ -87661,11 +87771,12 @@ You have to call mermaid.initialize.`
       defaultConfig() {
         return defaultConfig2.flowchart;
       }
-    };
+    }, __name(_a12, "FlowDB"), _a12);
     getClasses = /* @__PURE__ */ __name(function(text11, diagramObj) {
       return diagramObj.db.getClasses();
     }, "getClasses");
     draw2 = /* @__PURE__ */ __name(async function(text11, id28, _version, diag) {
+      var _a58, _b2;
       log.info("REF0:");
       log.info("Drawing state diagram (v2)", id28);
       const { securityLevel, flowchart: conf5, layout: layout6 } = getConfig2();
@@ -87687,20 +87798,20 @@ You have to call mermaid.initialize.`
         );
       }
       data4Layout.direction = direction;
-      data4Layout.nodeSpacing = conf5?.nodeSpacing || 50;
-      data4Layout.rankSpacing = conf5?.rankSpacing || 50;
+      data4Layout.nodeSpacing = (conf5 == null ? void 0 : conf5.nodeSpacing) || 50;
+      data4Layout.rankSpacing = (conf5 == null ? void 0 : conf5.rankSpacing) || 50;
       data4Layout.markers = ["point", "circle", "cross"];
       data4Layout.diagramId = id28;
       log.debug("REF1:", data4Layout);
       await render5(data4Layout, svg4);
-      const padding2 = data4Layout.config.flowchart?.diagramPadding ?? 8;
+      const padding2 = (_b2 = (_a58 = data4Layout.config.flowchart) == null ? void 0 : _a58.diagramPadding) != null ? _b2 : 8;
       utils_default2.insertTitle(
         svg4,
         "flowchartTitleText",
-        conf5?.titleTopMargin || 0,
+        (conf5 == null ? void 0 : conf5.titleTopMargin) || 0,
         diag.db.getDiagramTitle()
       );
-      setupViewPortForSVG(svg4, padding2, "flowchart", conf5?.useMaxWidth || false);
+      setupViewPortForSVG(svg4, padding2, "flowchart", (conf5 == null ? void 0 : conf5.useMaxWidth) || false);
       for (const vertex of data4Layout.nodes) {
         const node3 = select_default2(`#${id28} [id="${vertex.id}"]`);
         if (!node3 || !vertex.link) {
@@ -89170,7 +89281,7 @@ var erDiagram_Q2GNP2WA_exports = {};
 __export(erDiagram_Q2GNP2WA_exports, {
   diagram: () => diagram3
 });
-var parser4, erDiagram_default, ErDB, erRenderer_unified_exports, draw3, fade2, getStyles4, styles_default4, diagram3;
+var parser4, erDiagram_default, _a13, ErDB, erRenderer_unified_exports, draw3, fade2, getStyles4, styles_default4, diagram3;
 var init_erDiagram_Q2GNP2WA = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/erDiagram-Q2GNP2WA.mjs"() {
     init_chunk_55IACEB6();
@@ -90092,7 +90203,7 @@ var init_erDiagram_Q2GNP2WA = __esm({
     })();
     parser4.parser = parser4;
     erDiagram_default = parser4;
-    ErDB = class {
+    ErDB = (_a13 = class {
       constructor() {
         this.entities = /* @__PURE__ */ new Map();
         this.relationships = [];
@@ -90127,15 +90238,13 @@ var init_erDiagram_Q2GNP2WA = __esm({
         this.setAccTitle = this.setAccTitle.bind(this);
         this.setAccDescription = this.setAccDescription.bind(this);
       }
-      static {
-        __name(this, "ErDB");
-      }
       /**
        * Add entity
        * @param name - The name of the entity
        * @param alias - The alias of the entity
        */
       addEntity(name, alias = "") {
+        var _a58, _b2;
         if (!this.entities.has(name)) {
           this.entities.set(name, {
             id: `entity-${name}-${this.entities.size}`,
@@ -90143,12 +90252,12 @@ var init_erDiagram_Q2GNP2WA = __esm({
             attributes: [],
             alias,
             shape: "erBox",
-            look: getConfig2().look ?? "default",
+            look: (_a58 = getConfig2().look) != null ? _a58 : "default",
             cssClasses: "default",
             cssStyles: []
           });
           log.info("Added new entity :", name);
-        } else if (!this.entities.get(name)?.alias && alias) {
+        } else if (!((_b2 = this.entities.get(name)) == null ? void 0 : _b2.alias) && alias) {
           this.entities.get(name).alias = alias;
           log.info(`Add alias '${alias}' to entity '${name}'`);
         }
@@ -90210,14 +90319,15 @@ var init_erDiagram_Q2GNP2WA = __esm({
         this.direction = dir2;
       }
       getCompiledStyles(classDefs) {
+        var _a58, _b2;
         let compiledStyles = [];
         for (const customClass of classDefs) {
           const cssClass = this.classes.get(customClass);
-          if (cssClass?.styles) {
-            compiledStyles = [...compiledStyles, ...cssClass.styles ?? []].map((s3) => s3.trim());
+          if (cssClass == null ? void 0 : cssClass.styles) {
+            compiledStyles = [...compiledStyles, ...(_a58 = cssClass.styles) != null ? _a58 : []].map((s3) => s3.trim());
           }
-          if (cssClass?.textStyles) {
-            compiledStyles = [...compiledStyles, ...cssClass.textStyles ?? []].map((s3) => s3.trim());
+          if (cssClass == null ? void 0 : cssClass.textStyles) {
+            compiledStyles = [...compiledStyles, ...(_b2 = cssClass.textStyles) != null ? _b2 : []].map((s3) => s3.trim());
           }
         }
         return compiledStyles;
@@ -90302,12 +90412,13 @@ var init_erDiagram_Q2GNP2WA = __esm({
         }
         return { nodes: nodes5, edges: edges3, other: {}, config: config5, direction: "TB" };
       }
-    };
+    }, __name(_a13, "ErDB"), _a13);
     erRenderer_unified_exports = {};
     __export2(erRenderer_unified_exports, {
       draw: () => draw3
     });
     draw3 = /* @__PURE__ */ __name(async function(text11, id28, _version, diag) {
+      var _a58, _b2;
       log.info("REF0:");
       log.info("Drawing er diagram (unified)", id28);
       const { securityLevel, er: conf5, layout: layout6 } = getConfig2();
@@ -90315,8 +90426,8 @@ var init_erDiagram_Q2GNP2WA = __esm({
       const svg4 = getDiagramElement(id28, securityLevel);
       data4Layout.type = diag.type;
       data4Layout.layoutAlgorithm = getRegisteredLayoutAlgorithm(layout6);
-      data4Layout.config.flowchart.nodeSpacing = conf5?.nodeSpacing || 140;
-      data4Layout.config.flowchart.rankSpacing = conf5?.rankSpacing || 80;
+      data4Layout.config.flowchart.nodeSpacing = (conf5 == null ? void 0 : conf5.nodeSpacing) || 140;
+      data4Layout.config.flowchart.rankSpacing = (conf5 == null ? void 0 : conf5.rankSpacing) || 80;
       data4Layout.direction = diag.db.getDirection();
       data4Layout.markers = ["only_one", "zero_or_one", "one_or_more", "zero_or_more"];
       data4Layout.diagramId = id28;
@@ -90341,10 +90452,10 @@ var init_erDiagram_Q2GNP2WA = __esm({
       utils_default2.insertTitle(
         svg4,
         "erDiagramTitleText",
-        conf5?.titleTopMargin ?? 25,
+        (_a58 = conf5 == null ? void 0 : conf5.titleTopMargin) != null ? _a58 : 25,
         diag.db.getDiagramTitle()
       );
-      setupViewPortForSVG(svg4, padding2, "erDiagram", conf5?.useMaxWidth ?? true);
+      setupViewPortForSVG(svg4, padding2, "erDiagram", (_b2 = conf5 == null ? void 0 : conf5.useMaxWidth) != null ? _b2 : true);
     }, "draw");
     fade2 = /* @__PURE__ */ __name((color3, opacity) => {
       const channel2 = channel_default2;
@@ -90422,14 +90533,15 @@ var init_erDiagram_Q2GNP2WA = __esm({
 
 // node_modules/mermaid/dist/chunks/mermaid.core/chunk-4BX2VUAB.mjs
 function populateCommonDb(ast, db7) {
+  var _a58, _b2, _c2;
   if (ast.accDescr) {
-    db7.setAccDescription?.(ast.accDescr);
+    (_a58 = db7.setAccDescription) == null ? void 0 : _a58.call(db7, ast.accDescr);
   }
   if (ast.accTitle) {
-    db7.setAccTitle?.(ast.accTitle);
+    (_b2 = db7.setAccTitle) == null ? void 0 : _b2.call(db7, ast.accTitle);
   }
   if (ast.title) {
-    db7.setDiagramTitle?.(ast.title);
+    (_c2 = db7.setDiagramTitle) == null ? void 0 : _c2.call(db7, ast.title);
   }
 }
 var init_chunk_4BX2VUAB = __esm({
@@ -90440,11 +90552,11 @@ var init_chunk_4BX2VUAB = __esm({
 });
 
 // node_modules/mermaid/dist/chunks/mermaid.core/chunk-QZHKN3VN.mjs
-var ImperativeState;
+var _a14, ImperativeState;
 var init_chunk_QZHKN3VN = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/chunk-QZHKN3VN.mjs"() {
     init_chunk_AGHRB4JF();
-    ImperativeState = class {
+    ImperativeState = (_a14 = class {
       /**
        * @param init - Function that creates the default state.
        */
@@ -90452,13 +90564,10 @@ var init_chunk_QZHKN3VN = __esm({
         this.init = init3;
         this.records = this.init();
       }
-      static {
-        __name(this, "ImperativeState");
-      }
       reset() {
         this.records = this.init();
       }
-    };
+    }, __name(_a14, "ImperativeState"), _a14);
   }
 });
 
@@ -92220,11 +92329,11 @@ function streamAst(root7, options2) {
   return new TreeStreamImpl(root7, (node3) => streamContents(node3, options2), { includeRoot: true });
 }
 function isAstNodeInRange(astNode, range3) {
-  var _a;
+  var _a58;
   if (!range3) {
     return true;
   }
-  const nodeRange = (_a = astNode.$cstNode) === null || _a === void 0 ? void 0 : _a.range;
+  const nodeRange = (_a58 = astNode.$cstNode) === null || _a58 === void 0 ? void 0 : _a58.range;
   if (!nodeRange) {
     return false;
   }
@@ -93249,7 +93358,7 @@ function getTerminalParts(regexp) {
       });
     }
     return parts;
-  } catch (_a) {
+  } catch (_a58) {
     return [];
   }
 }
@@ -93262,7 +93371,7 @@ function isMultilineComment(regexp) {
     visitor.reset(regexp);
     visitor.visit(regexpParser.pattern(regexp));
     return visitor.multiline;
-  } catch (_a) {
+  } catch (_a58) {
     return false;
   }
 }
@@ -93642,9 +93751,9 @@ function findNodesForKeywordInternal(node3, keyword, element7) {
   return keywordNodes;
 }
 function findAssignment(cstNode) {
-  var _a;
+  var _a58;
   const astNode = cstNode.astNode;
-  while (astNode === ((_a = cstNode.container) === null || _a === void 0 ? void 0 : _a.astNode)) {
+  while (astNode === ((_a58 = cstNode.container) === null || _a58 === void 0 ? void 0 : _a58.astNode)) {
     const assignment = getContainerOfType(cstNode.grammarSource, isAssignment);
     if (assignment) {
       return assignment;
@@ -93667,7 +93776,7 @@ function findNameAssignment(type3) {
   return findNameAssignmentInternal(type3, startNode, /* @__PURE__ */ new Map());
 }
 function findNameAssignmentInternal(type3, startNode, cache3) {
-  var _a;
+  var _a58;
   function go(node3, refType) {
     let childAssignment = void 0;
     const parentAssignment = getContainerOfType(node3, isAssignment);
@@ -93687,7 +93796,7 @@ function findNameAssignmentInternal(type3, startNode, cache3) {
       return node3;
     } else if (isRuleCall(node3) && isParserRule(node3.rule.ref)) {
       return go(node3, node3.rule.ref);
-    } else if (isSimpleType(node3) && ((_a = node3.typeRef) === null || _a === void 0 ? void 0 : _a.ref)) {
+    } else if (isSimpleType(node3) && ((_a58 = node3.typeRef) === null || _a58 === void 0 ? void 0 : _a58.ref)) {
       return go(node3, node3.typeRef.ref);
     }
   }
@@ -93802,9 +93911,9 @@ function getExplicitRuleType(rule) {
   return void 0;
 }
 function getTypeName(type3) {
-  var _a;
+  var _a58;
   if (isParserRule(type3)) {
-    return isDataTypeRule(type3) ? type3.name : (_a = getExplicitRuleType(type3)) !== null && _a !== void 0 ? _a : type3.name;
+    return isDataTypeRule(type3) ? type3.name : (_a58 = getExplicitRuleType(type3)) !== null && _a58 !== void 0 ? _a58 : type3.name;
   } else if (isInterface(type3) || isType(type3) || isReturnType(type3)) {
     return type3.name;
   } else if (isAction(type3)) {
@@ -93818,28 +93927,28 @@ function getTypeName(type3) {
   throw new Error("Cannot get name of Unknown Type");
 }
 function getActionType(action) {
-  var _a;
+  var _a58;
   if (action.inferredType) {
     return action.inferredType.name;
-  } else if ((_a = action.type) === null || _a === void 0 ? void 0 : _a.ref) {
+  } else if ((_a58 = action.type) === null || _a58 === void 0 ? void 0 : _a58.ref) {
     return getTypeName(action.type.ref);
   }
   return void 0;
 }
 function getRuleTypeName(rule) {
-  var _a, _b, _c;
+  var _a58, _b2, _c2;
   if (isTerminalRule(rule)) {
-    return (_b = (_a = rule.type) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : "string";
+    return (_b2 = (_a58 = rule.type) === null || _a58 === void 0 ? void 0 : _a58.name) !== null && _b2 !== void 0 ? _b2 : "string";
   } else {
-    return isDataTypeRule(rule) ? rule.name : (_c = getExplicitRuleType(rule)) !== null && _c !== void 0 ? _c : rule.name;
+    return isDataTypeRule(rule) ? rule.name : (_c2 = getExplicitRuleType(rule)) !== null && _c2 !== void 0 ? _c2 : rule.name;
   }
 }
 function getRuleType(rule) {
-  var _a, _b, _c;
+  var _a58, _b2, _c2;
   if (isTerminalRule(rule)) {
-    return (_b = (_a = rule.type) === null || _a === void 0 ? void 0 : _a.name) !== null && _b !== void 0 ? _b : "string";
+    return (_b2 = (_a58 = rule.type) === null || _a58 === void 0 ? void 0 : _a58.name) !== null && _b2 !== void 0 ? _b2 : "string";
   } else {
-    return (_c = getExplicitRuleType(rule)) !== null && _c !== void 0 ? _c : rule.name;
+    return (_c2 = getExplicitRuleType(rule)) !== null && _c2 !== void 0 ? _c2 : rule.name;
   }
 }
 function terminalRegex(terminalRule) {
@@ -93937,9 +94046,9 @@ function keywordToRegex(keyword) {
   return escapeRegExp(keyword.value);
 }
 function withCardinality(regex2, options2) {
-  var _a;
+  var _a58;
   if (options2.wrap !== false || options2.lookahead) {
-    regex2 = `(${(_a = options2.lookahead) !== null && _a !== void 0 ? _a : ""}${regex2})`;
+    regex2 = `(${(_a58 = options2.lookahead) !== null && _a58 !== void 0 ? _a58 : ""}${regex2})`;
   }
   if (options2.cardinality) {
     return `${regex2}${options2.cardinality}`;
@@ -98045,8 +98154,8 @@ var init_llk_lookahead = __esm({
     init_lookahead();
     LLkLookaheadStrategy = class {
       constructor(options2) {
-        var _a;
-        this.maxLookahead = (_a = options2 === null || options2 === void 0 ? void 0 : options2.maxLookahead) !== null && _a !== void 0 ? _a : DEFAULT_PARSER_CONFIG.maxLookahead;
+        var _a58;
+        this.maxLookahead = (_a58 = options2 === null || options2 === void 0 ? void 0 : options2.maxLookahead) !== null && _a58 !== void 0 ? _a58 : DEFAULT_PARSER_CONFIG.maxLookahead;
       }
       validate(options2) {
         const leftRecursionErrors = this.validateNoLeftRecursion(options2.rules);
@@ -99920,8 +100029,8 @@ var init_parser = __esm({
               });
             }
             this.TRACE_INIT("ComputeLookaheadFunctions", () => {
-              var _a, _b;
-              (_b = (_a = this.lookaheadStrategy).initialize) === null || _b === void 0 ? void 0 : _b.call(_a, {
+              var _a58, _b2;
+              (_b2 = (_a58 = this.lookaheadStrategy).initialize) === null || _b2 === void 0 ? void 0 : _b2.call(_a58, {
                 rules: values_default(this.gastProductionsCache)
               });
               this.preComputeLookaheadFunctions(values_default(this.gastProductionsCache));
@@ -100844,9 +100953,9 @@ var init_all_star_lookahead = __esm({
     EMPTY_PREDICATES = new PredicateSet();
     LLStarLookaheadStrategy = class extends LLkLookaheadStrategy {
       constructor(options2) {
-        var _a;
+        var _a58;
         super();
-        this.logging = (_a = options2 === null || options2 === void 0 ? void 0 : options2.logging) !== null && _a !== void 0 ? _a : ((message) => console.log(message));
+        this.logging = (_a58 = options2 === null || options2 === void 0 ? void 0 : options2.logging) !== null && _a58 !== void 0 ? _a58 : ((message) => console.log(message));
       }
       initialize(options2) {
         this.atn = createATN(options2.rules);
@@ -100885,11 +100994,11 @@ var init_all_star_lookahead = __esm({
           }, {});
           if (hasPredicates) {
             return function(orAlts) {
-              var _a;
+              var _a58;
               const nextToken = this.LA(1);
               const prediction = choiceToAlt[nextToken.tokenTypeIdx];
               if (orAlts !== void 0 && prediction !== void 0) {
-                const gate = (_a = orAlts[prediction]) === null || _a === void 0 ? void 0 : _a.GATE;
+                const gate = (_a58 = orAlts[prediction]) === null || _a58 === void 0 ? void 0 : _a58.GATE;
                 if (gate !== void 0 && gate.call(this) === false) {
                   return void 0;
                 }
@@ -101192,9 +101301,9 @@ var init_main = __esm({
       }
       Diagnostic2.create = create5;
       function is3(value2) {
-        var _a;
+        var _a58;
         let candidate = value2;
-        return Is.defined(candidate) && Range.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a = candidate.codeDescription) === null || _a === void 0 ? void 0 : _a.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
+        return Is.defined(candidate) && Range.is(candidate.range) && Is.string(candidate.message) && (Is.number(candidate.severity) || Is.undefined(candidate.severity)) && (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code)) && (Is.undefined(candidate.codeDescription) || Is.string((_a58 = candidate.codeDescription) === null || _a58 === void 0 ? void 0 : _a58.href)) && (Is.string(candidate.source) || Is.undefined(candidate.source)) && (Is.undefined(candidate.relatedInformation) || Is.typedArray(candidate.relatedInformation, DiagnosticRelatedInformation.is));
       }
       Diagnostic2.is = is3;
     })(Diagnostic || (Diagnostic = {}));
@@ -102096,8 +102205,8 @@ var init_cst_node_builder = __esm({
         this.nodeStack = [];
       }
       get current() {
-        var _a;
-        return (_a = this.nodeStack[this.nodeStack.length - 1]) !== null && _a !== void 0 ? _a : this.rootNode;
+        var _a58;
+        return (_a58 = this.nodeStack[this.nodeStack.length - 1]) !== null && _a58 !== void 0 ? _a58 : this.rootNode;
       }
       buildRootNode(input) {
         this.rootNode = new RootCstNodeImpl(input);
@@ -102180,8 +102289,8 @@ var init_cst_node_builder = __esm({
         return false;
       }
       get astNode() {
-        var _a, _b;
-        const node3 = typeof ((_a = this._astNode) === null || _a === void 0 ? void 0 : _a.$type) === "string" ? this._astNode : (_b = this.container) === null || _b === void 0 ? void 0 : _b.astNode;
+        var _a58, _b2;
+        const node3 = typeof ((_a58 = this._astNode) === null || _a58 === void 0 ? void 0 : _a58.$type) === "string" ? this._astNode : (_b2 = this.container) === null || _b2 === void 0 ? void 0 : _b2.astNode;
         if (!node3) {
           throw new Error("This node has no associated AST element");
         }
@@ -102236,15 +102345,15 @@ var init_cst_node_builder = __esm({
         return this.content;
       }
       get offset() {
-        var _a, _b;
-        return (_b = (_a = this.firstNonHiddenNode) === null || _a === void 0 ? void 0 : _a.offset) !== null && _b !== void 0 ? _b : 0;
+        var _a58, _b2;
+        return (_b2 = (_a58 = this.firstNonHiddenNode) === null || _a58 === void 0 ? void 0 : _a58.offset) !== null && _b2 !== void 0 ? _b2 : 0;
       }
       get length() {
         return this.end - this.offset;
       }
       get end() {
-        var _a, _b;
-        return (_b = (_a = this.lastNonHiddenNode) === null || _a === void 0 ? void 0 : _a.end) !== null && _b !== void 0 ? _b : 0;
+        var _a58, _b2;
+        return (_b2 = (_a58 = this.lastNonHiddenNode) === null || _a58 === void 0 ? void 0 : _a58.end) !== null && _b2 !== void 0 ? _b2 : 0;
       }
       get range() {
         const firstNode = this.firstNonHiddenNode;
@@ -103257,7 +103366,7 @@ var init_value_converter = __esm({
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       runConverter(rule, input, cstNode) {
-        var _a;
+        var _a58;
         switch (rule.name.toUpperCase()) {
           case "INT":
             return ValueConverter.convertInt(input);
@@ -103266,7 +103375,7 @@ var init_value_converter = __esm({
           case "ID":
             return ValueConverter.convertID(input);
         }
-        switch ((_a = getRuleType(rule)) === null || _a === void 0 ? void 0 : _a.toLowerCase()) {
+        switch ((_a58 = getRuleType(rule)) === null || _a58 === void 0 ? void 0 : _a58.toLowerCase()) {
           case "number":
             return ValueConverter.convertNumber(input);
           case "boolean":
@@ -104099,15 +104208,12 @@ var init_esm2 = __esm({
         }
         const h3 = "", a2 = "/", c3 = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
         class f2 {
-          static isUri(t6) {
-            return t6 instanceof f2 || !!t6 && "string" == typeof t6.authority && "string" == typeof t6.fragment && "string" == typeof t6.path && "string" == typeof t6.query && "string" == typeof t6.scheme && "string" == typeof t6.fsPath && "function" == typeof t6.with && "function" == typeof t6.toString;
-          }
-          scheme;
-          authority;
-          path;
-          query;
-          fragment;
           constructor(t6, e6, r3, n3, i4, o3 = false) {
+            __publicField(this, "scheme");
+            __publicField(this, "authority");
+            __publicField(this, "path");
+            __publicField(this, "query");
+            __publicField(this, "fragment");
             "object" == typeof t6 ? (this.scheme = t6.scheme || h3, this.authority = t6.authority || h3, this.path = t6.path || h3, this.query = t6.query || h3, this.fragment = t6.fragment || h3) : (this.scheme = /* @__PURE__ */ (function(t7, e7) {
               return t7 || e7 ? t7 : "file";
             })(t6, o3), this.authority = e6 || h3, this.path = (function(t7, e7) {
@@ -104119,6 +104225,9 @@ var init_esm2 = __esm({
               }
               return e7;
             })(this.scheme, r3 || h3), this.query = n3 || h3, this.fragment = i4 || h3, s3(this, o3));
+          }
+          static isUri(t6) {
+            return t6 instanceof f2 || !!t6 && "string" == typeof t6.authority && "string" == typeof t6.fragment && "string" == typeof t6.path && "string" == typeof t6.query && "string" == typeof t6.scheme && "string" == typeof t6.fsPath && "function" == typeof t6.with && "function" == typeof t6.toString;
           }
           get fsPath() {
             return m3(this, false);
@@ -104163,8 +104272,11 @@ var init_esm2 = __esm({
         }
         const u4 = t5 ? 1 : void 0;
         class l2 extends f2 {
-          _formatted = null;
-          _fsPath = null;
+          constructor() {
+            super(...arguments);
+            __publicField(this, "_formatted", null);
+            __publicField(this, "_fsPath", null);
+          }
           get fsPath() {
             return this._fsPath || (this._fsPath = m3(this, false)), this._fsPath;
           }
@@ -104228,7 +104340,7 @@ var init_esm2 = __esm({
         function v3(t6) {
           try {
             return decodeURIComponent(t6);
-          } catch {
+          } catch (e6) {
             return t6.length > 3 ? t6.substr(0, 3) + v3(t6.substr(3)) : t6;
           }
         }
@@ -104406,9 +104518,9 @@ var init_documents = __esm({
         return document4;
       }
       async update(document4, cancellationToken) {
-        var _a, _b;
-        const oldText = (_a = document4.parseResult.value.$cstNode) === null || _a === void 0 ? void 0 : _a.root.fullText;
-        const textDocument = (_b = this.textDocuments) === null || _b === void 0 ? void 0 : _b.get(document4.uri.toString());
+        var _a58, _b2;
+        const oldText = (_a58 = document4.parseResult.value.$cstNode) === null || _a58 === void 0 ? void 0 : _a58.root.fullText;
+        const textDocument = (_b2 = this.textDocuments) === null || _b2 === void 0 ? void 0 : _b2.get(document4.uri.toString());
         const text11 = textDocument ? textDocument.getText() : await this.fileSystemProvider.readFile(document4.uri);
         if (textDocument) {
           Object.defineProperty(document4, "textDocument", {
@@ -104536,7 +104648,7 @@ var init_linker = __esm({
         }
       }
       doLink(refInfo, document4) {
-        var _a;
+        var _a58;
         const ref = refInfo.reference;
         if (ref._ref === void 0) {
           ref._ref = ref_resolving;
@@ -104555,7 +104667,7 @@ var init_linker = __esm({
             }
           } catch (err) {
             console.error(`An error occurred while resolving reference to '${ref.$refText}':`, err);
-            const errorMessage = (_a = err.message) !== null && _a !== void 0 ? _a : String(err);
+            const errorMessage = (_a58 = err.message) !== null && _a58 !== void 0 ? _a58 : String(err);
             ref._ref = Object.assign(Object.assign({}, refInfo), { message: `An error occurred while resolving reference to '${ref.$refText}': ${errorMessage}` });
           }
           document4.references.push(ref);
@@ -104579,7 +104691,7 @@ var init_linker = __esm({
           $refNode: refNode,
           $refText: refText,
           get ref() {
-            var _a;
+            var _a58;
             if (isAstNode(this._ref)) {
               return this._ref;
             } else if (isAstNodeDescription(this._nodeDescription)) {
@@ -104592,7 +104704,7 @@ var init_linker = __esm({
               if (refData.error && document4 && document4.state < DocumentState.ComputedScopes) {
                 return this._ref = void 0;
               }
-              this._ref = (_a = refData.node) !== null && _a !== void 0 ? _a : refData.error;
+              this._ref = (_a58 = refData.node) !== null && _a58 !== void 0 ? _a58 : refData.error;
               this._nodeDescription = refData.descr;
               document4 === null || document4 === void 0 ? void 0 : document4.references.push(this);
             } else if (this._ref === ref_resolving) {
@@ -104610,7 +104722,7 @@ var init_linker = __esm({
         return reference;
       }
       getLinkedNode(refInfo) {
-        var _a;
+        var _a58;
         try {
           const description = this.getCandidate(refInfo);
           if (isLinkingError(description)) {
@@ -104627,7 +104739,7 @@ var init_linker = __esm({
           }
         } catch (err) {
           console.error(`An error occurred while resolving reference to '${refInfo.reference.$refText}':`, err);
-          const errorMessage = (_a = err.message) !== null && _a !== void 0 ? _a : String(err);
+          const errorMessage = (_a58 = err.message) !== null && _a58 !== void 0 ? _a58 : String(err);
           return {
             error: Object.assign(Object.assign({}, refInfo), { message: `An error occurred while resolving reference to '${refInfo.reference.$refText}': ${errorMessage}` })
           };
@@ -104822,8 +104934,8 @@ var init_collections = __esm({
        * value and `delete` to remove a value from the multimap.
        */
       get(key2) {
-        var _a;
-        return (_a = this.map.get(key2)) !== null && _a !== void 0 ? _a : [];
+        var _a58;
+        return (_a58 = this.map.get(key2)) !== null && _a58 !== void 0 ? _a58 : [];
       }
       /**
        * Operates differently depending on whether a `value` is given:
@@ -105022,10 +105134,10 @@ var init_scope = __esm({
     init_stream();
     StreamScope = class {
       constructor(elements2, outerScope, options2) {
-        var _a;
+        var _a58;
         this.elements = elements2;
         this.outerScope = outerScope;
-        this.caseInsensitive = (_a = options2 === null || options2 === void 0 ? void 0 : options2.caseInsensitive) !== null && _a !== void 0 ? _a : false;
+        this.caseInsensitive = (_a58 = options2 === null || options2 === void 0 ? void 0 : options2.caseInsensitive) !== null && _a58 !== void 0 ? _a58 : false;
       }
       getAllElements() {
         if (this.outerScope) {
@@ -105047,9 +105159,9 @@ var init_scope = __esm({
     };
     MapScope = class {
       constructor(elements2, outerScope, options2) {
-        var _a;
+        var _a58;
         this.elements = /* @__PURE__ */ new Map();
-        this.caseInsensitive = (_a = options2 === null || options2 === void 0 ? void 0 : options2.caseInsensitive) !== null && _a !== void 0 ? _a : false;
+        this.caseInsensitive = (_a58 = options2 === null || options2 === void 0 ? void 0 : options2.caseInsensitive) !== null && _a58 !== void 0 ? _a58 : false;
         for (const element7 of elements2) {
           const name = this.caseInsensitive ? element7.name.toLowerCase() : element7.name;
           this.elements.set(name, element7);
@@ -105365,7 +105477,7 @@ var init_json_serializer = __esm({
         return root7;
       }
       replacer(key2, value2, { refText, sourceText, textRegions, comments, uriConverter }) {
-        var _a, _b, _c, _d;
+        var _a58, _b2, _c2, _d;
         if (this.ignoreProperties.has(key2)) {
           return void 0;
         } else if (isReference(value2)) {
@@ -105388,7 +105500,7 @@ var init_json_serializer = __esm({
             };
           } else {
             return {
-              $error: (_b = (_a = value2.error) === null || _a === void 0 ? void 0 : _a.message) !== null && _b !== void 0 ? _b : "Could not resolve reference",
+              $error: (_b2 = (_a58 = value2.error) === null || _a58 === void 0 ? void 0 : _a58.message) !== null && _b2 !== void 0 ? _b2 : "Could not resolve reference",
               $refText
             };
           }
@@ -105397,7 +105509,7 @@ var init_json_serializer = __esm({
           if (textRegions) {
             astNode = this.addAstNodeRegionWithAssignmentsTo(Object.assign({}, value2));
             if ((!key2 || value2.$document) && (astNode === null || astNode === void 0 ? void 0 : astNode.$textRegion)) {
-              astNode.$textRegion.documentURI = (_c = this.currentDocument) === null || _c === void 0 ? void 0 : _c.uri.toString();
+              astNode.$textRegion.documentURI = (_c2 = this.currentDocument) === null || _c2 === void 0 ? void 0 : _c2.uri.toString();
             }
           }
           if (sourceText && !key2) {
@@ -105562,14 +105674,14 @@ var init_service_registry = __esm({
         }
       }
       getServices(uri) {
-        var _a, _b;
+        var _a58, _b2;
         if (this.singleton !== void 0) {
           return this.singleton;
         }
         if (this.languageIdMap.size === 0) {
           throw new Error("The service registry is empty. Use `register` to register the services of a language.");
         }
-        const languageId = (_b = (_a = this.textDocuments) === null || _a === void 0 ? void 0 : _a.get(uri)) === null || _b === void 0 ? void 0 : _b.languageId;
+        const languageId = (_b2 = (_a58 = this.textDocuments) === null || _a58 === void 0 ? void 0 : _a58.get(uri)) === null || _b2 === void 0 ? void 0 : _b2.languageId;
         if (languageId !== void 0) {
           const services2 = this.languageIdMap.get(languageId);
           if (services2) {
@@ -105591,7 +105703,7 @@ var init_service_registry = __esm({
         try {
           this.getServices(uri);
           return true;
-        } catch (_a) {
+        } catch (_a58) {
           return false;
         }
       }
@@ -105814,22 +105926,22 @@ var init_document_validator = __esm({
         if (!options2.categories || options2.categories.includes("built-in")) {
           this.processLexingErrors(parseResult, diagnostics, options2);
           if (options2.stopAfterLexingErrors && diagnostics.some((d3) => {
-            var _a;
-            return ((_a = d3.data) === null || _a === void 0 ? void 0 : _a.code) === DocumentValidator.LexingError;
+            var _a58;
+            return ((_a58 = d3.data) === null || _a58 === void 0 ? void 0 : _a58.code) === DocumentValidator.LexingError;
           })) {
             return diagnostics;
           }
           this.processParsingErrors(parseResult, diagnostics, options2);
           if (options2.stopAfterParsingErrors && diagnostics.some((d3) => {
-            var _a;
-            return ((_a = d3.data) === null || _a === void 0 ? void 0 : _a.code) === DocumentValidator.ParsingError;
+            var _a58;
+            return ((_a58 = d3.data) === null || _a58 === void 0 ? void 0 : _a58.code) === DocumentValidator.ParsingError;
           })) {
             return diagnostics;
           }
           this.processLinkingErrors(document4, diagnostics, options2);
           if (options2.stopAfterLinkingErrors && diagnostics.some((d3) => {
-            var _a;
-            return ((_a = d3.data) === null || _a === void 0 ? void 0 : _a.code) === DocumentValidator.LinkingError;
+            var _a58;
+            return ((_a58 = d3.data) === null || _a58 === void 0 ? void 0 : _a58.code) === DocumentValidator.LinkingError;
           })) {
             return diagnostics;
           }
@@ -105846,10 +105958,10 @@ var init_document_validator = __esm({
         return diagnostics;
       }
       processLexingErrors(parseResult, diagnostics, _options) {
-        var _a, _b, _c;
-        const lexerDiagnostics = [...parseResult.lexerErrors, ...(_b = (_a = parseResult.lexerReport) === null || _a === void 0 ? void 0 : _a.diagnostics) !== null && _b !== void 0 ? _b : []];
+        var _a58, _b2, _c2;
+        const lexerDiagnostics = [...parseResult.lexerErrors, ...(_b2 = (_a58 = parseResult.lexerReport) === null || _a58 === void 0 ? void 0 : _a58.diagnostics) !== null && _b2 !== void 0 ? _b2 : []];
         for (const lexerDiagnostic of lexerDiagnostics) {
-          const severity = (_c = lexerDiagnostic.severity) !== null && _c !== void 0 ? _c : "error";
+          const severity = (_c2 = lexerDiagnostic.severity) !== null && _c2 !== void 0 ? _c2 : "error";
           const diagnostic = {
             severity: toDiagnosticSeverity(severity),
             range: {
@@ -105928,11 +106040,11 @@ var init_document_validator = __esm({
         return validationItems;
       }
       async validateAstBefore(rootNode, options2, acceptor, cancelToken = cancellation_exports.CancellationToken.None) {
-        var _a;
+        var _a58;
         const checksBefore = this.validationRegistry.checksBefore;
         for (const checkBefore of checksBefore) {
           await interruptAndCheck(cancelToken);
-          await checkBefore(rootNode, acceptor, (_a = options2.categories) !== null && _a !== void 0 ? _a : [], cancelToken);
+          await checkBefore(rootNode, acceptor, (_a58 = options2.categories) !== null && _a58 !== void 0 ? _a58 : [], cancelToken);
         }
       }
       async validateAstNodes(rootNode, options2, acceptor, cancelToken = cancellation_exports.CancellationToken.None) {
@@ -105945,11 +106057,11 @@ var init_document_validator = __esm({
         }));
       }
       async validateAstAfter(rootNode, options2, acceptor, cancelToken = cancellation_exports.CancellationToken.None) {
-        var _a;
+        var _a58;
         const checksAfter = this.validationRegistry.checksAfter;
         for (const checkAfter of checksAfter) {
           await interruptAndCheck(cancelToken);
-          await checkAfter(rootNode, acceptor, (_a = options2.categories) !== null && _a !== void 0 ? _a : [], cancelToken);
+          await checkAfter(rootNode, acceptor, (_a58 = options2.categories) !== null && _a58 !== void 0 ? _a58 : [], cancelToken);
         }
       }
       toDiagnostic(severity, message, info2) {
@@ -106004,8 +106116,8 @@ var init_ast_descriptions = __esm({
         }
         let nameNodeSegment;
         const nameSegmentGetter = () => {
-          var _a;
-          return nameNodeSegment !== null && nameNodeSegment !== void 0 ? nameNodeSegment : nameNodeSegment = toDocumentSegment((_a = this.nameProvider.getNameNode(node3)) !== null && _a !== void 0 ? _a : node3.$cstNode);
+          var _a58;
+          return nameNodeSegment !== null && nameNodeSegment !== void 0 ? nameNodeSegment : nameNodeSegment = toDocumentSegment((_a58 = this.nameProvider.getNameNode(node3)) !== null && _a58 !== void 0 ? _a58 : node3.$cstNode);
         };
         return {
           node: node3,
@@ -106131,8 +106243,8 @@ var init_configuration = __esm({
         return this._ready.promise;
       }
       initialize(params) {
-        var _a, _b;
-        this.workspaceConfig = (_b = (_a = params.capabilities.workspace) === null || _a === void 0 ? void 0 : _a.configuration) !== null && _b !== void 0 ? _b : false;
+        var _a58, _b2;
+        this.workspaceConfig = (_b2 = (_a58 = params.capabilities.workspace) === null || _a58 === void 0 ? void 0 : _a58.configuration) !== null && _b2 !== void 0 ? _b2 : false;
       }
       async initialized(params) {
         if (this.workspaceConfig) {
@@ -106245,7 +106357,7 @@ var init_document_builder = __esm({
         this.serviceRegistry = services.ServiceRegistry;
       }
       async build(documents, options2 = {}, cancelToken = cancellation_exports.CancellationToken.None) {
-        var _a, _b;
+        var _a58, _b2;
         for (const document4 of documents) {
           const key2 = document4.uri.toString();
           if (document4.state === DocumentState.Validated) {
@@ -106255,9 +106367,9 @@ var init_document_builder = __esm({
               this.buildState.delete(key2);
             } else if (typeof options2.validation === "object") {
               const buildState2 = this.buildState.get(key2);
-              const previousCategories = (_a = buildState2 === null || buildState2 === void 0 ? void 0 : buildState2.result) === null || _a === void 0 ? void 0 : _a.validationChecks;
+              const previousCategories = (_a58 = buildState2 === null || buildState2 === void 0 ? void 0 : buildState2.result) === null || _a58 === void 0 ? void 0 : _a58.validationChecks;
               if (previousCategories) {
-                const newCategories = (_b = options2.validation.categories) !== null && _b !== void 0 ? _b : ValidationCategory.all;
+                const newCategories = (_b2 = options2.validation.categories) !== null && _b2 !== void 0 ? _b2 : ValidationCategory.all;
                 const categories = newCategories.filter((c3) => !previousCategories.includes(c3));
                 if (categories.length > 0) {
                   this.buildState.set(key2, {
@@ -106305,8 +106417,8 @@ var init_document_builder = __esm({
         await this.emitUpdate(changed, deleted);
         await interruptAndCheck(cancelToken);
         const rebuildDocuments = this.sortDocuments(this.langiumDocuments.all.filter((doc) => {
-          var _a;
-          return doc.state < DocumentState.Linked || !((_a = this.buildState.get(doc.uri.toString())) === null || _a === void 0 ? void 0 : _a.completed);
+          var _a58;
+          return doc.state < DocumentState.Linked || !((_a58 = this.buildState.get(doc.uri.toString())) === null || _a58 === void 0 ? void 0 : _a58.completed);
         }).toArray());
         await this.buildDocuments(rebuildDocuments, this.updateBuildOptions, cancelToken);
       }
@@ -106337,8 +106449,8 @@ var init_document_builder = __esm({
         return documents;
       }
       hasTextDocument(doc) {
-        var _a;
-        return Boolean((_a = this.textDocuments) === null || _a === void 0 ? void 0 : _a.get(doc.uri));
+        var _a58;
+        return Boolean((_a58 = this.textDocuments) === null || _a58 === void 0 ? void 0 : _a58.get(doc.uri));
       }
       /**
        * Check whether the given document should be relinked after changes were found in the given URIs.
@@ -106516,7 +106628,7 @@ var init_document_builder = __esm({
        * If the document already contains diagnostics, the new ones are added to the list.
        */
       async validate(document4, cancelToken) {
-        var _a, _b;
+        var _a58, _b2;
         const validator = this.serviceRegistry.getServices(document4.uri).validation.DocumentValidator;
         const validationSetting = this.getBuildOptions(document4).validation;
         const options2 = typeof validationSetting === "object" ? validationSetting : void 0;
@@ -106528,8 +106640,8 @@ var init_document_builder = __esm({
         }
         const state3 = this.buildState.get(document4.uri.toString());
         if (state3) {
-          (_a = state3.result) !== null && _a !== void 0 ? _a : state3.result = {};
-          const newCategories = (_b = options2 === null || options2 === void 0 ? void 0 : options2.categories) !== null && _b !== void 0 ? _b : ValidationCategory.all;
+          (_a58 = state3.result) !== null && _a58 !== void 0 ? _a58 : state3.result = {};
+          const newCategories = (_b2 = options2 === null || options2 === void 0 ? void 0 : options2.categories) !== null && _b2 !== void 0 ? _b2 : ValidationCategory.all;
           if (state3.result.validationChecks) {
             state3.result.validationChecks.push(...newCategories);
           } else {
@@ -106538,8 +106650,8 @@ var init_document_builder = __esm({
         }
       }
       getBuildOptions(document4) {
-        var _a, _b;
-        return (_b = (_a = this.buildState.get(document4.uri.toString())) === null || _a === void 0 ? void 0 : _a.options) !== null && _b !== void 0 ? _b : {};
+        var _a58, _b2;
+        return (_b2 = (_a58 = this.buildState.get(document4.uri.toString())) === null || _a58 === void 0 ? void 0 : _a58.options) !== null && _b2 !== void 0 ? _b2 : {};
       }
     };
   }
@@ -106583,13 +106695,13 @@ var init_index_manager = __esm({
         return documentUris.map((uri) => this.getFileDescriptions(uri, nodeType3)).flat();
       }
       getFileDescriptions(uri, nodeType3) {
-        var _a;
+        var _a58;
         if (!nodeType3) {
-          return (_a = this.symbolIndex.get(uri)) !== null && _a !== void 0 ? _a : [];
+          return (_a58 = this.symbolIndex.get(uri)) !== null && _a58 !== void 0 ? _a58 : [];
         }
         const descriptions = this.symbolByTypeIndex.get(uri, nodeType3, () => {
-          var _a2;
-          const allFileDescriptions = (_a2 = this.symbolIndex.get(uri)) !== null && _a2 !== void 0 ? _a2 : [];
+          var _a59;
+          const allFileDescriptions = (_a59 = this.symbolIndex.get(uri)) !== null && _a59 !== void 0 ? _a59 : [];
           return allFileDescriptions.filter((e3) => this.astReflection.isSubtype(e3.type, nodeType3));
         });
         return descriptions;
@@ -106647,13 +106759,13 @@ var init_workspace_manager = __esm({
         return this.folders;
       }
       initialize(params) {
-        var _a;
-        this.folders = (_a = params.workspaceFolders) !== null && _a !== void 0 ? _a : void 0;
+        var _a58;
+        this.folders = (_a58 = params.workspaceFolders) !== null && _a58 !== void 0 ? _a58 : void 0;
       }
       initialized(_params) {
         return this.mutex.write((token2) => {
-          var _a;
-          return this.initializeWorkspace((_a = this.folders) !== null && _a !== void 0 ? _a : [], token2);
+          var _a58;
+          return this.initializeWorkspace((_a58 = this.folders) !== null && _a58 !== void 0 ? _a58 : [], token2);
         });
       }
       async initializeWorkspace(folders, cancelToken = cancellation_exports.CancellationToken.None) {
@@ -106775,13 +106887,13 @@ var init_lexer2 = __esm({
         return this.tokenTypes;
       }
       tokenize(text11, _options = DEFAULT_TOKENIZE_OPTIONS) {
-        var _a, _b, _c;
+        var _a58, _b2, _c2;
         const chevrotainResult = this.chevrotainLexer.tokenize(text11);
         return {
           tokens: chevrotainResult.tokens,
           errors: chevrotainResult.errors,
-          hidden: (_a = chevrotainResult.groups.hidden) !== null && _a !== void 0 ? _a : [],
-          report: (_c = (_b = this.tokenBuilder).flushLexingReport) === null || _c === void 0 ? void 0 : _c.call(_b, text11)
+          hidden: (_a58 = chevrotainResult.groups.hidden) !== null && _a58 !== void 0 ? _a58 : [],
+          report: (_c2 = (_b2 = this.tokenBuilder).flushLexingReport) === null || _c2 === void 0 ? void 0 : _c2.call(_b2, text11)
         };
       }
       toTokenTypeDictionary(buildTokens) {
@@ -106846,7 +106958,7 @@ function getLines(node3) {
   return lines;
 }
 function tokenize(context) {
-  var _a, _b, _c;
+  var _a58, _b2, _c2;
   const tokens2 = [];
   let currentLine = context.position.line;
   let currentCharacter = context.position.character;
@@ -106856,18 +106968,18 @@ function tokenize(context) {
     let line2 = context.lines[i3];
     let index2 = 0;
     if (first3 && context.options.start) {
-      const match2 = (_a = context.options.start) === null || _a === void 0 ? void 0 : _a.exec(line2);
+      const match2 = (_a58 = context.options.start) === null || _a58 === void 0 ? void 0 : _a58.exec(line2);
       if (match2) {
         index2 = match2.index + match2[0].length;
       }
     } else {
-      const match2 = (_b = context.options.line) === null || _b === void 0 ? void 0 : _b.exec(line2);
+      const match2 = (_b2 = context.options.line) === null || _b2 === void 0 ? void 0 : _b2.exec(line2);
       if (match2) {
         index2 = match2.index + match2[0].length;
       }
     }
     if (last3) {
-      const match2 = (_c = context.options.end) === null || _c === void 0 ? void 0 : _c.exec(line2);
+      const match2 = (_c2 = context.options.end) === null || _c2 === void 0 ? void 0 : _c2.exec(line2);
       if (match2) {
         line2 = line2.substring(0, match2.index);
       }
@@ -106987,7 +107099,7 @@ function lastCharacter(line2) {
   return void 0;
 }
 function parseJSDocComment(context) {
-  var _a, _b, _c, _d;
+  var _a58, _b2, _c2, _d;
   const startPosition = Position.create(context.position.line, context.position.character);
   if (context.tokens.length === 0) {
     return new JSDocCommentImpl([], Range.create(startPosition, startPosition));
@@ -106999,8 +107111,8 @@ function parseJSDocComment(context) {
       elements2.push(element7);
     }
   }
-  const start3 = (_b = (_a = elements2[0]) === null || _a === void 0 ? void 0 : _a.range.start) !== null && _b !== void 0 ? _b : startPosition;
-  const end2 = (_d = (_c = elements2[elements2.length - 1]) === null || _c === void 0 ? void 0 : _c.range.end) !== null && _d !== void 0 ? _d : startPosition;
+  const start3 = (_b2 = (_a58 = elements2[0]) === null || _a58 === void 0 ? void 0 : _a58.range.start) !== null && _b2 !== void 0 ? _b2 : startPosition;
+  const end2 = (_d = (_c2 = elements2[elements2.length - 1]) === null || _c2 === void 0 ? void 0 : _c2.range.end) !== null && _d !== void 0 ? _d : startPosition;
   return new JSDocCommentImpl(elements2, Range.create(start3, end2));
 }
 function parseJSDocElement(context, last3) {
@@ -107094,7 +107206,7 @@ function normalizeOption(option3, start3) {
   }
 }
 function renderInlineTag(tag, content3, options2) {
-  var _a, _b;
+  var _a58, _b2;
   if (tag === "linkplain" || tag === "linkcode" || tag === "link") {
     const index2 = content3.indexOf(" ");
     let display = content3;
@@ -107106,7 +107218,7 @@ function renderInlineTag(tag, content3, options2) {
     if (tag === "linkcode" || tag === "link" && options2.link === "code") {
       display = `\`${display}\``;
     }
-    const renderedLink = (_b = (_a = options2.renderLink) === null || _a === void 0 ? void 0 : _a.call(options2, content3, display)) !== null && _b !== void 0 ? _b : renderLinkDefault(content3, display);
+    const renderedLink = (_b2 = (_a58 = options2.renderLink) === null || _a58 === void 0 ? void 0 : _a58.call(options2, content3, display)) !== null && _b2 !== void 0 ? _b2 : renderLinkDefault(content3, display);
     return renderedLink;
   }
   return void 0;
@@ -107115,7 +107227,7 @@ function renderLinkDefault(content3, display) {
   try {
     URI2.parse(content3, true);
     return `[${display}](${content3})`;
-  } catch (_a) {
+  } catch (_a58) {
     return content3;
   }
 }
@@ -107198,8 +107310,8 @@ ${content3}`;
         }
       }
       toMarkdown(options2) {
-        var _a, _b;
-        return (_b = (_a = options2 === null || options2 === void 0 ? void 0 : options2.renderTag) === null || _a === void 0 ? void 0 : _a.call(options2, this)) !== null && _b !== void 0 ? _b : this.toMarkdownDefault(options2);
+        var _a58, _b2;
+        return (_b2 = (_a58 = options2 === null || options2 === void 0 ? void 0 : options2.renderTag) === null || _a58 === void 0 ? void 0 : _a58.call(options2, this)) !== null && _b2 !== void 0 ? _b2 : this.toMarkdownDefault(options2);
       }
       toMarkdownDefault(options2) {
         const content3 = this.content.toMarkdown(options2);
@@ -107303,8 +107415,8 @@ var init_documentation_provider = __esm({
         return void 0;
       }
       documentationLinkRenderer(node3, name, display) {
-        var _a;
-        const description = (_a = this.findNameInPrecomputedScopes(node3, name)) !== null && _a !== void 0 ? _a : this.findNameInGlobalScope(node3, name);
+        var _a58;
+        const description = (_a58 = this.findNameInPrecomputedScopes(node3, name)) !== null && _a58 !== void 0 ? _a58 : this.findNameInGlobalScope(node3, name);
         if (description && description.nameSegment) {
           const line2 = description.nameSegment.range.start.line + 1;
           const character2 = description.nameSegment.range.start.character + 1;
@@ -107353,11 +107465,11 @@ var init_comment_provider = __esm({
         this.grammarConfig = () => services.parser.GrammarConfig;
       }
       getComment(node3) {
-        var _a;
+        var _a58;
         if (isAstNodeWithComment(node3)) {
           return node3.$comment;
         }
-        return (_a = findCommentNode(node3.$cstNode, this.grammarConfig().multilineCommentRules)) === null || _a === void 0 ? void 0 : _a.text;
+        return (_a58 = findCommentNode(node3.$cstNode, this.grammarConfig().multilineCommentRules)) === null || _a58 === void 0 ? void 0 : _a58.text;
       }
     };
   }
@@ -108129,11 +108241,11 @@ var init_indentation_aware = __esm({
        */
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       matchWhitespace(text11, offset, tokens2, groups) {
-        var _a;
+        var _a58;
         this.whitespaceRegExp.lastIndex = offset;
         const match2 = this.whitespaceRegExp.exec(text11);
         return {
-          currIndentLevel: (_a = match2 === null || match2 === void 0 ? void 0 : match2[0].length) !== null && _a !== void 0 ? _a : 0,
+          currIndentLevel: (_a58 = match2 === null || match2 === void 0 ? void 0 : match2[0].length) !== null && _a58 !== void 0 ? _a58 : 0,
           prevIndentLevel: this.indentationStack.at(-1),
           match: match2
         };
@@ -108189,7 +108301,7 @@ var init_indentation_aware = __esm({
        * @param groups Token Groups
        */
       dedentMatcher(text11, offset, tokens2, groups) {
-        var _a, _b, _c, _d;
+        var _a58, _b2, _c2, _d;
         if (!this.isStartOfLine(text11, offset)) {
           return null;
         }
@@ -108203,14 +108315,14 @@ var init_indentation_aware = __esm({
             severity: "error",
             message: `Invalid dedent level ${currIndentLevel} at offset: ${offset}. Current indentation stack: ${this.indentationStack}`,
             offset,
-            length: (_b = (_a = match2 === null || match2 === void 0 ? void 0 : match2[0]) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0,
+            length: (_b2 = (_a58 = match2 === null || match2 === void 0 ? void 0 : match2[0]) === null || _a58 === void 0 ? void 0 : _a58.length) !== null && _b2 !== void 0 ? _b2 : 0,
             line: this.getLineNumber(text11, offset),
             column: 1
           });
           return null;
         }
         const numberOfDedents = this.indentationStack.length - matchIndentIndex - 1;
-        const newlinesBeforeDedent = (_d = (_c = text11.substring(0, offset).match(/[\r\n]+$/)) === null || _c === void 0 ? void 0 : _c[0].length) !== null && _d !== void 0 ? _d : 1;
+        const newlinesBeforeDedent = (_d = (_c2 = text11.substring(0, offset).match(/[\r\n]+$/)) === null || _c2 === void 0 ? void 0 : _c2[0].length) !== null && _d !== void 0 ? _d : 1;
         for (let i3 = 0; i3 < numberOfDedents; i3++) {
           const token2 = this.createIndentationTokenInstance(
             this.dedentTokenType,
@@ -108365,10 +108477,10 @@ function createMinimalGrammarServices() {
   return grammar;
 }
 function loadGrammarFromJson(json3) {
-  var _a;
+  var _a58;
   const services = createMinimalGrammarServices();
   const astNode = services.serializer.JsonSerializer.deserialize(json3);
-  services.shared.workspace.LangiumDocumentFactory.fromModel(astNode, URI2.parse(`memory://${(_a = astNode.name) !== null && _a !== void 0 ? _a : "grammar"}.langium`));
+  services.shared.workspace.LangiumDocumentFactory.fromModel(astNode, URI2.parse(`memory://${(_a58 = astNode.name) !== null && _a58 !== void 0 ? _a58 : "grammar"}.langium`));
   return astNode;
 }
 var minimalGrammarModule, minimalSharedGrammarModule;
@@ -108645,7 +108757,7 @@ function isPieSection(item) {
 function isTreemap(item) {
   return reflection2.isInstance(item, Treemap);
 }
-var __defProp3, __name2, Statement, Architecture, Axis, Branch, Checkout, CherryPicking, ClassDefStatement, Commit, Curve, Edge, Entry, GitGraph, Group2, Info2, Item, Junction, Merge, Option3, Packet, PacketBlock, Pie, PieSection, Radar, Service, Treemap, TreemapRow, Direction, Leaf, Section, MermaidAstReflection, reflection2, loadedInfoGrammar, InfoGrammar, loadedPacketGrammar, PacketGrammar, loadedPieGrammar, PieGrammar, loadedArchitectureGrammar, ArchitectureGrammar, loadedGitGraphGrammar, GitGraphGrammar, loadedRadarGrammar, RadarGrammar, loadedTreemapGrammar, TreemapGrammar, InfoLanguageMetaData, PacketLanguageMetaData, PieLanguageMetaData, ArchitectureLanguageMetaData, GitGraphLanguageMetaData, RadarLanguageMetaData, TreemapLanguageMetaData, MermaidGeneratedSharedModule, InfoGeneratedModule, PacketGeneratedModule, PieGeneratedModule, ArchitectureGeneratedModule, GitGraphGeneratedModule, RadarGeneratedModule, TreemapGeneratedModule, accessibilityDescrRegex, accessibilityTitleRegex, titleRegex, rulesRegexes, AbstractMermaidValueConverter, CommonValueConverter, AbstractMermaidTokenBuilder, CommonTokenBuilder;
+var __defProp3, __name2, Statement, Architecture, Axis, Branch, Checkout, CherryPicking, ClassDefStatement, Commit, Curve, Edge, Entry, GitGraph, Group2, Info2, Item, Junction, Merge, Option3, Packet, PacketBlock, Pie, PieSection, Radar, Service, Treemap, TreemapRow, Direction, Leaf, Section, _a15, MermaidAstReflection, reflection2, loadedInfoGrammar, InfoGrammar, loadedPacketGrammar, PacketGrammar, loadedPieGrammar, PieGrammar, loadedArchitectureGrammar, ArchitectureGrammar, loadedGitGraphGrammar, GitGraphGrammar, loadedRadarGrammar, RadarGrammar, loadedTreemapGrammar, TreemapGrammar, InfoLanguageMetaData, PacketLanguageMetaData, PieLanguageMetaData, ArchitectureLanguageMetaData, GitGraphLanguageMetaData, RadarLanguageMetaData, TreemapLanguageMetaData, MermaidGeneratedSharedModule, InfoGeneratedModule, PacketGeneratedModule, PieGeneratedModule, ArchitectureGeneratedModule, GitGraphGeneratedModule, RadarGeneratedModule, TreemapGeneratedModule, accessibilityDescrRegex, accessibilityTitleRegex, titleRegex, rulesRegexes, _a16, AbstractMermaidValueConverter, _a17, CommonValueConverter, _a18, AbstractMermaidTokenBuilder, _a19, CommonTokenBuilder;
 var init_chunk_FPAJGGOC = __esm({
   "node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-FPAJGGOC.mjs"() {
     init_lib3();
@@ -108694,10 +108806,7 @@ var init_chunk_FPAJGGOC = __esm({
     Direction = "Direction";
     Leaf = "Leaf";
     Section = "Section";
-    MermaidAstReflection = class extends AbstractAstReflection {
-      static {
-        __name2(this, "MermaidAstReflection");
-      }
+    MermaidAstReflection = (_a15 = class extends AbstractAstReflection {
       getAllTypes() {
         return [Architecture, Axis, Branch, Checkout, CherryPicking, ClassDefStatement, Commit, Curve, Direction, Edge, Entry, GitGraph, Group2, Info2, Item, Junction, Leaf, Merge, Option3, Packet, PacketBlock, Pie, PieSection, Radar, Section, Service, Statement, Treemap, TreemapRow];
       }
@@ -109037,15 +109146,15 @@ var init_chunk_FPAJGGOC = __esm({
           }
         }
       }
-    };
+    }, __name2(_a15, "MermaidAstReflection"), _a15);
     reflection2 = new MermaidAstReflection();
-    InfoGrammar = /* @__PURE__ */ __name2(() => loadedInfoGrammar ?? (loadedInfoGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Info","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Info","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[],"cardinality":"*"},{"$type":"Keyword","value":"info"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[],"cardinality":"*"},{"$type":"Group","elements":[{"$type":"Keyword","value":"showInfo"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[],"cardinality":"*"}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[],"cardinality":"?"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@7"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@8"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`)), "InfoGrammar");
-    PacketGrammar = /* @__PURE__ */ __name2(() => loadedPacketGrammar ?? (loadedPacketGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Packet","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Packet","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[],"cardinality":"*"},{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"packet"},{"$type":"Keyword","value":"packet-beta"}]},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]},{"$type":"Assignment","feature":"blocks","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[]}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"PacketBlock","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Assignment","feature":"start","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":"-"},{"$type":"Assignment","feature":"end","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}}],"cardinality":"?"}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"+"},{"$type":"Assignment","feature":"bits","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}}]}]},{"$type":"Keyword","value":":"},{"$type":"Assignment","feature":"label","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@8"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@9"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`)), "PacketGrammar");
-    PieGrammar = /* @__PURE__ */ __name2(() => loadedPieGrammar ?? (loadedPieGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Pie","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Pie","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[],"cardinality":"*"},{"$type":"Keyword","value":"pie"},{"$type":"Assignment","feature":"showData","operator":"?=","terminal":{"$type":"Keyword","value":"showData"},"cardinality":"?"},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]},{"$type":"Assignment","feature":"sections","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[]}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"PieSection","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"label","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@14"},"arguments":[]}},{"$type":"Keyword","value":":"},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"FLOAT_PIE","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/-?[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT_PIE","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/-?(0|[1-9][0-9]*)(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER_PIE","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@2"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@3"}}]},"fragment":false,"hidden":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@11"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@12"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`)), "PieGrammar");
-    ArchitectureGrammar = /* @__PURE__ */ __name2(() => loadedArchitectureGrammar ?? (loadedArchitectureGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Architecture","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Architecture","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[],"cardinality":"*"},{"$type":"Keyword","value":"architecture-beta"},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"Statement","definition":{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"groups","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}},{"$type":"Assignment","feature":"services","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}},{"$type":"Assignment","feature":"junctions","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}},{"$type":"Assignment","feature":"edges","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"LeftPort","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":":"},{"$type":"Assignment","feature":"lhsDir","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"RightPort","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"rhsDir","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}},{"$type":"Keyword","value":":"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"Arrow","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]},{"$type":"Assignment","feature":"lhsInto","operator":"?=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]},"cardinality":"?"},{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"--"},{"$type":"Group","elements":[{"$type":"Keyword","value":"-"},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@29"},"arguments":[]}},{"$type":"Keyword","value":"-"}]}]},{"$type":"Assignment","feature":"rhsInto","operator":"?=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]},"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Group","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"group"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Assignment","feature":"icon","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@28"},"arguments":[]},"cardinality":"?"},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@29"},"arguments":[]},"cardinality":"?"},{"$type":"Group","elements":[{"$type":"Keyword","value":"in"},{"$type":"Assignment","feature":"in","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Service","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"service"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"iconText","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@21"},"arguments":[]}},{"$type":"Assignment","feature":"icon","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@28"},"arguments":[]}}],"cardinality":"?"},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@29"},"arguments":[]},"cardinality":"?"},{"$type":"Group","elements":[{"$type":"Keyword","value":"in"},{"$type":"Assignment","feature":"in","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Junction","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"junction"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":"in"},{"$type":"Assignment","feature":"in","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Edge","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"lhsId","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Assignment","feature":"lhsGroup","operator":"?=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]},"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]},{"$type":"Assignment","feature":"rhsId","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Assignment","feature":"rhsGroup","operator":"?=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]},"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"ARROW_DIRECTION","definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"L"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"R"}}]},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"T"}}]},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"B"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ARROW_GROUP","definition":{"$type":"RegexToken","regex":"/\\\\{group\\\\}/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ARROW_INTO","definition":{"$type":"RegexToken","regex":"/<|>/"},"fragment":false,"hidden":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@15"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@18"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@19"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false},{"$type":"TerminalRule","name":"ARCH_ICON","definition":{"$type":"RegexToken","regex":"/\\\\([\\\\w-:]+\\\\)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ARCH_TITLE","definition":{"$type":"RegexToken","regex":"/\\\\[[\\\\w ]+\\\\]/"},"fragment":false,"hidden":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`)), "ArchitectureGrammar");
-    GitGraphGrammar = /* @__PURE__ */ __name2(() => loadedGitGraphGrammar ?? (loadedGitGraphGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"GitGraph","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"GitGraph","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[],"cardinality":"*"},{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"gitGraph"},{"$type":"Group","elements":[{"$type":"Keyword","value":"gitGraph"},{"$type":"Keyword","value":":"}]},{"$type":"Keyword","value":"gitGraph:"},{"$type":"Group","elements":[{"$type":"Keyword","value":"gitGraph"},{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]},{"$type":"Keyword","value":":"}]}]},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]},{"$type":"Assignment","feature":"statements","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Statement","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Direction","definition":{"$type":"Assignment","feature":"dir","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"LR"},{"$type":"Keyword","value":"TB"},{"$type":"Keyword","value":"BT"}]}},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Commit","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"commit"},{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Keyword","value":"id:"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"msg:","cardinality":"?"},{"$type":"Assignment","feature":"message","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"tag:"},{"$type":"Assignment","feature":"tags","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"type:"},{"$type":"Assignment","feature":"type","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"NORMAL"},{"$type":"Keyword","value":"REVERSE"},{"$type":"Keyword","value":"HIGHLIGHT"}]}}]}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Branch","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"branch"},{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@24"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}]}},{"$type":"Group","elements":[{"$type":"Keyword","value":"order:"},{"$type":"Assignment","feature":"order","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@15"},"arguments":[]}}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Merge","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"merge"},{"$type":"Assignment","feature":"branch","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@24"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}]}},{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Keyword","value":"id:"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"tag:"},{"$type":"Assignment","feature":"tags","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"type:"},{"$type":"Assignment","feature":"type","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"NORMAL"},{"$type":"Keyword","value":"REVERSE"},{"$type":"Keyword","value":"HIGHLIGHT"}]}}]}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Checkout","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"checkout"},{"$type":"Keyword","value":"switch"}]},{"$type":"Assignment","feature":"branch","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@24"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"CherryPicking","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"cherry-pick"},{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Keyword","value":"id:"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"tag:"},{"$type":"Assignment","feature":"tags","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"parent:"},{"$type":"Assignment","feature":"parent","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@14"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@15"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false},{"$type":"TerminalRule","name":"REFERENCE","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\\\w([-\\\\./\\\\w]*[-\\\\w])?/"},"fragment":false,"hidden":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`)), "GitGraphGrammar");
-    RadarGrammar = /* @__PURE__ */ __name2(() => loadedRadarGrammar ?? (loadedRadarGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Radar","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Radar","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"radar-beta"},{"$type":"Keyword","value":"radar-beta:"},{"$type":"Group","elements":[{"$type":"Keyword","value":"radar-beta"},{"$type":"Keyword","value":":"}]}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]},{"$type":"Group","elements":[{"$type":"Keyword","value":"axis"},{"$type":"Assignment","feature":"axes","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"Assignment","feature":"axes","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}}],"cardinality":"*"}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"curve"},{"$type":"Assignment","feature":"curves","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"Assignment","feature":"curves","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]}}],"cardinality":"*"}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"options","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"Assignment","feature":"options","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}}],"cardinality":"*"}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[]}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"Label","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"["},{"$type":"Assignment","feature":"label","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@18"},"arguments":[]}},{"$type":"Keyword","value":"]"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Axis","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[],"cardinality":"?"}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Curve","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[],"cardinality":"?"},{"$type":"Keyword","value":"{"},{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]},{"$type":"Keyword","value":"}"}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"Entries","definition":{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Assignment","feature":"entries","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Assignment","feature":"entries","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"}]},{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Assignment","feature":"entries","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Assignment","feature":"entries","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"}]}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"DetailedEntry","returnType":{"$ref":"#/interfaces@0"},"definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"axis","operator":"=","terminal":{"$type":"CrossReference","type":{"$ref":"#/rules@2"},"terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]},"deprecatedSyntax":false}},{"$type":"Keyword","value":":","cardinality":"?"},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"NumberEntry","returnType":{"$ref":"#/interfaces@0"},"definition":{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Option","definition":{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"showLegend"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"ticks"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"max"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"min"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"graticule"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}}]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"GRATICULE","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"circle"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"polygon"}}]},"fragment":false,"hidden":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@14"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@15"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@16"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false}],"interfaces":[{"$type":"Interface","name":"Entry","attributes":[{"$type":"TypeAttribute","name":"axis","isOptional":true,"type":{"$type":"ReferenceType","referenceType":{"$type":"SimpleType","typeRef":{"$ref":"#/rules@2"}}}},{"$type":"TypeAttribute","name":"value","type":{"$type":"SimpleType","primitiveType":"number"},"isOptional":false}],"superTypes":[]}],"definesHiddenTokens":false,"hiddenTokens":[],"types":[],"usedGrammars":[]}`)), "RadarGrammar");
-    TreemapGrammar = /* @__PURE__ */ __name2(() => loadedTreemapGrammar ?? (loadedTreemapGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Treemap","rules":[{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]}}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"ParserRule","entry":true,"name":"Treemap","returnType":{"$ref":"#/interfaces@4"},"definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@0"},"arguments":[]},{"$type":"Assignment","feature":"TreemapRows","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@14"},"arguments":[]}}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"TREEMAP_KEYWORD","definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"treemap-beta"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"treemap"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"CLASS_DEF","definition":{"$type":"RegexToken","regex":"/classDef\\\\s+([a-zA-Z_][a-zA-Z0-9_]+)(?:\\\\s+([^;\\\\r\\\\n]*))?(?:;)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STYLE_SEPARATOR","definition":{"$type":"CharacterRange","left":{"$type":"Keyword","value":":::"}},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"SEPARATOR","definition":{"$type":"CharacterRange","left":{"$type":"Keyword","value":":"}},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"COMMA","definition":{"$type":"CharacterRange","left":{"$type":"Keyword","value":","}},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WS","definition":{"$type":"RegexToken","regex":"/[ \\\\t]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"ML_COMMENT","definition":{"$type":"RegexToken","regex":"/\\\\%\\\\%[^\\\\n]*/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"NL","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false},{"$type":"ParserRule","name":"TreemapRow","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"indent","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]},"cardinality":"?"},{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"item","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@15"},"arguments":[]}]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"ClassDef","dataType":"string","definition":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Item","returnType":{"$ref":"#/interfaces@0"},"definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@18"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Section","returnType":{"$ref":"#/interfaces@1"},"definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]},{"$type":"Assignment","feature":"classSelector","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[]}}],"cardinality":"?"}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Leaf","returnType":{"$ref":"#/interfaces@2"},"definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[],"cardinality":"?"},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[],"cardinality":"?"},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]},{"$type":"Assignment","feature":"classSelector","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[]}}],"cardinality":"?"}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"INDENTATION","definition":{"$type":"RegexToken","regex":"/[ \\\\t]{1,}/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID2","definition":{"$type":"RegexToken","regex":"/[a-zA-Z_][a-zA-Z0-9_]*/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER2","definition":{"$type":"RegexToken","regex":"/[0-9_\\\\.\\\\,]+/"},"fragment":false,"hidden":false},{"$type":"ParserRule","name":"MyNumber","dataType":"number","definition":{"$type":"RuleCall","rule":{"$ref":"#/rules@21"},"arguments":[]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"STRING2","definition":{"$type":"RegexToken","regex":"/\\"[^\\"]*\\"|'[^']*'/"},"fragment":false,"hidden":false}],"interfaces":[{"$type":"Interface","name":"Item","attributes":[{"$type":"TypeAttribute","name":"name","type":{"$type":"SimpleType","primitiveType":"string"},"isOptional":false},{"$type":"TypeAttribute","name":"classSelector","isOptional":true,"type":{"$type":"SimpleType","primitiveType":"string"}}],"superTypes":[]},{"$type":"Interface","name":"Section","superTypes":[{"$ref":"#/interfaces@0"}],"attributes":[]},{"$type":"Interface","name":"Leaf","superTypes":[{"$ref":"#/interfaces@0"}],"attributes":[{"$type":"TypeAttribute","name":"value","type":{"$type":"SimpleType","primitiveType":"number"},"isOptional":false}]},{"$type":"Interface","name":"ClassDefStatement","attributes":[{"$type":"TypeAttribute","name":"className","type":{"$type":"SimpleType","primitiveType":"string"},"isOptional":false},{"$type":"TypeAttribute","name":"styleText","type":{"$type":"SimpleType","primitiveType":"string"},"isOptional":false}],"superTypes":[]},{"$type":"Interface","name":"Treemap","attributes":[{"$type":"TypeAttribute","name":"TreemapRows","type":{"$type":"ArrayType","elementType":{"$type":"SimpleType","typeRef":{"$ref":"#/rules@14"}}},"isOptional":false},{"$type":"TypeAttribute","name":"title","isOptional":true,"type":{"$type":"SimpleType","primitiveType":"string"}},{"$type":"TypeAttribute","name":"accTitle","isOptional":true,"type":{"$type":"SimpleType","primitiveType":"string"}},{"$type":"TypeAttribute","name":"accDescr","isOptional":true,"type":{"$type":"SimpleType","primitiveType":"string"}}],"superTypes":[]}],"definesHiddenTokens":false,"hiddenTokens":[],"imports":[],"types":[],"usedGrammars":[],"$comment":"/**\\n * Treemap grammar for Langium\\n * Converted from mindmap grammar\\n *\\n * The ML_COMMENT and NL hidden terminals handle whitespace, comments, and newlines\\n * before the treemap keyword, allowing for empty lines and comments before the\\n * treemap declaration.\\n */"}`)), "TreemapGrammar");
+    InfoGrammar = /* @__PURE__ */ __name2(() => loadedInfoGrammar != null ? loadedInfoGrammar : loadedInfoGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Info","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Info","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[],"cardinality":"*"},{"$type":"Keyword","value":"info"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[],"cardinality":"*"},{"$type":"Group","elements":[{"$type":"Keyword","value":"showInfo"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[],"cardinality":"*"}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[],"cardinality":"?"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@7"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@8"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`), "InfoGrammar");
+    PacketGrammar = /* @__PURE__ */ __name2(() => loadedPacketGrammar != null ? loadedPacketGrammar : loadedPacketGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Packet","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Packet","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[],"cardinality":"*"},{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"packet"},{"$type":"Keyword","value":"packet-beta"}]},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]},{"$type":"Assignment","feature":"blocks","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[]}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"PacketBlock","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Assignment","feature":"start","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":"-"},{"$type":"Assignment","feature":"end","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}}],"cardinality":"?"}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"+"},{"$type":"Assignment","feature":"bits","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}}]}]},{"$type":"Keyword","value":":"},{"$type":"Assignment","feature":"label","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@8"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@9"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`), "PacketGrammar");
+    PieGrammar = /* @__PURE__ */ __name2(() => loadedPieGrammar != null ? loadedPieGrammar : loadedPieGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Pie","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Pie","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[],"cardinality":"*"},{"$type":"Keyword","value":"pie"},{"$type":"Assignment","feature":"showData","operator":"?=","terminal":{"$type":"Keyword","value":"showData"},"cardinality":"?"},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]},{"$type":"Assignment","feature":"sections","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[]}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"PieSection","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"label","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@14"},"arguments":[]}},{"$type":"Keyword","value":":"},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"FLOAT_PIE","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/-?[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT_PIE","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/-?(0|[1-9][0-9]*)(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER_PIE","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@2"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@3"}}]},"fragment":false,"hidden":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@11"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@12"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`), "PieGrammar");
+    ArchitectureGrammar = /* @__PURE__ */ __name2(() => loadedArchitectureGrammar != null ? loadedArchitectureGrammar : loadedArchitectureGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Architecture","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Architecture","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[],"cardinality":"*"},{"$type":"Keyword","value":"architecture-beta"},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"Statement","definition":{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"groups","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}},{"$type":"Assignment","feature":"services","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}},{"$type":"Assignment","feature":"junctions","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}},{"$type":"Assignment","feature":"edges","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"LeftPort","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":":"},{"$type":"Assignment","feature":"lhsDir","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"RightPort","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"rhsDir","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}},{"$type":"Keyword","value":":"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"Arrow","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]},{"$type":"Assignment","feature":"lhsInto","operator":"?=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]},"cardinality":"?"},{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"--"},{"$type":"Group","elements":[{"$type":"Keyword","value":"-"},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@29"},"arguments":[]}},{"$type":"Keyword","value":"-"}]}]},{"$type":"Assignment","feature":"rhsInto","operator":"?=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]},"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Group","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"group"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Assignment","feature":"icon","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@28"},"arguments":[]},"cardinality":"?"},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@29"},"arguments":[]},"cardinality":"?"},{"$type":"Group","elements":[{"$type":"Keyword","value":"in"},{"$type":"Assignment","feature":"in","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Service","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"service"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"iconText","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@21"},"arguments":[]}},{"$type":"Assignment","feature":"icon","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@28"},"arguments":[]}}],"cardinality":"?"},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@29"},"arguments":[]},"cardinality":"?"},{"$type":"Group","elements":[{"$type":"Keyword","value":"in"},{"$type":"Assignment","feature":"in","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Junction","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"junction"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":"in"},{"$type":"Assignment","feature":"in","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Edge","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"lhsId","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Assignment","feature":"lhsGroup","operator":"?=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]},"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]},{"$type":"Assignment","feature":"rhsId","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Assignment","feature":"rhsGroup","operator":"?=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]},"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"ARROW_DIRECTION","definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"L"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"R"}}]},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"T"}}]},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"B"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ARROW_GROUP","definition":{"$type":"RegexToken","regex":"/\\\\{group\\\\}/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ARROW_INTO","definition":{"$type":"RegexToken","regex":"/<|>/"},"fragment":false,"hidden":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@15"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@18"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@19"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false},{"$type":"TerminalRule","name":"ARCH_ICON","definition":{"$type":"RegexToken","regex":"/\\\\([\\\\w-:]+\\\\)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ARCH_TITLE","definition":{"$type":"RegexToken","regex":"/\\\\[[\\\\w ]+\\\\]/"},"fragment":false,"hidden":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`), "ArchitectureGrammar");
+    GitGraphGrammar = /* @__PURE__ */ __name2(() => loadedGitGraphGrammar != null ? loadedGitGraphGrammar : loadedGitGraphGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"GitGraph","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"GitGraph","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[],"cardinality":"*"},{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"gitGraph"},{"$type":"Group","elements":[{"$type":"Keyword","value":"gitGraph"},{"$type":"Keyword","value":":"}]},{"$type":"Keyword","value":"gitGraph:"},{"$type":"Group","elements":[{"$type":"Keyword","value":"gitGraph"},{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]},{"$type":"Keyword","value":":"}]}]},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]},{"$type":"Assignment","feature":"statements","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[]}}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Statement","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Direction","definition":{"$type":"Assignment","feature":"dir","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"LR"},{"$type":"Keyword","value":"TB"},{"$type":"Keyword","value":"BT"}]}},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Commit","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"commit"},{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Keyword","value":"id:"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"msg:","cardinality":"?"},{"$type":"Assignment","feature":"message","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"tag:"},{"$type":"Assignment","feature":"tags","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"type:"},{"$type":"Assignment","feature":"type","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"NORMAL"},{"$type":"Keyword","value":"REVERSE"},{"$type":"Keyword","value":"HIGHLIGHT"}]}}]}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Branch","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"branch"},{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@24"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}]}},{"$type":"Group","elements":[{"$type":"Keyword","value":"order:"},{"$type":"Assignment","feature":"order","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@15"},"arguments":[]}}],"cardinality":"?"},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Merge","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"merge"},{"$type":"Assignment","feature":"branch","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@24"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}]}},{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Keyword","value":"id:"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"tag:"},{"$type":"Assignment","feature":"tags","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"type:"},{"$type":"Assignment","feature":"type","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"NORMAL"},{"$type":"Keyword","value":"REVERSE"},{"$type":"Keyword","value":"HIGHLIGHT"}]}}]}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Checkout","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"checkout"},{"$type":"Keyword","value":"switch"}]},{"$type":"Assignment","feature":"branch","operator":"=","terminal":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@24"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"CherryPicking","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"cherry-pick"},{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Keyword","value":"id:"},{"$type":"Assignment","feature":"id","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"tag:"},{"$type":"Assignment","feature":"tags","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"parent:"},{"$type":"Assignment","feature":"parent","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@14"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@15"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false},{"$type":"TerminalRule","name":"REFERENCE","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\\\w([-\\\\./\\\\w]*[-\\\\w])?/"},"fragment":false,"hidden":false}],"definesHiddenTokens":false,"hiddenTokens":[],"interfaces":[],"types":[],"usedGrammars":[]}`), "GitGraphGrammar");
+    RadarGrammar = /* @__PURE__ */ __name2(() => loadedRadarGrammar != null ? loadedRadarGrammar : loadedRadarGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Radar","imports":[],"rules":[{"$type":"ParserRule","entry":true,"name":"Radar","definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Alternatives","elements":[{"$type":"Keyword","value":"radar-beta"},{"$type":"Keyword","value":"radar-beta:"},{"$type":"Group","elements":[{"$type":"Keyword","value":"radar-beta"},{"$type":"Keyword","value":":"}]}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]},{"$type":"Group","elements":[{"$type":"Keyword","value":"axis"},{"$type":"Assignment","feature":"axes","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"Assignment","feature":"axes","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}}],"cardinality":"*"}]},{"$type":"Group","elements":[{"$type":"Keyword","value":"curve"},{"$type":"Assignment","feature":"curves","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"Assignment","feature":"curves","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]}}],"cardinality":"*"}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"options","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"Assignment","feature":"options","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]}}],"cardinality":"*"}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[]}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"Label","definition":{"$type":"Group","elements":[{"$type":"Keyword","value":"["},{"$type":"Assignment","feature":"label","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@18"},"arguments":[]}},{"$type":"Keyword","value":"]"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Axis","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[],"cardinality":"?"}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Curve","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@1"},"arguments":[],"cardinality":"?"},{"$type":"Keyword","value":"{"},{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]},{"$type":"Keyword","value":"}"}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"Entries","definition":{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Assignment","feature":"entries","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Assignment","feature":"entries","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]}}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"}]},{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Assignment","feature":"entries","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"Keyword","value":","},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"},{"$type":"Assignment","feature":"entries","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@5"},"arguments":[]}}],"cardinality":"*"},{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"*"}]}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"DetailedEntry","returnType":{"$ref":"#/interfaces@0"},"definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"axis","operator":"=","terminal":{"$type":"CrossReference","type":{"$ref":"#/rules@2"},"terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]},"deprecatedSyntax":false}},{"$type":"Keyword","value":":","cardinality":"?"},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"NumberEntry","returnType":{"$ref":"#/interfaces@0"},"definition":{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Option","definition":{"$type":"Alternatives","elements":[{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"showLegend"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@11"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"ticks"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"max"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"min"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}}]},{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"Keyword","value":"graticule"}},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]}}]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"GRATICULE","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"circle"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"polygon"}}]},"fragment":false,"hidden":false},{"$type":"ParserRule","fragment":true,"name":"EOL","dataType":"string","definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[],"cardinality":"+"},{"$type":"EndOfFile"}]},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Group","elements":[{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@12"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@13"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@14"},"arguments":[]}}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"FLOAT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/[0-9]+\\\\.[0-9]+(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"INT","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"RegexToken","regex":"/0|[1-9][0-9]*(?!\\\\.)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER","type":{"$type":"ReturnType","name":"number"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@15"}},{"$type":"TerminalRuleCall","rule":{"$ref":"#/rules@16"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STRING","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/\\"([^\\"\\\\\\\\]|\\\\\\\\.)*\\"|'([^'\\\\\\\\]|\\\\\\\\.)*'/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID","type":{"$type":"ReturnType","name":"string"},"definition":{"$type":"RegexToken","regex":"/[\\\\w]([-\\\\w]*\\\\w)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NEWLINE","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WHITESPACE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"YAML","definition":{"$type":"RegexToken","regex":"/---[\\\\t ]*\\\\r?\\\\n(?:[\\\\S\\\\s]*?\\\\r?\\\\n)?---(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"DIRECTIVE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%{[\\\\S\\\\s]*?}%%(?:\\\\r?\\\\n|(?!\\\\S))/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"SINGLE_LINE_COMMENT","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*%%[^\\\\n\\\\r]*/"},"fragment":false}],"interfaces":[{"$type":"Interface","name":"Entry","attributes":[{"$type":"TypeAttribute","name":"axis","isOptional":true,"type":{"$type":"ReferenceType","referenceType":{"$type":"SimpleType","typeRef":{"$ref":"#/rules@2"}}}},{"$type":"TypeAttribute","name":"value","type":{"$type":"SimpleType","primitiveType":"number"},"isOptional":false}],"superTypes":[]}],"definesHiddenTokens":false,"hiddenTokens":[],"types":[],"usedGrammars":[]}`), "RadarGrammar");
+    TreemapGrammar = /* @__PURE__ */ __name2(() => loadedTreemapGrammar != null ? loadedTreemapGrammar : loadedTreemapGrammar = loadGrammarFromJson(`{"$type":"Grammar","isDeclared":true,"name":"Treemap","rules":[{"$type":"ParserRule","fragment":true,"name":"TitleAndAccessibilities","definition":{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"accDescr","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@2"},"arguments":[]}},{"$type":"Assignment","feature":"accTitle","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@3"},"arguments":[]}},{"$type":"Assignment","feature":"title","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@4"},"arguments":[]}}],"cardinality":"+"},"definesHiddenTokens":false,"entry":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"BOOLEAN","type":{"$type":"ReturnType","name":"boolean"},"definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"true"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"false"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_DESCR","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accDescr(?:[\\\\t ]*:([^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)|\\\\s*{([^}]*)})/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ACC_TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*accTitle[\\\\t ]*:(?:[^\\\\n\\\\r]*?(?=%%)|[^\\\\n\\\\r]*)/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"TITLE","definition":{"$type":"RegexToken","regex":"/[\\\\t ]*title(?:[\\\\t ][^\\\\n\\\\r]*?(?=%%)|[\\\\t ][^\\\\n\\\\r]*|)/"},"fragment":false,"hidden":false},{"$type":"ParserRule","entry":true,"name":"Treemap","returnType":{"$ref":"#/interfaces@4"},"definition":{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@6"},"arguments":[]},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@0"},"arguments":[]},{"$type":"Assignment","feature":"TreemapRows","operator":"+=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@14"},"arguments":[]}}],"cardinality":"*"}]},"definesHiddenTokens":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"TREEMAP_KEYWORD","definition":{"$type":"TerminalAlternatives","elements":[{"$type":"CharacterRange","left":{"$type":"Keyword","value":"treemap-beta"}},{"$type":"CharacterRange","left":{"$type":"Keyword","value":"treemap"}}]},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"CLASS_DEF","definition":{"$type":"RegexToken","regex":"/classDef\\\\s+([a-zA-Z_][a-zA-Z0-9_]+)(?:\\\\s+([^;\\\\r\\\\n]*))?(?:;)?/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"STYLE_SEPARATOR","definition":{"$type":"CharacterRange","left":{"$type":"Keyword","value":":::"}},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"SEPARATOR","definition":{"$type":"CharacterRange","left":{"$type":"Keyword","value":":"}},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"COMMA","definition":{"$type":"CharacterRange","left":{"$type":"Keyword","value":","}},"fragment":false,"hidden":false},{"$type":"TerminalRule","hidden":true,"name":"WS","definition":{"$type":"RegexToken","regex":"/[ \\\\t]+/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"ML_COMMENT","definition":{"$type":"RegexToken","regex":"/\\\\%\\\\%[^\\\\n]*/"},"fragment":false},{"$type":"TerminalRule","hidden":true,"name":"NL","definition":{"$type":"RegexToken","regex":"/\\\\r?\\\\n/"},"fragment":false},{"$type":"ParserRule","name":"TreemapRow","definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"indent","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[]},"cardinality":"?"},{"$type":"Alternatives","elements":[{"$type":"Assignment","feature":"item","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@16"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@15"},"arguments":[]}]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"ClassDef","dataType":"string","definition":{"$type":"RuleCall","rule":{"$ref":"#/rules@7"},"arguments":[]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Item","returnType":{"$ref":"#/interfaces@0"},"definition":{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@18"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@17"},"arguments":[]}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Section","returnType":{"$ref":"#/interfaces@1"},"definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]},{"$type":"Assignment","feature":"classSelector","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[]}}],"cardinality":"?"}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"ParserRule","name":"Leaf","returnType":{"$ref":"#/interfaces@2"},"definition":{"$type":"Group","elements":[{"$type":"Assignment","feature":"name","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@23"},"arguments":[]}},{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[],"cardinality":"?"},{"$type":"Alternatives","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@9"},"arguments":[]},{"$type":"RuleCall","rule":{"$ref":"#/rules@10"},"arguments":[]}]},{"$type":"RuleCall","rule":{"$ref":"#/rules@19"},"arguments":[],"cardinality":"?"},{"$type":"Assignment","feature":"value","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@22"},"arguments":[]}},{"$type":"Group","elements":[{"$type":"RuleCall","rule":{"$ref":"#/rules@8"},"arguments":[]},{"$type":"Assignment","feature":"classSelector","operator":"=","terminal":{"$type":"RuleCall","rule":{"$ref":"#/rules@20"},"arguments":[]}}],"cardinality":"?"}]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"INDENTATION","definition":{"$type":"RegexToken","regex":"/[ \\\\t]{1,}/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"ID2","definition":{"$type":"RegexToken","regex":"/[a-zA-Z_][a-zA-Z0-9_]*/"},"fragment":false,"hidden":false},{"$type":"TerminalRule","name":"NUMBER2","definition":{"$type":"RegexToken","regex":"/[0-9_\\\\.\\\\,]+/"},"fragment":false,"hidden":false},{"$type":"ParserRule","name":"MyNumber","dataType":"number","definition":{"$type":"RuleCall","rule":{"$ref":"#/rules@21"},"arguments":[]},"definesHiddenTokens":false,"entry":false,"fragment":false,"hiddenTokens":[],"parameters":[],"wildcard":false},{"$type":"TerminalRule","name":"STRING2","definition":{"$type":"RegexToken","regex":"/\\"[^\\"]*\\"|'[^']*'/"},"fragment":false,"hidden":false}],"interfaces":[{"$type":"Interface","name":"Item","attributes":[{"$type":"TypeAttribute","name":"name","type":{"$type":"SimpleType","primitiveType":"string"},"isOptional":false},{"$type":"TypeAttribute","name":"classSelector","isOptional":true,"type":{"$type":"SimpleType","primitiveType":"string"}}],"superTypes":[]},{"$type":"Interface","name":"Section","superTypes":[{"$ref":"#/interfaces@0"}],"attributes":[]},{"$type":"Interface","name":"Leaf","superTypes":[{"$ref":"#/interfaces@0"}],"attributes":[{"$type":"TypeAttribute","name":"value","type":{"$type":"SimpleType","primitiveType":"number"},"isOptional":false}]},{"$type":"Interface","name":"ClassDefStatement","attributes":[{"$type":"TypeAttribute","name":"className","type":{"$type":"SimpleType","primitiveType":"string"},"isOptional":false},{"$type":"TypeAttribute","name":"styleText","type":{"$type":"SimpleType","primitiveType":"string"},"isOptional":false}],"superTypes":[]},{"$type":"Interface","name":"Treemap","attributes":[{"$type":"TypeAttribute","name":"TreemapRows","type":{"$type":"ArrayType","elementType":{"$type":"SimpleType","typeRef":{"$ref":"#/rules@14"}}},"isOptional":false},{"$type":"TypeAttribute","name":"title","isOptional":true,"type":{"$type":"SimpleType","primitiveType":"string"}},{"$type":"TypeAttribute","name":"accTitle","isOptional":true,"type":{"$type":"SimpleType","primitiveType":"string"}},{"$type":"TypeAttribute","name":"accDescr","isOptional":true,"type":{"$type":"SimpleType","primitiveType":"string"}}],"superTypes":[]}],"definesHiddenTokens":false,"hiddenTokens":[],"imports":[],"types":[],"usedGrammars":[],"$comment":"/**\\n * Treemap grammar for Langium\\n * Converted from mindmap grammar\\n *\\n * The ML_COMMENT and NL hidden terminals handle whitespace, comments, and newlines\\n * before the treemap keyword, allowing for empty lines and comments before the\\n * treemap declaration.\\n */"}`), "TreemapGrammar");
     InfoLanguageMetaData = {
       languageId: "info",
       fileExtensions: [".mmd", ".mermaid"],
@@ -109134,10 +109243,7 @@ var init_chunk_FPAJGGOC = __esm({
       ACC_TITLE: accessibilityTitleRegex,
       TITLE: titleRegex
     };
-    AbstractMermaidValueConverter = class extends DefaultValueConverter {
-      static {
-        __name2(this, "AbstractMermaidValueConverter");
-      }
+    AbstractMermaidValueConverter = (_a16 = class extends DefaultValueConverter {
       runConverter(rule, input, cstNode) {
         let value2 = this.runCommonConverter(rule, input, cstNode);
         if (value2 === void 0) {
@@ -109165,19 +109271,13 @@ var init_chunk_FPAJGGOC = __esm({
         }
         return void 0;
       }
-    };
-    CommonValueConverter = class extends AbstractMermaidValueConverter {
-      static {
-        __name2(this, "CommonValueConverter");
-      }
+    }, __name2(_a16, "AbstractMermaidValueConverter"), _a16);
+    CommonValueConverter = (_a17 = class extends AbstractMermaidValueConverter {
       runCustomConverter(_rule, _input, _cstNode) {
         return void 0;
       }
-    };
-    AbstractMermaidTokenBuilder = class extends DefaultTokenBuilder {
-      static {
-        __name2(this, "AbstractMermaidTokenBuilder");
-      }
+    }, __name2(_a17, "CommonValueConverter"), _a17);
+    AbstractMermaidTokenBuilder = (_a18 = class extends DefaultTokenBuilder {
       constructor(keywords) {
         super();
         this.keywords = new Set(keywords);
@@ -109191,12 +109291,9 @@ var init_chunk_FPAJGGOC = __esm({
         });
         return tokenTypes;
       }
-    };
-    CommonTokenBuilder = class extends AbstractMermaidTokenBuilder {
-      static {
-        __name2(this, "CommonTokenBuilder");
-      }
-    };
+    }, __name2(_a18, "AbstractMermaidTokenBuilder"), _a18);
+    CommonTokenBuilder = (_a19 = class extends AbstractMermaidTokenBuilder {
+    }, __name2(_a19, "CommonTokenBuilder"), _a19);
   }
 });
 
@@ -109214,19 +109311,16 @@ function createGitGraphServices(context = EmptyFileSystem) {
   shared.ServiceRegistry.register(GitGraph2);
   return { shared, GitGraph: GitGraph2 };
 }
-var GitGraphTokenBuilder, GitGraphModule;
+var _a20, GitGraphTokenBuilder, GitGraphModule;
 var init_chunk_S6J4BHB3 = __esm({
   "node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-S6J4BHB3.mjs"() {
     init_chunk_FPAJGGOC();
     init_lib3();
-    GitGraphTokenBuilder = class extends AbstractMermaidTokenBuilder {
-      static {
-        __name2(this, "GitGraphTokenBuilder");
-      }
+    GitGraphTokenBuilder = (_a20 = class extends AbstractMermaidTokenBuilder {
       constructor() {
         super(["gitGraph"]);
       }
-    };
+    }, __name2(_a20, "GitGraphTokenBuilder"), _a20);
     GitGraphModule = {
       parser: {
         TokenBuilder: /* @__PURE__ */ __name2(() => new GitGraphTokenBuilder(), "TokenBuilder"),
@@ -109251,19 +109345,16 @@ function createInfoServices(context = EmptyFileSystem) {
   shared.ServiceRegistry.register(Info3);
   return { shared, Info: Info3 };
 }
-var InfoTokenBuilder, InfoModule;
+var _a21, InfoTokenBuilder, InfoModule;
 var init_chunk_LBM3YZW2 = __esm({
   "node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-LBM3YZW2.mjs"() {
     init_chunk_FPAJGGOC();
     init_lib3();
-    InfoTokenBuilder = class extends AbstractMermaidTokenBuilder {
-      static {
-        __name2(this, "InfoTokenBuilder");
-      }
+    InfoTokenBuilder = (_a21 = class extends AbstractMermaidTokenBuilder {
       constructor() {
         super(["info", "showInfo"]);
       }
-    };
+    }, __name2(_a21, "InfoTokenBuilder"), _a21);
     InfoModule = {
       parser: {
         TokenBuilder: /* @__PURE__ */ __name2(() => new InfoTokenBuilder(), "TokenBuilder"),
@@ -109288,19 +109379,16 @@ function createPacketServices(context = EmptyFileSystem) {
   shared.ServiceRegistry.register(Packet2);
   return { shared, Packet: Packet2 };
 }
-var PacketTokenBuilder, PacketModule;
+var _a22, PacketTokenBuilder, PacketModule;
 var init_chunk_76Q3JFCE = __esm({
   "node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-76Q3JFCE.mjs"() {
     init_chunk_FPAJGGOC();
     init_lib3();
-    PacketTokenBuilder = class extends AbstractMermaidTokenBuilder {
-      static {
-        __name2(this, "PacketTokenBuilder");
-      }
+    PacketTokenBuilder = (_a22 = class extends AbstractMermaidTokenBuilder {
       constructor() {
         super(["packet"]);
       }
-    };
+    }, __name2(_a22, "PacketTokenBuilder"), _a22);
     PacketModule = {
       parser: {
         TokenBuilder: /* @__PURE__ */ __name2(() => new PacketTokenBuilder(), "TokenBuilder"),
@@ -109325,30 +109413,24 @@ function createPieServices(context = EmptyFileSystem) {
   shared.ServiceRegistry.register(Pie2);
   return { shared, Pie: Pie2 };
 }
-var PieTokenBuilder, PieValueConverter, PieModule;
+var _a23, PieTokenBuilder, _a24, PieValueConverter, PieModule;
 var init_chunk_T53DSG4Q = __esm({
   "node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-T53DSG4Q.mjs"() {
     init_chunk_FPAJGGOC();
     init_lib3();
-    PieTokenBuilder = class extends AbstractMermaidTokenBuilder {
-      static {
-        __name2(this, "PieTokenBuilder");
-      }
+    PieTokenBuilder = (_a23 = class extends AbstractMermaidTokenBuilder {
       constructor() {
         super(["pie", "showData"]);
       }
-    };
-    PieValueConverter = class extends AbstractMermaidValueConverter {
-      static {
-        __name2(this, "PieValueConverter");
-      }
+    }, __name2(_a23, "PieTokenBuilder"), _a23);
+    PieValueConverter = (_a24 = class extends AbstractMermaidValueConverter {
       runCustomConverter(rule, input, _cstNode) {
         if (rule.name !== "PIE_SECTION_LABEL") {
           return void 0;
         }
         return input.replace(/"/g, "").trim();
       }
-    };
+    }, __name2(_a24, "PieValueConverter"), _a24);
     PieModule = {
       parser: {
         TokenBuilder: /* @__PURE__ */ __name2(() => new PieTokenBuilder(), "TokenBuilder"),
@@ -109373,23 +109455,17 @@ function createArchitectureServices(context = EmptyFileSystem) {
   shared.ServiceRegistry.register(Architecture2);
   return { shared, Architecture: Architecture2 };
 }
-var ArchitectureTokenBuilder, ArchitectureValueConverter, ArchitectureModule;
+var _a25, ArchitectureTokenBuilder, _a26, ArchitectureValueConverter, ArchitectureModule;
 var init_chunk_O7ZBX7Z2 = __esm({
   "node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-O7ZBX7Z2.mjs"() {
     init_chunk_FPAJGGOC();
     init_lib3();
-    ArchitectureTokenBuilder = class extends AbstractMermaidTokenBuilder {
-      static {
-        __name2(this, "ArchitectureTokenBuilder");
-      }
+    ArchitectureTokenBuilder = (_a25 = class extends AbstractMermaidTokenBuilder {
       constructor() {
         super(["architecture"]);
       }
-    };
-    ArchitectureValueConverter = class extends AbstractMermaidValueConverter {
-      static {
-        __name2(this, "ArchitectureValueConverter");
-      }
+    }, __name2(_a25, "ArchitectureTokenBuilder"), _a25);
+    ArchitectureValueConverter = (_a26 = class extends AbstractMermaidValueConverter {
       runCustomConverter(rule, input, _cstNode) {
         if (rule.name === "ARCH_ICON") {
           return input.replace(/[()]/g, "").trim();
@@ -109400,7 +109476,7 @@ var init_chunk_O7ZBX7Z2 = __esm({
         }
         return void 0;
       }
-    };
+    }, __name2(_a26, "ArchitectureValueConverter"), _a26);
     ArchitectureModule = {
       parser: {
         TokenBuilder: /* @__PURE__ */ __name2(() => new ArchitectureTokenBuilder(), "TokenBuilder"),
@@ -109425,19 +109501,16 @@ function createRadarServices(context = EmptyFileSystem) {
   shared.ServiceRegistry.register(Radar2);
   return { shared, Radar: Radar2 };
 }
-var RadarTokenBuilder, RadarModule;
+var _a27, RadarTokenBuilder, RadarModule;
 var init_chunk_LHMN2FUI = __esm({
   "node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-LHMN2FUI.mjs"() {
     init_chunk_FPAJGGOC();
     init_lib3();
-    RadarTokenBuilder = class extends AbstractMermaidTokenBuilder {
-      static {
-        __name2(this, "RadarTokenBuilder");
-      }
+    RadarTokenBuilder = (_a27 = class extends AbstractMermaidTokenBuilder {
       constructor() {
         super(["radar-beta"]);
       }
-    };
+    }, __name2(_a27, "RadarTokenBuilder"), _a27);
     RadarModule = {
       parser: {
         TokenBuilder: /* @__PURE__ */ __name2(() => new RadarTokenBuilder(), "TokenBuilder"),
@@ -109474,24 +109547,18 @@ function createTreemapServices(context = EmptyFileSystem) {
   registerValidationChecks(Treemap2);
   return { shared, Treemap: Treemap2 };
 }
-var TreemapTokenBuilder, classDefRegex, TreemapValueConverter, TreemapValidator, TreemapModule;
+var _a28, TreemapTokenBuilder, classDefRegex, _a29, TreemapValueConverter, _a30, TreemapValidator, TreemapModule;
 var init_chunk_FWNWRKHM = __esm({
   "node_modules/@mermaid-js/parser/dist/chunks/mermaid-parser.core/chunk-FWNWRKHM.mjs"() {
     init_chunk_FPAJGGOC();
     init_lib3();
-    TreemapTokenBuilder = class extends AbstractMermaidTokenBuilder {
-      static {
-        __name2(this, "TreemapTokenBuilder");
-      }
+    TreemapTokenBuilder = (_a28 = class extends AbstractMermaidTokenBuilder {
       constructor() {
         super(["treemap"]);
       }
-    };
+    }, __name2(_a28, "TreemapTokenBuilder"), _a28);
     classDefRegex = /classDef\s+([A-Z_a-z]\w+)(?:\s+([^\n\r;]*))?;?/;
-    TreemapValueConverter = class extends AbstractMermaidValueConverter {
-      static {
-        __name2(this, "TreemapValueConverter");
-      }
+    TreemapValueConverter = (_a29 = class extends AbstractMermaidValueConverter {
       runCustomConverter(rule, input, _cstNode) {
         if (rule.name === "NUMBER2") {
           return parseFloat(input.replace(/,/g, ""));
@@ -109516,12 +109583,9 @@ var init_chunk_FWNWRKHM = __esm({
         }
         return void 0;
       }
-    };
+    }, __name2(_a29, "TreemapValueConverter"), _a29);
     __name2(registerValidationChecks, "registerValidationChecks");
-    TreemapValidator = class {
-      static {
-        __name2(this, "TreemapValidator");
-      }
+    TreemapValidator = (_a30 = class {
       /**
        * Validates that a treemap has only one root node.
        * A root node is defined as a node that has no indentation.
@@ -109548,7 +109612,7 @@ var init_chunk_FWNWRKHM = __esm({
           }
         }
       }
-    };
+    }, __name2(_a30, "TreemapValidator"), _a30);
     TreemapModule = {
       parser: {
         TokenBuilder: /* @__PURE__ */ __name2(() => new TreemapTokenBuilder(), "TokenBuilder"),
@@ -109669,7 +109733,7 @@ async function parse7(diagramType, text11) {
   }
   return result.value;
 }
-var parsers, initializers, MermaidParseError;
+var parsers, initializers, _a31, MermaidParseError;
 var init_mermaid_parser_core = __esm({
   "node_modules/@mermaid-js/parser/dist/mermaid-parser.core.mjs"() {
     init_chunk_S6J4BHB3();
@@ -109719,17 +109783,14 @@ var init_mermaid_parser_core = __esm({
       }, "treemap")
     };
     __name2(parse7, "parse");
-    MermaidParseError = class extends Error {
+    MermaidParseError = (_a31 = class extends Error {
       constructor(result) {
         const lexerErrors = result.lexerErrors.map((err) => err.message).join("\n");
         const parserErrors = result.parserErrors.map((err) => err.message).join("\n");
         super(`Parsing failed: ${lexerErrors} ${parserErrors}`);
         this.result = result;
       }
-      static {
-        __name2(this, "MermaidParseError");
-      }
-    };
+    }, __name2(_a31, "MermaidParseError"), _a31);
   }
 });
 
@@ -109818,10 +109879,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
     };
     DEFAULT_GITGRAPH_CONFIG = defaultConfig_default.gitGraph;
     getConfig3 = /* @__PURE__ */ __name(() => {
-      const config5 = cleanAndMerge({
-        ...DEFAULT_GITGRAPH_CONFIG,
-        ...getConfig().gitGraph
-      });
+      const config5 = cleanAndMerge(__spreadValues(__spreadValues({}, DEFAULT_GITGRAPH_CONFIG), getConfig().gitGraph));
       return config5;
     }, "getConfig");
     state2 = new ImperativeState(() => {
@@ -109847,7 +109905,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
     }, "setDirection");
     setOptions6 = /* @__PURE__ */ __name(function(rawOptString) {
       log.debug("options str", rawOptString);
-      rawOptString = rawOptString?.trim();
+      rawOptString = rawOptString == null ? void 0 : rawOptString.trim();
       rawOptString = rawOptString || "{}";
       try {
         state2.records.options = JSON.parse(rawOptString);
@@ -109868,13 +109926,13 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       const config5 = getConfig3();
       id28 = common_default.sanitizeText(id28, config5);
       msg = common_default.sanitizeText(msg, config5);
-      tags2 = tags2?.map((tag) => common_default.sanitizeText(tag, config5));
+      tags2 = tags2 == null ? void 0 : tags2.map((tag) => common_default.sanitizeText(tag, config5));
       const newCommit = {
         id: id28 ? id28 : state2.records.seq + "-" + getID(),
         message: msg,
         seq: state2.records.seq++,
-        type: type3 ?? commitType.NORMAL,
-        tags: tags2 ?? [],
+        type: type3 != null ? type3 : commitType.NORMAL,
+        tags: tags2 != null ? tags2 : [],
         parents: state2.records.head == null ? [] : [state2.records.head.id],
         branch: state2.records.currBranch
       };
@@ -109974,10 +110032,10 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
           'Incorrect usage of "merge". Commit with id:' + customId + " already exists, use different custom id"
         );
         error3.hash = {
-          text: `merge ${otherBranch} ${customId} ${overrideType} ${customTags?.join(" ")}`,
-          token: `merge ${otherBranch} ${customId} ${overrideType} ${customTags?.join(" ")}`,
+          text: `merge ${otherBranch} ${customId} ${overrideType} ${customTags == null ? void 0 : customTags.join(" ")}`,
+          token: `merge ${otherBranch} ${customId} ${overrideType} ${customTags == null ? void 0 : customTags.join(" ")}`,
           expected: [
-            `merge ${otherBranch} ${customId}_UNIQUE ${overrideType} ${customTags?.join(" ")}`
+            `merge ${otherBranch} ${customId}_UNIQUE ${overrideType} ${customTags == null ? void 0 : customTags.join(" ")}`
           ]
         };
         throw error3;
@@ -109992,7 +110050,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         type: commitType.MERGE,
         customType: overrideType,
         customId: customId ? true : false,
-        tags: customTags ?? []
+        tags: customTags != null ? customTags : []
       };
       state2.records.head = commit2;
       state2.records.commits.set(commit2.id, commit2);
@@ -110009,7 +110067,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       const config5 = getConfig3();
       sourceId = common_default.sanitizeText(sourceId, config5);
       targetId = common_default.sanitizeText(targetId, config5);
-      tags2 = tags2?.map((tag) => common_default.sanitizeText(tag, config5));
+      tags2 = tags2 == null ? void 0 : tags2.map((tag) => common_default.sanitizeText(tag, config5));
       parentCommitId = common_default.sanitizeText(parentCommitId, config5);
       if (!sourceId || !state2.records.commits.has(sourceId)) {
         const error3 = new Error(
@@ -110077,7 +110135,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         }
         const commit2 = {
           id: state2.records.seq + "-" + getID(),
-          message: `cherry-picked ${sourceCommit?.message} into ${state2.records.currBranch}`,
+          message: `cherry-picked ${sourceCommit == null ? void 0 : sourceCommit.message} into ${state2.records.currBranch}`,
           seq: state2.records.seq++,
           parents: state2.records.head == null ? [] : [state2.records.head.id, sourceCommit.id],
           branch: state2.records.currBranch,
@@ -110094,6 +110152,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       }
     }, "cherryPick");
     checkout = /* @__PURE__ */ __name(function(branch2) {
+      var _a58;
       branch2 = common_default.sanitizeText(branch2, getConfig3());
       if (!state2.records.branches.has(branch2)) {
         const error3 = new Error(
@@ -110111,7 +110170,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         if (id28 === void 0 || !id28) {
           state2.records.head = null;
         } else {
-          state2.records.head = state2.records.commits.get(id28) ?? null;
+          state2.records.head = (_a58 = state2.records.commits.get(id28)) != null ? _a58 : null;
         }
       }
     }, "checkout");
@@ -110131,11 +110190,13 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         if (branchConfig.order !== null && branchConfig.order !== void 0) {
           return branchConfig;
         }
-        return {
-          ...branchConfig,
+        return __spreadProps(__spreadValues({}, branchConfig), {
           order: parseFloat(`0.${i3}`)
-        };
-      }).sort((a2, b3) => (a2.order ?? 0) - (b3.order ?? 0)).map(({ name }) => ({ name }));
+        });
+      }).sort((a2, b3) => {
+        var _a58, _b2;
+        return ((_a58 = a2.order) != null ? _a58 : 0) - ((_b2 = b3.order) != null ? _b2 : 0);
+      }).map(({ name }) => ({ name }));
       return branchesArray;
     }, "getBranchesAsObjArray");
     getBranches = /* @__PURE__ */ __name(function() {
@@ -110214,27 +110275,30 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       }
     }, "parseStatement");
     parseCommit = /* @__PURE__ */ __name((commit2) => {
+      var _a58, _b2;
       const commitDB = {
         id: commit2.id,
-        msg: commit2.message ?? "",
+        msg: (_a58 = commit2.message) != null ? _a58 : "",
         type: commit2.type !== void 0 ? commitType[commit2.type] : commitType.NORMAL,
-        tags: commit2.tags ?? void 0
+        tags: (_b2 = commit2.tags) != null ? _b2 : void 0
       };
       return commitDB;
     }, "parseCommit");
     parseBranch = /* @__PURE__ */ __name((branch2) => {
+      var _a58;
       const branchDB = {
         name: branch2.name,
-        order: branch2.order ?? 0
+        order: (_a58 = branch2.order) != null ? _a58 : 0
       };
       return branchDB;
     }, "parseBranch");
     parseMerge = /* @__PURE__ */ __name((merge22) => {
+      var _a58, _b2;
       const mergeDB = {
         branch: merge22.branch,
-        id: merge22.id ?? "",
+        id: (_a58 = merge22.id) != null ? _a58 : "",
         type: merge22.type !== void 0 ? commitType[merge22.type] : void 0,
-        tags: merge22.tags ?? void 0
+        tags: (_b2 = merge22.tags) != null ? _b2 : void 0
       };
       return mergeDB;
     }, "parseMerge");
@@ -110243,10 +110307,11 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       return branch2;
     }, "parseCheckout");
     parseCherryPicking = /* @__PURE__ */ __name((cherryPicking) => {
+      var _a58;
       const cherryPickDB = {
         id: cherryPicking.id,
         targetId: "",
-        tags: cherryPicking.tags?.length === 0 ? void 0 : cherryPicking.tags,
+        tags: ((_a58 = cherryPicking.tags) == null ? void 0 : _a58.length) === 0 ? void 0 : cherryPicking.tags,
         parent: cherryPicking.parent
       };
       return cherryPickDB;
@@ -110397,7 +110462,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       });
     }
     DEFAULT_CONFIG = getConfig2();
-    DEFAULT_GITGRAPH_CONFIG2 = DEFAULT_CONFIG?.gitGraph;
+    DEFAULT_GITGRAPH_CONFIG2 = DEFAULT_CONFIG == null ? void 0 : DEFAULT_CONFIG.gitGraph;
     LAYOUT_OFFSET = 10;
     COMMIT_STEP = 40;
     PX = 4;
@@ -110444,7 +110509,8 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         targetPosition = 0;
       }
       parents3.forEach((parent4) => {
-        const parentPosition = dir === "TB" || dir == "BT" ? commitPos.get(parent4)?.y : commitPos.get(parent4)?.x;
+        var _a58, _b2;
+        const parentPosition = dir === "TB" || dir == "BT" ? (_a58 = commitPos.get(parent4)) == null ? void 0 : _a58.y : (_b2 = commitPos.get(parent4)) == null ? void 0 : _b2.x;
         if (parentPosition !== void 0 && comparisonFunc(parentPosition, targetPosition)) {
           closestParent = parent4;
           targetPosition = parentPosition;
@@ -110487,7 +110553,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       });
       sortedKeys.forEach((key2) => {
         const commit2 = commits.get(key2);
-        if (commit2?.parents.length) {
+        if (commit2 == null ? void 0 : commit2.parents.length) {
           const closestParent = findClosestParentBT(commit2.parents);
           curPos = commitPos.get(closestParent).y - COMMIT_STEP;
           if (curPos <= maxPosition) {
@@ -110500,11 +110566,12 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       });
     }, "setParallelBTPos");
     findClosestParentPos = /* @__PURE__ */ __name((commit2) => {
+      var _a58;
       const closestParent = findClosestParent(commit2.parents.filter((p5) => p5 !== null));
       if (!closestParent) {
         throw new Error(`Closest parent not found for commit ${commit2.id}`);
       }
-      const closestParentPos = commitPos.get(closestParent)?.y;
+      const closestParentPos = (_a58 = commitPos.get(closestParent)) == null ? void 0 : _a58.y;
       if (closestParentPos === void 0) {
         throw new Error(`Closest parent position not found for commit ${commit2.id}`);
       }
@@ -110575,11 +110642,12 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       }
     }, "drawCommitBullet");
     drawCommitLabel = /* @__PURE__ */ __name((gLabels, commit2, commitPosition, pos) => {
-      if (commit2.type !== commitType.CHERRY_PICK && (commit2.customId && commit2.type === commitType.MERGE || commit2.type !== commitType.MERGE) && DEFAULT_GITGRAPH_CONFIG2?.showCommitLabel) {
+      var _a58;
+      if (commit2.type !== commitType.CHERRY_PICK && (commit2.customId && commit2.type === commitType.MERGE || commit2.type !== commitType.MERGE) && (DEFAULT_GITGRAPH_CONFIG2 == null ? void 0 : DEFAULT_GITGRAPH_CONFIG2.showCommitLabel)) {
         const wrapper = gLabels.append("g");
         const labelBkg = wrapper.insert("rect").attr("class", "commit-label-bkg");
         const text11 = wrapper.append("text").attr("x", pos).attr("y", commitPosition.y + 25).attr("class", "commit-label").text(commit2.id);
-        const bbox = text11.node()?.getBBox();
+        const bbox = (_a58 = text11.node()) == null ? void 0 : _a58.getBBox();
         if (bbox) {
           labelBkg.attr("x", commitPosition.posWithOffset - bbox.width / 2 - PY).attr("y", commitPosition.y + 13.5).attr("width", bbox.width + 2 * PY).attr("height", bbox.height + 2 * PY);
           if (dir === "TB" || dir === "BT") {
@@ -110611,6 +110679,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       }
     }, "drawCommitLabel");
     drawCommitTags = /* @__PURE__ */ __name((gLabels, commit2, commitPosition, pos) => {
+      var _a58;
       if (commit2.tags.length > 0) {
         let yOffset = 0;
         let maxTagBboxWidth = 0;
@@ -110620,7 +110689,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
           const rect3 = gLabels.insert("polygon");
           const hole = gLabels.append("circle");
           const tag = gLabels.append("text").attr("y", commitPosition.y - 16 - yOffset).attr("class", "tag-label").text(tagValue);
-          const tagBbox = tag.node()?.getBBox();
+          const tagBbox = (_a58 = tag.node()) == null ? void 0 : _a58.getBBox();
           if (!tagBbox) {
             throw new Error("Tag bbox not found");
           }
@@ -110668,7 +110737,8 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       }
     }, "drawCommitTags");
     getCommitClassType = /* @__PURE__ */ __name((commit2) => {
-      const commitSymbolType = commit2.customType ?? commit2.type;
+      var _a58;
+      const commitSymbolType = (_a58 = commit2.customType) != null ? _a58 : commit2.type;
       switch (commitSymbolType) {
         case commitType.NORMAL:
           return "commit-normal";
@@ -110685,15 +110755,16 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       }
     }, "getCommitClassType");
     calculatePosition = /* @__PURE__ */ __name((commit2, dir2, pos, commitPos2) => {
+      var _a58, _b2, _c2;
       const defaultCommitPosition = { x: 0, y: 0 };
       if (commit2.parents.length > 0) {
         const closestParent = findClosestParent(commit2.parents);
         if (closestParent) {
-          const parentPosition = commitPos2.get(closestParent) ?? defaultCommitPosition;
+          const parentPosition = (_a58 = commitPos2.get(closestParent)) != null ? _a58 : defaultCommitPosition;
           if (dir2 === "TB") {
             return parentPosition.y + COMMIT_STEP;
           } else if (dir2 === "BT") {
-            const currentPosition = commitPos2.get(commit2.id) ?? defaultCommitPosition;
+            const currentPosition = (_b2 = commitPos2.get(commit2.id)) != null ? _b2 : defaultCommitPosition;
             return currentPosition.y - COMMIT_STEP;
           } else {
             return parentPosition.x + COMMIT_STEP;
@@ -110703,7 +110774,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         if (dir2 === "TB") {
           return defaultPos;
         } else if (dir2 === "BT") {
-          const currentPosition = commitPos2.get(commit2.id) ?? defaultCommitPosition;
+          const currentPosition = (_c2 = commitPos2.get(commit2.id)) != null ? _c2 : defaultCommitPosition;
           return currentPosition.y - COMMIT_STEP;
         } else {
           return 0;
@@ -110712,15 +110783,17 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       return 0;
     }, "calculatePosition");
     getCommitPosition = /* @__PURE__ */ __name((commit2, pos, isParallelCommits) => {
+      var _a58, _b2;
       const posWithOffset = dir === "BT" && isParallelCommits ? pos : pos + LAYOUT_OFFSET;
-      const y6 = dir === "TB" || dir === "BT" ? posWithOffset : branchPos.get(commit2.branch)?.pos;
-      const x6 = dir === "TB" || dir === "BT" ? branchPos.get(commit2.branch)?.pos : posWithOffset;
+      const y6 = dir === "TB" || dir === "BT" ? posWithOffset : (_a58 = branchPos.get(commit2.branch)) == null ? void 0 : _a58.pos;
+      const x6 = dir === "TB" || dir === "BT" ? (_b2 = branchPos.get(commit2.branch)) == null ? void 0 : _b2.pos : posWithOffset;
       if (x6 === void 0 || y6 === void 0) {
         throw new Error(`Position were undefined for commit ${commit2.id}`);
       }
       return { x: x6, y: y6, posWithOffset };
     }, "getCommitPosition");
     drawCommits = /* @__PURE__ */ __name((svg4, commits, modifyGraph) => {
+      var _a58;
       if (!DEFAULT_GITGRAPH_CONFIG2) {
         throw new Error("GitGraph config not found");
       }
@@ -110728,10 +110801,11 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       const gLabels = svg4.append("g").attr("class", "commit-labels");
       let pos = dir === "TB" || dir === "BT" ? defaultPos : 0;
       const keys3 = [...commits.keys()];
-      const isParallelCommits = DEFAULT_GITGRAPH_CONFIG2?.parallelCommits ?? false;
+      const isParallelCommits = (_a58 = DEFAULT_GITGRAPH_CONFIG2 == null ? void 0 : DEFAULT_GITGRAPH_CONFIG2.parallelCommits) != null ? _a58 : false;
       const sortKeys = /* @__PURE__ */ __name((a2, b3) => {
-        const seqA = commits.get(a2)?.seq;
-        const seqB = commits.get(b3)?.seq;
+        var _a59, _b2;
+        const seqA = (_a59 = commits.get(a2)) == null ? void 0 : _a59.seq;
+        const seqB = (_b2 = commits.get(b3)) == null ? void 0 : _b2.seq;
         return seqA !== void 0 && seqB !== void 0 ? seqA - seqB : 0;
       }, "sortKeys");
       let sortedKeys = keys3.sort(sortKeys);
@@ -110742,6 +110816,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         sortedKeys = sortedKeys.reverse();
       }
       sortedKeys.forEach((key2) => {
+        var _a59, _b2, _c2;
         const commit2 = commits.get(key2);
         if (!commit2) {
           throw new Error(`Commit not found for key ${key2}`);
@@ -110752,8 +110827,8 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         const commitPosition = getCommitPosition(commit2, pos, isParallelCommits);
         if (modifyGraph) {
           const typeClass = getCommitClassType(commit2);
-          const commitSymbolType = commit2.customType ?? commit2.type;
-          const branchIndex = branchPos.get(commit2.branch)?.index ?? 0;
+          const commitSymbolType = (_a59 = commit2.customType) != null ? _a59 : commit2.type;
+          const branchIndex = (_c2 = (_b2 = branchPos.get(commit2.branch)) == null ? void 0 : _b2.index) != null ? _c2 : 0;
           drawCommitBullet(gBullets, commit2, commitPosition, typeClass, branchIndex, commitSymbolType);
           drawCommitLabel(gLabels, commit2, commitPosition, pos);
           drawCommitTags(gLabels, commit2, commitPosition, pos);
@@ -110792,6 +110867,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       return findLane(y1, y22 - diff2 / 5, depth + 1);
     }, "findLane");
     drawArrow = /* @__PURE__ */ __name((svg4, commitA, commitB, allCommits) => {
+      var _a58, _b2, _c2, _d, _e2;
       const p1 = commitPos.get(commitA.id);
       const p22 = commitPos.get(commitB.id);
       if (p1 === void 0 || p22 === void 0) {
@@ -110802,9 +110878,9 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       let arc2 = "";
       let radius2 = 0;
       let offset = 0;
-      let colorClassNum = branchPos.get(commitB.branch)?.index;
+      let colorClassNum = (_a58 = branchPos.get(commitB.branch)) == null ? void 0 : _a58.index;
       if (commitB.type === commitType.MERGE && commitA.id !== commitB.parents[0]) {
-        colorClassNum = branchPos.get(commitA.branch)?.index;
+        colorClassNum = (_b2 = branchPos.get(commitA.branch)) == null ? void 0 : _b2.index;
       }
       let lineDef;
       if (arrowNeedsRerouting) {
@@ -110818,21 +110894,21 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
           if (p1.x < p22.x) {
             lineDef = `M ${p1.x} ${p1.y} L ${lineX - radius2} ${p1.y} ${arc2} ${lineX} ${p1.y + offset} L ${lineX} ${p22.y - radius2} ${arc} ${lineX + offset} ${p22.y} L ${p22.x} ${p22.y}`;
           } else {
-            colorClassNum = branchPos.get(commitA.branch)?.index;
+            colorClassNum = (_c2 = branchPos.get(commitA.branch)) == null ? void 0 : _c2.index;
             lineDef = `M ${p1.x} ${p1.y} L ${lineX + radius2} ${p1.y} ${arc} ${lineX} ${p1.y + offset} L ${lineX} ${p22.y - radius2} ${arc2} ${lineX - offset} ${p22.y} L ${p22.x} ${p22.y}`;
           }
         } else if (dir === "BT") {
           if (p1.x < p22.x) {
             lineDef = `M ${p1.x} ${p1.y} L ${lineX - radius2} ${p1.y} ${arc} ${lineX} ${p1.y - offset} L ${lineX} ${p22.y + radius2} ${arc2} ${lineX + offset} ${p22.y} L ${p22.x} ${p22.y}`;
           } else {
-            colorClassNum = branchPos.get(commitA.branch)?.index;
+            colorClassNum = (_d = branchPos.get(commitA.branch)) == null ? void 0 : _d.index;
             lineDef = `M ${p1.x} ${p1.y} L ${lineX + radius2} ${p1.y} ${arc2} ${lineX} ${p1.y - offset} L ${lineX} ${p22.y + radius2} ${arc} ${lineX - offset} ${p22.y} L ${p22.x} ${p22.y}`;
           }
         } else {
           if (p1.y < p22.y) {
             lineDef = `M ${p1.x} ${p1.y} L ${p1.x} ${lineY - radius2} ${arc} ${p1.x + offset} ${lineY} L ${p22.x - radius2} ${lineY} ${arc2} ${p22.x} ${lineY + offset} L ${p22.x} ${p22.y}`;
           } else {
-            colorClassNum = branchPos.get(commitA.branch)?.index;
+            colorClassNum = (_e2 = branchPos.get(commitA.branch)) == null ? void 0 : _e2.index;
             lineDef = `M ${p1.x} ${p1.y} L ${p1.x} ${lineY + radius2} ${arc2} ${p1.x + offset} ${lineY} L ${p22.x - radius2} ${lineY} ${arc} ${p22.x} ${lineY - offset} L ${p22.x} ${p22.y}`;
           }
         }
@@ -110924,8 +111000,9 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
     drawBranches = /* @__PURE__ */ __name((svg4, branches) => {
       const g2 = svg4.append("g");
       branches.forEach((branch2, index2) => {
+        var _a58;
         const adjustIndexForTheme = index2 % THEME_COLOR_LIMIT;
-        const pos = branchPos.get(branch2.name)?.pos;
+        const pos = (_a58 = branchPos.get(branch2.name)) == null ? void 0 : _a58.pos;
         if (pos === void 0) {
           throw new Error(`Position not found for branch ${branch2.name}`);
         }
@@ -110954,10 +111031,10 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
         const label = branchLabel.insert("g").attr("class", "label branch-label" + adjustIndexForTheme);
         label.node().appendChild(labelElement);
         const bbox = labelElement.getBBox();
-        bkg.attr("class", "branchLabelBkg label" + adjustIndexForTheme).attr("rx", 4).attr("ry", 4).attr("x", -bbox.width - 4 - (DEFAULT_GITGRAPH_CONFIG2?.rotateCommitLabel === true ? 30 : 0)).attr("y", -bbox.height / 2 + 8).attr("width", bbox.width + 18).attr("height", bbox.height + 4);
+        bkg.attr("class", "branchLabelBkg label" + adjustIndexForTheme).attr("rx", 4).attr("ry", 4).attr("x", -bbox.width - 4 - ((DEFAULT_GITGRAPH_CONFIG2 == null ? void 0 : DEFAULT_GITGRAPH_CONFIG2.rotateCommitLabel) === true ? 30 : 0)).attr("y", -bbox.height / 2 + 8).attr("width", bbox.width + 18).attr("height", bbox.height + 4);
         label.attr(
           "transform",
-          "translate(" + (-bbox.width - 14 - (DEFAULT_GITGRAPH_CONFIG2?.rotateCommitLabel === true ? 30 : 0)) + ", " + (pos - bbox.height / 2 - 1) + ")"
+          "translate(" + (-bbox.width - 14 - ((DEFAULT_GITGRAPH_CONFIG2 == null ? void 0 : DEFAULT_GITGRAPH_CONFIG2.rotateCommitLabel) === true ? 30 : 0)) + ", " + (pos - bbox.height / 2 - 1) + ")"
         );
         if (dir === "TB") {
           bkg.attr("x", pos - bbox.width / 2 - 10).attr("y", 0);
@@ -110976,12 +111053,13 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       return pos;
     }, "setBranchPosition");
     draw4 = /* @__PURE__ */ __name(function(txt, id28, ver, diagObj) {
+      var _a58, _b2;
       clear32();
       log.debug("in gitgraph renderer", txt + "\n", "id:", id28, ver);
       if (!DEFAULT_GITGRAPH_CONFIG2) {
         throw new Error("GitGraph config not found");
       }
-      const rotateCommitLabel = DEFAULT_GITGRAPH_CONFIG2.rotateCommitLabel ?? false;
+      const rotateCommitLabel = (_a58 = DEFAULT_GITGRAPH_CONFIG2.rotateCommitLabel) != null ? _a58 : false;
       const db22 = diagObj.db;
       allCommitsDict = db22.getCommits();
       const branches = db22.getBranchesAsObjArray();
@@ -110989,11 +111067,12 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       const diagram27 = select_default2(`[id="${id28}"]`);
       let pos = 0;
       branches.forEach((branch2, index2) => {
+        var _a59;
         const labelElement = drawText2(branch2.name);
         const g2 = diagram27.append("g");
         const branchLabel = g2.insert("g").attr("class", "branchLabel");
         const label = branchLabel.insert("g").attr("class", "label branch-label");
-        label.node()?.appendChild(labelElement);
+        (_a59 = label.node()) == null ? void 0 : _a59.appendChild(labelElement);
         const bbox = labelElement.getBBox();
         pos = setBranchPosition(branch2.name, pos, index2, bbox, rotateCommitLabel);
         label.remove();
@@ -111009,7 +111088,7 @@ var init_gitGraphDiagram_NY62KEGX = __esm({
       utils_default2.insertTitle(
         diagram27,
         "gitTitleText",
-        DEFAULT_GITGRAPH_CONFIG2.titleTopMargin ?? 0,
+        (_b2 = DEFAULT_GITGRAPH_CONFIG2.titleTopMargin) != null ? _b2 : 0,
         db22.getDiagramTitle()
       );
       setupGraphViewbox2(
@@ -112678,7 +112757,7 @@ var init_ganttDiagram_LVOFAZNH = __esm({
       if ((dateFormat2.trim() === "x" || dateFormat2.trim() === "X") && /^\d+$/.test(str2)) {
         return new Date(Number(str2));
       }
-      const afterRePattern = /^after\s+(?<ids>[\d\w- ]+)/;
+      const afterRePattern = new RegExp("^after\\s+(?<ids>[\\d\\w- ]+)");
       const afterStatement = afterRePattern.exec(str2);
       if (afterStatement !== null) {
         let latestTask = null;
@@ -112722,7 +112801,7 @@ var init_ganttDiagram_LVOFAZNH = __esm({
     }, "parseDuration");
     getEndDate = /* @__PURE__ */ __name(function(prevTime, dateFormat2, str2, inclusive = false) {
       str2 = str2.trim();
-      const untilRePattern = /^until\s+(?<ids>[\d\w- ]+)/;
+      const untilRePattern = new RegExp("^until\\s+(?<ids>[\\d\\w- ]+)");
       const untilStatement = untilRePattern.exec(str2);
       if (untilStatement !== null) {
         let earliestTask = null;
@@ -113445,6 +113524,7 @@ var init_ganttDiagram_LVOFAZNH = __esm({
       }
       __name(drawExcludeDays, "drawExcludeDays");
       function makeGrid(theSidePad, theTopPad, w22, h22) {
+        var _a58;
         const dateFormat2 = diagObj.db.getDateFormat();
         const userAxisFormat = diagObj.db.getAxisFormat();
         let axisFormat2;
@@ -113453,7 +113533,7 @@ var init_ganttDiagram_LVOFAZNH = __esm({
         } else if (dateFormat2 === "D") {
           axisFormat2 = "%d";
         } else {
-          axisFormat2 = conf5.axisFormat ?? "%Y-%m-%d";
+          axisFormat2 = (_a58 = conf5.axisFormat) != null ? _a58 : "%Y-%m-%d";
         }
         let bottomXAxis = axisBottom(timeScale).tickSize(-h22 + theTopPad + conf5.gridLineStartPadding).tickFormat(timeFormat(axisFormat2));
         const reTickInterval = /^([1-9]\d*)(millisecond|second|minute|hour|day|week|month)$/;
@@ -114029,7 +114109,7 @@ var init_pieDiagram_ADFJNKIX = __esm({
       group2.attr("transform", "translate(" + pieWidth / 2 + "," + height2 / 2 + ")");
       const { themeVariables } = globalConfig;
       let [outerStrokeWidth] = parseFontSize(themeVariables.pieOuterStrokeWidth);
-      outerStrokeWidth ??= 2;
+      outerStrokeWidth != null ? outerStrokeWidth : outerStrokeWidth = 2;
       const textPosition = pieConfig.textPosition;
       const radius2 = Math.min(pieWidth, height2) / 2 - MARGIN;
       const arcGenerator = arc_default().innerRadius(0).outerRadius(radius2);
@@ -114085,7 +114165,10 @@ var init_pieDiagram_ADFJNKIX = __esm({
         return d3.label;
       });
       const longestTextWidth = Math.max(
-        ...legend.selectAll("text").nodes().map((node3) => node3?.getBoundingClientRect().width ?? 0)
+        ...legend.selectAll("text").nodes().map((node3) => {
+          var _a58;
+          return (_a58 = node3 == null ? void 0 : node3.getBoundingClientRect().width) != null ? _a58 : 0;
+        })
       );
       const totalWidth = pieWidth + MARGIN + LEGEND_RECT_SIZE + LEGEND_SPACING + longestTextWidth;
       svg4.attr("viewBox", `0 0 ${totalWidth} ${height2}`);
@@ -114175,13 +114258,12 @@ function parseStyles(styles4) {
 function addPoint(textObj, className, x6, y6, styles4) {
   const stylesObject = parseStyles(styles4);
   quadrantBuilder.addPoints([
-    {
+    __spreadValues({
       x: x6,
       y: y6,
       text: textSanitizer(textObj.text),
-      className,
-      ...stylesObject
-    }
+      className
+    }, stylesObject)
   ]);
 }
 function addClass2(className, styles4) {
@@ -114219,7 +114301,7 @@ function getQuadrantData() {
   quadrantBuilder.setData({ titleText: getDiagramTitle() });
   return quadrantBuilder.build();
 }
-var parser9, quadrant_default, defaultThemeVariables, QuadrantBuilder, InvalidStyleError, config3, quadrantBuilder, clear26, quadrantDb_default, draw8, quadrantRenderer_default, diagram8;
+var parser9, quadrant_default, defaultThemeVariables, _a32, QuadrantBuilder, _a33, InvalidStyleError, config3, quadrantBuilder, clear26, quadrantDb_default, draw8, quadrantRenderer_default, diagram8;
 var init_quadrantDiagram_AYHSOK5B = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/quadrantDiagram-AYHSOK5B.mjs"() {
     init_chunk_ABZYJK2D();
@@ -114967,15 +115049,12 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
     parser9.parser = parser9;
     quadrant_default = parser9;
     defaultThemeVariables = getThemeVariables3();
-    QuadrantBuilder = class {
+    QuadrantBuilder = (_a32 = class {
       constructor() {
         this.classes = /* @__PURE__ */ new Map();
         this.config = this.getDefaultConfig();
         this.themeConfig = this.getDefaultThemeConfig();
         this.data = this.getDefaultData();
-      }
-      static {
-        __name(this, "QuadrantBuilder");
       }
       getDefaultData() {
         return {
@@ -114992,28 +115071,29 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
         };
       }
       getDefaultConfig() {
+        var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
         return {
           showXAxis: true,
           showYAxis: true,
           showTitle: true,
-          chartHeight: defaultConfig_default.quadrantChart?.chartWidth || 500,
-          chartWidth: defaultConfig_default.quadrantChart?.chartHeight || 500,
-          titlePadding: defaultConfig_default.quadrantChart?.titlePadding || 10,
-          titleFontSize: defaultConfig_default.quadrantChart?.titleFontSize || 20,
-          quadrantPadding: defaultConfig_default.quadrantChart?.quadrantPadding || 5,
-          xAxisLabelPadding: defaultConfig_default.quadrantChart?.xAxisLabelPadding || 5,
-          yAxisLabelPadding: defaultConfig_default.quadrantChart?.yAxisLabelPadding || 5,
-          xAxisLabelFontSize: defaultConfig_default.quadrantChart?.xAxisLabelFontSize || 16,
-          yAxisLabelFontSize: defaultConfig_default.quadrantChart?.yAxisLabelFontSize || 16,
-          quadrantLabelFontSize: defaultConfig_default.quadrantChart?.quadrantLabelFontSize || 16,
-          quadrantTextTopPadding: defaultConfig_default.quadrantChart?.quadrantTextTopPadding || 5,
-          pointTextPadding: defaultConfig_default.quadrantChart?.pointTextPadding || 5,
-          pointLabelFontSize: defaultConfig_default.quadrantChart?.pointLabelFontSize || 12,
-          pointRadius: defaultConfig_default.quadrantChart?.pointRadius || 5,
-          xAxisPosition: defaultConfig_default.quadrantChart?.xAxisPosition || "top",
-          yAxisPosition: defaultConfig_default.quadrantChart?.yAxisPosition || "left",
-          quadrantInternalBorderStrokeWidth: defaultConfig_default.quadrantChart?.quadrantInternalBorderStrokeWidth || 1,
-          quadrantExternalBorderStrokeWidth: defaultConfig_default.quadrantChart?.quadrantExternalBorderStrokeWidth || 2
+          chartHeight: ((_a58 = defaultConfig_default.quadrantChart) == null ? void 0 : _a58.chartWidth) || 500,
+          chartWidth: ((_b2 = defaultConfig_default.quadrantChart) == null ? void 0 : _b2.chartHeight) || 500,
+          titlePadding: ((_c2 = defaultConfig_default.quadrantChart) == null ? void 0 : _c2.titlePadding) || 10,
+          titleFontSize: ((_d = defaultConfig_default.quadrantChart) == null ? void 0 : _d.titleFontSize) || 20,
+          quadrantPadding: ((_e2 = defaultConfig_default.quadrantChart) == null ? void 0 : _e2.quadrantPadding) || 5,
+          xAxisLabelPadding: ((_f = defaultConfig_default.quadrantChart) == null ? void 0 : _f.xAxisLabelPadding) || 5,
+          yAxisLabelPadding: ((_g = defaultConfig_default.quadrantChart) == null ? void 0 : _g.yAxisLabelPadding) || 5,
+          xAxisLabelFontSize: ((_h = defaultConfig_default.quadrantChart) == null ? void 0 : _h.xAxisLabelFontSize) || 16,
+          yAxisLabelFontSize: ((_i = defaultConfig_default.quadrantChart) == null ? void 0 : _i.yAxisLabelFontSize) || 16,
+          quadrantLabelFontSize: ((_j = defaultConfig_default.quadrantChart) == null ? void 0 : _j.quadrantLabelFontSize) || 16,
+          quadrantTextTopPadding: ((_k = defaultConfig_default.quadrantChart) == null ? void 0 : _k.quadrantTextTopPadding) || 5,
+          pointTextPadding: ((_l = defaultConfig_default.quadrantChart) == null ? void 0 : _l.pointTextPadding) || 5,
+          pointLabelFontSize: ((_m = defaultConfig_default.quadrantChart) == null ? void 0 : _m.pointLabelFontSize) || 12,
+          pointRadius: ((_n = defaultConfig_default.quadrantChart) == null ? void 0 : _n.pointRadius) || 5,
+          xAxisPosition: ((_o = defaultConfig_default.quadrantChart) == null ? void 0 : _o.xAxisPosition) || "top",
+          yAxisPosition: ((_p = defaultConfig_default.quadrantChart) == null ? void 0 : _p.yAxisPosition) || "left",
+          quadrantInternalBorderStrokeWidth: ((_q = defaultConfig_default.quadrantChart) == null ? void 0 : _q.quadrantInternalBorderStrokeWidth) || 1,
+          quadrantExternalBorderStrokeWidth: ((_r = defaultConfig_default.quadrantChart) == null ? void 0 : _r.quadrantExternalBorderStrokeWidth) || 2
         };
       }
       getDefaultThemeConfig() {
@@ -115043,7 +115123,7 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
         log.info("clear called");
       }
       setData(data5) {
-        this.data = { ...this.data, ...data5 };
+        this.data = __spreadValues(__spreadValues({}, this.data), data5);
       }
       addPoints(points) {
         this.data.points = [...points, ...this.data.points];
@@ -115053,11 +115133,11 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
       }
       setConfig(config22) {
         log.trace("setConfig called with: ", config22);
-        this.config = { ...this.config, ...config22 };
+        this.config = __spreadValues(__spreadValues({}, this.config), config22);
       }
       setThemeConfig(themeConfig) {
         log.trace("setThemeConfig called with: ", themeConfig);
-        this.themeConfig = { ...this.themeConfig, ...themeConfig };
+        this.themeConfig = __spreadValues(__spreadValues({}, this.themeConfig), themeConfig);
       }
       calculateSpace(xAxisPosition, showXAxis, showYAxis, showTitle) {
         const xAxisSpaceCalculation = this.config.xAxisLabelPadding * 2 + this.config.xAxisLabelFontSize;
@@ -115249,15 +115329,16 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
         const xAxis = linear2().domain([0, 1]).range([quadrantLeft, quadrantWidth + quadrantLeft]);
         const yAxis = linear2().domain([0, 1]).range([quadrantHeight + quadrantTop, quadrantTop]);
         const points = this.data.points.map((point11) => {
+          var _a58, _b2, _c2, _d;
           const classStyles = this.classes.get(point11.className);
           if (classStyles) {
-            point11 = { ...classStyles, ...point11 };
+            point11 = __spreadValues(__spreadValues({}, classStyles), point11);
           }
           const props = {
             x: xAxis(point11.x),
             y: yAxis(point11.y),
-            fill: point11.color ?? this.themeConfig.quadrantPointFill,
-            radius: point11.radius ?? this.config.pointRadius,
+            fill: (_a58 = point11.color) != null ? _a58 : this.themeConfig.quadrantPointFill,
+            radius: (_b2 = point11.radius) != null ? _b2 : this.config.pointRadius,
             text: {
               text: point11.text,
               fill: this.themeConfig.quadrantPointTextFill,
@@ -115268,8 +115349,8 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
               fontSize: this.config.pointLabelFontSize,
               rotation: 0
             },
-            strokeColor: point11.strokeColor ?? this.themeConfig.quadrantPointFill,
-            strokeWidth: point11.strokeWidth ?? "0px"
+            strokeColor: (_c2 = point11.strokeColor) != null ? _c2 : this.themeConfig.quadrantPointFill,
+            strokeWidth: (_d = point11.strokeWidth) != null ? _d : "0px"
           };
           return props;
         });
@@ -115373,16 +115454,13 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
           title: this.getTitle(showTitle)
         };
       }
-    };
-    InvalidStyleError = class extends Error {
-      static {
-        __name(this, "InvalidStyleError");
-      }
+    }, __name(_a32, "QuadrantBuilder"), _a32);
+    InvalidStyleError = (_a33 = class extends Error {
       constructor(style4, value2, type3) {
         super(`value for ${style4} ${value2} is invalid, please use a valid ${type3}`);
         this.name = "InvalidStyleError";
       }
-    };
+    }, __name(_a33, "InvalidStyleError"), _a33);
     __name(validateHexCode, "validateHexCode");
     __name(validateNumber, "validateNumber");
     __name(validateSizeInPixels, "validateSizeInPixels");
@@ -115431,6 +115509,7 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
       setAccDescription
     };
     draw8 = /* @__PURE__ */ __name((txt, id28, _version, diagObj) => {
+      var _a58, _b2, _c2, _d, _e2, _f;
       function getDominantBaseLine(horizontalPos) {
         return horizontalPos === "top" ? "hanging" : "middle";
       }
@@ -115453,9 +115532,9 @@ var init_quadrantDiagram_AYHSOK5B = __esm({
       const root7 = securityLevel === "sandbox" ? select_default2(sandboxElement.nodes()[0].contentDocument.body) : select_default2("body");
       const svg4 = root7.select(`[id="${id28}"]`);
       const group2 = svg4.append("g").attr("class", "main");
-      const width3 = conf5.quadrantChart?.chartWidth ?? 500;
-      const height2 = conf5.quadrantChart?.chartHeight ?? 500;
-      configureSvgSize(svg4, height2, width3, conf5.quadrantChart?.useMaxWidth ?? true);
+      const width3 = (_b2 = (_a58 = conf5.quadrantChart) == null ? void 0 : _a58.chartWidth) != null ? _b2 : 500;
+      const height2 = (_d = (_c2 = conf5.quadrantChart) == null ? void 0 : _c2.chartHeight) != null ? _d : 500;
+      configureSvgSize(svg4, height2, width3, (_f = (_e2 = conf5.quadrantChart) == null ? void 0 : _e2.useMaxWidth) != null ? _f : true);
       svg4.attr("viewBox", "0 0 " + width3 + " " + height2);
       diagObj.db.setHeight(height2);
       diagObj.db.setWidth(width3);
@@ -115681,7 +115760,7 @@ function getChartConfig() {
 function getXYChartData() {
   return xyChartData;
 }
-var parser10, xychart_default, TextDimensionCalculatorWithFont, BAR_WIDTH_TO_TICK_WIDTH_RATIO, MAX_OUTER_PADDING_PERCENT_FOR_WRT_LABEL, BaseAxis, BandAxis, LinearAxis, ChartTitle, LinePlot, BarPlot, BasePlot, Orchestrator, XYChartBuilder, plotIndex, tmpSVGGroup, xyChartConfig, xyChartThemeConfig, xyChartData, plotColorPalette, hasSetXAxis, hasSetYAxis, clear27, xychartDb_default, draw9, xychartRenderer_default, diagram9;
+var parser10, xychart_default, _a34, TextDimensionCalculatorWithFont, BAR_WIDTH_TO_TICK_WIDTH_RATIO, MAX_OUTER_PADDING_PERCENT_FOR_WRT_LABEL, _a35, BaseAxis, _a36, BandAxis, _a37, LinearAxis, _a38, ChartTitle, _a39, LinePlot, _a40, BarPlot, _a41, BasePlot, _a42, Orchestrator, _a43, XYChartBuilder, plotIndex, tmpSVGGroup, xyChartConfig, xyChartThemeConfig, xyChartData, plotColorPalette, hasSetXAxis, hasSetYAxis, clear27, xychartDb_default, draw9, xychartRenderer_default, diagram9;
 var init_xychartDiagram_PRI3JC2R = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/xychartDiagram-PRI3JC2R.mjs"() {
     init_chunk_EXTU4WIE();
@@ -116404,12 +116483,9 @@ var init_xychartDiagram_PRI3JC2R = __esm({
     __name(isBarPlot, "isBarPlot");
     __name(isBandAxisData, "isBandAxisData");
     __name(isLinearAxisData, "isLinearAxisData");
-    TextDimensionCalculatorWithFont = class {
+    TextDimensionCalculatorWithFont = (_a34 = class {
       constructor(parentGroup) {
         this.parentGroup = parentGroup;
-      }
-      static {
-        __name(this, "TextDimensionCalculatorWithFont");
       }
       getMaxDimension(texts, fontSize) {
         if (!this.parentGroup) {
@@ -116433,10 +116509,10 @@ var init_xychartDiagram_PRI3JC2R = __esm({
         elem.remove();
         return dimension;
       }
-    };
+    }, __name(_a34, "TextDimensionCalculatorWithFont"), _a34);
     BAR_WIDTH_TO_TICK_WIDTH_RATIO = 0.7;
     MAX_OUTER_PADDING_PERCENT_FOR_WRT_LABEL = 0.2;
-    BaseAxis = class {
+    BaseAxis = (_a35 = class {
       constructor(axisConfig, title2, textDimensionCalculator, axisThemeConfig) {
         this.axisConfig = axisConfig;
         this.title = title2;
@@ -116454,9 +116530,6 @@ var init_xychartDiagram_PRI3JC2R = __esm({
         this.range = [0, 10];
         this.boundingRect = { x: 0, y: 0, width: 0, height: 0 };
         this.axisPosition = "left";
-      }
-      static {
-        __name(this, "BaseAxis");
       }
       setRange(range3) {
         this.range = range3;
@@ -116787,11 +116860,8 @@ var init_xychartDiagram_PRI3JC2R = __esm({
         }
         return [];
       }
-    };
-    BandAxis = class extends BaseAxis {
-      static {
-        __name(this, "BandAxis");
-      }
+    }, __name(_a35, "BaseAxis"), _a35);
+    BandAxis = (_a36 = class extends BaseAxis {
       constructor(axisConfig, axisThemeConfig, categories, title2, textDimensionCalculator) {
         super(axisConfig, title2, textDimensionCalculator, axisThemeConfig);
         this.categories = categories;
@@ -116808,13 +116878,11 @@ var init_xychartDiagram_PRI3JC2R = __esm({
         return this.categories;
       }
       getScaleValue(value2) {
-        return this.scale(value2) ?? this.getRange()[0];
+        var _a58;
+        return (_a58 = this.scale(value2)) != null ? _a58 : this.getRange()[0];
       }
-    };
-    LinearAxis = class extends BaseAxis {
-      static {
-        __name(this, "LinearAxis");
-      }
+    }, __name(_a36, "BandAxis"), _a36);
+    LinearAxis = (_a37 = class extends BaseAxis {
       constructor(axisConfig, axisThemeConfig, domain2, title2, textDimensionCalculator) {
         super(axisConfig, title2, textDimensionCalculator, axisThemeConfig);
         this.domain = domain2;
@@ -116833,9 +116901,9 @@ var init_xychartDiagram_PRI3JC2R = __esm({
       getScaleValue(value2) {
         return this.scale(value2);
       }
-    };
+    }, __name(_a37, "LinearAxis"), _a37);
     __name(getAxis, "getAxis");
-    ChartTitle = class {
+    ChartTitle = (_a38 = class {
       constructor(textDimensionCalculator, chartConfig, chartData, chartThemeConfig) {
         this.textDimensionCalculator = textDimensionCalculator;
         this.chartConfig = chartConfig;
@@ -116848,9 +116916,6 @@ var init_xychartDiagram_PRI3JC2R = __esm({
           height: 0
         };
         this.showChartTitle = false;
-      }
-      static {
-        __name(this, "ChartTitle");
       }
       setBoundingBoxXY(point11) {
         this.boundingRect.x = point11.x;
@@ -116895,18 +116960,15 @@ var init_xychartDiagram_PRI3JC2R = __esm({
         }
         return drawableElem;
       }
-    };
+    }, __name(_a38, "ChartTitle"), _a38);
     __name(getChartTitleComponent, "getChartTitleComponent");
-    LinePlot = class {
+    LinePlot = (_a39 = class {
       constructor(plotData, xAxis, yAxis, orientation, plotIndex2) {
         this.plotData = plotData;
         this.xAxis = xAxis;
         this.yAxis = yAxis;
         this.orientation = orientation;
         this.plotIndex = plotIndex2;
-      }
-      static {
-        __name(this, "LinePlot");
       }
       getDrawableElement() {
         const finalData = this.plotData.data.map((d3) => [
@@ -116936,8 +116998,8 @@ var init_xychartDiagram_PRI3JC2R = __esm({
           }
         ];
       }
-    };
-    BarPlot = class {
+    }, __name(_a39, "LinePlot"), _a39);
+    BarPlot = (_a40 = class {
       constructor(barData, boundingRect, xAxis, yAxis, orientation, plotIndex2) {
         this.barData = barData;
         this.boundingRect = boundingRect;
@@ -116945,9 +117007,6 @@ var init_xychartDiagram_PRI3JC2R = __esm({
         this.yAxis = yAxis;
         this.orientation = orientation;
         this.plotIndex = plotIndex2;
-      }
-      static {
-        __name(this, "BarPlot");
       }
       getDrawableElement() {
         const finalData = this.barData.data.map((d3) => [
@@ -116990,8 +117049,8 @@ var init_xychartDiagram_PRI3JC2R = __esm({
           }
         ];
       }
-    };
-    BasePlot = class {
+    }, __name(_a40, "BarPlot"), _a40);
+    BasePlot = (_a41 = class {
       constructor(chartConfig, chartData, chartThemeConfig) {
         this.chartConfig = chartConfig;
         this.chartData = chartData;
@@ -117002,9 +117061,6 @@ var init_xychartDiagram_PRI3JC2R = __esm({
           width: 0,
           height: 0
         };
-      }
-      static {
-        __name(this, "BasePlot");
       }
       setAxes(xAxis, yAxis) {
         this.xAxis = xAxis;
@@ -117058,9 +117114,9 @@ var init_xychartDiagram_PRI3JC2R = __esm({
         }
         return drawableElem;
       }
-    };
+    }, __name(_a41, "BasePlot"), _a41);
     __name(getPlotComponent, "getPlotComponent");
-    Orchestrator = class {
+    Orchestrator = (_a42 = class {
       constructor(chartConfig, chartData, chartThemeConfig, tmpSVGGroup2) {
         this.chartConfig = chartConfig;
         this.chartData = chartData;
@@ -117090,9 +117146,6 @@ var init_xychartDiagram_PRI3JC2R = __esm({
             tmpSVGGroup2
           )
         };
-      }
-      static {
-        __name(this, "Orchestrator");
       }
       calculateVerticalSpace() {
         let availableWidth = this.chartConfig.width;
@@ -117222,16 +117275,13 @@ var init_xychartDiagram_PRI3JC2R = __esm({
         }
         return drawableElem;
       }
-    };
-    XYChartBuilder = class {
-      static {
-        __name(this, "XYChartBuilder");
-      }
+    }, __name(_a42, "Orchestrator"), _a42);
+    XYChartBuilder = (_a43 = class {
       static build(config5, chartData, chartThemeConfig, tmpSVGGroup2) {
         const orchestrator = new Orchestrator(config5, chartData, chartThemeConfig, tmpSVGGroup2);
         return orchestrator.getDrawableElement();
       }
-    };
+    }, __name(_a43, "XYChartBuilder"), _a43);
     plotIndex = 0;
     xyChartConfig = getChartDefaultConfig();
     xyChartThemeConfig = getChartDefaultThemeConfig();
@@ -117418,7 +117468,7 @@ var requirementDiagram_UZGBJVZJ_exports = {};
 __export(requirementDiagram_UZGBJVZJ_exports, {
   diagram: () => diagram10
 });
-var parser11, requirementDiagram_default, RequirementDB, getStyles8, styles_default7, requirementRenderer_exports, draw10, diagram10;
+var parser11, requirementDiagram_default, _a44, RequirementDB, getStyles8, styles_default7, requirementRenderer_exports, draw10, diagram10;
 var init_requirementDiagram_UZGBJVZJ = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/requirementDiagram-UZGBJVZJ.mjs"() {
     init_chunk_55IACEB6();
@@ -118276,7 +118326,7 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
     })();
     parser11.parser = parser11;
     requirementDiagram_default = parser11;
-    RequirementDB = class {
+    RequirementDB = (_a44 = class {
       constructor() {
         this.relations = [];
         this.latestRequirement = this.getInitialRequirement();
@@ -118336,9 +118386,6 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
         this.defineClass = this.defineClass.bind(this);
         this.setAccTitle = this.setAccTitle.bind(this);
         this.setAccDescription = this.setAccDescription.bind(this);
-      }
-      static {
-        __name(this, "RequirementDB");
       }
       getDirection() {
         return this.direction;
@@ -118459,8 +118506,9 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
         clear();
       }
       setCssStyle(ids, styles4) {
+        var _a58;
         for (const id28 of ids) {
-          const node3 = this.requirements.get(id28) ?? this.elements.get(id28);
+          const node3 = (_a58 = this.requirements.get(id28)) != null ? _a58 : this.elements.get(id28);
           if (!styles4 || !node3) {
             return;
           }
@@ -118474,12 +118522,13 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
         }
       }
       setClass(ids, classNames) {
+        var _a58, _b2;
         for (const id28 of ids) {
-          const node3 = this.requirements.get(id28) ?? this.elements.get(id28);
+          const node3 = (_a58 = this.requirements.get(id28)) != null ? _a58 : this.elements.get(id28);
           if (node3) {
             for (const _class2 of classNames) {
               node3.classes.push(_class2);
-              const styles4 = this.classes.get(_class2)?.styles;
+              const styles4 = (_b2 = this.classes.get(_class2)) == null ? void 0 : _b2.styles;
               if (styles4) {
                 node3.cssStyles.push(...styles4);
               }
@@ -118519,6 +118568,7 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
         return this.classes;
       }
       getData() {
+        var _a58, _b2, _c2, _d, _e2, _f;
         const config5 = getConfig2();
         const nodes5 = [];
         const edges3 = [];
@@ -118545,8 +118595,8 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
           const isContains = relation.type === this.Relationships.CONTAINS;
           const edge = {
             id: `${relation.src}-${relation.dst}-${counter2}`,
-            start: this.requirements.get(relation.src)?.name ?? this.elements.get(relation.src)?.name,
-            end: this.requirements.get(relation.dst)?.name ?? this.elements.get(relation.dst)?.name,
+            start: (_c2 = (_a58 = this.requirements.get(relation.src)) == null ? void 0 : _a58.name) != null ? _c2 : (_b2 = this.elements.get(relation.src)) == null ? void 0 : _b2.name,
+            end: (_f = (_d = this.requirements.get(relation.dst)) == null ? void 0 : _d.name) != null ? _f : (_e2 = this.elements.get(relation.dst)) == null ? void 0 : _e2.name,
             label: `&lt;&lt;${relation.type}&gt;&gt;`,
             classes: "relationshipLine",
             style: ["fill:none", isContains ? "" : "stroke-dasharray: 10,7"],
@@ -118563,7 +118613,7 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
         }
         return { nodes: nodes5, edges: edges3, other: {}, config: config5, direction: this.getDirection() };
       }
-    };
+    }, __name(_a44, "RequirementDB"), _a44);
     getStyles8 = /* @__PURE__ */ __name((options2) => `
 
   marker {
@@ -118629,6 +118679,7 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
       draw: () => draw10
     });
     draw10 = /* @__PURE__ */ __name(async function(text11, id28, _version, diag) {
+      var _a58, _b2, _c2, _d;
       log.info("REF0:");
       log.info("Drawing requirement diagram (unified)", id28);
       const { securityLevel, state: conf5, layout: layout6 } = getConfig2();
@@ -118636,8 +118687,8 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
       const svg4 = getDiagramElement(id28, securityLevel);
       data4Layout.type = diag.type;
       data4Layout.layoutAlgorithm = getRegisteredLayoutAlgorithm(layout6);
-      data4Layout.nodeSpacing = conf5?.nodeSpacing ?? 50;
-      data4Layout.rankSpacing = conf5?.rankSpacing ?? 50;
+      data4Layout.nodeSpacing = (_a58 = conf5 == null ? void 0 : conf5.nodeSpacing) != null ? _a58 : 50;
+      data4Layout.rankSpacing = (_b2 = conf5 == null ? void 0 : conf5.rankSpacing) != null ? _b2 : 50;
       data4Layout.markers = ["requirement_contains", "requirement_arrow"];
       data4Layout.diagramId = id28;
       await render5(data4Layout, svg4);
@@ -118645,10 +118696,10 @@ var init_requirementDiagram_UZGBJVZJ = __esm({
       utils_default2.insertTitle(
         svg4,
         "requirementDiagramTitleText",
-        conf5?.titleTopMargin ?? 25,
+        (_c2 = conf5 == null ? void 0 : conf5.titleTopMargin) != null ? _c2 : 25,
         diag.db.getDiagramTitle()
       );
-      setupViewPortForSVG(svg4, padding2, "requirementDiagram", conf5?.useMaxWidth ?? true);
+      setupViewPortForSVG(svg4, padding2, "requirementDiagram", (_d = conf5 == null ? void 0 : conf5.useMaxWidth) != null ? _d : true);
     }, "draw");
     diagram10 = {
       parser: requirementDiagram_default,
@@ -118914,7 +118965,7 @@ async function calculateActorMargins(actors2, actorToMessageWidth, boxes) {
   boxes.forEach((box) => box.textMaxHeight = maxBoxHeight);
   return common_default.getMax(maxHeight, conf2.height);
 }
-var import_sanitize_url5, parser12, sequenceDiagram_default, LINETYPE2, ARROWTYPE2, PLACEMENT2, PARTICIPANT_TYPE, SequenceDB, getStyles9, styles_default8, ACTOR_TYPE_WIDTH, TOP_ACTOR_CLASS, BOTTOM_ACTOR_CLASS, ACTOR_BOX_CLASS, ACTOR_MAN_FIGURE_CLASS, drawRect23, drawPopup, popupMenuToggle, drawKatex, drawText3, drawLabel, actorCnt, fixLifeLineHeights, drawActorTypeParticipant, drawActorTypeCollections, drawActorTypeQueue, drawActorTypeControl, drawActorTypeEntity, drawActorTypeDatabase, drawActorTypeBoundary, drawActorTypeActor, drawActor, drawBox, anchorElement, drawActivation, drawLoop, drawBackgroundRect2, insertDatabaseIcon2, insertComputerIcon2, insertClockIcon2, insertArrowHead2, insertArrowFilledHead2, insertSequenceNumber, insertArrowCrossHead2, getTextObj22, getNoteRect2, _drawTextCandidateFunc2, _drawMenuItemTextCandidateFunc, svgDraw_default2, conf2, bounds2, drawNote, messageFont2, noteFont, actorFont, drawMessage, addActorRenderingData, drawActors, drawActorsPopup, setConf3, actorActivations, activationBounds, draw11, getRequiredPopupWidth, buildNoteModel, buildMessageModel, calculateLoopBounds, sequenceRenderer_default, diagram11;
+var import_sanitize_url5, parser12, sequenceDiagram_default, LINETYPE2, ARROWTYPE2, PLACEMENT2, PARTICIPANT_TYPE, _a45, SequenceDB, getStyles9, styles_default8, ACTOR_TYPE_WIDTH, TOP_ACTOR_CLASS, BOTTOM_ACTOR_CLASS, ACTOR_BOX_CLASS, ACTOR_MAN_FIGURE_CLASS, drawRect23, drawPopup, popupMenuToggle, drawKatex, drawText3, drawLabel, actorCnt, fixLifeLineHeights, drawActorTypeParticipant, drawActorTypeCollections, drawActorTypeQueue, drawActorTypeControl, drawActorTypeEntity, drawActorTypeDatabase, drawActorTypeBoundary, drawActorTypeActor, drawActor, drawBox, anchorElement, drawActivation, drawLoop, drawBackgroundRect2, insertDatabaseIcon2, insertComputerIcon2, insertClockIcon2, insertArrowHead2, insertArrowFilledHead2, insertSequenceNumber, insertArrowCrossHead2, getTextObj22, getNoteRect2, _drawTextCandidateFunc2, _drawMenuItemTextCandidateFunc, svgDraw_default2, conf2, bounds2, drawNote, messageFont2, noteFont, actorFont, drawMessage, addActorRenderingData, drawActors, drawActorsPopup, setConf3, actorActivations, activationBounds, draw11, getRequiredPopupWidth, buildNoteModel, buildMessageModel, calculateLoopBounds, sequenceRenderer_default, diagram11;
 var init_sequenceDiagram_WL72ISMW = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/sequenceDiagram-WL72ISMW.mjs"() {
     init_chunk_TZMSLE5B();
@@ -119948,7 +119999,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       PARTICIPANT: "participant",
       QUEUE: "queue"
     };
-    SequenceDB = class {
+    SequenceDB = (_a45 = class {
       constructor() {
         this.state = new ImperativeState(() => ({
           prevActor: void 0,
@@ -119979,19 +120030,18 @@ var init_sequenceDiagram_WL72ISMW = __esm({
         this.ARROWTYPE = ARROWTYPE2;
         this.PLACEMENT = PLACEMENT2;
       }
-      static {
-        __name(this, "SequenceDB");
-      }
       addBox(data5) {
+        var _a58;
         this.state.records.boxes.push({
           name: data5.text,
-          wrap: data5.wrap ?? this.autoWrap(),
+          wrap: (_a58 = data5.wrap) != null ? _a58 : this.autoWrap(),
           fill: data5.color,
           actorKeys: []
         });
         this.state.records.currentBox = this.state.records.boxes.slice(-1)[0];
       }
       addActor(id28, name, description, type3, metadata) {
+        var _a58, _b2;
         let assignedBox = this.state.records.currentBox;
         let doc;
         if (metadata !== void 0) {
@@ -120003,7 +120053,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
           }
           doc = load(yamlData, { schema: JSON_SCHEMA });
         }
-        type3 = doc?.type ?? type3;
+        type3 = (_a58 = doc == null ? void 0 : doc.type) != null ? _a58 : type3;
         const old = this.state.records.actors.get(id28);
         if (old) {
           if (this.state.records.currentBox && old.box && this.state.records.currentBox !== old.box) {
@@ -120017,7 +120067,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
             return;
           }
         }
-        if (description?.text == null) {
+        if ((description == null ? void 0 : description.text) == null) {
           description = { text: name, type: type3 };
         }
         if (type3 == null || description.text == null) {
@@ -120027,13 +120077,13 @@ var init_sequenceDiagram_WL72ISMW = __esm({
           box: assignedBox,
           name,
           description: description.text,
-          wrap: description.wrap ?? this.autoWrap(),
+          wrap: (_b2 = description.wrap) != null ? _b2 : this.autoWrap(),
           prevActor: this.state.records.prevActor,
           links: {},
           properties: {},
           actorCnt: null,
           rectData: null,
-          type: type3 ?? "participant"
+          type: type3 != null ? type3 : "participant"
         });
         if (this.state.records.prevActor) {
           const prevActorInRecords = this.state.records.actors.get(this.state.records.prevActor);
@@ -120063,18 +120113,20 @@ var init_sequenceDiagram_WL72ISMW = __esm({
         return count2;
       }
       addMessage(idFrom, idTo, message, answer) {
+        var _a58;
         this.state.records.messages.push({
           id: this.state.records.messages.length.toString(),
           from: idFrom,
           to: idTo,
           message: message.text,
-          wrap: message.wrap ?? this.autoWrap(),
+          wrap: (_a58 = message.wrap) != null ? _a58 : this.autoWrap(),
           answer
         });
       }
       addSignal(idFrom, idTo, message, messageType, activate = false) {
+        var _a58, _b2;
         if (messageType === this.LINETYPE.ACTIVE_END) {
-          const cnt4 = this.activationCount(idFrom ?? "");
+          const cnt4 = this.activationCount(idFrom != null ? idFrom : "");
           if (cnt4 < 1) {
             const error3 = new Error("Trying to inactivate an inactive participant (" + idFrom + ")");
             error3.hash = {
@@ -120091,8 +120143,8 @@ var init_sequenceDiagram_WL72ISMW = __esm({
           id: this.state.records.messages.length.toString(),
           from: idFrom,
           to: idTo,
-          message: message?.text ?? "",
-          wrap: message?.wrap ?? this.autoWrap(),
+          message: (_a58 = message == null ? void 0 : message.text) != null ? _a58 : "",
+          wrap: (_b2 = message == null ? void 0 : message.wrap) != null ? _b2 : this.autoWrap(),
           type: messageType,
           activate
         });
@@ -120147,10 +120199,11 @@ var init_sequenceDiagram_WL72ISMW = __esm({
         return { cleanedText, wrap: wrap5 };
       }
       autoWrap() {
+        var _a58, _b2;
         if (this.state.records.wrapEnabled !== void 0) {
           return this.state.records.wrapEnabled;
         }
-        return getConfig2().sequence?.wrap ?? false;
+        return (_b2 = (_a58 = getConfig2().sequence) == null ? void 0 : _a58.wrap) != null ? _b2 : false;
       }
       clear() {
         this.state.reset();
@@ -120171,9 +120224,9 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       // We extract first segment as color, the rest of the line is considered as text
       parseBoxData(str2) {
         const match2 = /^((?:rgba?|hsla?)\s*\(.*\)|\w*)(.*)$/.exec(str2);
-        let color3 = match2?.[1] ? match2[1].trim() : "transparent";
-        let title2 = match2?.[2] ? match2[2].trim() : void 0;
-        if (window?.CSS) {
+        let color3 = (match2 == null ? void 0 : match2[1]) ? match2[1].trim() : "transparent";
+        let title2 = (match2 == null ? void 0 : match2[2]) ? match2[2].trim() : void 0;
+        if (window == null ? void 0 : window.CSS) {
           if (!window.CSS.supports("color", color3)) {
             color3 = "transparent";
             title2 = str2.trim();
@@ -120194,11 +120247,12 @@ var init_sequenceDiagram_WL72ISMW = __esm({
         };
       }
       addNote(actor, placement, message) {
+        var _a58, _b2;
         const note3 = {
           actor,
           placement,
           message: message.text,
-          wrap: message.wrap ?? this.autoWrap()
+          wrap: (_a58 = message.wrap) != null ? _a58 : this.autoWrap()
         };
         const actors2 = [].concat(actor, actor);
         this.state.records.notes.push(note3);
@@ -120207,7 +120261,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
           from: actors2[0],
           to: actors2[1],
           message: message.text,
-          wrap: message.wrap ?? this.autoWrap(),
+          wrap: (_b2 = message.wrap) != null ? _b2 : this.autoWrap(),
           type: this.LINETYPE.NOTE,
           placement
         });
@@ -120288,7 +120342,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
         }
       }
       getActorProperty(actor, key2) {
-        if (actor?.properties !== void 0) {
+        if ((actor == null ? void 0 : actor.properties) !== void 0) {
           return actor.properties[key2];
         }
         return void 0;
@@ -120439,7 +120493,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       getConfig() {
         return getConfig2().sequence;
       }
-    };
+    }, __name(_a45, "SequenceDB"), _a45);
     getStyles9 = /* @__PURE__ */ __name((options2) => `.actor {
     stroke: ${options2.actorBorder};
     fill: ${options2.actorBkg};
@@ -120783,6 +120837,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       });
     }, "fixLifeLineHeights");
     drawActorTypeParticipant = /* @__PURE__ */ __name(function(elem, actor, conf22, isFooter) {
+      var _a58, _b2;
       const actorY = isFooter ? actor.stopy : actor.starty;
       const center4 = actor.x + actor.width / 2;
       const centerY = actorY + actor.height;
@@ -120802,7 +120857,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       }
       const rect3 = getNoteRect();
       var cssclass = "actor";
-      if (actor.properties?.class) {
+      if ((_a58 = actor.properties) == null ? void 0 : _a58.class) {
         cssclass = actor.properties.class;
       } else {
         rect3.fill = "#eaeaea";
@@ -120822,7 +120877,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       rect3.name = actor.name;
       const rectElem = drawRect23(g2, rect3);
       actor.rectData = rect3;
-      if (actor.properties?.icon) {
+      if ((_b2 = actor.properties) == null ? void 0 : _b2.icon) {
         const iconSrc = actor.properties.icon.trim();
         if (iconSrc.charAt(0) === "@") {
           drawEmbeddedImage(g2, rect3.x + rect3.width - 20, rect3.y + 10, iconSrc.substr(1));
@@ -120849,6 +120904,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       return height2;
     }, "drawActorTypeParticipant");
     drawActorTypeCollections = /* @__PURE__ */ __name(function(elem, actor, conf22, isFooter) {
+      var _a58, _b2;
       const actorY = isFooter ? actor.stopy : actor.starty;
       const center4 = actor.x + actor.width / 2;
       const centerY = actorY + actor.height;
@@ -120868,7 +120924,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       }
       const rect3 = getNoteRect();
       var cssclass = "actor";
-      if (actor.properties?.class) {
+      if ((_a58 = actor.properties) == null ? void 0 : _a58.class) {
         cssclass = actor.properties.class;
       } else {
         rect3.fill = "#eaeaea";
@@ -120885,16 +120941,15 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       rect3.class = cssclass;
       rect3.name = actor.name;
       const offset = 6;
-      const shadowRect = {
-        ...rect3,
+      const shadowRect = __spreadProps(__spreadValues({}, rect3), {
         x: rect3.x + (isFooter ? -offset : -offset),
         y: rect3.y + (isFooter ? +offset : +offset),
         class: "actor"
-      };
+      });
       const rectElem = drawRect23(g2, rect3);
       drawRect23(g2, shadowRect);
       actor.rectData = rect3;
-      if (actor.properties?.icon) {
+      if ((_b2 = actor.properties) == null ? void 0 : _b2.icon) {
         const iconSrc = actor.properties.icon.trim();
         if (iconSrc.charAt(0) === "@") {
           drawEmbeddedImage(g2, rect3.x + rect3.width - 20, rect3.y + 10, iconSrc.substr(1));
@@ -120921,6 +120976,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       return height2;
     }, "drawActorTypeCollections");
     drawActorTypeQueue = /* @__PURE__ */ __name(function(elem, actor, conf22, isFooter) {
+      var _a58, _b2;
       const actorY = isFooter ? actor.stopy : actor.starty;
       const center4 = actor.x + actor.width / 2;
       const centerY = actorY + actor.height;
@@ -120940,7 +120996,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       }
       const rect3 = getNoteRect();
       let cssclass = "actor";
-      if (actor.properties?.class) {
+      if ((_a58 = actor.properties) == null ? void 0 : _a58.class) {
         cssclass = actor.properties.class;
       } else {
         rect3.fill = "#eaeaea";
@@ -120977,7 +121033,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       cylinderGroup.attr("transform", `translate(${rx}, ${-(rect3.height / 2)})`);
       cylinderArc.attr("transform", `translate(${rect3.width - rx}, ${-rect3.height / 2})`);
       actor.rectData = rect3;
-      if (actor.properties?.icon) {
+      if ((_b2 = actor.properties) == null ? void 0 : _b2.icon) {
         const iconSrc = actor.properties.icon.trim();
         const iconX = rect3.x + rect3.width - 20;
         const iconY = rect3.y + 10;
@@ -121007,6 +121063,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       return height2;
     }, "drawActorTypeQueue");
     drawActorTypeControl = /* @__PURE__ */ __name(function(elem, actor, conf22, isFooter) {
+      var _a58, _b2;
       const actorY = isFooter ? actor.stopy : actor.starty;
       const center4 = actor.x + actor.width / 2;
       const centerY = actorY + 75;
@@ -121039,7 +121096,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       actElem.append("circle").attr("cx", cx).attr("cy", cy).attr("r", r2).attr("fill", "#eaeaf7").attr("stroke", "#666").attr("stroke-width", 1.2);
       actElem.append("line").attr("marker-end", "url(#filled-head-control)").attr("transform", `translate(${cx}, ${cy - r2})`);
       const bounds22 = actElem.node().getBBox();
-      actor.height = bounds22.height + 2 * (conf22?.sequence?.labelBoxHeight ?? 0);
+      actor.height = bounds22.height + 2 * ((_b2 = (_a58 = conf22 == null ? void 0 : conf22.sequence) == null ? void 0 : _a58.labelBoxHeight) != null ? _b2 : 0);
       _drawTextCandidateFunc2(conf22, hasKatex(actor.description))(
         actor.description,
         actElem,
@@ -121053,6 +121110,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       return actor.height;
     }, "drawActorTypeControl");
     drawActorTypeEntity = /* @__PURE__ */ __name(function(elem, actor, conf22, isFooter) {
+      var _a58, _b2;
       const actorY = isFooter ? actor.stopy : actor.starty;
       const center4 = actor.x + actor.width / 2;
       const centerY = actorY + 75;
@@ -121079,7 +121137,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       actElem.append("circle").attr("cx", cx).attr("cy", cy).attr("r", r2).attr("width", actor.width).attr("height", actor.height);
       actElem.append("line").attr("x1", cx - r2).attr("x2", cx + r2).attr("y1", cy + r2).attr("y2", cy + r2).attr("stroke", "#333").attr("stroke-width", 2);
       const bounds22 = actElem.node().getBBox();
-      actor.height = bounds22.height + (conf22?.sequence?.labelBoxHeight ?? 0);
+      actor.height = bounds22.height + ((_b2 = (_a58 = conf22 == null ? void 0 : conf22.sequence) == null ? void 0 : _a58.labelBoxHeight) != null ? _b2 : 0);
       if (!isFooter) {
         actorCnt++;
         line2.append("line").attr("id", "actor" + actorCnt).attr("x1", center4).attr("y1", centerY).attr("x2", center4).attr("y2", 2e3).attr("class", "actor-line 200").attr("stroke-width", "0.5px").attr("stroke", "#999").attr("name", actor.name);
@@ -121103,6 +121161,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       return actor.height;
     }, "drawActorTypeEntity");
     drawActorTypeDatabase = /* @__PURE__ */ __name(function(elem, actor, conf22, isFooter) {
+      var _a58, _b2;
       const actorY = isFooter ? actor.stopy : actor.starty;
       const center4 = actor.x + actor.width / 2;
       const centerY = actorY + actor.height + 2 * conf22.boxTextMargin;
@@ -121122,7 +121181,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       }
       const rect3 = getNoteRect();
       let cssclass = "actor";
-      if (actor.properties?.class) {
+      if ((_a58 = actor.properties) == null ? void 0 : _a58.class) {
         cssclass = actor.properties.class;
       } else {
         rect3.fill = "#eaeaea";
@@ -121173,11 +121232,12 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       const lastPath = cylinderGroup.select("path:last-child");
       if (lastPath.node()) {
         const bounds22 = lastPath.node().getBBox();
-        actor.height = bounds22.height + (conf22.sequence.labelBoxHeight ?? 0);
+        actor.height = bounds22.height + ((_b2 = conf22.sequence.labelBoxHeight) != null ? _b2 : 0);
       }
       return actor.height;
     }, "drawActorTypeDatabase");
     drawActorTypeBoundary = /* @__PURE__ */ __name(function(elem, actor, conf22, isFooter) {
+      var _a58;
       const actorY = isFooter ? actor.stopy : actor.starty;
       const center4 = actor.x + actor.width / 2;
       const centerY = actorY + 80;
@@ -121208,7 +121268,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
       actElem.append("line").attr("id", "actor-man-arms" + actorCnt).attr("x1", actor.x + actor.width / 2 - radius2 * 2.5).attr("y1", actorY + 0).attr("x2", actor.x + actor.width / 2 - radius2 * 2.5).attr("y2", actorY + 20);
       actElem.append("circle").attr("cx", actor.x + actor.width / 2).attr("cy", actorY + 10).attr("r", radius2);
       const bounds22 = actElem.node().getBBox();
-      actor.height = bounds22.height + (conf22.sequence.labelBoxHeight ?? 0);
+      actor.height = bounds22.height + ((_a58 = conf22.sequence.labelBoxHeight) != null ? _a58 : 0);
       _drawTextCandidateFunc2(conf22, hasKatex(actor.description))(
         actor.description,
         actElem,
@@ -122630,7 +122690,7 @@ var init_sequenceDiagram_WL72ISMW = __esm({
 });
 
 // node_modules/mermaid/dist/chunks/mermaid.core/chunk-B4BG7PRW.mjs
-var parser13, classDiagram_default, visibilityValues, ClassMember, MERMAID_DOM_ID_PREFIX2, classCounter, sanitizeText22, ClassDB, getStyles10, styles_default9, getDir, getClasses2, draw12, classRenderer_v3_unified_default;
+var parser13, classDiagram_default, visibilityValues, _a46, ClassMember, MERMAID_DOM_ID_PREFIX2, classCounter, sanitizeText22, _a47, ClassDB, getStyles10, styles_default9, getDir, getClasses2, draw12, classRenderer_v3_unified_default;
 var init_chunk_B4BG7PRW = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/chunk-B4BG7PRW.mjs"() {
     init_chunk_FMBD7UC4();
@@ -123655,10 +123715,7 @@ var init_chunk_B4BG7PRW = __esm({
     parser13.parser = parser13;
     classDiagram_default = parser13;
     visibilityValues = ["#", "+", "~", "-", ""];
-    ClassMember = class {
-      static {
-        __name(this, "ClassMember");
-      }
+    ClassMember = (_a46 = class {
       constructor(input, memberType) {
         this.memberType = memberType;
         this.visibility = "";
@@ -123737,11 +123794,11 @@ var init_chunk_B4BG7PRW = __esm({
             return "";
         }
       }
-    };
+    }, __name(_a46, "ClassMember"), _a46);
     MERMAID_DOM_ID_PREFIX2 = "classId-";
     classCounter = 0;
     sanitizeText22 = /* @__PURE__ */ __name((txt) => common_default.sanitizeText(txt, getConfig2()), "sanitizeText");
-    ClassDB = class {
+    ClassDB = (_a47 = class {
       constructor() {
         this.relations = [];
         this.classes = /* @__PURE__ */ new Map();
@@ -123815,9 +123872,6 @@ var init_chunk_B4BG7PRW = __esm({
         this.setTooltip = this.setTooltip.bind(this);
         this.setClickEvent = this.setClickEvent.bind(this);
         this.setCssStyle = this.setCssStyle.bind(this);
-      }
-      static {
-        __name(this, "ClassDB");
       }
       splitClassNameAndType(_id) {
         const id28 = common_default.sanitizeText(_id, getConfig2());
@@ -124238,6 +124292,7 @@ var init_chunk_B4BG7PRW = __esm({
         return marker;
       }
       getData() {
+        var _a58, _b2, _c2, _d;
         const nodes5 = [];
         const edges3 = [];
         const config5 = getConfig2();
@@ -124248,7 +124303,7 @@ var init_chunk_B4BG7PRW = __esm({
               id: namespace.id,
               label: namespace.id,
               isGroup: true,
-              padding: config5.class.padding ?? 16,
+              padding: (_a58 = config5.class.padding) != null ? _a58 : 16,
               // parent node must be one of [rect, roundedWithTitle, noteGroup, divider]
               shape: "rect",
               cssStyles: ["fill: none", "stroke: black"],
@@ -124274,7 +124329,7 @@ var init_chunk_B4BG7PRW = __esm({
             label: note3.text,
             isGroup: false,
             shape: "note",
-            padding: config5.class.padding ?? 6,
+            padding: (_b2 = config5.class.padding) != null ? _b2 : 6,
             cssStyles: [
               "text-align: left",
               "white-space: nowrap",
@@ -124284,7 +124339,7 @@ var init_chunk_B4BG7PRW = __esm({
             look: config5.look
           };
           nodes5.push(noteNode);
-          const noteClassId = this.classes.get(note3.class)?.id ?? "";
+          const noteClassId = (_d = (_c2 = this.classes.get(note3.class)) == null ? void 0 : _c2.id) != null ? _d : "";
           if (noteClassId) {
             const edge = {
               id: `edgeNote${cnt4}`,
@@ -124344,7 +124399,7 @@ var init_chunk_B4BG7PRW = __esm({
         }
         return { nodes: nodes5, edges: edges3, other: {}, config: config5, direction: this.getDirection() };
       }
-    };
+    }, __name(_a47, "ClassDB"), _a47);
     getStyles10 = /* @__PURE__ */ __name((options2) => `g.classGroup text {
   fill: ${options2.nodeBorder || options2.classText};
   stroke: none;
@@ -124522,6 +124577,7 @@ g.classGroup line {
       return diagramObj.db.getClasses();
     }, "getClasses");
     draw12 = /* @__PURE__ */ __name(async function(text11, id28, _version, diag) {
+      var _a58, _b2;
       log.info("REF0:");
       log.info("Drawing class diagram (v3)", id28);
       const { securityLevel, state: conf5, layout: layout6 } = getConfig2();
@@ -124529,8 +124585,8 @@ g.classGroup line {
       const svg4 = getDiagramElement(id28, securityLevel);
       data4Layout.type = diag.type;
       data4Layout.layoutAlgorithm = getRegisteredLayoutAlgorithm(layout6);
-      data4Layout.nodeSpacing = conf5?.nodeSpacing || 50;
-      data4Layout.rankSpacing = conf5?.rankSpacing || 50;
+      data4Layout.nodeSpacing = (conf5 == null ? void 0 : conf5.nodeSpacing) || 50;
+      data4Layout.rankSpacing = (conf5 == null ? void 0 : conf5.rankSpacing) || 50;
       data4Layout.markers = ["aggregation", "extension", "composition", "dependency", "lollipop"];
       data4Layout.diagramId = id28;
       await render5(data4Layout, svg4);
@@ -124538,10 +124594,10 @@ g.classGroup line {
       utils_default2.insertTitle(
         svg4,
         "classDiagramTitleText",
-        conf5?.titleTopMargin ?? 25,
+        (_a58 = conf5 == null ? void 0 : conf5.titleTopMargin) != null ? _a58 : 25,
         diag.db.getDiagramTitle()
       );
-      setupViewPortForSVG(svg4, padding2, "classDiagram", conf5?.useMaxWidth ?? true);
+      setupViewPortForSVG(svg4, padding2, "classDiagram", (_b2 = conf5 == null ? void 0 : conf5.useMaxWidth) != null ? _b2 : true);
     }, "draw");
     classRenderer_v3_unified_default = {
       getClasses: getClasses2,
@@ -124643,9 +124699,10 @@ function insertOrUpdateNode(nodes5, nodeData2, classes3) {
       nodeData2.cssCompiledStyles = [];
     }
     nodeData2.cssClasses.split(" ").forEach((cssClass) => {
+      var _a58;
       const classDef = classes3.get(cssClass);
       if (classDef) {
-        nodeData2.cssCompiledStyles = [...nodeData2.cssCompiledStyles ?? [], ...classDef.styles];
+        nodeData2.cssCompiledStyles = [...(_a58 = nodeData2.cssCompiledStyles) != null ? _a58 : [], ...classDef.styles];
       }
     });
   }
@@ -124657,12 +124714,14 @@ function insertOrUpdateNode(nodes5, nodeData2, classes3) {
   }
 }
 function getClassesFromDbInfo(dbInfoItem) {
-  return dbInfoItem?.classes?.join(" ") ?? "";
+  var _a58, _b2;
+  return (_b2 = (_a58 = dbInfoItem == null ? void 0 : dbInfoItem.classes) == null ? void 0 : _a58.join(" ")) != null ? _b2 : "";
 }
 function getStylesFromDbInfo(dbInfoItem) {
-  return dbInfoItem?.styles ?? [];
+  var _a58;
+  return (_a58 = dbInfoItem == null ? void 0 : dbInfoItem.styles) != null ? _a58 : [];
 }
-var parser14, stateDiagram_default, DEFAULT_DIAGRAM_DIRECTION, DEFAULT_NESTED_DOC_DIR, STMT_DIRECTION, STMT_STATE, STMT_ROOT, STMT_RELATION, STMT_CLASSDEF, STMT_STYLEDEF, STMT_APPLYCLASS, DEFAULT_STATE_TYPE, DIVIDER_TYPE, G_EDGE_STYLE, G_EDGE_ARROWHEADSTYLE, G_EDGE_LABELPOS, G_EDGE_LABELTYPE, G_EDGE_THICKNESS, SHAPE_STATE, SHAPE_STATE_WITH_DESC, SHAPE_START, SHAPE_END, SHAPE_DIVIDER, SHAPE_GROUP, SHAPE_NOTE, SHAPE_NOTEGROUP, CSS_DIAGRAM, CSS_STATE, CSS_DIAGRAM_STATE, CSS_EDGE, CSS_NOTE, CSS_NOTE_EDGE, CSS_EDGE_NOTE_EDGE, CSS_DIAGRAM_NOTE, CSS_CLUSTER, CSS_DIAGRAM_CLUSTER, CSS_CLUSTER_ALT, CSS_DIAGRAM_CLUSTER_ALT, PARENT2, NOTE, DOMID_STATE, DOMID_TYPE_SPACER, NOTE_ID, PARENT_ID, getDir2, getClasses3, draw13, stateRenderer_v3_unified_default, nodeDb, graphItemCount, setupDoc, getDir22, dataFetcher, reset3, CONSTANTS, newClassesList, newDoc, clone5, StateDB, getStyles11, styles_default10;
+var parser14, stateDiagram_default, DEFAULT_DIAGRAM_DIRECTION, DEFAULT_NESTED_DOC_DIR, STMT_DIRECTION, STMT_STATE, STMT_ROOT, STMT_RELATION, STMT_CLASSDEF, STMT_STYLEDEF, STMT_APPLYCLASS, DEFAULT_STATE_TYPE, DIVIDER_TYPE, G_EDGE_STYLE, G_EDGE_ARROWHEADSTYLE, G_EDGE_LABELPOS, G_EDGE_LABELTYPE, G_EDGE_THICKNESS, SHAPE_STATE, SHAPE_STATE_WITH_DESC, SHAPE_START, SHAPE_END, SHAPE_DIVIDER, SHAPE_GROUP, SHAPE_NOTE, SHAPE_NOTEGROUP, CSS_DIAGRAM, CSS_STATE, CSS_DIAGRAM_STATE, CSS_EDGE, CSS_NOTE, CSS_NOTE_EDGE, CSS_EDGE_NOTE_EDGE, CSS_DIAGRAM_NOTE, CSS_CLUSTER, CSS_DIAGRAM_CLUSTER, CSS_CLUSTER_ALT, CSS_DIAGRAM_CLUSTER_ALT, PARENT2, NOTE, DOMID_STATE, DOMID_TYPE_SPACER, NOTE_ID, PARENT_ID, getDir2, getClasses3, draw13, stateRenderer_v3_unified_default, nodeDb, graphItemCount, setupDoc, getDir22, dataFetcher, reset3, CONSTANTS, newClassesList, newDoc, clone5, _a48, StateDB, getStyles11, styles_default10;
 var init_chunk_DI55MBZ5 = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/chunk-DI55MBZ5.mjs"() {
     init_chunk_55IACEB6();
@@ -125620,6 +125679,7 @@ var init_chunk_DI55MBZ5 = __esm({
       return diagramObj.db.getClasses();
     }, "getClasses");
     draw13 = /* @__PURE__ */ __name(async function(text11, id28, _version, diag) {
+      var _a58, _b2;
       log.info("REF0:");
       log.info("Drawing state diagram (v2)", id28);
       const { securityLevel, state: conf5, layout: layout6 } = getConfig2();
@@ -125628,8 +125688,8 @@ var init_chunk_DI55MBZ5 = __esm({
       const svg4 = getDiagramElement(id28, securityLevel);
       data4Layout.type = diag.type;
       data4Layout.layoutAlgorithm = layout6;
-      data4Layout.nodeSpacing = conf5?.nodeSpacing || 50;
-      data4Layout.rankSpacing = conf5?.rankSpacing || 50;
+      data4Layout.nodeSpacing = (conf5 == null ? void 0 : conf5.nodeSpacing) || 50;
+      data4Layout.rankSpacing = (conf5 == null ? void 0 : conf5.rankSpacing) || 50;
       data4Layout.markers = ["barb"];
       data4Layout.diagramId = id28;
       await render5(data4Layout, svg4);
@@ -125637,15 +125697,17 @@ var init_chunk_DI55MBZ5 = __esm({
       try {
         const links3 = typeof diag.db.getLinks === "function" ? diag.db.getLinks() : /* @__PURE__ */ new Map();
         links3.forEach((linkInfo, key2) => {
-          const stateId = typeof key2 === "string" ? key2 : typeof key2?.id === "string" ? key2.id : "";
+          var _a59;
+          const stateId = typeof key2 === "string" ? key2 : typeof (key2 == null ? void 0 : key2.id) === "string" ? key2.id : "";
           if (!stateId) {
             log.warn("\u26A0\uFE0F Invalid or missing stateId from key:", JSON.stringify(key2));
             return;
           }
-          const allNodes = svg4.node()?.querySelectorAll("g");
+          const allNodes = (_a59 = svg4.node()) == null ? void 0 : _a59.querySelectorAll("g");
           let matchedElem;
-          allNodes?.forEach((g2) => {
-            const text22 = g2.textContent?.trim();
+          allNodes == null ? void 0 : allNodes.forEach((g2) => {
+            var _a60;
+            const text22 = (_a60 = g2.textContent) == null ? void 0 : _a60.trim();
             if (text22 === stateId) {
               matchedElem = g2;
             }
@@ -125677,10 +125739,10 @@ var init_chunk_DI55MBZ5 = __esm({
       utils_default2.insertTitle(
         svg4,
         "statediagramTitleText",
-        conf5?.titleTopMargin ?? 25,
+        (_a58 = conf5 == null ? void 0 : conf5.titleTopMargin) != null ? _a58 : 25,
         diag.db.getDiagramTitle()
       );
-      setupViewPortForSVG(svg4, padding2, CSS_DIAGRAM, conf5?.useMaxWidth ?? true);
+      setupViewPortForSVG(svg4, padding2, CSS_DIAGRAM, (_b2 = conf5 == null ? void 0 : conf5.useMaxWidth) != null ? _b2 : true);
     }, "draw");
     stateRenderer_v3_unified_default = {
       getClasses: getClasses3,
@@ -125693,6 +125755,7 @@ var init_chunk_DI55MBZ5 = __esm({
     setupDoc = /* @__PURE__ */ __name((parentParsedItem, doc, diagramStates, nodes5, edges3, altFlag, look, classes3) => {
       log.trace("items", doc);
       doc.forEach((item) => {
+        var _a58;
         switch (item.stmt) {
           case STMT_STATE:
             dataFetcher(parentParsedItem, item, diagramStates, nodes5, edges3, altFlag, look, classes3);
@@ -125730,7 +125793,7 @@ var init_chunk_DI55MBZ5 = __esm({
                 arrowTypeEnd: "arrow_barb",
                 style: G_EDGE_STYLE,
                 labelStyle: "",
-                label: common_default.sanitizeText(item.description ?? "", getConfig2()),
+                label: common_default.sanitizeText((_a58 = item.description) != null ? _a58 : "", getConfig2()),
                 arrowheadStyle: G_EDGE_ARROWHEADSTYLE,
                 labelpos: G_EDGE_LABELPOS,
                 labelType: G_EDGE_LABELTYPE,
@@ -125760,6 +125823,7 @@ var init_chunk_DI55MBZ5 = __esm({
     __name(getClassesFromDbInfo, "getClassesFromDbInfo");
     __name(getStylesFromDbInfo, "getStylesFromDbInfo");
     dataFetcher = /* @__PURE__ */ __name((parent4, parsedItem, diagramStates, nodes5, edges3, altFlag, look, classes3) => {
+      var _a58, _b2, _c2;
       const itemId = parsedItem.id;
       const dbState = diagramStates.get(itemId);
       const classStr = getClassesFromDbInfo(dbState);
@@ -125791,7 +125855,7 @@ var init_chunk_DI55MBZ5 = __esm({
             newNode.shape = SHAPE_STATE_WITH_DESC;
             newNode.description.push(parsedItem.description);
           } else {
-            if (newNode.description?.length && newNode.description.length > 0) {
+            if (((_a58 = newNode.description) == null ? void 0 : _a58.length) && newNode.description.length > 0) {
               newNode.shape = SHAPE_STATE_WITH_DESC;
               if (newNode.description === itemId) {
                 newNode.description = [parsedItem.description];
@@ -125805,7 +125869,7 @@ var init_chunk_DI55MBZ5 = __esm({
           }
           newNode.description = common_default.sanitizeTextOrArray(newNode.description, config5);
         }
-        if (newNode.description?.length === 1 && newNode.shape === SHAPE_STATE_WITH_DESC) {
+        if (((_b2 = newNode.description) == null ? void 0 : _b2.length) === 1 && newNode.shape === SHAPE_STATE_WITH_DESC) {
           if (newNode.type === "group") {
             newNode.shape = SHAPE_GROUP;
           } else {
@@ -125858,7 +125922,7 @@ var init_chunk_DI55MBZ5 = __esm({
             domId: stateDomId(itemId, graphItemCount, NOTE),
             type: newNode.type,
             isGroup: newNode.type === "group",
-            padding: config5.flowchart?.padding,
+            padding: (_c2 = config5.flowchart) == null ? void 0 : _c2.padding,
             look,
             position: parsedItem.note.position
           };
@@ -125935,7 +125999,7 @@ var init_chunk_DI55MBZ5 = __esm({
       documents: {}
     }), "newDoc");
     clone5 = /* @__PURE__ */ __name((o2) => JSON.parse(JSON.stringify(o2)), "clone");
-    StateDB = class {
+    StateDB = (_a48 = class {
       constructor(version3) {
         this.version = version3;
         this.nodes = [];
@@ -125958,17 +126022,6 @@ var init_chunk_DI55MBZ5 = __esm({
         this.getDividerId = this.getDividerId.bind(this);
         this.setDirection = this.setDirection.bind(this);
         this.trimColon = this.trimColon.bind(this);
-      }
-      static {
-        __name(this, "StateDB");
-      }
-      static {
-        this.relationType = {
-          AGGREGATION: 0,
-          EXTENSION: 1,
-          COMPOSITION: 2,
-          DEPENDENCY: 3
-        };
       }
       /**
        * Convert all of the statements (stmts) that were parsed into states and relationships.
@@ -126040,7 +126093,10 @@ var init_chunk_DI55MBZ5 = __esm({
             state3 = this.getState(trimmedId);
           }
           if (state3) {
-            state3.styles = styles4.map((s3) => s3.replace(/;/g, "")?.trim());
+            state3.styles = styles4.map((s3) => {
+              var _a58;
+              return (_a58 = s3.replace(/;/g, "")) == null ? void 0 : _a58.trim();
+            });
           }
         }
       }
@@ -126111,7 +126167,7 @@ var init_chunk_DI55MBZ5 = __esm({
        * @param textStyles - text styles to apply to this state. Can be a string (1 text test) or an array of text styles. If it's just 1 text style, convert it to an array of that 1 text style.
        */
       addState(id28, type3 = DEFAULT_STATE_TYPE, doc = void 0, descr = void 0, note3 = void 0, classes3 = void 0, styles4 = void 0, textStyles = void 0) {
-        const trimmedId = id28?.trim();
+        const trimmedId = id28 == null ? void 0 : id28.trim();
         if (!this.currentDocument.states.has(trimmedId)) {
           log.info("Adding state ", trimmedId, descr);
           this.currentDocument.states.set(trimmedId, {
@@ -126294,9 +126350,10 @@ var init_chunk_DI55MBZ5 = __esm({
         }
       }
       addDescription(id28, descr) {
+        var _a58;
         const theState = this.currentDocument.states.get(id28);
         const _descr = descr.startsWith(":") ? descr.replace(":", "").trim() : descr;
-        theState?.descriptions?.push(common_default.sanitizeText(_descr, getConfig2()));
+        (_a58 = theState == null ? void 0 : theState.descriptions) == null ? void 0 : _a58.push(common_default.sanitizeText(_descr, getConfig2()));
       }
       cleanupLabel(label) {
         return label.startsWith(":") ? label.slice(2).trim() : label.trim();
@@ -126342,13 +126399,14 @@ var init_chunk_DI55MBZ5 = __esm({
        */
       setCssClass(itemIds, cssClassName) {
         itemIds.split(",").forEach((id28) => {
+          var _a58;
           let foundState = this.getState(id28);
           if (!foundState) {
             const trimmedId = id28.trim();
             this.addState(trimmedId);
             foundState = this.getState(trimmedId);
           }
-          foundState?.classes?.push(cssClassName);
+          (_a58 = foundState == null ? void 0 : foundState.classes) == null ? void 0 : _a58.push(cssClassName);
         });
       }
       /**
@@ -126362,7 +126420,8 @@ var init_chunk_DI55MBZ5 = __esm({
        * @param styleText - the text of the attributes for the style
        */
       setStyle(itemId, styleText) {
-        this.getState(itemId)?.styles?.push(styleText);
+        var _a58, _b2;
+        (_b2 = (_a58 = this.getState(itemId)) == null ? void 0 : _a58.styles) == null ? void 0 : _b2.push(styleText);
       }
       /**
        * Add a text style to a state with the given id
@@ -126371,7 +126430,8 @@ var init_chunk_DI55MBZ5 = __esm({
        * @param cssClassName - CSS class name
        */
       setTextStyle(itemId, cssClassName) {
-        this.getState(itemId)?.textStyles?.push(cssClassName);
+        var _a58, _b2;
+        (_b2 = (_a58 = this.getState(itemId)) == null ? void 0 : _a58.textStyles) == null ? void 0 : _b2.push(cssClassName);
       }
       /**
        * Finds the direction statement in the root document.
@@ -126381,7 +126441,8 @@ var init_chunk_DI55MBZ5 = __esm({
         return this.rootDoc.find((doc) => doc.stmt === STMT_DIRECTION);
       }
       getDirection() {
-        return this.getDirectionStatement()?.value ?? DEFAULT_DIAGRAM_DIRECTION;
+        var _a58, _b2;
+        return (_b2 = (_a58 = this.getDirectionStatement()) == null ? void 0 : _a58.value) != null ? _b2 : DEFAULT_DIAGRAM_DIRECTION;
       }
       setDirection(dir2) {
         const doc = this.getDirectionStatement();
@@ -126407,7 +126468,12 @@ var init_chunk_DI55MBZ5 = __esm({
       getConfig() {
         return getConfig2().state;
       }
-    };
+    }, __name(_a48, "StateDB"), _a48.relationType = {
+      AGGREGATION: 0,
+      EXTENSION: 1,
+      COMPOSITION: 2,
+      DEPENDENCY: 3
+    }, _a48);
     getStyles11 = /* @__PURE__ */ __name((options2) => `
 defs #statediagram-barbEnd {
     fill: ${options2.transitionColor};
@@ -127201,12 +127267,13 @@ function drawActorLegend(diagram27) {
       measureText.remove();
     }
     lines.forEach((line2, index2) => {
+      var _a58;
       const labelData = {
         x: 40,
         y: yPos + 7 + index2 * 20,
         fill: "#666",
         text: line2,
-        textMargin: conf22.boxTextMargin ?? 5
+        textMargin: (_a58 = conf22.boxTextMargin) != null ? _a58 : 5
       };
       const textElement = svgDraw_default3.drawText(diagram27, labelData);
       const lineWidth = textElement.node().getBoundingClientRect().width;
@@ -129344,6 +129411,7 @@ var init_timeline_definition_IT6M3QCI = __esm({
     }, "initGraphics");
     __name(wrap4, "wrap");
     drawNode = /* @__PURE__ */ __name(function(elem, node3, fullSection, conf5) {
+      var _a58;
       const section = fullSection % MAX_SECTIONS - 1;
       const nodeElem = elem.append("g");
       node3.section = section;
@@ -129355,7 +129423,7 @@ var init_timeline_definition_IT6M3QCI = __esm({
       const textElem = nodeElem.append("g");
       const txt = textElem.append("text").text(node3.descr).attr("dy", "1em").attr("alignment-baseline", "middle").attr("dominant-baseline", "middle").attr("text-anchor", "middle").call(wrap4, node3.width);
       const bbox = txt.node().getBBox();
-      const fontSize = conf5.fontSize?.replace ? conf5.fontSize.replace("px", "") : conf5.fontSize;
+      const fontSize = ((_a58 = conf5.fontSize) == null ? void 0 : _a58.replace) ? conf5.fontSize.replace("px", "") : conf5.fontSize;
       node3.height = bbox.height + fontSize * 1.1 * 0.5 + node3.padding;
       node3.height = Math.max(node3.height, node3.maxHeight);
       node3.width = node3.width + 2 * node3.padding;
@@ -129364,10 +129432,11 @@ var init_timeline_definition_IT6M3QCI = __esm({
       return node3;
     }, "drawNode");
     getVirtualNodeHeight = /* @__PURE__ */ __name(function(elem, node3, conf5) {
+      var _a58;
       const textElem = elem.append("g");
       const txt = textElem.append("text").text(node3.descr).attr("dy", "1em").attr("alignment-baseline", "middle").attr("dominant-baseline", "middle").attr("text-anchor", "middle").call(wrap4, node3.width);
       const bbox = txt.node().getBBox();
-      const fontSize = conf5.fontSize?.replace ? conf5.fontSize.replace("px", "") : conf5.fontSize;
+      const fontSize = ((_a58 = conf5.fontSize) == null ? void 0 : _a58.replace) ? conf5.fontSize.replace("px", "") : conf5.fontSize;
       textElem.remove();
       return bbox.height + fontSize * 1.1 * 0.5 + node3.padding;
     }, "getVirtualNodeHeight");
@@ -129394,8 +129463,9 @@ var init_timeline_definition_IT6M3QCI = __esm({
       getVirtualNodeHeight
     };
     draw16 = /* @__PURE__ */ __name(function(text11, id28, version3, diagObj) {
+      var _a58, _b2, _c2, _d, _e2, _f;
       const conf5 = getConfig2();
-      const LEFT_MARGIN = conf5.timeline?.leftMargin ?? 50;
+      const LEFT_MARGIN = (_b2 = (_a58 = conf5.timeline) == null ? void 0 : _a58.leftMargin) != null ? _b2 : 50;
       log.debug("timeline", diagObj.db);
       const securityLevel = conf5.securityLevel;
       let sandboxElement;
@@ -129531,11 +129601,12 @@ var init_timeline_definition_IT6M3QCI = __esm({
       setupGraphViewbox(
         void 0,
         svg4,
-        conf5.timeline?.padding ?? 50,
-        conf5.timeline?.useMaxWidth ?? false
+        (_d = (_c2 = conf5.timeline) == null ? void 0 : _c2.padding) != null ? _d : 50,
+        (_f = (_e2 = conf5.timeline) == null ? void 0 : _e2.useMaxWidth) != null ? _f : false
       );
     }, "draw");
     drawTasks2 = /* @__PURE__ */ __name(function(diagram27, tasks22, sectionColor, masterX, masterY, maxTaskHeight, conf5, maxEventCount, maxEventLineLength, maxSectionHeight, isWithoutSections) {
+      var _a58;
       for (const task of tasks22) {
         const taskNode = {
           descr: task.task,
@@ -129561,7 +129632,7 @@ var init_timeline_definition_IT6M3QCI = __esm({
           lineWrapper.append("line").attr("x1", masterX + 190 / 2).attr("y1", masterY + maxTaskHeight).attr("x2", masterX + 190 / 2).attr("y2", masterY + maxTaskHeight + 100 + maxEventLineLength + 100).attr("stroke-width", 2).attr("stroke", "black").attr("marker-end", "url(#arrowhead)").attr("stroke-dasharray", "5,5");
         }
         masterX = masterX + 200;
-        if (isWithoutSections && !conf5.timeline?.disableMulticolor) {
+        if (isWithoutSections && !((_a58 = conf5.timeline) == null ? void 0 : _a58.disableMulticolor)) {
           sectionColor++;
         }
       }
@@ -129720,11 +129791,12 @@ var init_native = __esm({
 
 // node_modules/uuid/dist/esm-browser/v4.js
 function v4(options2, buf, offset) {
+  var _a58, _b2, _c2;
   if (native_default.randomUUID && !buf && !options2) {
     return native_default.randomUUID();
   }
   options2 = options2 || {};
-  const rnds = options2.random ?? options2.rng?.() ?? rng();
+  const rnds = (_c2 = (_b2 = options2.random) != null ? _b2 : (_a58 = options2.rng) == null ? void 0 : _a58.call(options2)) != null ? _c2 : rng();
   if (rnds.length < 16) {
     throw new Error("Random bytes length must be >= 16");
   }
@@ -129764,7 +129836,7 @@ var mindmap_definition_VGOIOE7T_exports = {};
 __export(mindmap_definition_VGOIOE7T_exports, {
   diagram: () => diagram18
 });
-var parser17, mindmap_default, nodeType, MindmapDB, draw17, mindmapRenderer_default, genSections2, getStyles14, styles_default13, diagram18;
+var parser17, mindmap_default, nodeType, _a49, MindmapDB, draw17, mindmapRenderer_default, genSections2, getStyles14, styles_default13, diagram18;
 var init_mindmap_definition_VGOIOE7T = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/mindmap-definition-VGOIOE7T.mjs"() {
     init_chunk_55IACEB6();
@@ -130460,7 +130532,7 @@ var init_mindmap_definition_VGOIOE7T = __esm({
       BANG: 5,
       HEXAGON: 6
     };
-    MindmapDB = class {
+    MindmapDB = (_a49 = class {
       constructor() {
         this.nodes = [];
         this.count = 0;
@@ -130474,9 +130546,6 @@ var init_mindmap_definition_VGOIOE7T = __esm({
         this.getMindmap = this.getMindmap.bind(this);
         this.addNode = this.addNode.bind(this);
         this.decorateNode = this.decorateNode.bind(this);
-      }
-      static {
-        __name(this, "MindmapDB");
       }
       clear() {
         this.nodes = [];
@@ -130496,6 +130565,7 @@ var init_mindmap_definition_VGOIOE7T = __esm({
         return this.nodes.length > 0 ? this.nodes[0] : null;
       }
       addNode(level, id28, descr, type3) {
+        var _a58, _b2, _c2, _d;
         log.info("addNode", level, id28, descr, type3);
         let isRoot = false;
         if (this.nodes.length === 0) {
@@ -130507,7 +130577,7 @@ var init_mindmap_definition_VGOIOE7T = __esm({
           isRoot = false;
         }
         const conf5 = getConfig2();
-        let padding2 = conf5.mindmap?.padding ?? defaultConfig_default.mindmap.padding;
+        let padding2 = (_b2 = (_a58 = conf5.mindmap) == null ? void 0 : _a58.padding) != null ? _b2 : defaultConfig_default.mindmap.padding;
         switch (type3) {
           case this.nodeType.ROUNDED_RECT:
           case this.nodeType.RECT:
@@ -130522,7 +130592,7 @@ var init_mindmap_definition_VGOIOE7T = __esm({
           descr: sanitizeText(descr, conf5),
           type: type3,
           children: [],
-          width: conf5.mindmap?.maxNodeWidth ?? defaultConfig_default.mindmap.maxNodeWidth,
+          width: (_d = (_c2 = conf5.mindmap) == null ? void 0 : _c2.maxNodeWidth) != null ? _d : defaultConfig_default.mindmap.maxNodeWidth,
           padding: padding2,
           isRoot
         };
@@ -130623,6 +130693,7 @@ var init_mindmap_definition_VGOIOE7T = __esm({
        * @param processedNodes - Array to collect processed nodes
        */
       flattenNodes(node3, processedNodes) {
+        var _a58;
         const cssClasses = ["mindmap-node"];
         if (node3.isRoot === true) {
           cssClasses.push("section-root", "section--1");
@@ -130661,7 +130732,7 @@ var init_mindmap_definition_VGOIOE7T = __esm({
           isGroup: false,
           shape: getShapeFromType(node3.type),
           width: node3.width,
-          height: node3.height ?? 0,
+          height: (_a58 = node3.height) != null ? _a58 : 0,
           padding: node3.padding,
           cssClasses: classes3,
           cssStyles: [],
@@ -130780,8 +130851,9 @@ var init_mindmap_definition_VGOIOE7T = __esm({
       getLogger() {
         return log;
       }
-    };
+    }, __name(_a49, "MindmapDB"), _a49);
     draw17 = /* @__PURE__ */ __name(async (text11, id28, _version, diagObj) => {
+      var _a58, _b2, _c2, _d;
       log.debug("Rendering mindmap diagram\n" + text11);
       const db7 = diagObj.db;
       const data4Layout = db7.getData();
@@ -130812,9 +130884,9 @@ var init_mindmap_definition_VGOIOE7T = __esm({
       await render5(data4Layout, svg4);
       setupViewPortForSVG(
         svg4,
-        data4Layout.config.mindmap?.padding ?? defaultConfig_default.mindmap.padding,
+        (_b2 = (_a58 = data4Layout.config.mindmap) == null ? void 0 : _a58.padding) != null ? _b2 : defaultConfig_default.mindmap.padding,
         "mindmapDiagram",
-        data4Layout.config.mindmap?.useMaxWidth ?? defaultConfig_default.mindmap.useMaxWidth
+        (_d = (_c2 = data4Layout.config.mindmap) == null ? void 0 : _c2.useMaxWidth) != null ? _d : defaultConfig_default.mindmap.useMaxWidth
       );
     }, "draw");
     mindmapRenderer_default = {
@@ -131660,7 +131732,7 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
           throw new Error('Items without section detected, found section ("' + nodes3[i3].label + '")');
         }
       }
-      if (level === lastSection?.level) {
+      if (level === (lastSection == null ? void 0 : lastSection.level)) {
         return null;
       }
       return lastSection;
@@ -131669,6 +131741,7 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
       return sections5;
     }, "getSections");
     getData = /* @__PURE__ */ __name(function() {
+      var _a58, _b2;
       const edges3 = [];
       const _nodes = [];
       const sections22 = getSections5();
@@ -131676,7 +131749,7 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
       for (const section of sections22) {
         const node3 = {
           id: section.id,
-          label: sanitizeText(section.label ?? "", conf5),
+          label: sanitizeText((_a58 = section.label) != null ? _a58 : "", conf5),
           isGroup: true,
           ticket: section.ticket,
           shape: "kanbanSection",
@@ -131689,12 +131762,12 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
           const childNode = {
             id: item.id,
             parentId: section.id,
-            label: sanitizeText(item.label ?? "", conf5),
+            label: sanitizeText((_b2 = item.label) != null ? _b2 : "", conf5),
             isGroup: false,
-            ticket: item?.ticket,
-            priority: item?.priority,
-            assigned: item?.assigned,
-            icon: item?.icon,
+            ticket: item == null ? void 0 : item.ticket,
+            priority: item == null ? void 0 : item.priority,
+            assigned: item == null ? void 0 : item.assigned,
+            icon: item == null ? void 0 : item.icon,
             shape: "kanbanItem",
             level: item.level,
             rx: 5,
@@ -131707,8 +131780,9 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
       return { nodes: _nodes, edges: edges3, other: {}, config: getConfig2() };
     }, "getData");
     addNode = /* @__PURE__ */ __name((level, id28, descr, type3, shapeData) => {
+      var _a58, _b2, _c2, _d;
       const conf5 = getConfig2();
-      let padding2 = conf5.mindmap?.padding ?? defaultConfig_default.mindmap.padding;
+      let padding2 = (_b2 = (_a58 = conf5.mindmap) == null ? void 0 : _a58.padding) != null ? _b2 : defaultConfig_default.mindmap.padding;
       switch (type3) {
         case nodeType2.ROUNDED_RECT:
         case nodeType2.RECT:
@@ -131719,7 +131793,7 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
         id: sanitizeText(id28, conf5) || "kbn" + cnt2++,
         level,
         label: sanitizeText(descr, conf5),
-        width: conf5.mindmap?.maxNodeWidth ?? defaultConfig_default.mindmap.maxNodeWidth,
+        width: (_d = (_c2 = conf5.mindmap) == null ? void 0 : _c2.maxNodeWidth) != null ? _d : defaultConfig_default.mindmap.maxNodeWidth,
         padding: padding2,
         isGroup: false
       };
@@ -131734,23 +131808,23 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
         if (doc.shape && (doc.shape !== doc.shape.toLowerCase() || doc.shape.includes("_"))) {
           throw new Error(`No such shape: ${doc.shape}. Shape names should be lowercase.`);
         }
-        if (doc?.shape && doc.shape === "kanbanItem") {
-          node3.shape = doc?.shape;
+        if ((doc == null ? void 0 : doc.shape) && doc.shape === "kanbanItem") {
+          node3.shape = doc == null ? void 0 : doc.shape;
         }
-        if (doc?.label) {
-          node3.label = doc?.label;
+        if (doc == null ? void 0 : doc.label) {
+          node3.label = doc == null ? void 0 : doc.label;
         }
-        if (doc?.icon) {
-          node3.icon = doc?.icon.toString();
+        if (doc == null ? void 0 : doc.icon) {
+          node3.icon = doc == null ? void 0 : doc.icon.toString();
         }
-        if (doc?.assigned) {
-          node3.assigned = doc?.assigned.toString();
+        if (doc == null ? void 0 : doc.assigned) {
+          node3.assigned = doc == null ? void 0 : doc.assigned.toString();
         }
-        if (doc?.ticket) {
-          node3.ticket = doc?.ticket.toString();
+        if (doc == null ? void 0 : doc.ticket) {
+          node3.ticket = doc == null ? void 0 : doc.ticket.toString();
         }
-        if (doc?.priority) {
-          node3.priority = doc?.priority;
+        if (doc == null ? void 0 : doc.priority) {
+          node3.priority = doc == null ? void 0 : doc.priority;
         }
       }
       const section = getSection(level);
@@ -131844,6 +131918,7 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
     };
     kanbanDb_default = db4;
     draw18 = /* @__PURE__ */ __name(async (text11, id28, _version, diagObj) => {
+      var _a58, _b2, _c2, _d, _e2, _f, _g;
       log.debug("Rendering kanban diagram\n" + text11);
       const db22 = diagObj.db;
       const data4Layout = db22.getData();
@@ -131863,7 +131938,7 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
       const sectionObjects = [];
       let maxLabelHeight = 25;
       for (const section of sections22) {
-        const WIDTH = conf5?.kanban?.sectionWidth || 200;
+        const WIDTH = ((_a58 = conf5 == null ? void 0 : conf5.kanban) == null ? void 0 : _a58.sectionWidth) || 200;
         cnt22 = cnt22 + 1;
         section.x = WIDTH * cnt22 + (cnt22 - 1) * padding2 / 2;
         section.width = WIDTH;
@@ -131873,14 +131948,14 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
         section.ry = 5;
         section.cssClasses = section.cssClasses + " section-" + cnt22;
         const sectionObj = await insertCluster(sectionsElem, section);
-        maxLabelHeight = Math.max(maxLabelHeight, sectionObj?.labelBBox?.height);
+        maxLabelHeight = Math.max(maxLabelHeight, (_b2 = sectionObj == null ? void 0 : sectionObj.labelBBox) == null ? void 0 : _b2.height);
         sectionObjects.push(sectionObj);
       }
       let i3 = 0;
       for (const section of sections22) {
         const sectionObj = sectionObjects[i3];
         i3 = i3 + 1;
-        const WIDTH = conf5?.kanban?.sectionWidth || 200;
+        const WIDTH = ((_c2 = conf5 == null ? void 0 : conf5.kanban) == null ? void 0 : _c2.sectionWidth) || 200;
         const top2 = -WIDTH * 3 / 2 + maxLabelHeight;
         let y6 = top2;
         const sectionItems = data4Layout.nodes.filter((node3) => node3.parentId === section.id);
@@ -131903,8 +131978,8 @@ var init_kanban_definition_3W4ZIXB7 = __esm({
       setupGraphViewbox(
         void 0,
         svg4,
-        conf5.mindmap?.padding ?? defaultConfig_default.kanban.padding,
-        conf5.mindmap?.useMaxWidth ?? defaultConfig_default.kanban.useMaxWidth
+        (_e2 = (_d = conf5.mindmap) == null ? void 0 : _d.padding) != null ? _e2 : defaultConfig_default.kanban.padding,
+        (_g = (_f = conf5.mindmap) == null ? void 0 : _f.useMaxWidth) != null ? _g : defaultConfig_default.kanban.useMaxWidth
       );
     }, "draw");
     kanbanRenderer_default = {
@@ -132661,7 +132736,7 @@ var sankeyDiagram_TZEHDZUN_exports = {};
 __export(sankeyDiagram_TZEHDZUN_exports, {
   diagram: () => diagram20
 });
-var parser19, sankey_default, links2, nodes4, nodesMap, clear210, SankeyLink, addLink, SankeyNode, findOrCreateNode, getNodes, getLinks2, getGraph, sankeyDB_default, Uid, alignmentsMap, draw19, sankeyRenderer_default, prepareTextForParsing, getStyles16, styles_default15, originalParse, diagram20;
+var parser19, sankey_default, links2, nodes4, nodesMap, clear210, _a50, SankeyLink, addLink, _a51, SankeyNode, findOrCreateNode, getNodes, getLinks2, getGraph, sankeyDB_default, _a52, Uid, alignmentsMap, draw19, sankeyRenderer_default, prepareTextForParsing, getStyles16, styles_default15, originalParse, diagram20;
 var init_sankeyDiagram_TZEHDZUN = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/sankeyDiagram-TZEHDZUN.mjs"() {
     init_chunk_ABZYJK2D();
@@ -133194,27 +133269,21 @@ var init_sankeyDiagram_TZEHDZUN = __esm({
       nodesMap = /* @__PURE__ */ new Map();
       clear();
     }, "clear");
-    SankeyLink = class {
+    SankeyLink = (_a50 = class {
       constructor(source, target, value2 = 0) {
         this.source = source;
         this.target = target;
         this.value = value2;
       }
-      static {
-        __name(this, "SankeyLink");
-      }
-    };
+    }, __name(_a50, "SankeyLink"), _a50);
     addLink = /* @__PURE__ */ __name((source, target, value2) => {
       links2.push(new SankeyLink(source, target, value2));
     }, "addLink");
-    SankeyNode = class {
+    SankeyNode = (_a51 = class {
       constructor(ID) {
         this.ID = ID;
       }
-      static {
-        __name(this, "SankeyNode");
-      }
-    };
+    }, __name(_a51, "SankeyNode"), _a51);
     findOrCreateNode = /* @__PURE__ */ __name((ID) => {
       ID = common_default.sanitizeText(ID, getConfig2());
       let node3 = nodesMap.get(ID);
@@ -133251,15 +133320,9 @@ var init_sankeyDiagram_TZEHDZUN = __esm({
       setDiagramTitle,
       clear: clear210
     };
-    Uid = class _Uid {
-      static {
-        __name(this, "Uid");
-      }
-      static {
-        this.count = 0;
-      }
+    Uid = (_a52 = class {
       static next(name) {
-        return new _Uid(name + ++_Uid.count);
+        return new _a52(name + ++_a52.count);
       }
       constructor(id28) {
         this.id = id28;
@@ -133268,7 +133331,7 @@ var init_sankeyDiagram_TZEHDZUN = __esm({
       toString() {
         return "url(" + this.href + ")";
       }
-    };
+    }, __name(_a52, "Uid"), _a52.count = 0, _a52);
     alignmentsMap = {
       left: left2,
       right: right2,
@@ -133276,6 +133339,7 @@ var init_sankeyDiagram_TZEHDZUN = __esm({
       justify
     };
     draw19 = /* @__PURE__ */ __name(function(text11, id28, _version, diagObj) {
+      var _a58, _b2, _c2, _d, _e2, _f, _g, _h;
       const { securityLevel, sankey: conf5 } = getConfig2();
       const defaultSankeyConfig = defaultConfig2.sankey;
       let sandboxElement;
@@ -133284,13 +133348,13 @@ var init_sankeyDiagram_TZEHDZUN = __esm({
       }
       const root7 = securityLevel === "sandbox" ? select_default2(sandboxElement.nodes()[0].contentDocument.body) : select_default2("body");
       const svg4 = securityLevel === "sandbox" ? root7.select(`[id="${id28}"]`) : select_default2(`[id="${id28}"]`);
-      const width3 = conf5?.width ?? defaultSankeyConfig.width;
-      const height2 = conf5?.height ?? defaultSankeyConfig.width;
-      const useMaxWidth = conf5?.useMaxWidth ?? defaultSankeyConfig.useMaxWidth;
-      const nodeAlignment = conf5?.nodeAlignment ?? defaultSankeyConfig.nodeAlignment;
-      const prefix = conf5?.prefix ?? defaultSankeyConfig.prefix;
-      const suffix = conf5?.suffix ?? defaultSankeyConfig.suffix;
-      const showValues = conf5?.showValues ?? defaultSankeyConfig.showValues;
+      const width3 = (_a58 = conf5 == null ? void 0 : conf5.width) != null ? _a58 : defaultSankeyConfig.width;
+      const height2 = (_b2 = conf5 == null ? void 0 : conf5.height) != null ? _b2 : defaultSankeyConfig.width;
+      const useMaxWidth = (_c2 = conf5 == null ? void 0 : conf5.useMaxWidth) != null ? _c2 : defaultSankeyConfig.useMaxWidth;
+      const nodeAlignment = (_d = conf5 == null ? void 0 : conf5.nodeAlignment) != null ? _d : defaultSankeyConfig.nodeAlignment;
+      const prefix = (_e2 = conf5 == null ? void 0 : conf5.prefix) != null ? _e2 : defaultSankeyConfig.prefix;
+      const suffix = (_f = conf5 == null ? void 0 : conf5.suffix) != null ? _f : defaultSankeyConfig.suffix;
+      const showValues = (_g = conf5 == null ? void 0 : conf5.showValues) != null ? _g : defaultSankeyConfig.showValues;
       const graph = diagObj.db.getGraph();
       const nodeAlign = alignmentsMap[nodeAlignment];
       const nodeWidth = 10;
@@ -133314,7 +133378,7 @@ ${prefix}${Math.round(value2 * 100) / 100}${suffix}`;
       }, "getText");
       svg4.append("g").attr("class", "node-labels").attr("font-size", 14).selectAll("text").data(graph.nodes).join("text").attr("x", (d3) => d3.x0 < width3 / 2 ? d3.x1 + 6 : d3.x0 - 6).attr("y", (d3) => (d3.y1 + d3.y0) / 2).attr("dy", `${showValues ? "0" : "0.35"}em`).attr("text-anchor", (d3) => d3.x0 < width3 / 2 ? "start" : "end").text(getText);
       const link4 = svg4.append("g").attr("class", "links").attr("fill", "none").attr("stroke-opacity", 0.5).selectAll(".link").data(graph.links).join("g").attr("class", "link").style("mix-blend-mode", "multiply");
-      const linkColor = conf5?.linkColor ?? "gradient";
+      const linkColor = (_h = conf5 == null ? void 0 : conf5.linkColor) != null ? _h : "gradient";
       if (linkColor === "gradient") {
         const gradient = link4.append("linearGradient").attr("id", (d3) => (d3.uid = Uid.next("linearGradient-")).id).attr("gradientUnits", "userSpaceOnUse").attr("x1", (d3) => d3.source.x1).attr("x2", (d3) => d3.target.x0);
         gradient.append("stop").attr("offset", "0%").attr("stop-color", (d3) => colorScheme(d3.source.id));
@@ -133364,7 +133428,7 @@ var diagram_S2PKOQOG_exports = {};
 __export(diagram_S2PKOQOG_exports, {
   diagram: () => diagram21
 });
-var DEFAULT_PACKET_CONFIG, PacketDB, maxPacketSize, populate16, getNextFittingBlock, parser20, draw20, drawWord, renderer5, defaultPacketStyleOptions, styles2, diagram21;
+var DEFAULT_PACKET_CONFIG, _a53, PacketDB, maxPacketSize, populate16, getNextFittingBlock, parser20, draw20, drawWord, renderer5, defaultPacketStyleOptions, styles2, diagram21;
 var init_diagram_S2PKOQOG = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/diagram-S2PKOQOG.mjs"() {
     init_chunk_EXTU4WIE();
@@ -133374,7 +133438,7 @@ var init_diagram_S2PKOQOG = __esm({
     init_chunk_AGHRB4JF();
     init_mermaid_parser_core();
     DEFAULT_PACKET_CONFIG = defaultConfig_default.packet;
-    PacketDB = class {
+    PacketDB = (_a53 = class {
       constructor() {
         this.packet = [];
         this.setAccTitle = setAccTitle;
@@ -133384,14 +133448,8 @@ var init_diagram_S2PKOQOG = __esm({
         this.getAccDescription = getAccDescription;
         this.setAccDescription = setAccDescription;
       }
-      static {
-        __name(this, "PacketDB");
-      }
       getConfig() {
-        const config5 = cleanAndMerge({
-          ...DEFAULT_PACKET_CONFIG,
-          ...getConfig().packet
-        });
+        const config5 = cleanAndMerge(__spreadValues(__spreadValues({}, DEFAULT_PACKET_CONFIG), getConfig().packet));
         if (config5.showBits) {
           config5.paddingY += 10;
         }
@@ -133409,7 +133467,7 @@ var init_diagram_S2PKOQOG = __esm({
         clear();
         this.packet = [];
       }
-    };
+    }, __name(_a53, "PacketDB"), _a53);
     maxPacketSize = 1e4;
     populate16 = /* @__PURE__ */ __name((ast, db7) => {
       populateCommonDb(ast, db7);
@@ -133421,17 +133479,17 @@ var init_diagram_S2PKOQOG = __esm({
         if (start3 !== void 0 && end2 !== void 0 && end2 < start3) {
           throw new Error(`Packet block ${start3} - ${end2} is invalid. End must be greater than start.`);
         }
-        start3 ??= lastBit + 1;
+        start3 != null ? start3 : start3 = lastBit + 1;
         if (start3 !== lastBit + 1) {
           throw new Error(
-            `Packet block ${start3} - ${end2 ?? start3} is not contiguous. It should start from ${lastBit + 1}.`
+            `Packet block ${start3} - ${end2 != null ? end2 : start3} is not contiguous. It should start from ${lastBit + 1}.`
           );
         }
         if (bits === 0) {
           throw new Error(`Packet block ${start3} is invalid. Cannot have a zero bit field.`);
         }
-        end2 ??= start3 + (bits ?? 1) - 1;
-        bits ??= end2 - start3 + 1;
+        end2 != null ? end2 : end2 = start3 + (bits != null ? bits : 1) - 1;
+        bits != null ? bits : bits = end2 - start3 + 1;
         lastBit = end2;
         log.debug(`Packet block ${start3} - ${lastBit} with label ${label}`);
         while (word.length <= bitsPerRow + 1 && db7.getPacket().length < maxPacketSize) {
@@ -133484,8 +133542,9 @@ var init_diagram_S2PKOQOG = __esm({
       // @ts-expect-error - PacketDB is not assignable to DiagramDB
       parser: { yy: void 0 },
       parse: /* @__PURE__ */ __name(async (input) => {
+        var _a58;
         const ast = await parse7("packet", input);
-        const db7 = parser20.parser?.yy;
+        const db7 = (_a58 = parser20.parser) == null ? void 0 : _a58.yy;
         if (!(db7 instanceof PacketDB)) {
           throw new Error(
             "parser.parser?.yy was not a PacketDB. This is due to a bug within Mermaid, please report this issue at https://github.com/mermaid-js/mermaid/issues."
@@ -133669,10 +133728,7 @@ var init_diagram_QEK2KX5R = __esm({
     data4 = structuredClone(defaultRadarData);
     DEFAULT_RADAR_CONFIG = defaultConfig_default.radar;
     getConfig23 = /* @__PURE__ */ __name(() => {
-      const config5 = cleanAndMerge({
-        ...DEFAULT_RADAR_CONFIG,
-        ...getConfig().radar
-      });
+      const config5 = cleanAndMerge(__spreadValues(__spreadValues({}, DEFAULT_RADAR_CONFIG), getConfig().radar));
       return config5;
     }, "getConfig");
     getAxes = /* @__PURE__ */ __name(() => data4.axes, "getAxes");
@@ -133680,17 +133736,19 @@ var init_diagram_QEK2KX5R = __esm({
     getOptions2 = /* @__PURE__ */ __name(() => data4.options, "getOptions");
     setAxes = /* @__PURE__ */ __name((axes) => {
       data4.axes = axes.map((axis2) => {
+        var _a58;
         return {
           name: axis2.name,
-          label: axis2.label ?? axis2.name
+          label: (_a58 = axis2.label) != null ? _a58 : axis2.name
         };
       });
     }, "setAxes");
     setCurves = /* @__PURE__ */ __name((curves) => {
       data4.curves = curves.map((curve) => {
+        var _a58;
         return {
           name: curve.name,
-          label: curve.label ?? curve.name,
+          label: (_a58 = curve.label) != null ? _a58 : curve.name,
           entries: computeCurveEntries(curve.entries)
         };
       });
@@ -133704,7 +133762,10 @@ var init_diagram_QEK2KX5R = __esm({
         throw new Error("Axes must be populated before curves for reference entries");
       }
       return axes.map((axis2) => {
-        const entry = entries2.find((entry2) => entry2.axis?.$refText === axis2.name);
+        const entry = entries2.find((entry2) => {
+          var _a58;
+          return ((_a58 = entry2.axis) == null ? void 0 : _a58.$refText) === axis2.name;
+        });
         if (entry === void 0) {
           throw new Error("Missing entry for axis " + axis2.label);
         }
@@ -133712,6 +133773,7 @@ var init_diagram_QEK2KX5R = __esm({
       });
     }, "computeCurveEntries");
     setOptions7 = /* @__PURE__ */ __name((options2) => {
+      var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j;
       const optionMap = options2.reduce(
         (acc, option3) => {
           acc[option3.name] = option3;
@@ -133720,11 +133782,11 @@ var init_diagram_QEK2KX5R = __esm({
         {}
       );
       data4.options = {
-        showLegend: optionMap.showLegend?.value ?? defaultOptions.showLegend,
-        ticks: optionMap.ticks?.value ?? defaultOptions.ticks,
-        max: optionMap.max?.value ?? defaultOptions.max,
-        min: optionMap.min?.value ?? defaultOptions.min,
-        graticule: optionMap.graticule?.value ?? defaultOptions.graticule
+        showLegend: (_b2 = (_a58 = optionMap.showLegend) == null ? void 0 : _a58.value) != null ? _b2 : defaultOptions.showLegend,
+        ticks: (_d = (_c2 = optionMap.ticks) == null ? void 0 : _c2.value) != null ? _d : defaultOptions.ticks,
+        max: (_f = (_e2 = optionMap.max) == null ? void 0 : _e2.value) != null ? _f : defaultOptions.max,
+        min: (_h = (_g = optionMap.min) == null ? void 0 : _g.value) != null ? _h : defaultOptions.min,
+        graticule: (_j = (_i = optionMap.graticule) == null ? void 0 : _i.value) != null ? _j : defaultOptions.graticule
       };
     }, "setOptions");
     clear211 = /* @__PURE__ */ __name(() => {
@@ -133762,6 +133824,7 @@ var init_diagram_QEK2KX5R = __esm({
       }, "parse")
     };
     draw21 = /* @__PURE__ */ __name((_text, id28, _version, diagram27) => {
+      var _a58;
       const db22 = diagram27.db;
       const axes = db22.getAxes();
       const curves = db22.getCurves();
@@ -133770,7 +133833,7 @@ var init_diagram_QEK2KX5R = __esm({
       const title2 = db22.getDiagramTitle();
       const svg4 = selectSvgElement(id28);
       const g2 = drawFrame(svg4, config5);
-      const maxValue = options2.max ?? Math.max(...curves.map((curve) => Math.max(...curve.entries)));
+      const maxValue = (_a58 = options2.max) != null ? _a58 : Math.max(...curves.map((curve) => Math.max(...curve.entries)));
       const minValue = options2.min;
       const radius2 = Math.min(config5.width, config5.height) / 2;
       drawGraticule(g2, axes, radius2, options2.ticks, options2.graticule);
@@ -133975,16 +134038,17 @@ function calculateBlockPosition(columns, position7) {
   return { px, py };
 }
 function setBlockSizes(block2, db22, siblingWidth = 0, siblingHeight = 0) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
   log.debug(
     "setBlockSizes abc95 (start)",
     block2.id,
-    block2?.size?.x,
+    (_a58 = block2 == null ? void 0 : block2.size) == null ? void 0 : _a58.x,
     "block width =",
-    block2?.size,
+    block2 == null ? void 0 : block2.size,
     "siblingWidth",
     siblingWidth
   );
-  if (!block2?.size?.width) {
+  if (!((_b2 = block2 == null ? void 0 : block2.size) == null ? void 0 : _b2.width)) {
     block2.size = {
       width: siblingWidth,
       height: siblingHeight,
@@ -133994,7 +134058,7 @@ function setBlockSizes(block2, db22, siblingWidth = 0, siblingHeight = 0) {
   }
   let maxWidth2 = 0;
   let maxHeight = 0;
-  if (block2.children?.length > 0) {
+  if (((_c2 = block2.children) == null ? void 0 : _c2.length) > 0) {
     for (const child of block2.children) {
       setBlockSizes(child, db22);
     }
@@ -134007,7 +134071,7 @@ function setBlockSizes(block2, db22, siblingWidth = 0, siblingHeight = 0) {
         log.debug(
           `abc95 Setting size of children of ${block2.id} id=${child.id} ${maxWidth2} ${maxHeight} ${JSON.stringify(child.size)}`
         );
-        child.size.width = maxWidth2 * (child.widthInColumns ?? 1) + padding * ((child.widthInColumns ?? 1) - 1);
+        child.size.width = maxWidth2 * ((_d = child.widthInColumns) != null ? _d : 1) + padding * (((_e2 = child.widthInColumns) != null ? _e2 : 1) - 1);
         child.size.height = maxHeight;
         child.size.x = 0;
         child.size.y = 0;
@@ -134019,10 +134083,10 @@ function setBlockSizes(block2, db22, siblingWidth = 0, siblingHeight = 0) {
     for (const child of block2.children) {
       setBlockSizes(child, db22, maxWidth2, maxHeight);
     }
-    const columns = block2.columns ?? -1;
+    const columns = (_f = block2.columns) != null ? _f : -1;
     let numItems = 0;
     for (const child of block2.children) {
-      numItems += child.widthInColumns ?? 1;
+      numItems += (_g = child.widthInColumns) != null ? _g : 1;
     }
     let xSize = block2.children.length;
     if (columns > 0 && columns < numItems) {
@@ -134052,14 +134116,14 @@ function setBlockSizes(block2, db22, siblingWidth = 0, siblingHeight = 0) {
       }
     }
     log.debug(
-      `abc95 (finale calc) ${block2.id} xSize ${xSize} ySize ${ySize} columns ${columns}${block2.children.length} width=${Math.max(width3, block2.size?.width || 0)}`
+      `abc95 (finale calc) ${block2.id} xSize ${xSize} ySize ${ySize} columns ${columns}${block2.children.length} width=${Math.max(width3, ((_h = block2.size) == null ? void 0 : _h.width) || 0)}`
     );
-    if (width3 < (block2?.size?.width || 0)) {
-      width3 = block2?.size?.width || 0;
+    if (width3 < (((_i = block2 == null ? void 0 : block2.size) == null ? void 0 : _i.width) || 0)) {
+      width3 = ((_j = block2 == null ? void 0 : block2.size) == null ? void 0 : _j.width) || 0;
       const num = columns > 0 ? Math.min(block2.children.length, columns) : block2.children.length;
       if (num > 0) {
         const childWidth = (width3 - num * padding - padding) / num;
-        log.debug("abc95 (growing to fit) width", block2.id, width3, block2.size?.width, childWidth);
+        log.debug("abc95 (growing to fit) width", block2.id, width3, (_k = block2.size) == null ? void 0 : _k.width, childWidth);
         for (const child of block2.children) {
           if (child.size) {
             child.size.width = childWidth;
@@ -134077,26 +134141,27 @@ function setBlockSizes(block2, db22, siblingWidth = 0, siblingHeight = 0) {
   log.debug(
     "setBlockSizes abc94 (done)",
     block2.id,
-    block2?.size?.x,
-    block2?.size?.width,
-    block2?.size?.y,
-    block2?.size?.height
+    (_l = block2 == null ? void 0 : block2.size) == null ? void 0 : _l.x,
+    (_m = block2 == null ? void 0 : block2.size) == null ? void 0 : _m.width,
+    (_n = block2 == null ? void 0 : block2.size) == null ? void 0 : _n.y,
+    (_o = block2 == null ? void 0 : block2.size) == null ? void 0 : _o.height
   );
 }
 function layoutBlocks(block2, db22) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
   log.debug(
-    `abc85 layout blocks (=>layoutBlocks) ${block2.id} x: ${block2?.size?.x} y: ${block2?.size?.y} width: ${block2?.size?.width}`
+    `abc85 layout blocks (=>layoutBlocks) ${block2.id} x: ${(_a58 = block2 == null ? void 0 : block2.size) == null ? void 0 : _a58.x} y: ${(_b2 = block2 == null ? void 0 : block2.size) == null ? void 0 : _b2.y} width: ${(_c2 = block2 == null ? void 0 : block2.size) == null ? void 0 : _c2.width}`
   );
-  const columns = block2.columns ?? -1;
+  const columns = (_d = block2.columns) != null ? _d : -1;
   log.debug("layoutBlocks columns abc95", block2.id, "=>", columns, block2);
   if (block2.children && // find max width of children
   block2.children.length > 0) {
-    const width3 = block2?.children[0]?.size?.width ?? 0;
+    const width3 = (_g = (_f = (_e2 = block2 == null ? void 0 : block2.children[0]) == null ? void 0 : _e2.size) == null ? void 0 : _f.width) != null ? _g : 0;
     const widthOfChildren = block2.children.length * width3 + (block2.children.length - 1) * padding;
     log.debug("widthOfChildren 88", widthOfChildren, "posX");
     let columnPos = 0;
-    log.debug("abc91 block?.size?.x", block2.id, block2?.size?.x);
-    let startingPosX = block2?.size?.x ? block2?.size?.x + (-block2?.size?.width / 2 || 0) : -padding;
+    log.debug("abc91 block?.size?.x", block2.id, (_h = block2 == null ? void 0 : block2.size) == null ? void 0 : _h.x);
+    let startingPosX = ((_i = block2 == null ? void 0 : block2.size) == null ? void 0 : _i.x) ? ((_j = block2 == null ? void 0 : block2.size) == null ? void 0 : _j.x) + (-((_k = block2 == null ? void 0 : block2.size) == null ? void 0 : _k.width) / 2 || 0) : -padding;
     let rowPos = 0;
     for (const child of block2.children) {
       const parent4 = block2;
@@ -134107,28 +134172,28 @@ function layoutBlocks(block2, db22) {
       const { px, py } = calculateBlockPosition(columns, columnPos);
       if (py != rowPos) {
         rowPos = py;
-        startingPosX = block2?.size?.x ? block2?.size?.x + (-block2?.size?.width / 2 || 0) : -padding;
+        startingPosX = ((_l = block2 == null ? void 0 : block2.size) == null ? void 0 : _l.x) ? ((_m = block2 == null ? void 0 : block2.size) == null ? void 0 : _m.x) + (-((_n = block2 == null ? void 0 : block2.size) == null ? void 0 : _n.width) / 2 || 0) : -padding;
         log.debug("New row in layout for block", block2.id, " and child ", child.id, rowPos);
       }
       log.debug(
-        `abc89 layout blocks (child) id: ${child.id} Pos: ${columnPos} (px, py) ${px},${py} (${parent4?.size?.x},${parent4?.size?.y}) parent: ${parent4.id} width: ${width22}${padding}`
+        `abc89 layout blocks (child) id: ${child.id} Pos: ${columnPos} (px, py) ${px},${py} (${(_o = parent4 == null ? void 0 : parent4.size) == null ? void 0 : _o.x},${(_p = parent4 == null ? void 0 : parent4.size) == null ? void 0 : _p.y}) parent: ${parent4.id} width: ${width22}${padding}`
       );
       if (parent4.size) {
         const halfWidth = width22 / 2;
         child.size.x = startingPosX + padding + halfWidth;
         log.debug(
-          `abc91 layout blocks (calc) px, pyid:${child.id} startingPos=X${startingPosX} new startingPosX${child.size.x} ${halfWidth} padding=${padding} width=${width22} halfWidth=${halfWidth} => x:${child.size.x} y:${child.size.y} ${child.widthInColumns} (width * (child?.w || 1)) / 2 ${width22 * (child?.widthInColumns ?? 1) / 2}`
+          `abc91 layout blocks (calc) px, pyid:${child.id} startingPos=X${startingPosX} new startingPosX${child.size.x} ${halfWidth} padding=${padding} width=${width22} halfWidth=${halfWidth} => x:${child.size.x} y:${child.size.y} ${child.widthInColumns} (width * (child?.w || 1)) / 2 ${width22 * ((_q = child == null ? void 0 : child.widthInColumns) != null ? _q : 1) / 2}`
         );
         startingPosX = child.size.x + halfWidth;
         child.size.y = parent4.size.y - parent4.size.height / 2 + py * (height2 + padding) + height2 / 2 + padding;
         log.debug(
-          `abc88 layout blocks (calc) px, pyid:${child.id}startingPosX${startingPosX}${padding}${halfWidth}=>x:${child.size.x}y:${child.size.y}${child.widthInColumns}(width * (child?.w || 1)) / 2${width22 * (child?.widthInColumns ?? 1) / 2}`
+          `abc88 layout blocks (calc) px, pyid:${child.id}startingPosX${startingPosX}${padding}${halfWidth}=>x:${child.size.x}y:${child.size.y}${child.widthInColumns}(width * (child?.w || 1)) / 2${width22 * ((_r = child == null ? void 0 : child.widthInColumns) != null ? _r : 1) / 2}`
         );
       }
       if (child.children) {
         layoutBlocks(child, db22);
       }
-      let columnsFilled = child?.widthInColumns ?? 1;
+      let columnsFilled = (_s = child == null ? void 0 : child.widthInColumns) != null ? _s : 1;
       if (columns > 0) {
         columnsFilled = Math.min(columnsFilled, columns - columnPos % columns);
       }
@@ -134137,7 +134202,7 @@ function layoutBlocks(block2, db22) {
     }
   }
   log.debug(
-    `layout blocks (<==layoutBlocks) ${block2.id} x: ${block2?.size?.x} y: ${block2?.size?.y} width: ${block2?.size?.width}`
+    `layout blocks (<==layoutBlocks) ${block2.id} x: ${(_t = block2 == null ? void 0 : block2.size) == null ? void 0 : _t.x} y: ${(_u = block2 == null ? void 0 : block2.size) == null ? void 0 : _u.y} width: ${(_v = block2 == null ? void 0 : block2.size) == null ? void 0 : _v.width}`
   );
 }
 function findBounds(block2, { minX, minY, maxX, maxY } = { minX: 0, minY: 0, maxX: 0, maxY: 0 }) {
@@ -134348,10 +134413,11 @@ function applyNodePropertyBorders(rect22, borders, totalWidth, totalHeight) {
   rect22.attr("stroke-dasharray", strokeDashArray.join(" "));
 }
 function getNodeFromBlock(block2, db22, positioned = false) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g;
   const vertex = block2;
   let classStr = "default";
-  if ((vertex?.classes?.length || 0) > 0) {
-    classStr = (vertex?.classes ?? []).join(" ");
+  if ((((_a58 = vertex == null ? void 0 : vertex.classes) == null ? void 0 : _a58.length) || 0) > 0) {
+    classStr = ((_b2 = vertex == null ? void 0 : vertex.classes) != null ? _b2 : []).join(" ");
   }
   classStr = classStr + " flowchart-label";
   let radius2 = 0;
@@ -134421,9 +134487,9 @@ function getNodeFromBlock(block2, db22, positioned = false) {
     default:
       shape = "rect";
   }
-  const styles4 = getStylesFromArray(vertex?.styles ?? []);
+  const styles4 = getStylesFromArray((_c2 = vertex == null ? void 0 : vertex.styles) != null ? _c2 : []);
   const vertexText = vertex.label;
-  const bounds4 = vertex.size ?? { width: 0, height: 0, x: 0, y: 0 };
+  const bounds4 = (_d = vertex.size) != null ? _d : { width: 0, height: 0, x: 0, y: 0 };
   const node3 = {
     labelStyle: styles4.labelStyle,
     shape,
@@ -134441,7 +134507,7 @@ function getNodeFromBlock(block2, db22, positioned = false) {
     positioned,
     intersect: void 0,
     type: vertex.type,
-    padding: padding2 ?? getConfig()?.block?.padding ?? 0
+    padding: (_g = padding2 != null ? padding2 : (_f = (_e2 = getConfig()) == null ? void 0 : _e2.block) == null ? void 0 : _f.padding) != null ? _g : 0
   };
   return node3;
 }
@@ -134464,7 +134530,7 @@ async function insertBlockPositioned(elem, block2, db22) {
   if (obj.type !== "space") {
     const config22 = getConfig();
     await insertNode2(elem, node3, { config: config22 });
-    block2.intersect = node3?.intersect;
+    block2.intersect = node3 == null ? void 0 : node3.intersect;
     positionNode2(node3);
   }
 }
@@ -134507,7 +134573,7 @@ async function insertEdges(elem, edges3, blocks2, db22, id28) {
     if (edge.start && edge.end) {
       const startBlock = db22.getBlock(edge.start);
       const endBlock = db22.getBlock(edge.end);
-      if (startBlock?.size && endBlock?.size) {
+      if ((startBlock == null ? void 0 : startBlock.size) && (endBlock == null ? void 0 : endBlock.size)) {
         const start22 = startBlock.size;
         const end2 = endBlock.size;
         const points = [
@@ -134518,30 +134584,28 @@ async function insertEdges(elem, edges3, blocks2, db22, id28) {
         insertEdge2(
           elem,
           { v: edge.start, w: edge.end, name: edge.id },
-          {
-            ...edge,
+          __spreadProps(__spreadValues({}, edge), {
             arrowTypeEnd: edge.arrowTypeEnd,
             arrowTypeStart: edge.arrowTypeStart,
             points,
             classes: "edge-thickness-normal edge-pattern-solid flowchart-link LS-a1 LE-b1"
-          },
+          }),
           void 0,
           "block",
           g2,
           id28
         );
         if (edge.label) {
-          await insertEdgeLabel2(elem, {
-            ...edge,
+          await insertEdgeLabel2(elem, __spreadProps(__spreadValues({}, edge), {
             label: edge.label,
             labelStyle: "stroke: #333; stroke-width: 1.5px;fill:none;",
             arrowTypeEnd: edge.arrowTypeEnd,
             arrowTypeStart: edge.arrowTypeStart,
             points,
             classes: "edge-thickness-normal edge-pattern-solid flowchart-link LS-a1 LE-b1"
-          });
+          }));
           positionEdgeLabel2(
-            { ...edge, x: points[1].x, y: points[1].y },
+            __spreadProps(__spreadValues({}, edge), { x: points[1].x, y: points[1].y }),
             {
               originalPath: points
             }
@@ -134551,7 +134615,7 @@ async function insertEdges(elem, edges3, blocks2, db22, id28) {
     }
   }
 }
-var parser22, block_default, blockDatabase, edgeList, edgeCount2, COLOR_KEYWORD, FILL_KEYWORD, BG_FILL, STYLECLASS_SEP, config4, classes2, sanitizeText23, addStyleClass, addStyle2Node, setCssClass, populateBlockDatabase, blocks, rootBlock, clear212, cnt3, generateId2, setHierarchy, getColumns, getBlocksFlat, getBlocks, getEdges, getBlock, setBlock, getLogger2, getClasses4, db6, blockDB_default, fade3, getStyles17, styles_default16, insertMarkers3, extension5, composition2, aggregation2, dependency2, lollipop2, point10, circle4, cross2, barb2, markers2, markers_default2, padding, getMaxChildSize, createLabel2, createLabel_default2, addEdgeMarkers2, arrowTypesMap2, addEdgeMarker2, edgeLabels2, terminalLabels2, insertEdgeLabel2, positionEdgeLabel2, outsideNode2, intersection3, cutPathAtIntersect2, insertEdge2, expandAndDeduplicateDirections, getArrowPoints, intersect_node_default2, intersect_ellipse_default2, intersect_circle_default2, intersect_line_default2, intersect_polygon_default2, intersectRect3, intersect_rect_default2, intersect_default2, labelHelper2, updateNodeBounds2, note2, note_default, formatClass, getClassesFromNode, question2, choice2, hexagon2, block_arrow, rect_left_inv_arrow2, lean_right2, lean_left2, trapezoid2, inv_trapezoid2, rect_right_inv_arrow, cylinder2, rect2, composite, labelRect2, rectWithTitle2, stadium2, circle22, doublecircle2, subroutine2, start2, forkJoin2, end, class_box, shapes3, nodeElems2, insertNode2, positionNode2, getClasses22, draw22, blockRenderer_default, diagram23;
+var parser22, block_default, blockDatabase, edgeList, edgeCount2, COLOR_KEYWORD, FILL_KEYWORD, BG_FILL, STYLECLASS_SEP, config4, classes2, sanitizeText23, addStyleClass, addStyle2Node, setCssClass, populateBlockDatabase, blocks, rootBlock, clear212, cnt3, generateId2, setHierarchy, getColumns, getBlocksFlat, getBlocks, getEdges, getBlock, setBlock, getLogger2, getClasses4, db6, blockDB_default, fade3, getStyles17, styles_default16, insertMarkers3, extension5, composition2, aggregation2, dependency2, lollipop2, point10, circle4, cross2, barb2, markers2, markers_default2, _a54, _b, _c, padding, getMaxChildSize, createLabel2, createLabel_default2, addEdgeMarkers2, arrowTypesMap2, addEdgeMarker2, edgeLabels2, terminalLabels2, insertEdgeLabel2, positionEdgeLabel2, outsideNode2, intersection3, cutPathAtIntersect2, insertEdge2, expandAndDeduplicateDirections, getArrowPoints, intersect_node_default2, intersect_ellipse_default2, intersect_circle_default2, intersect_line_default2, intersect_polygon_default2, intersectRect3, intersect_rect_default2, intersect_default2, labelHelper2, updateNodeBounds2, note2, note_default, formatClass, getClassesFromNode, question2, choice2, hexagon2, block_arrow, rect_left_inv_arrow2, lean_right2, lean_left2, trapezoid2, inv_trapezoid2, rect_right_inv_arrow, cylinder2, rect2, composite, labelRect2, rectWithTitle2, stadium2, circle22, doublecircle2, subroutine2, start2, forkJoin2, end, class_box, shapes3, nodeElems2, insertNode2, positionNode2, getClasses22, draw22, blockRenderer_default, diagram23;
 var init_blockDiagram_VD42YOAC = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/blockDiagram-VD42YOAC.mjs"() {
     init_chunk_FMBD7UC4();
@@ -134655,7 +134719,7 @@ var init_blockDiagram_VD42YOAC = __esm({
             case 27:
               yy.getLogger().debug("Rule: id-block statement : ", $$[$0 - 2], $$[$0 - 1]);
               const id28 = yy.generateId();
-              this.$ = { ...$$[$0 - 2], type: "composite", children: $$[$0 - 1] };
+              this.$ = __spreadProps(__spreadValues({}, $$[$0 - 2]), { type: "composite", children: $$[$0 - 1] });
               break;
             case 28:
               yy.getLogger().debug("Rule: blockStatement : ", $$[$0 - 2], $$[$0 - 1], $$[$0]);
@@ -135657,10 +135721,11 @@ var init_blockDiagram_VD42YOAC = __esm({
       });
     }, "setCssClass");
     populateBlockDatabase = /* @__PURE__ */ __name((_blockList, parent4) => {
+      var _a58, _b2, _c2, _d, _e2;
       const blockList = _blockList.flat();
       const children2 = [];
-      const columnSettingBlock = blockList.find((b3) => b3?.type === "column-setting");
-      const column2 = columnSettingBlock?.columns ?? -1;
+      const columnSettingBlock = blockList.find((b3) => (b3 == null ? void 0 : b3.type) === "column-setting");
+      const column2 = (_a58 = columnSettingBlock == null ? void 0 : columnSettingBlock.columns) != null ? _a58 : -1;
       for (const block2 of blockList) {
         if (typeof column2 === "number" && column2 > 0 && block2.type !== "column-setting" && typeof block2.widthInColumns === "number" && block2.widthInColumns > column2) {
           log.warn(
@@ -135675,19 +135740,19 @@ var init_blockDiagram_VD42YOAC = __esm({
           continue;
         }
         if (block2.type === "applyClass") {
-          setCssClass(block2.id, block2?.styleClass ?? "");
+          setCssClass(block2.id, (_b2 = block2 == null ? void 0 : block2.styleClass) != null ? _b2 : "");
           continue;
         }
         if (block2.type === "applyStyles") {
-          if (block2?.stylesStr) {
-            addStyle2Node(block2.id, block2?.stylesStr);
+          if (block2 == null ? void 0 : block2.stylesStr) {
+            addStyle2Node(block2.id, block2 == null ? void 0 : block2.stylesStr);
           }
           continue;
         }
         if (block2.type === "column-setting") {
-          parent4.columns = block2.columns ?? -1;
+          parent4.columns = (_c2 = block2.columns) != null ? _c2 : -1;
         } else if (block2.type === "edge") {
-          const count2 = (edgeCount2.get(block2.id) ?? 0) + 1;
+          const count2 = ((_d = edgeCount2.get(block2.id)) != null ? _d : 0) + 1;
           edgeCount2.set(block2.id, count2);
           block2.id = count2 + "-" + block2.id;
           edgeList.push(block2);
@@ -135714,7 +135779,7 @@ var init_blockDiagram_VD42YOAC = __esm({
             populateBlockDatabase(block2.children, block2);
           }
           if (block2.type === "space") {
-            const w4 = block2.width ?? 1;
+            const w4 = (_e2 = block2.width) != null ? _e2 : 1;
             for (let j3 = 0; j3 < w4; j3++) {
               const newBlock = clone_default2(block2);
               newBlock.id = newBlock.id + "-" + j3;
@@ -135978,13 +136043,14 @@ var init_blockDiagram_VD42YOAC = __esm({
       barb: barb2
     };
     markers_default2 = insertMarkers3;
-    padding = getConfig2()?.block?.padding ?? 8;
+    padding = (_c = (_b = (_a54 = getConfig2()) == null ? void 0 : _a54.block) == null ? void 0 : _b.padding) != null ? _c : 8;
     __name(calculateBlockPosition, "calculateBlockPosition");
     getMaxChildSize = /* @__PURE__ */ __name((block2) => {
+      var _a58, _b2;
       let maxWidth2 = 0;
       let maxHeight = 0;
       for (const child of block2.children) {
-        const { width: width3, height: height2, x: x6, y: y6 } = child.size ?? { width: 0, height: 0, x: 0, y: 0 };
+        const { width: width3, height: height2, x: x6, y: y6 } = (_a58 = child.size) != null ? _a58 : { width: 0, height: 0, x: 0, y: 0 };
         log.debug(
           "getMaxChildSize abc95 child:",
           child.id,
@@ -136002,7 +136068,7 @@ var init_blockDiagram_VD42YOAC = __esm({
           continue;
         }
         if (width3 > maxWidth2) {
-          maxWidth2 = width3 / (block2.widthInColumns ?? 1);
+          maxWidth2 = width3 / ((_b2 = block2.widthInColumns) != null ? _b2 : 1);
         }
         if (height2 > maxHeight) {
           maxHeight = height2;
@@ -136354,7 +136420,7 @@ var init_blockDiagram_VD42YOAC = __esm({
       let pointsHasChanged = false;
       const tail = graph.node(e3.v);
       var head3 = graph.node(e3.w);
-      if (head3?.intersect && tail?.intersect) {
+      if ((head3 == null ? void 0 : head3.intersect) && (tail == null ? void 0 : tail.intersect)) {
         points = points.slice(1, edge.points.length - 1);
         points.unshift(tail.intersect(points[0]));
         points.push(head3.intersect(points[points.length - 1]));
@@ -137324,6 +137390,7 @@ var init_blockDiagram_VD42YOAC = __esm({
       return shapeSvg;
     }, "end");
     class_box = /* @__PURE__ */ __name(async (parent4, node3) => {
+      var _a58;
       const halfPadding = node3.padding / 2;
       const rowPadding = 4;
       const lineHeight = 8;
@@ -137341,7 +137408,7 @@ var init_blockDiagram_VD42YOAC = __esm({
       let maxHeight = rowPadding;
       const labelContainer = shapeSvg.insert("g").attr("class", "label");
       let verticalPos = 0;
-      const hasInterface = node3.classData.annotations?.[0];
+      const hasInterface = (_a58 = node3.classData.annotations) == null ? void 0 : _a58[0];
       const interfaceLabelText = node3.classData.annotations[0] ? "\xAB" + node3.classData.annotations[0] + "\xBB" : "";
       const interfaceLabel = labelContainer.node().appendChild(await createLabel_default2(interfaceLabelText, node3.labelStyle, true, true));
       let interfaceBBox = interfaceLabel.getBBox();
@@ -137455,23 +137522,25 @@ var init_blockDiagram_VD42YOAC = __esm({
       topLine.attr("class", "divider").attr("x1", -maxWidth2 / 2 - halfPadding).attr("x2", maxWidth2 / 2 + halfPadding).attr("y1", -maxHeight / 2 - halfPadding + lineHeight + verticalPos).attr("y2", -maxHeight / 2 - halfPadding + lineHeight + verticalPos);
       verticalPos += lineHeight;
       classAttributes.forEach((lbl) => {
+        var _a59;
         select_default2(lbl).attr(
           "transform",
           "translate( " + -maxWidth2 / 2 + ", " + (-1 * maxHeight / 2 + verticalPos + lineHeight / 2) + ")"
         );
-        const memberBBox = lbl?.getBBox();
-        verticalPos += (memberBBox?.height ?? 0) + rowPadding;
+        const memberBBox = lbl == null ? void 0 : lbl.getBBox();
+        verticalPos += ((_a59 = memberBBox == null ? void 0 : memberBBox.height) != null ? _a59 : 0) + rowPadding;
       });
       verticalPos += lineHeight;
       bottomLine.attr("class", "divider").attr("x1", -maxWidth2 / 2 - halfPadding).attr("x2", maxWidth2 / 2 + halfPadding).attr("y1", -maxHeight / 2 - halfPadding + lineHeight + verticalPos).attr("y2", -maxHeight / 2 - halfPadding + lineHeight + verticalPos);
       verticalPos += lineHeight;
       classMethods.forEach((lbl) => {
+        var _a59;
         select_default2(lbl).attr(
           "transform",
           "translate( " + -maxWidth2 / 2 + ", " + (-1 * maxHeight / 2 + verticalPos) + ")"
         );
-        const memberBBox = lbl?.getBBox();
-        verticalPos += (memberBBox?.height ?? 0) + rowPadding;
+        const memberBBox = lbl == null ? void 0 : lbl.getBBox();
+        verticalPos += ((_a59 = memberBBox == null ? void 0 : memberBBox.height) != null ? _a59 : 0) + rowPadding;
       });
       rect22.attr("style", node3.style).attr("class", "outer title-state").attr("x", -maxWidth2 / 2 - halfPadding).attr("y", -(maxHeight / 2) - halfPadding).attr("width", maxWidth2 + node3.padding).attr("height", maxHeight + node3.padding);
       updateNodeBounds2(node3, rect22);
@@ -145384,6 +145453,7 @@ function getAlignments(db7, spatialMaps, groupAlignments) {
   const flattenAlignments = /* @__PURE__ */ __name((alignmentObj, alignmentDir) => {
     return Object.entries(alignmentObj).reduce(
       (prev2, [dir2, alignments2]) => {
+        var _a58, _b2, _c2;
         let cnt4 = 0;
         const arr = Object.entries(alignments2);
         if (arr.length === 1) {
@@ -145394,12 +145464,12 @@ function getAlignments(db7, spatialMaps, groupAlignments) {
           for (let j3 = i3 + 1; j3 < arr.length; j3++) {
             const [aGroupId, aNodeIds] = arr[i3];
             const [bGroupId, bNodeIds] = arr[j3];
-            const alignment = groupAlignments[aGroupId]?.[bGroupId];
+            const alignment = (_a58 = groupAlignments[aGroupId]) == null ? void 0 : _a58[bGroupId];
             if (alignment === alignmentDir) {
-              prev2[dir2] ??= [];
+              (_b2 = prev2[dir2]) != null ? _b2 : prev2[dir2] = [];
               prev2[dir2] = [...prev2[dir2], ...aNodeIds, ...bNodeIds];
             } else if (aGroupId === "default" || bGroupId === "default") {
-              prev2[dir2] ??= [];
+              (_c2 = prev2[dir2]) != null ? _c2 : prev2[dir2] = [];
               prev2[dir2] = [...prev2[dir2], ...aNodeIds, ...bNodeIds];
             } else {
               const keyA = `${dir2}-${cnt4++}`;
@@ -145418,12 +145488,13 @@ function getAlignments(db7, spatialMaps, groupAlignments) {
     const horizontalAlignments = {};
     const verticalAlignments = {};
     Object.entries(spatialMap).forEach(([id28, [x6, y6]]) => {
-      const nodeGroup = db7.getNode(id28)?.in ?? "default";
-      horizontalAlignments[y6] ??= {};
-      horizontalAlignments[y6][nodeGroup] ??= [];
+      var _a58, _b2, _c2, _d, _e2, _f, _g, _h;
+      const nodeGroup = (_b2 = (_a58 = db7.getNode(id28)) == null ? void 0 : _a58.in) != null ? _b2 : "default";
+      (_c2 = horizontalAlignments[y6]) != null ? _c2 : horizontalAlignments[y6] = {};
+      (_e2 = (_d = horizontalAlignments[y6])[nodeGroup]) != null ? _e2 : _d[nodeGroup] = [];
       horizontalAlignments[y6][nodeGroup].push(id28);
-      verticalAlignments[x6] ??= {};
-      verticalAlignments[x6][nodeGroup] ??= [];
+      (_f = verticalAlignments[x6]) != null ? _f : verticalAlignments[x6] = {};
+      (_h = (_g = verticalAlignments[x6])[nodeGroup]) != null ? _h : _g[nodeGroup] = [];
       verticalAlignments[x6][nodeGroup].push(id28);
     });
     return {
@@ -145598,6 +145669,7 @@ function layoutArchitecture(services, junctions, groups, edges3, db7, { spatialM
       relativePlacementConstraint
     });
     layout6.one("layoutstop", () => {
+      var _a58;
       function getSegmentWeights(source, target, pointX, pointY) {
         let W3, D4;
         const { x: sX, y: sY } = source;
@@ -145634,7 +145706,7 @@ function layoutArchitecture(services, junctions, groups, edges3, db7, { spatialM
       __name(getSegmentWeights, "getSegmentWeights");
       cy.startBatch();
       for (const edge of Object.values(cy.edges())) {
-        if (edge.data?.()) {
+        if ((_a58 = edge.data) == null ? void 0 : _a58.call(edge)) {
           const { x: sX, y: sY } = edge.source().position();
           const { x: tX, y: tY } = edge.target().position();
           if (sX !== tX && sY !== tY) {
@@ -145658,7 +145730,7 @@ function layoutArchitecture(services, junctions, groups, edges3, db7, { spatialM
     });
   });
 }
-var import_cytoscape_fcose, ArchitectureDirectionName, ArchitectureDirectionArrow, ArchitectureDirectionArrowShift, getOppositeArchitectureDirection, isArchitectureDirection, isArchitectureDirectionX, isArchitectureDirectionY, isArchitectureDirectionXY, isArchitecturePairXY, isValidArchitectureDirectionPair, getArchitectureDirectionPair, shiftPositionByArchitectureDirectionPair, getArchitectureDirectionXYFactors, getArchitectureDirectionAlignment, isArchitectureService, isArchitectureJunction, edgeData, nodeData, DEFAULT_ARCHITECTURE_CONFIG, ArchitectureDB, populateDb2, parser23, getStyles18, architectureStyles_default, wrapIcon, architectureIcons, drawEdges, drawGroups, drawServices, drawJunctions, draw23, renderer7, diagram24;
+var import_cytoscape_fcose, ArchitectureDirectionName, ArchitectureDirectionArrow, ArchitectureDirectionArrowShift, getOppositeArchitectureDirection, isArchitectureDirection, isArchitectureDirectionX, isArchitectureDirectionY, isArchitectureDirectionXY, isArchitecturePairXY, isValidArchitectureDirectionPair, getArchitectureDirectionPair, shiftPositionByArchitectureDirectionPair, getArchitectureDirectionXYFactors, getArchitectureDirectionAlignment, isArchitectureService, isArchitectureJunction, edgeData, nodeData, DEFAULT_ARCHITECTURE_CONFIG, _a55, ArchitectureDB, populateDb2, parser23, getStyles18, architectureStyles_default, wrapIcon, architectureIcons, drawEdges, drawGroups, drawServices, drawJunctions, draw23, renderer7, diagram24;
 var init_architectureDiagram_VXUJARFQ = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/architectureDiagram-VXUJARFQ.mjs"() {
     init_chunk_EXTU4WIE();
@@ -145778,7 +145850,7 @@ var init_architectureDiagram_VXUJARFQ = __esm({
       return node3.data();
     }, "nodeData");
     DEFAULT_ARCHITECTURE_CONFIG = defaultConfig_default.architecture;
-    ArchitectureDB = class {
+    ArchitectureDB = (_a55 = class {
       constructor() {
         this.nodes = {};
         this.groups = {};
@@ -145792,9 +145864,6 @@ var init_architectureDiagram_VXUJARFQ = __esm({
         this.getAccDescription = getAccDescription;
         this.setAccDescription = setAccDescription;
         this.clear();
-      }
-      static {
-        __name(this, "ArchitectureDB");
       }
       clear() {
         this.nodes = {};
@@ -145860,10 +145929,12 @@ var init_architectureDiagram_VXUJARFQ = __esm({
         return Object.values(this.nodes);
       }
       getNode(id28) {
-        return this.nodes[id28] ?? null;
+        var _a58;
+        return (_a58 = this.nodes[id28]) != null ? _a58 : null;
       }
       addGroup({ id: id28, icon: icon2, in: parent4, title: title2 }) {
-        if (this.registeredIds?.[id28] !== void 0) {
+        var _a58, _b2, _c2;
+        if (((_a58 = this.registeredIds) == null ? void 0 : _a58[id28]) !== void 0) {
           throw new Error(
             `The group id [${id28}] is already in use by another ${this.registeredIds[id28]}`
           );
@@ -145872,12 +145943,12 @@ var init_architectureDiagram_VXUJARFQ = __esm({
           if (id28 === parent4) {
             throw new Error(`The group [${id28}] cannot be placed within itself`);
           }
-          if (this.registeredIds?.[parent4] === void 0) {
+          if (((_b2 = this.registeredIds) == null ? void 0 : _b2[parent4]) === void 0) {
             throw new Error(
               `The group [${id28}]'s parent does not exist. Please make sure the parent is created before this group`
             );
           }
-          if (this.registeredIds?.[parent4] === "node") {
+          if (((_c2 = this.registeredIds) == null ? void 0 : _c2[parent4]) === "node") {
             throw new Error(`The group [${id28}]'s parent is not a group`);
           }
         }
@@ -145965,14 +146036,15 @@ var init_architectureDiagram_VXUJARFQ = __esm({
           const groupAlignments = {};
           const adjList = Object.entries(this.nodes).reduce((prevOuter, [id28, service]) => {
             prevOuter[id28] = service.edges.reduce((prevInner, edge) => {
-              const lhsGroupId = this.getNode(edge.lhsId)?.in;
-              const rhsGroupId = this.getNode(edge.rhsId)?.in;
+              var _a58, _b2, _c2, _d;
+              const lhsGroupId = (_a58 = this.getNode(edge.lhsId)) == null ? void 0 : _a58.in;
+              const rhsGroupId = (_b2 = this.getNode(edge.rhsId)) == null ? void 0 : _b2.in;
               if (lhsGroupId && rhsGroupId && lhsGroupId !== rhsGroupId) {
                 const alignment = getArchitectureDirectionAlignment(edge.lhsDir, edge.rhsDir);
                 if (alignment !== "bend") {
-                  groupAlignments[lhsGroupId] ??= {};
+                  (_c2 = groupAlignments[lhsGroupId]) != null ? _c2 : groupAlignments[lhsGroupId] = {};
                   groupAlignments[lhsGroupId][rhsGroupId] = alignment;
-                  groupAlignments[rhsGroupId] ??= {};
+                  (_d = groupAlignments[rhsGroupId]) != null ? _d : groupAlignments[rhsGroupId] = {};
                   groupAlignments[rhsGroupId][lhsGroupId] = alignment;
                 }
               }
@@ -145994,7 +146066,7 @@ var init_architectureDiagram_VXUJARFQ = __esm({
           const firstId = Object.keys(adjList)[0];
           const visited = { [firstId]: 1 };
           const notVisited = Object.keys(adjList).reduce(
-            (prev2, id28) => id28 === firstId ? prev2 : { ...prev2, [id28]: 1 },
+            (prev2, id28) => id28 === firstId ? prev2 : __spreadProps(__spreadValues({}, prev2), { [id28]: 1 }),
             {}
           );
           const BFS = /* @__PURE__ */ __name((startingId) => {
@@ -146039,20 +146111,17 @@ var init_architectureDiagram_VXUJARFQ = __esm({
         return this.elements[id28];
       }
       getConfig() {
-        return cleanAndMerge({
-          ...DEFAULT_ARCHITECTURE_CONFIG,
-          ...getConfig().architecture
-        });
+        return cleanAndMerge(__spreadValues(__spreadValues({}, DEFAULT_ARCHITECTURE_CONFIG), getConfig().architecture));
       }
       getConfigField(field) {
         return this.getConfig()[field];
       }
-    };
+    }, __name(_a55, "ArchitectureDB"), _a55);
     populateDb2 = /* @__PURE__ */ __name((ast, db7) => {
       populateCommonDb(ast, db7);
       ast.groups.map((group2) => db7.addGroup(group2));
-      ast.services.map((service) => db7.addService({ ...service, type: "service" }));
-      ast.junctions.map((service) => db7.addJunction({ ...service, type: "junction" }));
+      ast.services.map((service) => db7.addService(__spreadProps(__spreadValues({}, service), { type: "service" })));
+      ast.junctions.map((service) => db7.addJunction(__spreadProps(__spreadValues({}, service), { type: "junction" })));
       ast.edges.map((edge) => db7.addEdge(edge));
     }, "populateDb");
     parser23 = {
@@ -146061,9 +146130,10 @@ var init_architectureDiagram_VXUJARFQ = __esm({
         yy: void 0
       },
       parse: /* @__PURE__ */ __name(async (input) => {
+        var _a58;
         const ast = await parse7("architecture", input);
         log.debug(ast);
-        const db7 = parser23.parser?.yy;
+        const db7 = (_a58 = parser23.parser) == null ? void 0 : _a58.yy;
         if (!(db7 instanceof ArchitectureDB)) {
           throw new Error(
             "parser.parser?.yy was not a ArchitectureDB. This is due to a bug within Mermaid, please report this issue at https://github.com/mermaid-js/mermaid/issues."
@@ -146152,6 +146222,7 @@ var init_architectureDiagram_VXUJARFQ = __esm({
       const halfArrowSize = arrowSize / 2;
       await Promise.all(
         cy.edges().map(async (edge) => {
+          var _a58, _b2;
           const {
             source,
             sourceDir,
@@ -146181,14 +146252,14 @@ var init_architectureDiagram_VXUJARFQ = __esm({
               endY += targetDir === "T" ? -groupEdgeShift : groupEdgeShift + 18;
             }
           }
-          if (!sourceGroup && db7.getNode(source)?.type === "junction") {
+          if (!sourceGroup && ((_a58 = db7.getNode(source)) == null ? void 0 : _a58.type) === "junction") {
             if (isArchitectureDirectionX(sourceDir)) {
               startX2 += sourceDir === "L" ? halfIconSize : -halfIconSize;
             } else {
               startY2 += sourceDir === "T" ? halfIconSize : -halfIconSize;
             }
           }
-          if (!targetGroup && db7.getNode(target)?.type === "junction") {
+          if (!targetGroup && ((_b2 = db7.getNode(target)) == null ? void 0 : _b2.type) === "junction") {
             if (isArchitectureDirectionX(targetDir)) {
               endX += targetDir === "L" ? halfIconSize : -halfIconSize;
             } else {
@@ -146308,6 +146379,7 @@ var init_architectureDiagram_VXUJARFQ = __esm({
       );
     }, "drawGroups");
     drawServices = /* @__PURE__ */ __name(async function(db7, elem, services) {
+      var _a58;
       const config5 = getConfig2();
       for (const service of services) {
         const serviceElem = elem.append("g");
@@ -146339,9 +146411,9 @@ var init_architectureDiagram_VXUJARFQ = __esm({
           const textElemContainer = bkgElem.append("g");
           const fo = textElemContainer.append("foreignObject").attr("width", iconSize).attr("height", iconSize);
           const divElem = fo.append("div").attr("class", "node-icon-text").attr("style", `height: ${iconSize}px;`).append("div").html(sanitizeText(service.iconText, config5));
-          const fontSize = parseInt(
+          const fontSize = (_a58 = parseInt(
             window.getComputedStyle(divElem.node(), null).getPropertyValue("font-size").replace(/\D/g, "")
-          ) ?? 16;
+          )) != null ? _a58 : 16;
           divElem.attr("style", `-webkit-line-clamp: ${Math.floor((iconSize - 2) / fontSize)};`);
         } else {
           bkgElem.append("path").attr("class", "node-bkg").attr("id", "node-" + service.id).attr(
@@ -146435,8 +146507,8 @@ function buildHierarchy(items) {
       name: item.name,
       children: item.type === "Leaf" ? void 0 : []
     };
-    node3.classSelector = item?.classSelector;
-    if (item?.cssCompiledStyles) {
+    node3.classSelector = item == null ? void 0 : item.classSelector;
+    if (item == null ? void 0 : item.cssCompiledStyles) {
       node3.cssCompiledStyles = [item.cssCompiledStyles];
     }
     if (item.type === "Leaf" && item.value !== void 0) {
@@ -146461,7 +146533,7 @@ function buildHierarchy(items) {
   });
   return root7;
 }
-var TreeMapDB, populate18, getItemName, parser24, DEFAULT_INNER_PADDING, SECTION_INNER_PADDING, SECTION_HEADER_HEIGHT, draw24, getClasses5, renderer8, defaultTreemapStyleOptions, getStyles19, styles_default17, diagram25;
+var _a56, TreeMapDB, populate18, getItemName, parser24, DEFAULT_INNER_PADDING, SECTION_INNER_PADDING, SECTION_HEADER_HEIGHT, draw24, getClasses5, renderer8, defaultTreemapStyleOptions, getStyles19, styles_default17, diagram25;
 var init_diagram_PSM6KHXK = __esm({
   "node_modules/mermaid/dist/chunks/mermaid.core/diagram-PSM6KHXK.mjs"() {
     init_chunk_EXTU4WIE();
@@ -146473,7 +146545,7 @@ var init_diagram_PSM6KHXK = __esm({
     init_chunk_AGHRB4JF();
     init_mermaid_parser_core();
     init_src32();
-    TreeMapDB = class {
+    TreeMapDB = (_a56 = class {
       constructor() {
         this.nodes = [];
         this.levels = /* @__PURE__ */ new Map();
@@ -146486,44 +146558,41 @@ var init_diagram_PSM6KHXK = __esm({
         this.getAccDescription = getAccDescription;
         this.setAccDescription = setAccDescription;
       }
-      static {
-        __name(this, "TreeMapDB");
-      }
       getNodes() {
         return this.nodes;
       }
       getConfig() {
+        var _a58;
         const defaultConfig4 = defaultConfig_default;
         const userConfig = getConfig();
-        return cleanAndMerge({
-          ...defaultConfig4.treemap,
-          ...userConfig.treemap ?? {}
-        });
+        return cleanAndMerge(__spreadValues(__spreadValues({}, defaultConfig4.treemap), (_a58 = userConfig.treemap) != null ? _a58 : {}));
       }
       addNode(node3, level) {
+        var _a58;
         this.nodes.push(node3);
         this.levels.set(node3, level);
         if (level === 0) {
           this.outerNodes.push(node3);
-          this.root ??= node3;
+          (_a58 = this.root) != null ? _a58 : this.root = node3;
         }
       }
       getRoot() {
         return { name: "", children: this.outerNodes };
       }
       addClass(id28, _style) {
-        const styleClass = this.classes.get(id28) ?? { id: id28, styles: [], textStyles: [] };
+        var _a58;
+        const styleClass = (_a58 = this.classes.get(id28)) != null ? _a58 : { id: id28, styles: [], textStyles: [] };
         const styles4 = _style.replace(/\\,/g, "\xA7\xA7\xA7").replace(/,/g, ";").replace(/§§§/g, ",").split(";");
         if (styles4) {
           styles4.forEach((s3) => {
             if (isLabelStyle(s3)) {
-              if (styleClass?.textStyles) {
+              if (styleClass == null ? void 0 : styleClass.textStyles) {
                 styleClass.textStyles.push(s3);
               } else {
                 styleClass.textStyles = [s3];
               }
             }
-            if (styleClass?.styles) {
+            if (styleClass == null ? void 0 : styleClass.styles) {
               styleClass.styles.push(s3);
             } else {
               styleClass.styles = [s3];
@@ -146536,7 +146605,8 @@ var init_diagram_PSM6KHXK = __esm({
         return this.classes;
       }
       getStylesForClass(classSelector) {
-        return this.classes.get(classSelector)?.styles ?? [];
+        var _a58, _b2;
+        return (_b2 = (_a58 = this.classes.get(classSelector)) == null ? void 0 : _a58.styles) != null ? _b2 : [];
       }
       clear() {
         clear();
@@ -146546,17 +146616,18 @@ var init_diagram_PSM6KHXK = __esm({
         this.classes = /* @__PURE__ */ new Map();
         this.root = void 0;
       }
-    };
+    }, __name(_a56, "TreeMapDB"), _a56);
     __name(buildHierarchy, "buildHierarchy");
     populate18 = /* @__PURE__ */ __name((ast, db7) => {
+      var _a58, _b2, _c2, _d;
       populateCommonDb(ast, db7);
       const items = [];
-      for (const row2 of ast.TreemapRows ?? []) {
+      for (const row2 of (_a58 = ast.TreemapRows) != null ? _a58 : []) {
         if (row2.$type === "ClassDefStatement") {
-          db7.addClass(row2.className ?? "", row2.styleText ?? "");
+          db7.addClass((_b2 = row2.className) != null ? _b2 : "", (_c2 = row2.styleText) != null ? _c2 : "");
         }
       }
-      for (const row2 of ast.TreemapRows ?? []) {
+      for (const row2 of (_d = ast.TreemapRows) != null ? _d : []) {
         const item = row2.item;
         if (!item) {
           continue;
@@ -146593,11 +146664,12 @@ var init_diagram_PSM6KHXK = __esm({
       // @ts-expect-error - TreeMapDB is not assignable to DiagramDB
       parser: { yy: void 0 },
       parse: /* @__PURE__ */ __name(async (text11) => {
+        var _a58;
         try {
           const parseFunc = parse7;
           const ast = await parseFunc("treemap", text11);
           log.debug("Treemap AST:", ast);
-          const db7 = parser24.parser?.yy;
+          const db7 = (_a58 = parser24.parser) == null ? void 0 : _a58.yy;
           if (!(db7 instanceof TreeMapDB)) {
             throw new Error(
               "parser.parser?.yy was not a TreemapDB. This is due to a bug within Mermaid, please report this issue at https://github.com/mermaid-js/mermaid/issues."
@@ -146614,9 +146686,10 @@ var init_diagram_PSM6KHXK = __esm({
     SECTION_INNER_PADDING = 10;
     SECTION_HEADER_HEIGHT = 25;
     draw24 = /* @__PURE__ */ __name((_text, id28, _version, diagram27) => {
+      var _a58, _b2;
       const treemapDb = diagram27.db;
       const config5 = treemapDb.getConfig();
-      const treemapInnerPadding = config5.padding ?? DEFAULT_INNER_PADDING;
+      const treemapInnerPadding = (_a58 = config5.padding) != null ? _a58 : DEFAULT_INNER_PADDING;
       const title2 = treemapDb.getDiagramTitle();
       const root7 = treemapDb.getRoot();
       const { themeVariables } = getConfig();
@@ -146698,7 +146771,13 @@ var init_diagram_PSM6KHXK = __esm({
         svg4.append("text").attr("x", svgWidth / 2).attr("y", titleHeight / 2).attr("class", "treemapTitle").attr("text-anchor", "middle").attr("dominant-baseline", "middle").text(title2);
       }
       const g2 = svg4.append("g").attr("transform", `translate(0, ${titleHeight})`).attr("class", "treemapContainer");
-      const hierarchyRoot = hierarchy(root7).sum((d3) => d3.value ?? 0).sort((a2, b3) => (b3.value ?? 0) - (a2.value ?? 0));
+      const hierarchyRoot = hierarchy(root7).sum((d3) => {
+        var _a59;
+        return (_a59 = d3.value) != null ? _a59 : 0;
+      }).sort((a2, b3) => {
+        var _a59, _b3;
+        return ((_a59 = b3.value) != null ? _a59 : 0) - ((_b3 = a2.value) != null ? _b3 : 0);
+      });
       const treemapLayout = treemap_default().size([width3, height2]).paddingTop(
         (d3) => d3.children && d3.children.length > 0 ? SECTION_HEADER_HEIGHT + SECTION_INNER_PADDING : 0
       ).paddingInner(treemapInnerPadding).paddingLeft((d3) => d3.children && d3.children.length > 0 ? SECTION_INNER_PADDING : 0).paddingRight((d3) => d3.children && d3.children.length > 0 ? SECTION_INNER_PADDING : 0).paddingBottom((d3) => d3.children && d3.children.length > 0 ? SECTION_INNER_PADDING : 0).round(true);
@@ -146890,8 +146969,8 @@ var init_diagram_PSM6KHXK = __esm({
           }
         });
       }
-      const diagramPadding = config5.diagramPadding ?? 8;
-      setupViewPortForSVG(svg4, diagramPadding, "flowchart", config5?.useMaxWidth || false);
+      const diagramPadding = (_b2 = config5.diagramPadding) != null ? _b2 : 8;
+      setupViewPortForSVG(svg4, diagramPadding, "flowchart", (config5 == null ? void 0 : config5.useMaxWidth) || false);
     }, "draw");
     getClasses5 = /* @__PURE__ */ __name(function(_text, diagramObj) {
       return diagramObj.db.getClasses();
@@ -146951,6 +147030,9 @@ var init_diagram_PSM6KHXK = __esm({
     };
   }
 });
+
+// entry.js
+var import_polyfill = __toESM(require_polyfill());
 
 // node_modules/bail/index.js
 function bail(error3) {
@@ -147162,7 +147244,7 @@ var VFileMessage = class extends Error {
           place: optionsOrParentOrPlace.position
         };
       } else {
-        options2 = { ...optionsOrParentOrPlace };
+        options2 = __spreadValues({}, optionsOrParentOrPlace);
       }
     }
     if (typeof causeOrReason === "string") {
@@ -148790,7 +148872,7 @@ function markdownLineEndingOrSpace(code4) {
 function markdownSpace(code4) {
   return code4 === -2 || code4 === -1 || code4 === 32;
 }
-var unicodePunctuation = regexCheck(/\p{P}|\p{S}/u);
+var unicodePunctuation = regexCheck(new RegExp("\\p{P}|\\p{S}", "u"));
 var unicodeWhitespace = regexCheck(/\s/);
 function regexCheck(regex2) {
   return check;
@@ -148952,9 +149034,7 @@ function initializeDocument(effects) {
       exitContainers(continued);
       let index2 = indexBeforeExits;
       while (index2 < self2.events.length) {
-        self2.events[index2][1].end = {
-          ...point11
-        };
+        self2.events[index2][1].end = __spreadValues({}, point11);
         index2++;
       }
       splice(self2.events, indexBeforeFlow + 1, 0, self2.events.slice(indexBeforeExits));
@@ -149063,9 +149143,7 @@ function initializeDocument(effects) {
       exitContainers(continued);
       index2 = indexBeforeExits;
       while (index2 < self2.events.length) {
-        self2.events[index2][1].end = {
-          ...point11
-        };
+        self2.events[index2][1].end = __spreadValues({}, point11);
         index2++;
       }
       splice(self2.events, indexBeforeFlow + 1, 0, self2.events.slice(indexBeforeExits));
@@ -149142,52 +149220,32 @@ function resolveAllAttention(events, context) {
             continue;
           }
           use = events[open2][1].end.offset - events[open2][1].start.offset > 1 && events[index2][1].end.offset - events[index2][1].start.offset > 1 ? 2 : 1;
-          const start3 = {
-            ...events[open2][1].end
-          };
-          const end2 = {
-            ...events[index2][1].start
-          };
+          const start3 = __spreadValues({}, events[open2][1].end);
+          const end2 = __spreadValues({}, events[index2][1].start);
           movePoint(start3, -use);
           movePoint(end2, use);
           openingSequence = {
             type: use > 1 ? "strongSequence" : "emphasisSequence",
             start: start3,
-            end: {
-              ...events[open2][1].end
-            }
+            end: __spreadValues({}, events[open2][1].end)
           };
           closingSequence = {
             type: use > 1 ? "strongSequence" : "emphasisSequence",
-            start: {
-              ...events[index2][1].start
-            },
+            start: __spreadValues({}, events[index2][1].start),
             end: end2
           };
           text11 = {
             type: use > 1 ? "strongText" : "emphasisText",
-            start: {
-              ...events[open2][1].end
-            },
-            end: {
-              ...events[index2][1].start
-            }
+            start: __spreadValues({}, events[open2][1].end),
+            end: __spreadValues({}, events[index2][1].start)
           };
           group2 = {
             type: use > 1 ? "strong" : "emphasis",
-            start: {
-              ...openingSequence.start
-            },
-            end: {
-              ...closingSequence.end
-            }
+            start: __spreadValues({}, openingSequence.start),
+            end: __spreadValues({}, closingSequence.end)
           };
-          events[open2][1].end = {
-            ...openingSequence.start
-          };
-          events[index2][1].start = {
-            ...closingSequence.end
-          };
+          events[open2][1].end = __spreadValues({}, openingSequence.start);
+          events[index2][1].start = __spreadValues({}, closingSequence.end);
           nextEvents = [];
           if (events[open2][1].end.offset - events[open2][1].start.offset) {
             nextEvents = push(nextEvents, [["enter", events[open2][1], context], ["exit", events[open2][1], context]]);
@@ -150127,9 +150185,7 @@ function subtokenize(eventsArray) {
         }
       }
       if (lineIndex) {
-        event3[1].end = {
-          ...events.get(lineIndex)[1].start
-        };
+        event3[1].end = __spreadValues({}, events.get(lineIndex)[1].start);
         parameters = events.slice(lineIndex, index2);
         parameters.unshift(event3);
         events.splice(lineIndex, index2 - lineIndex + 1, parameters);
@@ -151538,30 +151594,18 @@ function resolveToLabelEnd(events, context) {
   }
   const group2 = {
     type: events[open2][1].type === "labelLink" ? "link" : "image",
-    start: {
-      ...events[open2][1].start
-    },
-    end: {
-      ...events[events.length - 1][1].end
-    }
+    start: __spreadValues({}, events[open2][1].start),
+    end: __spreadValues({}, events[events.length - 1][1].end)
   };
   const label = {
     type: "label",
-    start: {
-      ...events[open2][1].start
-    },
-    end: {
-      ...events[close2][1].end
-    }
+    start: __spreadValues({}, events[open2][1].start),
+    end: __spreadValues({}, events[close2][1].end)
   };
   const text11 = {
     type: "labelText",
-    start: {
-      ...events[open2 + offset + 2][1].end
-    },
-    end: {
-      ...events[close2 - 2][1].start
-    }
+    start: __spreadValues({}, events[open2 + offset + 2][1].end),
+    end: __spreadValues({}, events[close2 - 2][1].start)
   };
   media = [["enter", group2, context], ["enter", label, context]];
   media = push(media, events.slice(open2 + 1, open2 + offset + 3));
@@ -151969,20 +152013,14 @@ function resolveToSetextUnderline(events, context) {
   }
   const heading3 = {
     type: "setextHeading",
-    start: {
-      ...events[content3][1].start
-    },
-    end: {
-      ...events[events.length - 1][1].end
-    }
+    start: __spreadValues({}, events[content3][1].start),
+    end: __spreadValues({}, events[events.length - 1][1].end)
   };
   events[text11][1].type = "setextHeadingText";
   if (definition3) {
     events.splice(text11, 0, ["enter", heading3, context]);
     events.splice(definition3 + 1, 0, ["exit", events[content3][1], context]);
-    events[content3][1].end = {
-      ...events[definition3][1].end
-    };
+    events[content3][1].end = __spreadValues({}, events[definition3][1].end);
   } else {
     events[content3][1] = heading3;
   }
@@ -152187,13 +152225,9 @@ function resolveAllLineSuffixes(events, context) {
             column: data5.end.column - size4,
             offset: data5.end.offset - size4
           },
-          end: {
-            ...data5.end
-          }
+          end: __spreadValues({}, data5.end)
         };
-        data5.end = {
-          ...token2.start
-        };
+        data5.end = __spreadValues({}, token2.start);
         if (data5.start.offset === data5.end.offset) {
           Object.assign(data5, token2);
         } else {
@@ -153449,15 +153483,13 @@ function remarkParse(options2) {
   const self2 = this;
   self2.parser = parser25;
   function parser25(doc) {
-    return fromMarkdown(doc, {
-      ...self2.data("settings"),
-      ...options2,
+    return fromMarkdown(doc, __spreadProps(__spreadValues(__spreadValues({}, self2.data("settings")), options2), {
       // Note: these options are not in the readme.
       // The goal is for them to be set by plugins on `data` instead of being
       // passed by users.
       extensions: self2.data("micromarkExtensions") || [],
       mdastExtensions: self2.data("fromMarkdownExtensions") || []
-    });
+    }));
   }
 }
 
@@ -153836,7 +153868,7 @@ function transformGfmAutolinkLiterals(tree) {
     tree,
     [
       [/(https?:\/\/|www(?=\.))([-.\w]+)([^ \t\r\n]*)/gi, findUrl],
-      [/(?<=^|\s|\p{P}|\p{S})([-.\w+]+)@([-\w]+(?:\.[-\w]+)+)/gu, findEmail]
+      [new RegExp("(?<=^|\\s|\\p{P}|\\p{S})([-.\\w+]+)@([-\\w]+(?:\\.[-\\w]+)+)", "gu"), findEmail]
     ],
     { ignore: ["link", "linkReference"] }
   );
@@ -154065,11 +154097,10 @@ function handleDelete(node3, _3, state3, info2) {
   const tracker = state3.createTracker(info2);
   const exit3 = state3.enter("strikethrough");
   let value2 = tracker.move("~~");
-  value2 += state3.containerPhrasing(node3, {
-    ...tracker.current(),
+  value2 += state3.containerPhrasing(node3, __spreadProps(__spreadValues({}, tracker.current()), {
     before: value2,
     after: "~"
-  });
+  }));
   value2 += tracker.move("~~");
   exit3();
   return value2;
@@ -154351,12 +154382,11 @@ function code(node3, _3, state3, info2) {
   if (node3.lang) {
     const subexit = state3.enter(`codeFencedLang${suffix}`);
     value2 += tracker.move(
-      state3.safe(node3.lang, {
+      state3.safe(node3.lang, __spreadValues({
         before: value2,
         after: " ",
-        encode: ["`"],
-        ...tracker.current()
-      })
+        encode: ["`"]
+      }, tracker.current()))
     );
     subexit();
   }
@@ -154364,12 +154394,11 @@ function code(node3, _3, state3, info2) {
     const subexit = state3.enter(`codeFencedMeta${suffix}`);
     value2 += tracker.move(" ");
     value2 += tracker.move(
-      state3.safe(node3.meta, {
+      state3.safe(node3.meta, __spreadValues({
         before: value2,
         after: "\n",
-        encode: ["`"],
-        ...tracker.current()
-      })
+        encode: ["`"]
+      }, tracker.current()))
     );
     subexit();
   }
@@ -154405,11 +154434,10 @@ function definition2(node3, _3, state3, info2) {
   const tracker = state3.createTracker(info2);
   let value2 = tracker.move("[");
   value2 += tracker.move(
-    state3.safe(state3.associationId(node3), {
+    state3.safe(state3.associationId(node3), __spreadValues({
       before: value2,
-      after: "]",
-      ...tracker.current()
-    })
+      after: "]"
+    }, tracker.current()))
   );
   value2 += tracker.move("]: ");
   subexit();
@@ -154421,17 +154449,16 @@ function definition2(node3, _3, state3, info2) {
     subexit = state3.enter("destinationLiteral");
     value2 += tracker.move("<");
     value2 += tracker.move(
-      state3.safe(node3.url, { before: value2, after: ">", ...tracker.current() })
+      state3.safe(node3.url, __spreadValues({ before: value2, after: ">" }, tracker.current()))
     );
     value2 += tracker.move(">");
   } else {
     subexit = state3.enter("destinationRaw");
     value2 += tracker.move(
-      state3.safe(node3.url, {
+      state3.safe(node3.url, __spreadValues({
         before: value2,
-        after: node3.title ? " " : "\n",
-        ...tracker.current()
-      })
+        after: node3.title ? " " : "\n"
+      }, tracker.current()))
     );
   }
   subexit();
@@ -154439,11 +154466,10 @@ function definition2(node3, _3, state3, info2) {
     subexit = state3.enter(`title${suffix}`);
     value2 += tracker.move(" " + quote);
     value2 += tracker.move(
-      state3.safe(node3.title, {
+      state3.safe(node3.title, __spreadValues({
         before: value2,
-        after: quote,
-        ...tracker.current()
-      })
+        after: quote
+      }, tracker.current()))
     );
     value2 += tracker.move(quote);
     subexit();
@@ -154518,11 +154544,10 @@ function emphasis(node3, _3, state3, info2) {
   const tracker = state3.createTracker(info2);
   const before = tracker.move(marker);
   let between = tracker.move(
-    state3.containerPhrasing(node3, {
+    state3.containerPhrasing(node3, __spreadValues({
       after: marker,
-      before,
-      ...tracker.current()
-    })
+      before
+    }, tracker.current()))
   );
   const betweenHead = between.charCodeAt(0);
   const open2 = encodeInfo(
@@ -154593,11 +154618,10 @@ function heading(node3, _3, state3, info2) {
   if (formatHeadingAsSetext(node3, state3)) {
     const exit4 = state3.enter("headingSetext");
     const subexit2 = state3.enter("phrasing");
-    const value3 = state3.containerPhrasing(node3, {
-      ...tracker.current(),
+    const value3 = state3.containerPhrasing(node3, __spreadProps(__spreadValues({}, tracker.current()), {
       before: "\n",
       after: "\n"
-    });
+    }));
     subexit2();
     exit4();
     return value3 + "\n" + (rank2 === 1 ? "=" : "-").repeat(
@@ -154611,11 +154635,10 @@ function heading(node3, _3, state3, info2) {
   const exit3 = state3.enter("headingAtx");
   const subexit = state3.enter("phrasing");
   tracker.move(sequence + " ");
-  let value2 = state3.containerPhrasing(node3, {
+  let value2 = state3.containerPhrasing(node3, __spreadValues({
     before: "# ",
-    after: "\n",
-    ...tracker.current()
-  });
+    after: "\n"
+  }, tracker.current()));
   if (/^[\t ]/.test(value2)) {
     value2 = encodeCharacterReference(value2.charCodeAt(0)) + value2.slice(1);
   }
@@ -154647,7 +154670,7 @@ function image(node3, _3, state3, info2) {
   const tracker = state3.createTracker(info2);
   let value2 = tracker.move("![");
   value2 += tracker.move(
-    state3.safe(node3.alt, { before: value2, after: "]", ...tracker.current() })
+    state3.safe(node3.alt, __spreadValues({ before: value2, after: "]" }, tracker.current()))
   );
   value2 += tracker.move("](");
   subexit();
@@ -154659,17 +154682,16 @@ function image(node3, _3, state3, info2) {
     subexit = state3.enter("destinationLiteral");
     value2 += tracker.move("<");
     value2 += tracker.move(
-      state3.safe(node3.url, { before: value2, after: ">", ...tracker.current() })
+      state3.safe(node3.url, __spreadValues({ before: value2, after: ">" }, tracker.current()))
     );
     value2 += tracker.move(">");
   } else {
     subexit = state3.enter("destinationRaw");
     value2 += tracker.move(
-      state3.safe(node3.url, {
+      state3.safe(node3.url, __spreadValues({
         before: value2,
-        after: node3.title ? " " : ")",
-        ...tracker.current()
-      })
+        after: node3.title ? " " : ")"
+      }, tracker.current()))
     );
   }
   subexit();
@@ -154677,11 +154699,10 @@ function image(node3, _3, state3, info2) {
     subexit = state3.enter(`title${suffix}`);
     value2 += tracker.move(" " + quote);
     value2 += tracker.move(
-      state3.safe(node3.title, {
+      state3.safe(node3.title, __spreadValues({
         before: value2,
-        after: quote,
-        ...tracker.current()
-      })
+        after: quote
+      }, tracker.current()))
     );
     value2 += tracker.move(quote);
     subexit();
@@ -154702,21 +154723,19 @@ function imageReference(node3, _3, state3, info2) {
   let subexit = state3.enter("label");
   const tracker = state3.createTracker(info2);
   let value2 = tracker.move("![");
-  const alt = state3.safe(node3.alt, {
+  const alt = state3.safe(node3.alt, __spreadValues({
     before: value2,
-    after: "]",
-    ...tracker.current()
-  });
+    after: "]"
+  }, tracker.current()));
   value2 += tracker.move(alt + "][");
   subexit();
   const stack = state3.stack;
   state3.stack = [];
   subexit = state3.enter("reference");
-  const reference = state3.safe(state3.associationId(node3), {
+  const reference = state3.safe(state3.associationId(node3), __spreadValues({
     before: value2,
-    after: "]",
-    ...tracker.current()
-  });
+    after: "]"
+  }, tracker.current()));
   subexit();
   state3.stack = stack;
   exit3();
@@ -154793,11 +154812,10 @@ function link(node3, _3, state3, info2) {
     exit3 = state3.enter("autolink");
     let value3 = tracker.move("<");
     value3 += tracker.move(
-      state3.containerPhrasing(node3, {
+      state3.containerPhrasing(node3, __spreadValues({
         before: value3,
-        after: ">",
-        ...tracker.current()
-      })
+        after: ">"
+      }, tracker.current()))
     );
     value3 += tracker.move(">");
     exit3();
@@ -154808,11 +154826,10 @@ function link(node3, _3, state3, info2) {
   subexit = state3.enter("label");
   let value2 = tracker.move("[");
   value2 += tracker.move(
-    state3.containerPhrasing(node3, {
+    state3.containerPhrasing(node3, __spreadValues({
       before: value2,
-      after: "](",
-      ...tracker.current()
-    })
+      after: "]("
+    }, tracker.current()))
   );
   value2 += tracker.move("](");
   subexit();
@@ -154824,17 +154841,16 @@ function link(node3, _3, state3, info2) {
     subexit = state3.enter("destinationLiteral");
     value2 += tracker.move("<");
     value2 += tracker.move(
-      state3.safe(node3.url, { before: value2, after: ">", ...tracker.current() })
+      state3.safe(node3.url, __spreadValues({ before: value2, after: ">" }, tracker.current()))
     );
     value2 += tracker.move(">");
   } else {
     subexit = state3.enter("destinationRaw");
     value2 += tracker.move(
-      state3.safe(node3.url, {
+      state3.safe(node3.url, __spreadValues({
         before: value2,
-        after: node3.title ? " " : ")",
-        ...tracker.current()
-      })
+        after: node3.title ? " " : ")"
+      }, tracker.current()))
     );
   }
   subexit();
@@ -154842,11 +154858,10 @@ function link(node3, _3, state3, info2) {
     subexit = state3.enter(`title${suffix}`);
     value2 += tracker.move(" " + quote);
     value2 += tracker.move(
-      state3.safe(node3.title, {
+      state3.safe(node3.title, __spreadValues({
         before: value2,
-        after: quote,
-        ...tracker.current()
-      })
+        after: quote
+      }, tracker.current()))
     );
     value2 += tracker.move(quote);
     subexit();
@@ -154867,21 +154882,19 @@ function linkReference(node3, _3, state3, info2) {
   let subexit = state3.enter("label");
   const tracker = state3.createTracker(info2);
   let value2 = tracker.move("[");
-  const text11 = state3.containerPhrasing(node3, {
+  const text11 = state3.containerPhrasing(node3, __spreadValues({
     before: value2,
-    after: "]",
-    ...tracker.current()
-  });
+    after: "]"
+  }, tracker.current()));
   value2 += tracker.move(text11 + "][");
   subexit();
   const stack = state3.stack;
   state3.stack = [];
   subexit = state3.enter("reference");
-  const reference = state3.safe(state3.associationId(node3), {
+  const reference = state3.safe(state3.associationId(node3), __spreadValues({
     before: value2,
-    after: "]",
-    ...tracker.current()
-  });
+    after: "]"
+  }, tracker.current()));
   subexit();
   state3.stack = stack;
   exit3();
@@ -155097,11 +155110,10 @@ function strong(node3, _3, state3, info2) {
   const tracker = state3.createTracker(info2);
   const before = tracker.move(marker + marker);
   let between = tracker.move(
-    state3.containerPhrasing(node3, {
+    state3.containerPhrasing(node3, __spreadValues({
       after: marker,
-      before,
-      ...tracker.current()
-    })
+      before
+    }, tracker.current()))
   );
   const betweenHead = between.charCodeAt(0);
   const open2 = encodeInfo(
@@ -155277,11 +155289,10 @@ function gfmTableToMarkdown(options2) {
   function handleTableCell(node3, _3, state3, info2) {
     const exit3 = state3.enter("tableCell");
     const subexit = state3.enter("phrasing");
-    const value2 = state3.containerPhrasing(node3, {
-      ...info2,
+    const value2 = state3.containerPhrasing(node3, __spreadProps(__spreadValues({}, info2), {
       before: around,
       after: around
-    });
+    }));
     subexit();
     exit3();
     return value2;
@@ -155388,10 +155399,7 @@ function listItemWithTaskListItem(node3, parent4, state3, info2) {
   if (checkable) {
     tracker.move(checkbox);
   }
-  let value2 = handle.listItem(node3, parent4, state3, {
-    ...info2,
-    ...tracker.current()
-  });
+  let value2 = handle.listItem(node3, parent4, state3, __spreadValues(__spreadValues({}, info2), tracker.current()));
   if (checkable) {
     value2 = value2.replace(/^(?:[*+-]|\d+\.)([\r\n]| {1,3})/, check);
   }
@@ -156853,12 +156861,11 @@ function mathToMarkdown(options2) {
     if (node3.meta) {
       const subexit = state3.enter("mathFlowMeta");
       value2 += tracker.move(
-        state3.safe(node3.meta, {
+        state3.safe(node3.meta, __spreadValues({
           after: "\n",
           before: value2,
-          encode: ["$"],
-          ...tracker.current()
-        })
+          encode: ["$"]
+        }, tracker.current()))
       );
       subexit();
     }
@@ -158067,10 +158074,9 @@ function footer(state3) {
       {
         type: "element",
         tagName: footnoteLabelTagName,
-        properties: {
-          ...esm_default(footnoteLabelProperties),
+        properties: __spreadProps(__spreadValues({}, esm_default(footnoteLabelProperties)), {
           id: "footnote-label"
-        },
+        }),
         children: [{ type: "text", value: footnoteLabel }]
       },
       { type: "text", value: "\n" },
@@ -158093,7 +158099,7 @@ function createState(tree, options2) {
   const definitionById = /* @__PURE__ */ new Map();
   const footnoteById = /* @__PURE__ */ new Map();
   const footnoteCounts = /* @__PURE__ */ new Map();
-  const handlers2 = { ...handlers, ...settings.handlers };
+  const handlers2 = __spreadValues(__spreadValues({}, handlers), settings.handlers);
   const state3 = {
     all: all4,
     applyData,
@@ -158125,7 +158131,7 @@ function createState(tree, options2) {
     }
     if (state3.options.passThrough && state3.options.passThrough.includes(type3)) {
       if ("children" in node3) {
-        const { children: children2, ...shallow } = node3;
+        const _a58 = node3, { children: children2 } = _a58, shallow = __objRest(_a58, ["children"]);
         const result = esm_default(shallow);
         result.children = state3.all(node3);
         return result;
@@ -158246,7 +158252,7 @@ function remarkRehype(destination, options2) {
     return async function(tree, file) {
       const hastTree = (
         /** @type {HastRoot} */
-        toHast(tree, { file, ...options2 })
+        toHast(tree, __spreadValues({ file }, options2))
       );
       await destination.run(hastTree, file);
     };
@@ -158254,7 +158260,7 @@ function remarkRehype(destination, options2) {
   return function(tree, file) {
     return (
       /** @type {HastRoot} */
-      toHast(tree, { file, ...options2 || destination })
+      toHast(tree, __spreadValues({ file }, options2 || destination))
     );
   };
 }
@@ -159866,7 +159872,7 @@ function all2(node3, options2) {
 // node_modules/hast-util-from-html-isomorphic/lib/browser.js
 var parser = new DOMParser();
 function fromHtmlIsomorphic(value2, options2) {
-  const node3 = options2?.fragment ? parseFragment(value2) : parser.parseFromString(value2, "text/html");
+  const node3 = (options2 == null ? void 0 : options2.fragment) ? parseFragment(value2) : parser.parseFromString(value2, "text/html");
   return (
     /** @type {Root} */
     fromDom(node3)
@@ -160324,11 +160330,10 @@ function rehypeKatex(options2) {
       const value2 = toText(scope, { whitespace: "pre" });
       let result;
       try {
-        result = katex.renderToString(value2, {
-          ...settings,
+        result = katex.renderToString(value2, __spreadProps(__spreadValues({}, settings), {
           displayMode: displayMode2,
           throwOnError: true
-        });
+        }));
       } catch (error3) {
         const cause = (
           /** @type {Error} */
@@ -160343,12 +160348,11 @@ function rehypeKatex(options2) {
           source: "rehype-katex"
         });
         if (ruleId === "parseerror") {
-          result = katex.renderToString(value2, {
-            ...settings,
+          result = katex.renderToString(value2, __spreadProps(__spreadValues({}, settings), {
             displayMode: displayMode2,
             strict: "ignore",
             throwOnError: false
-          });
+          }));
         } else {
           result = [
             {
@@ -161310,7 +161314,7 @@ function all3(parent4) {
 // node_modules/rehype-stringify/lib/index.js
 function rehypeStringify(options2) {
   const self2 = this;
-  const settings = { ...self2.data("settings"), ...options2 };
+  const settings = __spreadValues(__spreadValues({}, self2.data("settings")), options2);
   self2.compiler = compiler2;
   function compiler2(tree) {
     return toHtml(tree, settings);
@@ -161704,7 +161708,8 @@ var plugin = {
 var c4Detector_default = plugin;
 var id22 = "flowchart";
 var detector2 = /* @__PURE__ */ __name((txt, config5) => {
-  if (config5?.flowchart?.defaultRenderer === "dagre-wrapper" || config5?.flowchart?.defaultRenderer === "elk") {
+  var _a58, _b2;
+  if (((_a58 = config5 == null ? void 0 : config5.flowchart) == null ? void 0 : _a58.defaultRenderer) === "dagre-wrapper" || ((_b2 = config5 == null ? void 0 : config5.flowchart) == null ? void 0 : _b2.defaultRenderer) === "elk") {
     return false;
   }
   return /^\s*graph/.test(txt);
@@ -161721,13 +161726,14 @@ var plugin2 = {
 var flowDetector_default = plugin2;
 var id32 = "flowchart-v2";
 var detector3 = /* @__PURE__ */ __name((txt, config5) => {
-  if (config5?.flowchart?.defaultRenderer === "dagre-d3") {
+  var _a58, _b2, _c2;
+  if (((_a58 = config5 == null ? void 0 : config5.flowchart) == null ? void 0 : _a58.defaultRenderer) === "dagre-d3") {
     return false;
   }
-  if (config5?.flowchart?.defaultRenderer === "elk") {
+  if (((_b2 = config5 == null ? void 0 : config5.flowchart) == null ? void 0 : _b2.defaultRenderer) === "elk") {
     config5.layout = "elk";
   }
-  if (/^\s*graph/.test(txt) && config5?.flowchart?.defaultRenderer === "dagre-wrapper") {
+  if (/^\s*graph/.test(txt) && ((_c2 = config5 == null ? void 0 : config5.flowchart) == null ? void 0 : _c2.defaultRenderer) === "dagre-wrapper") {
     return true;
   }
   return /^\s*flowchart/.test(txt);
@@ -161868,7 +161874,8 @@ var plugin10 = {
 var sequenceDetector_default = plugin10;
 var id13 = "class";
 var detector13 = /* @__PURE__ */ __name((txt, config5) => {
-  if (config5?.class?.defaultRenderer === "dagre-wrapper") {
+  var _a58;
+  if (((_a58 = config5 == null ? void 0 : config5.class) == null ? void 0 : _a58.defaultRenderer) === "dagre-wrapper") {
     return false;
   }
   return /^\s*classDiagram/.test(txt);
@@ -161885,7 +161892,8 @@ var plugin11 = {
 var classDetector_default = plugin11;
 var id14 = "classDiagram";
 var detector14 = /* @__PURE__ */ __name((txt, config5) => {
-  if (/^\s*classDiagram/.test(txt) && config5?.class?.defaultRenderer === "dagre-wrapper") {
+  var _a58;
+  if (/^\s*classDiagram/.test(txt) && ((_a58 = config5 == null ? void 0 : config5.class) == null ? void 0 : _a58.defaultRenderer) === "dagre-wrapper") {
     return true;
   }
   return /^\s*classDiagram-v2/.test(txt);
@@ -161902,7 +161910,8 @@ var plugin12 = {
 var classDetector_V2_default = plugin12;
 var id15 = "state";
 var detector15 = /* @__PURE__ */ __name((txt, config5) => {
-  if (config5?.state?.defaultRenderer === "dagre-wrapper") {
+  var _a58;
+  if (((_a58 = config5 == null ? void 0 : config5.state) == null ? void 0 : _a58.defaultRenderer) === "dagre-wrapper") {
     return false;
   }
   return /^\s*stateDiagram/.test(txt);
@@ -161919,10 +161928,11 @@ var plugin13 = {
 var stateDetector_default = plugin13;
 var id16 = "stateDiagram";
 var detector16 = /* @__PURE__ */ __name((txt, config5) => {
+  var _a58;
   if (/^\s*stateDiagram-v2/.test(txt)) {
     return true;
   }
-  if (/^\s*stateDiagram/.test(txt) && config5?.state?.defaultRenderer === "dagre-wrapper") {
+  if (/^\s*stateDiagram/.test(txt) && ((_a58 = config5 == null ? void 0 : config5.state) == null ? void 0 : _a58.defaultRenderer) === "dagre-wrapper") {
     return true;
   }
   return false;
@@ -161998,10 +162008,11 @@ var diagram26 = {
 var errorDiagram_default = diagram26;
 var id18 = "flowchart-elk";
 var detector18 = /* @__PURE__ */ __name((txt, config5 = {}) => {
+  var _a58;
   if (
     // If diagram explicitly states flowchart-elk
     /^\s*flowchart-elk/.test(txt) || // If a flowchart/graph diagram has their default renderer set to elk
-    /^\s*(flowchart|graph)/.test(txt) && config5?.flowchart?.defaultRenderer === "elk"
+    /^\s*(flowchart|graph)/.test(txt) && ((_a58 = config5 == null ? void 0 : config5.flowchart) == null ? void 0 : _a58.defaultRenderer) === "elk"
   ) {
     config5.layout = "elk";
     return true;
@@ -162217,7 +162228,7 @@ var loadRegisteredDiagrams = /* @__PURE__ */ __name(async () => {
       }
       try {
         getDiagram(key2);
-      } catch {
+      } catch (e3) {
         try {
           const { diagram: diagram27, id: id28 } = await loader28();
           registerDiagram(id28, diagram27, detector28);
@@ -162262,7 +162273,8 @@ function addSVGa11yTitleDescription(svg4, a11yTitle, a11yDesc, baseId) {
   }
 }
 __name(addSVGa11yTitleDescription, "addSVGa11yTitleDescription");
-var Diagram = class _Diagram {
+var _a57;
+var Diagram = (_a57 = class {
   constructor(type3, text11, db7, parser25, renderer22) {
     this.type = type3;
     this.text = text11;
@@ -162270,16 +162282,14 @@ var Diagram = class _Diagram {
     this.parser = parser25;
     this.renderer = renderer22;
   }
-  static {
-    __name(this, "Diagram");
-  }
   static async fromText(text11, metadata = {}) {
+    var _a58, _b2;
     const config5 = getConfig();
     const type3 = detectType(text11, config5);
     text11 = encodeEntities(text11) + "\n";
     try {
       getDiagram(type3);
-    } catch {
+    } catch (e3) {
       const loader28 = getDiagramLoader(type3);
       if (!loader28) {
         throw new UnknownDiagramError(`Diagram ${type3} not found.`);
@@ -162291,13 +162301,13 @@ var Diagram = class _Diagram {
     if (parser25.parser) {
       parser25.parser.yy = db7;
     }
-    db7.clear?.();
-    init22?.(config5);
+    (_a58 = db7.clear) == null ? void 0 : _a58.call(db7);
+    init22 == null ? void 0 : init22(config5);
     if (metadata.title) {
-      db7.setDiagramTitle?.(metadata.title);
+      (_b2 = db7.setDiagramTitle) == null ? void 0 : _b2.call(db7, metadata.title);
     }
     await parser25.parse(text11);
-    return new _Diagram(type3, text11, db7, parser25, renderer22);
+    return new _a57(type3, text11, db7, parser25, renderer22);
   }
   async render(id28, version3) {
     await this.renderer.draw(this.text, id28, version3, this);
@@ -162308,7 +162318,7 @@ var Diagram = class _Diagram {
   getType() {
     return this.type;
   }
-};
+}, __name(_a57, "Diagram"), _a57);
 var interactionFunctions = [];
 var attachFunctions = /* @__PURE__ */ __name(() => {
   interactionFunctions.forEach((f2) => {
@@ -162320,6 +162330,7 @@ var cleanupComments = /* @__PURE__ */ __name((text11) => {
   return text11.replace(/^\s*%%(?!{)[^\n]+\n?/gm, "").trimStart();
 }, "cleanupComments");
 function extractFrontMatter(text11) {
+  var _a58;
   const matches33 = text11.match(frontMatterRegex);
   if (!matches33) {
     return {
@@ -162327,11 +162338,11 @@ function extractFrontMatter(text11) {
       metadata: {}
     };
   }
-  let parsed = load(matches33[1], {
+  let parsed = (_a58 = load(matches33[1], {
     // To support config, we need JSON schema.
     // https://www.yaml.org/spec/1.2/spec.html#id2803231
     schema: JSON_SCHEMA
-  }) ?? {};
+  })) != null ? _a58 : {};
   parsed = typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
   const metadata = {};
   if (parsed.displayMode) {
@@ -162367,11 +162378,12 @@ var processFrontmatter = /* @__PURE__ */ __name((code4) => {
   return { title: title2, config: config5, text: text11 };
 }, "processFrontmatter");
 var processDirectives = /* @__PURE__ */ __name((code4) => {
-  const initDirective = utils_default2.detectInit(code4) ?? {};
+  var _a58;
+  const initDirective = (_a58 = utils_default2.detectInit(code4)) != null ? _a58 : {};
   const wrapDirectives = utils_default2.detectDirective(code4, "wrap");
   if (Array.isArray(wrapDirectives)) {
     initDirective.wrap = wrapDirectives.some(({ type: type3 }) => type3 === "wrap");
-  } else if (wrapDirectives?.type === "wrap") {
+  } else if ((wrapDirectives == null ? void 0 : wrapDirectives.type) === "wrap") {
     initDirective.wrap = true;
   }
   return {
@@ -162414,9 +162426,10 @@ var IFRAME_NOT_SUPPORTED_MSG = 'The "iframe" tag is not supported by your browse
 var DOMPURIFY_TAGS = ["foreignobject"];
 var DOMPURIFY_ATTR = ["dominant-baseline"];
 function processAndSetConfigs(text11) {
+  var _a58;
   const processed2 = preprocessDiagram(text11);
   reset();
-  addDirective(processed2.config ?? {});
+  addDirective((_a58 = processed2.config) != null ? _a58 : {});
   return processed2;
 }
 __name(processAndSetConfigs, "processAndSetConfigs");
@@ -162427,7 +162440,7 @@ async function parse8(text11, parseOptions) {
     const diagram27 = await getDiagramFromText(code4);
     return { diagramType: diagram27.type, config: config5 };
   } catch (error3) {
-    if (parseOptions?.suppressErrors) {
+    if (parseOptions == null ? void 0 : parseOptions.suppressErrors) {
       return false;
     }
     throw error3;
@@ -162439,6 +162452,7 @@ var cssImportantStyles = /* @__PURE__ */ __name((cssClass, element7, cssClasses 
 .${cssClass} ${element7} { ${cssClasses.join(" !important; ")} !important; }`;
 }, "cssImportantStyles");
 var createCssStyles = /* @__PURE__ */ __name((config5, classDefs = /* @__PURE__ */ new Map()) => {
+  var _a58, _b2;
   let cssStyles = "";
   if (config5.themeCSS !== void 0) {
     cssStyles += `
@@ -162453,7 +162467,7 @@ ${config5.themeCSS}`;
 :root { --mermaid-alt-font-family: ${config5.altFontFamily}}`;
   }
   if (classDefs instanceof Map) {
-    const htmlLabels = config5.htmlLabels ?? config5.flowchart?.htmlLabels;
+    const htmlLabels = (_b2 = config5.htmlLabels) != null ? _b2 : (_a58 = config5.flowchart) == null ? void 0 : _a58.htmlLabels;
     const cssHtmlElements = ["> *", "span"];
     const cssShapeElements = ["rect", "polygon", "ellipse", "circle", "path"];
     const cssElements = htmlLabels ? cssHtmlElements : cssShapeElements;
@@ -162467,7 +162481,7 @@ ${config5.themeCSS}`;
         cssStyles += cssImportantStyles(
           styleClassDef.id,
           "tspan",
-          (styleClassDef?.textStyles || []).map((s3) => s3.replace("color", "fill"))
+          ((styleClassDef == null ? void 0 : styleClassDef.textStyles) || []).map((s3) => s3.replace("color", "fill"))
         );
       }
     });
@@ -162492,7 +162506,8 @@ var cleanUpSvgCode = /* @__PURE__ */ __name((svgCode = "", inSandboxMode, useArr
   return cleanedUpSvg;
 }, "cleanUpSvgCode");
 var putIntoIFrame = /* @__PURE__ */ __name((svgCode = "", svgElement) => {
-  const height2 = svgElement?.viewBox?.baseVal?.height ? svgElement.viewBox.baseVal.height + "px" : IFRAME_HEIGHT;
+  var _a58, _b2;
+  const height2 = ((_b2 = (_a58 = svgElement == null ? void 0 : svgElement.viewBox) == null ? void 0 : _a58.baseVal) == null ? void 0 : _b2.height) ? svgElement.viewBox.baseVal.height + "px" : IFRAME_HEIGHT;
   const base64encodedSrc = toBase64(`<body style="${IFRAME_BODY_STYLE}">${svgCode}</body>`);
   return `<iframe style="width:${IFRAME_WIDTH};height:${height2};${IFRAME_STYLES}" src="data:text/html;charset=UTF-8;base64,${base64encodedSrc}" sandbox="${IFRAME_SANDBOX_OPTS}">
   ${IFRAME_NOT_SUPPORTED_MSG}
@@ -162516,17 +162531,19 @@ function sandboxedIframe(parentNode, iFrameId) {
 }
 __name(sandboxedIframe, "sandboxedIframe");
 var removeExistingElements = /* @__PURE__ */ __name((doc, id28, divId, iFrameId) => {
-  doc.getElementById(id28)?.remove();
-  doc.getElementById(divId)?.remove();
-  doc.getElementById(iFrameId)?.remove();
+  var _a58, _b2, _c2;
+  (_a58 = doc.getElementById(id28)) == null ? void 0 : _a58.remove();
+  (_b2 = doc.getElementById(divId)) == null ? void 0 : _b2.remove();
+  (_c2 = doc.getElementById(iFrameId)) == null ? void 0 : _c2.remove();
 }, "removeExistingElements");
 var render6 = /* @__PURE__ */ __name(async function(id28, text11, svgContainingElement) {
+  var _a58, _b2, _c2, _d, _e2, _f, _g;
   addDiagrams();
   const processed2 = processAndSetConfigs(text11);
   text11 = processed2.code;
   const config5 = getConfig();
   log.debug(config5);
-  if (text11.length > (config5?.maxTextSize ?? MAX_TEXTLENGTH)) {
+  if (text11.length > ((_a58 = config5 == null ? void 0 : config5.maxTextSize) != null ? _a58 : MAX_TEXTLENGTH)) {
     text11 = MAX_TEXTLENGTH_EXCEEDED_MSG;
   }
   const idSelector = "#" + id28;
@@ -162584,7 +162601,7 @@ var render6 = /* @__PURE__ */ __name(async function(id28, text11, svgContainingE
   const diagramType = diag.type;
   const svg4 = element7.firstChild;
   const firstChild = svg4.firstChild;
-  const diagramClassDefs = diag.renderer.getClasses?.(text11, diag);
+  const diagramClassDefs = (_c2 = (_b2 = diag.renderer).getClasses) == null ? void 0 : _c2.call(_b2, text11, diag);
   const rules = createUserStyles(config5, diagramType, diagramClassDefs, idSelector);
   const style1 = document.createElement("style");
   style1.innerHTML = rules;
@@ -162600,8 +162617,8 @@ var render6 = /* @__PURE__ */ __name(async function(id28, text11, svgContainingE
     throw e3;
   }
   const svgNode2 = root7.select(`${enclosingDivID_selector} svg`);
-  const a11yTitle = diag.db.getAccTitle?.();
-  const a11yDescr = diag.db.getAccDescription?.();
+  const a11yTitle = (_e2 = (_d = diag.db).getAccTitle) == null ? void 0 : _e2.call(_d);
+  const a11yDescr = (_g = (_f = diag.db).getAccDescription) == null ? void 0 : _g.call(_f);
   addA11yInfo(diagramType, svgNode2, a11yTitle, a11yDescr);
   root7.select(`[id="${id28}"]`).selectAll("foreignobject > *").attr("xmlns", XMLNS_XHTML_STD);
   let svgCode = root7.select(enclosingDivID_selector).node().innerHTML;
@@ -162629,15 +162646,16 @@ var render6 = /* @__PURE__ */ __name(async function(id28, text11, svgContainingE
   };
 }, "render");
 function initialize(userOptions = {}) {
+  var _a58;
   const options2 = assignWithDepth_default({}, userOptions);
-  if (options2?.fontFamily && !options2.themeVariables?.fontFamily) {
+  if ((options2 == null ? void 0 : options2.fontFamily) && !((_a58 = options2.themeVariables) == null ? void 0 : _a58.fontFamily)) {
     if (!options2.themeVariables) {
       options2.themeVariables = {};
     }
     options2.themeVariables.fontFamily = options2.fontFamily;
   }
   saveConfigFromInitialize(options2);
-  if (options2?.theme && options2.theme in themes_default) {
+  if ((options2 == null ? void 0 : options2.theme) && options2.theme in themes_default) {
     options2.themeVariables = themes_default[options2.theme].getThemeVariables(
       options2.themeVariables
     );
@@ -162683,7 +162701,7 @@ var handleError = /* @__PURE__ */ __name((error3, errors, parseError) => {
     if (parseError) {
       parseError(error3.str, error3.hash);
     }
-    errors.push({ ...error3, message: error3.str, error: error3 });
+    errors.push(__spreadProps(__spreadValues({}, error3), { message: error3.str, error: error3 }));
   } else {
     if (parseError) {
       parseError(error3);
@@ -162730,9 +162748,9 @@ var runThrowsErrors = /* @__PURE__ */ __name(async function({ postRenderCallback
     throw new Error("Nodes and querySelector are both undefined");
   }
   log.debug(`Found ${nodesToProcess.length} diagrams`);
-  if (conf5?.startOnLoad !== void 0) {
-    log.debug("Start On Load: " + conf5?.startOnLoad);
-    mermaidAPI.updateSiteConfig({ startOnLoad: conf5?.startOnLoad });
+  if ((conf5 == null ? void 0 : conf5.startOnLoad) !== void 0) {
+    log.debug("Start On Load: " + (conf5 == null ? void 0 : conf5.startOnLoad));
+    mermaidAPI.updateSiteConfig({ startOnLoad: conf5 == null ? void 0 : conf5.startOnLoad });
   }
   const idGenerator = new utils_default2.InitIDGenerator(conf5.deterministicIds, conf5.deterministicIDSeed);
   let txt;
@@ -162838,8 +162856,9 @@ var parse22 = /* @__PURE__ */ __name(async (text11, parseOptions) => {
           resolve2(r2);
         },
         (e3) => {
+          var _a58;
           log.error("Error parsing", e3);
-          mermaid.parseError?.(e3);
+          (_a58 = mermaid.parseError) == null ? void 0 : _a58.call(mermaid, e3);
           rej(e3);
           reject3(e3);
         }
@@ -162858,8 +162877,9 @@ var render23 = /* @__PURE__ */ __name((id28, text11, container2) => {
           resolve2(r2);
         },
         (e3) => {
+          var _a58;
           log.error("Error parsing", e3);
-          mermaid.parseError?.(e3);
+          (_a58 = mermaid.parseError) == null ? void 0 : _a58.call(mermaid, e3);
           rej(e3);
           reject3(e3);
         }
