@@ -539,14 +539,14 @@
                                 <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
                                     <div class="issue-header">
                                         <!-- 问题级别：编辑模式下显示下拉框，非编辑模式显示文本 -->
-                                        <div v-if="editingIssueId !== issue.id" class="issue-level" :class="issue.level?.toLowerCase()">
+                                        <div class="issue-level" :class="issue.level?.toLowerCase()">
                                             ${ issueLevelText(issue.level) }
                                         </div>
-                                        <el-select v-else v-model="issue.level" placeholder="选择问题级别" size="small" style="width: 80px;">
+                                        <!-- <el-select v-else v-model="issue.level" placeholder="选择问题级别" size="small" style="width: 80px;">
                                             <el-option label="重大" value="high"></el-option>
                                             <el-option label="严重" value="medium"></el-option>
                                             <el-option label="一般" value="low"></el-option>
-                                        </el-select>
+                                        </el-select> -->
                                         
                                         <span class="issue-status" :class="issue.status?.toLowerCase()" :style="(issue.status === 'confirmed' || issue.status === 'false_positive') ? 'color: #fff;' : ''">
                                             ${ issue.status === 'confirmed'
