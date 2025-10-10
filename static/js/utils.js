@@ -538,7 +538,7 @@ export function removeTemporaryHighlights(type = null) {
 
 // 存储当前高亮块的信息
 const currentHighlightBlocks = {
-    doc: new Map(), // key: annotationId, value: highlightBlock element
+    doc: new Map(), // key: annotationId, value: array of highlightBlock elements
     code: new Map()
 };
 
@@ -547,18 +547,18 @@ export function highlightRange(start, end, type = 'doc', annotationId = null) {
     const editorDiv = document.querySelector(`.content-text-${type}`);
     if (!editorDiv) return [];
 
-    // 如果已存在该标注的高亮块，先移除
-    if (annotationId && currentHighlightBlocks[type].has(annotationId)) {
-        removeAnnotationHighlights(annotationId, type);
-    }
-
     // 创建高亮块
     const highlightBlock = createHighlightBlock(start, end, type, annotationId);
     if (highlightBlock) {
         editorDiv.appendChild(highlightBlock);
         
         if (annotationId) {
-            currentHighlightBlocks[type].set(annotationId, highlightBlock);
+            // 如果该annotationId还没有高亮块数组，创建一个
+            if (!currentHighlightBlocks[type].has(annotationId)) {
+                currentHighlightBlocks[type].set(annotationId, []);
+            }
+            // 将新的高亮块添加到数组中
+            currentHighlightBlocks[type].get(annotationId).push(highlightBlock);
         }
         
         return [highlightBlock];
@@ -658,9 +658,14 @@ export function removeAllHighlights(type = 'doc') {
 export function removeAnnotationHighlights(annotationId, type = 'doc') {
     if (!annotationId) return;
 
-    const highlightBlock = currentHighlightBlocks[type].get(annotationId);
-    if (highlightBlock) {
-        highlightBlock.remove();
+    const highlightBlocks = currentHighlightBlocks[type].get(annotationId);
+    if (highlightBlocks && highlightBlocks.length > 0) {
+        // 移除所有该annotationId的高亮块
+        highlightBlocks.forEach(block => {
+            if (block && block.parentNode) {
+                block.remove();
+            }
+        });
         currentHighlightBlocks[type].delete(annotationId);
     }
 }
@@ -669,14 +674,18 @@ export function removeAnnotationHighlights(annotationId, type = 'doc') {
 export function updateHighlightPositions(type = 'doc') {
     const blocks = currentHighlightBlocks[type];
     
-    blocks.forEach((block, annotationId) => {
-        const start = parseInt(block.getAttribute('data-range-start'));
-        const end = parseInt(block.getAttribute('data-range-end'));
-        
-        const blockInfo = calculateHighlightBlockPosition(start, end, type);
-        if (blockInfo) {
-            block.style.top = `${blockInfo.top}px`;
-            block.style.height = `${blockInfo.height}px`;
+    blocks.forEach((blockArray, annotationId) => {
+        if (blockArray && blockArray.length > 0) {
+            blockArray.forEach(block => {
+                const start = parseInt(block.getAttribute('data-range-start'));
+                const end = parseInt(block.getAttribute('data-range-end'));
+                
+                const blockInfo = calculateHighlightBlockPosition(start, end, type);
+                if (blockInfo) {
+                    block.style.top = `${blockInfo.top}px`;
+                    block.style.height = `${blockInfo.height}px`;
+                }
+            });
         }
     });
 }

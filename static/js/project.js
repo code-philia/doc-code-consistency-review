@@ -1581,9 +1581,23 @@ const app = createApp({
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
                 
-                // 高亮选中的代码部分
+                // 高亮该对齐关系中当前代码文件的所有代码片段
                 if (selectionInfo && selectionInfo.type === 'code') {
-                    highlightCodeRange(selectionInfo.start, selectionInfo.end, alignment.id);
+                    // 清除当前代码文件中该对齐关系的所有高亮
+                    const existingHighlights = document.querySelectorAll(`.code-highlight[data-alignment-id="${alignment.id}"]`);
+                    existingHighlights.forEach(el => {
+                        const parent = el.parentNode;
+                        parent.insertBefore(document.createTextNode(el.textContent), el);
+                        parent.removeChild(el);
+                        parent.normalize();
+                    });
+                    
+                    // 重新高亮该对齐关系中当前代码文件的所有代码片段
+                    alignment.codeRanges.forEach(range => {
+                        if (range.documentId === selectedCodeFile.value) {
+                            highlightCodeRange(range.start, range.end, alignment.id);
+                        }
+                    });
                 }
                 
                 ElMessage.success('已添加到对齐关系');
