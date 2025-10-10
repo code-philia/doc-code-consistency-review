@@ -619,13 +619,60 @@ const app = createApp({
         /***********************
          * 需求分解功能
          ***********************/
+        
+        // 清空项目所有结果的函数
+        const clearAllResults = async () => {
+            try {
+                const response = await axios.post('/api/clear-project-results', {
+                    projectPath: projectPath.value
+                });
+                
+                if (response.data.status === 'success') {
+                    // 清空前端状态
+                    alignmentResults.value = [];
+                    issues.value = [];
+                    selectedIssue.value = null;
+                    selectedDocFile.value = null;
+                    selectedCodeFile.value = null;
+                    
+                    // 重新获取项目文件信息
+                    await fetchProjectMetadata();
+                } else {
+                    throw new Error(response.data.message || '清空失败');
+                }
+            } catch (error) {
+                console.error('清空结果时出现错误:', error);
+                ElMessage.error(`清空失败: ${error.message}`);
+                throw error;
+            }
+        };
+        
         const startAutoSplit = async () => {
             if (projectFiles.value.doc_files.length === 0) {
                 ElMessage.warning('请先添加需求文档');
                 return;
             }
-            ElMessage.info('开始需求分解，生成需求点...');
+            
+            // 显示确认对话框
             try {
+                await ElMessageBox.confirm(
+                    '需求分解将清空所有现有的需求片段、对齐结果、审查结果和问题单。是否继续？',
+                    '确认需求分解',
+                    {
+                        confirmButtonText: '继续',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                    }
+                );
+            } catch {
+                return; // 用户取消操作
+            }
+            
+            try {
+                // 先清空所有结果
+                await clearAllResults();
+                
+            ElMessage.info('开始需求分解，生成需求点...');
                 const response = await axios.post('api/requirement-decomposition',{
                     projectPath: projectPath.value
                 });
@@ -648,8 +695,26 @@ const app = createApp({
                 ElMessage.warning('请先添加需求文档');
                 return;
             }
-            ElMessage.info('开始自动分解需求文档...');
+            
+            // 显示确认对话框
             try {
+                await ElMessageBox.confirm(
+                    '自动分解将清空所有现有的需求片段、对齐结果、审查结果和问题单。是否继续？',
+                    '确认自动分解',
+                    {
+                        confirmButtonText: '继续',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                    }
+                );
+            } catch {
+                return;
+            }
+            
+            try {
+                await clearAllResults();
+                
+            ElMessage.info('开始自动分解需求文档...');
                 const response = await axios.post('api/auto-markdown-split',{
                     projectPath: projectPath.value
                 });

@@ -1384,6 +1384,45 @@ def delete_issue(issue_id):
         return jsonify({'status': 'error', 'message': str(e)})
 
 
+@app.route('/api/clear-project-results', methods=['POST'])
+def clear_project_results():
+    """清空项目的所有结果：需求片段、对齐结果、审查结果、问题单结果"""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'})
+        
+        if not os.path.exists(project_path):
+            return jsonify({'status': 'error', 'message': '项目路径不存在'})
+        
+        # 清空results目录（需求片段和对齐结果）
+        results_dir = os.path.join(project_path, 'results')
+        if os.path.exists(results_dir):
+            shutil.rmtree(results_dir)
+            os.makedirs(results_dir, exist_ok=True)
+        
+        # 清空问题单文件
+        issues_file = os.path.join(project_path, 'issues.json')
+        if os.path.exists(issues_file):
+            os.remove(issues_file)
+        
+        # 清空审查结果（如果有单独的审查结果文件）
+        review_dir = os.path.join(project_path, 'reviews')
+        if os.path.exists(review_dir):
+            shutil.rmtree(review_dir)
+            os.makedirs(review_dir, exist_ok=True)
+        
+        return jsonify({
+            'status': 'success',
+            'message': '所有结果已清空'
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 @app.route('/project/issue/update', methods=['POST'])
 def update_issue_content():
     data = request.json
