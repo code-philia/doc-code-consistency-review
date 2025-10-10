@@ -50,8 +50,13 @@ def project():
 
 @app.route('/annotation')
 def annotation():
-    """Render the project page"""
+    """Render the annotation page"""
     return render_template('annotation.html')
+
+@app.route('/templates/flowchart-viewer.html')
+def flowchart_viewer_template():
+    """Serve the flowchart viewer template"""
+    return send_file('templates/flowchart-viewer.html', mimetype='text/html')
 
 # project
 @app.route('/project/create', methods=['POST'])

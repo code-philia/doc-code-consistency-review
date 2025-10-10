@@ -672,7 +672,7 @@ const app = createApp({
                 // 先清空所有结果
                 await clearAllResults();
                 
-            ElMessage.info('开始需求分解，生成需求点...');
+                ElMessage.info('开始需求分解，生成需求点...');
                 const response = await axios.post('api/requirement-decomposition',{
                     projectPath: projectPath.value
                 });
@@ -714,7 +714,7 @@ const app = createApp({
             try {
                 await clearAllResults();
                 
-            ElMessage.info('开始自动分解需求文档...');
+                ElMessage.info('开始自动分解需求文档...');
                 const response = await axios.post('api/auto-markdown-split',{
                     projectPath: projectPath.value
                 });
@@ -2272,6 +2272,83 @@ const app = createApp({
             flowchartError.value = null;
         };
 
+        // 查看流程图功能
+        const viewFlowchart = async () => {
+            if (!currentFlowchart.value) {
+                ElMessage.error('没有可查看的流程图');
+                return;
+            }
+
+            try {
+                const element = document.getElementById('mermaid-flowchart');
+                if (!element) {
+                    ElMessage.error('未找到流程图元素');
+                    return;
+                }
+
+                const svgElement = element.querySelector('svg');
+                if (!svgElement) {
+                    ElMessage.error('未找到SVG元素');
+                    return;
+                }
+
+                // 克隆SVG元素以避免修改原始元素
+                const clonedSvg = svgElement.cloneNode(true);
+                
+                // 设置SVG的背景色为白色
+                clonedSvg.style.backgroundColor = 'white';
+                
+                // 确保SVG有正确的尺寸
+                const svgRect = svgElement.getBoundingClientRect();
+                const svgWidth = svgElement.viewBox?.baseVal?.width || svgRect.width || 800;
+                const svgHeight = svgElement.viewBox?.baseVal?.height || svgRect.height || 600;
+                
+                clonedSvg.setAttribute('width', svgWidth);
+                clonedSvg.setAttribute('height', svgHeight);
+                
+                // 添加白色背景矩形
+                const backgroundRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                backgroundRect.setAttribute('width', '100%');
+                backgroundRect.setAttribute('height', '100%');
+                backgroundRect.setAttribute('fill', 'white');
+                clonedSvg.insertBefore(backgroundRect, clonedSvg.firstChild);
+
+                // 将SVG转换为字符串
+                const svgData = new XMLSerializer().serializeToString(clonedSvg);
+                
+                // 获取HTML模板并替换占位符
+                const templateResponse = await fetch('/templates/flowchart-viewer.html');
+                if (!templateResponse.ok) {
+                    throw new Error('无法加载流程图查看器模板');
+                }
+                
+                let htmlContent = await templateResponse.text();
+                htmlContent = htmlContent.replace('{{SVG_CONTENT}}', svgData);
+                htmlContent = htmlContent.replace('{{TIMESTAMP}}', new Date().toLocaleString('zh-CN'));
+                
+                // 创建Blob并在新标签页中打开
+                const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                
+                // 在新标签页中打开
+                const newWindow = window.open(url, '_blank');
+                
+                if (newWindow) {
+                    // 等待一段时间后清理URL对象
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                    }, 1000);
+                } else {
+                    URL.revokeObjectURL(url);
+                    ElMessage.error('无法打开新标签页，请检查浏览器弹窗设置');
+                }
+                
+            } catch (error) {
+                console.error('查看流程图时出错:', error);
+                ElMessage.error('查看流程图失败: ' + error.message);
+            }
+        };
+
         // 刷新高亮功能
         const refreshHighlights = () => {
             try {
@@ -2397,6 +2474,7 @@ const app = createApp({
             generateFlowchart,
             regenerateFlowchart,
             clearFlowchart,
+            viewFlowchart,
             
             // 刷新高亮功能
             refreshHighlights
