@@ -1622,14 +1622,14 @@ const app = createApp({
         });
 
         // 选择导出文件夹
-        // 导出已确认的问题单
+        // 导出非误报的问题单
         const exportConfirmedIssues = async () => {
             try {
-                // 筛选出已确认的问题单
-                const confirmedIssues = issues.value.filter(issue => issue.status === 'confirmed');
+                // 筛选非误报的问题单
+                const confirmedIssues = issues.value.filter(issue => issue.status === 'confirmed' || issue.status === 'unconfirmed');
                 
                 if (confirmedIssues.length === 0) {
-                    ElMessage.warning('没有已确认的问题单可导出');
+                    ElMessage.warning('没有可导出（非误报）的问题单');
                     return;
                 }
 
@@ -1644,16 +1644,16 @@ const app = createApp({
         // 确认导出
         const confirmExport = async () => {
             try {
-                // 筛选出已确认的问题单
-                const confirmedIssues = issues.value.filter(issue => issue.status === 'confirmed');
+                // 筛选出非误报的问题单
+                const confirmedIssues = issues.value.filter(issue => issue.status === 'confirmed' || issue.status === 'unconfirmed');
                 
                 if (confirmedIssues.length === 0) {
-                    ElMessage.warning('没有已确认的问题单可导出');
+                    ElMessage.warning('没有非误报的问题单可导出');
                     showExportDialog.value = false;
                     return;
                 }
 
-                // 调用后端API生成zip文件
+                // 调用后端API生成docx文件
                 const response = await axios.post('/project/export-issues-download', {
                     issues: confirmedIssues,
                     formData: exportForm.value,
@@ -1661,19 +1661,19 @@ const app = createApp({
                 });
 
                 if (response.data.status === 'success') {
-                    // 直接下载zip文件
-                    const zipFilename = response.data.zipFile;
+                    // 直接下载docx文件
+                    const docxFilename = response.data.docxFile;
                     
                     // 创建下载链接
-                    const downloadUrl = `/project/download-file/${zipFilename}`;
+                    const downloadUrl = `/project/download-file/${docxFilename}`;
                     const link = document.createElement('a');
                     link.href = downloadUrl;
-                    link.download = zipFilename;
+                    link.download = docxFilename;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     
-                    ElMessage.success(`成功生成并下载问题单zip文件：${zipFilename}`);
+                    ElMessage.success(`成功生成并下载问题单docx文件：${docxFilename}`);
                     showExportDialog.value = false;
                 } else {
                     ElMessage.error('导出失败：' + response.data.message);

@@ -825,7 +825,7 @@ def auto_markdown_split():
 
 @app.route('/project/export-issues-download', methods=['POST'])
 def export_issues_download():
-    """导出所有问题单并打包成zip文件"""
+    """导出所有问题单到一个docx文件"""
     try:
         data = request.json
         issues = data.get('issues', [])
@@ -842,75 +842,118 @@ def export_issues_download():
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir, exist_ok=True)
         
-        # 生成zip文件名
+        # 生成docx文件名
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        zip_filename = f"问题单导出_{form_data.get('issueId', 'BBB')}_{timestamp}.zip"
-        zip_path = os.path.join(temp_dir, zip_filename)
+        docx_filename = f"问题单导出_{form_data.get('issueId', 'BBB')}_{timestamp}.docx"
+        docx_path = os.path.join(temp_dir, docx_filename)
         
-        # 创建zip文件
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # 检查是否提供了DOCX模板路径
-            if template_path and os.path.exists(template_path):
-                # 使用DOCX模板导出
-                for i, issue in enumerate(issues, 1):
-                    filename = f"问题单_{form_data.get('issueId', 'BBB')}_{i:03d}.docx"
-                    
-                    # 加载DOCX模板
-                    doc = Document(template_path)
-                    # 生成当前日期（格式：20220121）
-                    current_date = datetime.now().strftime("%Y%m%d")
-                    
-                    replacements = {}
-                    
-                    replacements["AAAAA软件"] = form_data.get('productName', '')
-                    replacements["BBBBB"] = f"{form_data.get('issueId', '')}_{i}"
-                    replacements["CCCCC"] = form_data.get('productId', '')
-                    replacements["DDDDD"] = form_data.get('discoveryMethod', '')
-                    replacements["EEEEE"] = form_data.get('issueTracking', '')
-                    replacements["GGGGG"] = current_date
-                    
-                    issue_categories = form_data.get('issueCategories', [])
-                    for category in ['设计', '编码', '测试', '文档', '数据', '其他']:
-                        if category in issue_categories:
-                            replacements[f"□{category}"] = f"■{category}"
-                    
-                    issue_level = issue.get('level', '')
-                    # 将英文级别转换为中文
-                    level_mapping = {
-                        'high': '重大',
-                        'medium': '严重', 
-                        'low': '一般'
-                    }
-                    chinese_level = level_mapping.get(issue_level.lower(), issue_level)
-                    
-                    for level in ['重大', '严重', '一般']:
-                        if level == chinese_level:
-                            replacements[f"□{level}"] = f"■{level}"
-                    
-                    replacements["CONTENTCONTENT"] = issue.get('description', '')
-
-                    replace_text_in_docx(doc, replacements)
-
-                    # 保存到内存中的字节流
-                    doc_buffer = io.BytesIO()
-                    doc.save(doc_buffer)
-                    doc_buffer.seek(0)
-                    
-                    # 添加到zip文件
-                    zipf.writestr(filename, doc_buffer.getvalue())
-            else:
-                # 使用文本格式导出
-                for i, issue in enumerate(issues, 1):
-                    filename = f"问题单_{form_data.get('issueId', 'BBB')}_{i:03d}.txt"
-                    content = generate_issue_content(issue, form_data)
-                    
-                    # 添加到zip文件
-                    zipf.writestr(filename, content.encode('utf-8'))
+        # 检查是否提供了DOCX模板路径
+        if template_path and os.path.exists(template_path):
+            current_date = datetime.now().strftime("%Y%m%d")
+            issue_categories = form_data.get('issueCategories', [])
+            
+            # 将英文级别转换为中文的映射
+            level_mapping = {
+                'high': '重大',
+                'medium': '严重', 
+                'low': '一般'
+            }
+            
+            # 处理第一个问题单作为基础文档
+            first_issue = issues[0]
+            merged_doc = Document(template_path)
+            
+            replacements = {}
+            # 替换页码信息
+            replacements["CURRENT"] = "1"
+            replacements["TOTAL"] = str(len(issues))
+            
+            replacements["AAAAA软件"] = form_data.get('productName', '')
+            replacements["BBBBB"] = f"{form_data.get('issueId', '')}_1"
+            replacements["CCCCC"] = form_data.get('productId', '')
+            replacements["DDDDD"] = form_data.get('discoveryMethod', '')
+            replacements["EEEEE"] = form_data.get('issueTracking', '')
+            replacements["GGGGG"] = current_date
+            
+            # 处理问题类别
+            for category in ['设计', '编码', '测试', '文档', '数据', '其他']:
+                if category in issue_categories:
+                    replacements[f"□{category}"] = f"■{category}"
+            
+            # 处理问题级别
+            issue_level = first_issue.get('level', '')
+            chinese_level = level_mapping.get(issue_level.lower(), issue_level)
+            
+            for level in ['重大', '严重', '一般']:
+                if level == chinese_level:
+                    replacements[f"□{level}"] = f"■{level}"
+            
+            replacements["CONTENTCONTENT"] = first_issue.get('description', '')
+            
+            # 替换第一个文档的占位符
+            replace_text_in_docx(merged_doc, replacements)
+            
+            # 处理剩余的问题单
+            for i, issue in enumerate(issues[1:], 2):
+                # 添加分页符
+                merged_doc.add_page_break()
+                
+                # 为每个问题单加载新的模板并填充
+                temp_doc = Document(template_path)
+                
+                replacements = {}
+                # 替换页码信息
+                replacements["CURRENT"] = str(i)
+                replacements["TOTAL"] = str(len(issues))
+                
+                replacements["AAAAA软件"] = form_data.get('productName', '')
+                replacements["BBBBB"] = f"{form_data.get('issueId', '')}_{i}"
+                replacements["CCCCC"] = form_data.get('productId', '')
+                replacements["DDDDD"] = form_data.get('discoveryMethod', '')
+                replacements["EEEEE"] = form_data.get('issueTracking', '')
+                replacements["GGGGG"] = current_date
+                
+                # 处理问题类别
+                for category in ['设计', '编码', '测试', '文档', '数据', '其他']:
+                    if category in issue_categories:
+                        replacements[f"□{category}"] = f"■{category}"
+                
+                # 处理问题级别
+                issue_level = issue.get('level', '')
+                chinese_level = level_mapping.get(issue_level.lower(), issue_level)
+                
+                for level in ['重大', '严重', '一般']:
+                    if level == chinese_level:
+                        replacements[f"□{level}"] = f"■{level}"
+                
+                replacements["CONTENTCONTENT"] = issue.get('description', '')
+                
+                # 替换模板中的占位符
+                replace_text_in_docx(temp_doc, replacements)
+                
+                # 直接拼接填充好的页面内容到合并文档
+                for element in temp_doc.element.body:
+                    merged_doc.element.body.append(element)
+            
+            # 保存合并后的文档
+            merged_doc.save(docx_path)
+        else:
+            # 使用文本格式导出（备用方案）
+            content = ""
+            for i, issue in enumerate(issues, 1):
+                content += f"问题单 {i}/{len(issues)}\n"
+                content += generate_issue_content(issue, form_data)
+                content += "\n" + "="*50 + "\n\n"
+            
+            # 创建一个简单的docx文档
+            doc = Document()
+            doc.add_paragraph(content)
+            doc.save(docx_path)
         
         return jsonify({
             'status': 'success', 
-            'message': f'成功生成 {len(issues)} 个问题单文件并打包成zip',
-            'zipFile': zip_filename
+            'message': f'成功生成包含 {len(issues)} 个问题单的docx文件',
+            'docxFile': docx_filename
         })
         
     except Exception as e:

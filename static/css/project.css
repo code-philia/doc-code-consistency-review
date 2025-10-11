@@ -1560,9 +1560,11 @@
 
 .issue-summary {
     font-size: 14px;
+    max-height: 60vh;
     color: var(--text-primary);
     margin-bottom: 8px;
     font-weight: 500;
+    overflow-y: auto;
 }
 
 .issue-description {
