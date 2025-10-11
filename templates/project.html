@@ -64,12 +64,12 @@
                     <div class="dropdown-item" @click="startAutoAlignment" :class="{disabled: isAutoAligning}">
                         <i class="fas fa-link"></i> 
                         <span v-if="!isAutoAligning">自动对齐</span>
-                        <span v-else>对齐中... ${alignmentProgress}%</span>
+                        <span v-else>对齐中...</span>
                     </div>
                     <div class="dropdown-item" @click="startAutoReview" :class="{disabled: isAutoReviewing}">
                         <i class="fas fa-tasks"></i> 
                         <span v-if="!isAutoReviewing">自动审查</span>
-                        <span v-else>审查中... ${reviewProgress}%</span>
+                        <span v-else>审查中...</span>
                     </div>
                 </div>
             </div>
