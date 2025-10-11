@@ -381,6 +381,13 @@ const app = createApp({
                             selectedDocFile.value = fileName;
                             selectedDocRawContent.value = content;
                             selectedDocContent.value = await renderMarkdown(content);
+                            
+                            // 切换文档时自动退出筛选模式
+                            if (isFiltered.value) {
+                                filteredAlignments.value = null;
+                                isFiltered.value = false;
+                            }
+                            
                             // 当选择文档时，获取该文档的对齐结果
                             await fetchAlignments();
                             // 重新加载高亮
