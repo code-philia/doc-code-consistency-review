@@ -1328,6 +1328,9 @@ const app = createApp({
         const scrollToFirstAndHighlightAll = (elements) => {
             if (!elements || elements.length === 0) return;
             
+            // 只处理高亮块元素，忽略其他内部元素
+            const highlightBlocks = elements.filter(el => el.classList.contains('highlight-block'));
+            
             // 滚动到第一个元素位置（只进行垂直滚动）
             elements[0].scrollIntoView({
                 behavior: 'smooth',
@@ -1335,11 +1338,11 @@ const app = createApp({
                 inline: 'start'
             });
             
-            // 为所有元素添加临时高亮效果
-            const originalStyles = [];
-            elements.forEach((element, index) => {
+            // 只为高亮块添加临时高亮效果（直接改变背景色）
+            const originalHighlightStyles = [];
+            highlightBlocks.forEach((element, index) => {
                 // 保存原始样式
-                originalStyles[index] = {
+                originalHighlightStyles[index] = {
                     backgroundColor: element.style.backgroundColor,
                     transition: element.style.transition
                 };
@@ -1351,12 +1354,14 @@ const app = createApp({
             
             // 5秒后恢复原来的背景色
             setTimeout(() => {
-                elements.forEach((element, index) => {
-                    element.style.backgroundColor = originalStyles[index].backgroundColor;
-                    // 再过一段时间移除transition，避免影响其他样式变化
-                    setTimeout(() => {
-                        element.style.transition = originalStyles[index].transition;
-                    }, 300);
+                highlightBlocks.forEach((element, index) => {
+                    if (originalHighlightStyles[index]) {
+                        element.style.backgroundColor = originalHighlightStyles[index].backgroundColor;
+                        // 再过一段时间移除transition，避免影响其他样式变化
+                        setTimeout(() => {
+                            element.style.transition = originalHighlightStyles[index].transition;
+                        }, 300);
+                    }
                 });
             }, 4000);
         };
@@ -1365,6 +1370,9 @@ const app = createApp({
         const scrollToFirstAndHighlightAllCode = (elements) => {
             if (!elements || elements.length === 0) return;
             
+            // 只处理高亮块元素，忽略其他内部元素
+            const highlightBlocks = elements.filter(el => el.classList.contains('highlight-block'));
+            
             // 滚动到第一个元素位置（只进行垂直滚动）
             elements[0].scrollIntoView({
                 behavior: 'smooth',
@@ -1372,11 +1380,11 @@ const app = createApp({
                 inline: 'start'
             });
             
-            // 为所有元素添加临时高亮效果
-            const originalStyles = [];
-            elements.forEach((element, index) => {
+            // 只为高亮块添加临时高亮效果（直接改变背景色）
+            const originalHighlightStyles = [];
+            highlightBlocks.forEach((element, index) => {
                 // 保存原始样式
-                originalStyles[index] = {
+                originalHighlightStyles[index] = {
                     backgroundColor: element.style.backgroundColor,
                     transition: element.style.transition
                 };
@@ -1388,12 +1396,14 @@ const app = createApp({
             
             // 5秒后恢复原来的背景色
             setTimeout(() => {
-                elements.forEach((element, index) => {
-                    element.style.backgroundColor = originalStyles[index].backgroundColor;
-                    // 再过一段时间移除transition，避免影响其他样式变化
-                    setTimeout(() => {
-                        element.style.transition = originalStyles[index].transition;
-                    }, 300);
+                highlightBlocks.forEach((element, index) => {
+                    if (originalHighlightStyles[index]) {
+                        element.style.backgroundColor = originalHighlightStyles[index].backgroundColor;
+                        // 再过一段时间移除transition，避免影响其他样式变化
+                        setTimeout(() => {
+                            element.style.transition = originalHighlightStyles[index].transition;
+                        }, 300);
+                    }
                 });
             }, 4000);
         };
