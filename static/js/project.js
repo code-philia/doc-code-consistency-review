@@ -332,6 +332,13 @@ const app = createApp({
                         }
                     }
 
+                    const levelOrder = { 'high': 0, 'medium': 1, 'low': 2 };
+                    issuesData.sort((a, b) => {
+                        const levelA = levelOrder[a.level] !== undefined ? levelOrder[a.level] : 3;
+                        const levelB = levelOrder[b.level] !== undefined ? levelOrder[b.level] : 3;
+                        return levelA - levelB;
+                    });
+
                     issues.value = issuesData;
                 }
             } catch (error) {
@@ -1927,6 +1934,16 @@ const app = createApp({
             }
         };
 
+        // 刷新问题单排序
+        const refreshIssuesSorting = () => {
+            const levelOrder = { 'high': 0, 'medium': 1, 'low': 2 };
+            issues.value.sort((a, b) => {
+                const levelA = levelOrder[a.level] !== undefined ? levelOrder[a.level] : 3;
+                const levelB = levelOrder[b.level] !== undefined ? levelOrder[b.level] : 3;
+                return levelA - levelB;
+            });
+        };
+
         /***********************
          * 对齐结果与右键菜单管理
          ***********************/
@@ -2655,6 +2672,7 @@ const app = createApp({
             toggleEditIssue,
             saveIssue,
             updateIssueContentOnBlur,
+            refreshIssuesSorting,
             
             // Markdown渲染
             renderMarkdownWithLatex,

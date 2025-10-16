@@ -848,7 +848,7 @@
 }
 
 .issue-actions {
-    width: 300px;
+    width: 400px;
     display: flex;
     gap: 8px;
     justify-content: flex-end;
