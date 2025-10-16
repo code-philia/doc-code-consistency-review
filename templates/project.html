@@ -297,6 +297,14 @@
                                             <el-button 
                                                 size="small" 
                                                 type="primary" 
+                                                plain
+                                                @click="startAutoMarkdownSplit">
+                                                <span>需求分解</span>
+                                            </el-button>
+                                            <el-button 
+                                                size="small" 
+                                                type="primary" 
+                                                plain
                                                 @click="toggleAutoAlignment">
                                                 <span v-if="!isAutoAligning">自动对齐</span>
                                                 <span v-else>停止对齐</span>
@@ -315,7 +323,8 @@
                                         <div style="display: flex; align-items: center;">
                                             <el-button 
                                                 size="small" 
-                                                type="success" 
+                                                type="success"
+                                                plain
                                                 @click="toggleAutoReview">
                                                 <span v-if="!isAutoReviewing">自动审查</span>
                                                 <span v-else>停止审查</span>
