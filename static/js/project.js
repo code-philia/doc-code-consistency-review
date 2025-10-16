@@ -235,6 +235,11 @@ const app = createApp({
                 reviewProgress.value.total = unreviewed.length;
 
                 for (const { docFile, alignment } of unreviewed) {
+                    // 检查是否需要中断
+                    if (!isAutoReviewing.value) {
+                        break;
+                    }
+
                     reviewProgress.value.current++;
 
                     // 调用后端进行审查
@@ -780,6 +785,11 @@ const app = createApp({
                 let processedCount = 0;
 
                 for (const docFile of projectFiles.value.doc_files) {
+                    // 检查是否需要中断
+                    if (!isAutoAligning.value) {
+                        break;
+                    }
+
                     const unalignedCount = await processUnalignedRequirements(docFile);
                     totalUnalignedCount += unalignedCount;
                     processedCount += unalignedCount;
@@ -818,6 +828,11 @@ const app = createApp({
                 alignmentProgress.value.total += unalignedRequirements.length;
 
                 for (const requirement of unalignedRequirements) {
+                    // 检查是否需要中断
+                    if (!isAutoAligning.value) {
+                        break;
+                    }
+
                     alignmentProgress.value.current++;
 
                     // 为未对齐的需求点生成mock代码对齐
@@ -1945,6 +1960,33 @@ const app = createApp({
         };
 
         /***********************
+         * 自动对齐和审查切换功能
+         ***********************/
+        const toggleAutoAlignment = async () => {
+            if (isAutoAligning.value) {
+                // 停止对齐
+                isAutoAligning.value = false;
+                alignmentProgress.value = { current: 0, total: 0 };
+                ElMessage.info('已停止自动对齐');
+            } else {
+                // 开始对齐
+                await startAutoAlignment();
+            }
+        };
+
+        const toggleAutoReview = async () => {
+            if (isAutoReviewing.value) {
+                // 停止审查
+                isAutoReviewing.value = false;
+                reviewProgress.value = { current: 0, total: 0 };
+                ElMessage.info('已停止自动审查');
+            } else {
+                // 开始审查
+                await startAutoReview();
+            }
+        };
+
+        /***********************
          * 对齐结果与右键菜单管理
          ***********************/
         const contextMenu = ref({
@@ -2633,6 +2675,7 @@ const app = createApp({
             startAutoAlignment,
             isAutoAligning,
             alignmentProgress,
+            toggleAutoAlignment,
             // 统计数据
             requirementStats,
             totalRequirements,
@@ -2643,6 +2686,7 @@ const app = createApp({
             startAutoReview,
             isAutoReviewing,
             reviewProgress,
+            toggleAutoReview,
             // 问题单数据
             fetchIssues,
             exportConfirmedIssues,

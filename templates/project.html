@@ -61,15 +61,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="dropdown-item" @click="startAutoAlignment" :class="{disabled: isAutoAligning}">
+                    <div class="dropdown-item" @click="toggleAutoAlignment">
                         <i class="fas fa-link"></i> 
                         <span v-if="!isAutoAligning">自动对齐</span>
-                        <span v-else>对齐中...</span>
+                        <span v-else>停止对齐</span>
                     </div>
-                    <div class="dropdown-item" @click="startAutoReview" :class="{disabled: isAutoReviewing}">
+                    <div class="dropdown-item" @click="toggleAutoReview">
                         <i class="fas fa-tasks"></i> 
                         <span v-if="!isAutoReviewing">自动审查</span>
-                        <span v-else>审查中...</span>
+                        <span v-else>停止审查</span>
                     </div>
                 </div>
             </div>
@@ -290,7 +290,18 @@
                             <el-splitter>
                                 <el-splitter-panel class="split-panel req-panel" :min="200" size="40%">
                                     <div class="panel-title">
-                                        <i class="fas fa-file-word"></i> <span>${ selectedDocFile || '请选择需求文档' }</span>
+                                        <div style="display: flex; align-items: center;">
+                                            <i class="fas fa-file-word"></i> <span style="margin-left: 8px;">${ selectedDocFile || '请选择需求文档' }</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center;">
+                                            <el-button 
+                                                size="small" 
+                                                type="primary" 
+                                                @click="toggleAutoAlignment">
+                                                <span v-if="!isAutoAligning">自动对齐</span>
+                                                <span v-else>停止对齐</span>
+                                            </el-button>
+                                        </div>
                                     </div>
                                     <div class="content-card">
                                         <div class="content-text-doc" v-html="selectedDocContent" @mouseup="handleDocSelection"></div>
@@ -298,7 +309,18 @@
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel code-panel" :min="200" size="40%">
                                     <div class="panel-title">
-                                        <i class="fas fa-file-code"></i> <span>${ selectedCodeFile || '请选择代码文件' }</span>
+                                        <div style="display: flex; align-items: center;">
+                                            <i class="fas fa-file-code"></i> <span style="margin-left: 8px;">${ selectedCodeFile || '请选择代码文件' }</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center;">
+                                            <el-button 
+                                                size="small" 
+                                                type="success" 
+                                                @click="toggleAutoReview">
+                                                <span v-if="!isAutoReviewing">自动审查</span>
+                                                <span v-else>停止审查</span>
+                                            </el-button>
+                                        </div>
                                     </div>
                                     <div class="content-card">
                                         <pre class="content-text-code" v-html="selectedCodeContent" @mouseup="handleCodeSelection"></pre>
