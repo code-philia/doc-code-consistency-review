@@ -947,7 +947,6 @@
     border-radius: 3px;
     font-size: 11px;
     font-weight: 700;
-    color: var(--text-primary);
     text-align: center;
 }
 
@@ -957,13 +956,22 @@
 }
 
 .issue-status.unconfirmed {
-    font-weight: 500;
     background-color: #e0e0e0;
+    color: var(--text-primary);
 }
 
 .issue-status.false_positive {
     background-color: var(--warning-color);
     color: white;
+}
+
+.issue-status.clickable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.issue-status.clickable:hover {
+    opacity: 0.8;
 }
 
 .issue-summary.editable {

@@ -1810,6 +1810,59 @@ const app = createApp({
             }
         };
 
+        // 循环切换问题单状态
+        const cycleIssueStatus = async (issue) => {
+            let newStatus;
+            
+            // 状态循环：未确认 -> 已确认 -> 误报 -> 未确认
+            switch (issue.status) {
+                case 'unconfirmed':
+                case undefined:
+                case null:
+                    newStatus = 'confirmed';
+                    break;
+                case 'confirmed':
+                    newStatus = 'false_positive';
+                    break;
+                case 'false_positive':
+                    newStatus = 'unconfirmed';
+                    break;
+                default:
+                    newStatus = 'confirmed';
+            }
+
+            try {
+                const updatedIssue = { ...issue, status: newStatus };
+                const response = await axios.put(
+                    `/project/issues/${issue.id}?path=${encodeURIComponent(projectPath.value)}`,
+                    updatedIssue
+                );
+
+                if (response.data.status === 'success') {
+                    // 更新本地数据
+                    const idx = issues.value.findIndex(i => i.id === issue.id);
+                    if (idx > -1) {
+                        issues.value[idx].status = newStatus;
+                    }
+                    issue.status = newStatus;
+                    
+                    // 如果是当前选中的问题单，也要更新
+                    if (selectedIssue.value && selectedIssue.value.id === issue.id) {
+                        selectedIssue.value.status = newStatus;
+                    }
+                    
+                    const statusText = newStatus === 'confirmed' ? '已确认' : 
+                                     newStatus === 'false_positive' ? '误报' : '未确认';
+                    ElMessage.success(`状态已更新为：${statusText}`);
+                } else {
+                    ElMessage.error('状态更新失败：' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error updating issue status:', error);
+                ElMessage.error('状态更新失败：' + (error.response?.data?.message || error.message));
+            }
+        };
+
         // 删除选中的问题单
         const deleteSelectedIssue = async () => {
             if (!selectedIssue.value) {
@@ -2593,6 +2646,7 @@ const app = createApp({
             selectIssue,
             confirmIssue,
             markFalsePositive,
+            cycleIssueStatus,
             deleteSelectedIssue,
             ignoreIssue,
             showIssueDetail,

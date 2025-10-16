@@ -557,7 +557,12 @@
                                             </button>
                                         </div>
                                         
-                                        <span class="issue-status" :class="issue.status?.toLowerCase()" :style="(issue.status === 'confirmed' || issue.status === 'false_positive') ? 'color: #fff;' : ''">
+                                        <span 
+                                            class="issue-status clickable" 
+                                            :class="issue.status?.toLowerCase()" 
+                                            @click="cycleIssueStatus(issue)"
+                                            title="点击切换状态"
+                                        >
                                             ${ issue.status === 'confirmed'
                                                 ? '已确认'
                                                 : (issue.status === 'false_positive'
