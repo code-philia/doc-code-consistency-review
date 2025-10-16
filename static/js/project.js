@@ -6,7 +6,7 @@ let activeView = 'alignmentView'; // 当前活动视图
 const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
-    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike, updateHighlightPositions
+    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike, updateHighlightPositions, extractPlainTextFromMarkdown
 } from './utils.js';
 import { mermaid } from './thirdParty/bundle.js';
 
@@ -966,7 +966,9 @@ const app = createApp({
                 return;
             }
             if (!newAlignmentName.value.trim()) {
-                newAlignmentName.value = `需求点_${id.slice(0, 8)}`;
+                // 从选中的内容中提取纯文本作为名称
+                const extractedName = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
+                newAlignmentName.value = extractedName;
             }
 
             // 为文档范围添加filename和行号信息

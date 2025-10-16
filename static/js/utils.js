@@ -755,3 +755,50 @@ export function generateUUIDLike() {
     const y = (Math.random() * 16 | 0).toString(16);
     return `${randomStr()}-${timestamp.slice(-4)}-${'4' + randomStr().slice(1)}-${(y & 0x3 | 0x8).toString(16) + randomStr().slice(1)}-${randomStr()}`;
 }
+
+/**
+ * 从markdown文本中提取纯文本，去除markdown元素
+ * @param {string} markdownText - 包含markdown格式的文本
+ * @param {number} maxLength - 最大长度，默认20个字符
+ * @returns {string} 提取的纯文本
+ */
+export function extractPlainTextFromMarkdown(markdownText, maxLength = 20) {
+    if (!markdownText || typeof markdownText !== 'string') {
+        return '';
+    }
+
+    let plainText = markdownText
+        // 去除代码块
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/`[^`]*`/g, '')
+        // 去除链接，保留链接文本
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+        // 去除图片
+        .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+        // 去除标题标记
+        .replace(/^#{1,6}\s+/gm, '')
+        // 去除粗体和斜体标记
+        .replace(/\*\*([^*]*)\*\*/g, '$1')
+        .replace(/\*([^*]*)\*/g, '$1')
+        .replace(/__([^_]*)__/g, '$1')
+        .replace(/_([^_]*)_/g, '$1')
+        // 去除删除线
+        .replace(/~~([^~]*)~~/g, '$1')
+        // 去除列表标记
+        .replace(/^[\s]*[-*+]\s+/gm, '')
+        .replace(/^[\s]*\d+\.\s+/gm, '')
+        // 去除引用标记
+        .replace(/^>\s+/gm, '')
+        // 去除水平线
+        .replace(/^[-*_]{3,}$/gm, '')
+        // 去除多余的空白字符
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    // 截取前几个字符作为名称
+    if (plainText.length > maxLength) {
+        plainText = plainText.substring(0, maxLength) + '...';
+    }
+
+    return plainText || '需求点';
+}
