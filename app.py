@@ -130,8 +130,20 @@ def create_project_from_folder(project_name, folder_path):
         code_files = get_all_files_with_relative_paths(code_repo_path, type ='code')
         doc_files = get_all_files_with_relative_paths(doc_repo_path, type ='doc')
         
-        # 对 doc_repo 目录下的文档进行格式转换
-        convert_doc_to_markdown(doc_repo_path)
+        # 检查 doc_repo 目录下是否有 docx 文件，如果有则进行格式转换
+        has_docx = False
+        for root, dirs, files in os.walk(doc_repo_path):
+            for file in files:
+                if file.endswith('.docx'):
+                    has_docx = True
+                    break
+            if has_docx:
+                break
+        
+        if has_docx:
+            convert_doc_to_markdown(doc_repo_path)
+            # 转换后重新获取文档文件列表
+            doc_files = get_all_files_with_relative_paths(doc_repo_path, type ='doc')
         
         code_file_lines = {}
         total_loc = 0
