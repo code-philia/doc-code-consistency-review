@@ -46,6 +46,7 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
         lines = [line.rstrip('\n') for line in f.readlines()]
     
     total_lines = len(lines)
+
     if total_lines == 0:
         return []
     
@@ -55,10 +56,6 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
     
     # 定义分块模式和处理函数，按优先级排序
     patterns = [
-        # 1. 单行注释 //
-        (re.compile(r'^[\s\ufeff]*//.*$'),
-         lambda i, name: i + 1,
-         "single_comment"),
         
         # 2. 多行注释 /* ... */
         (re.compile(r'^[\s\ufeff]*/\*\*'),
@@ -66,6 +63,11 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                     # r'(?:\n.*?\n\*+/)?'),
          lambda i, name: find_multiline_comment_end(lines, i),
          "multiline_comment"),
+        
+         # 1. 多行注释 //
+        (re.compile(r'^\s*//.*(?:[\r\n]+\s*//.*)*'),
+         lambda i, name: i + 1,
+         "multi_comment"),
         
         # 3. 函数定义（包括模板/成员/友元函数等） 
         # (re.compile(r'^\s*([A-Za-z0-9_*&<>]+\s+)+([A-Za-z_][A-Za-z0-9_]*::\s*)?[A-Za-z_][A-Za-z0-9_~]*\s*\(\s*[^\)]*\s*\)\s*[const&volatile]*\s*[;{]?\s*$'), 
@@ -93,8 +95,14 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
          lambda i, name: find_preprocessor_block_end(lines, i),
          "preprocessor_block"),
         
+        # 1. 单行注释 //
+        (re.compile(r'^[\s\ufeff]*//.*$'),
+         lambda i, name: i + 1,
+         "single_comment"),
+  
         # 8. 头文件
-        (re.compile(r'^\s*#\s*include'), 
+        #(re.compile(r'^\s*#\s*include'), 
+        (re.compile(r'^[\s\ufeff]*#\s*include'), 
          lambda i, name: i + 1,
          "include_single"),
         
@@ -139,13 +147,10 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                 start_idx = i
                 start_line = i + 1  # 行号从1开始
                 
-                
                 # 提取名称，如果有
-                name_group = 4 if block_type == "class/struct" else 3 if block_type == "function" else 2
-                name = match.group(name_group) if len(match.groups()) >= name_group else None
                 # print(name)
                 # sys.exit()
-                end_idx = end_finder(i, name) - 1  # 转换为索引
+                end_idx = end_finder(i, block_type) - 1  # 转换为索引
                 
                 # 确保不超出范围
                 end_idx = min(end_idx, total_lines - 1)
@@ -156,13 +161,23 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                 # print(block_type)
                 # sys.exit()
                 # 记录注释但先不添加，后续判断是不是结构体/函数前的注释
-                if block_type == 'multiline_comment' or block_type == 'single_comment': 
-                    comment_dict = {
-                        "file":filename,
-                        "range": [start_line, end_idx + 1],
-                        "type": block_type,
-                        "code": code 
-                    }
+                if block_type == 'multiline_comment' or block_type == 'single_comment' or block_type == 'multi_comment': 
+                    if not comment_dict: #  # 如果本块前面没有注释，且本块是注释
+                        comment_dict = {
+                                "file":filename,
+                                "range": [start_line, end_idx + 1],
+                                "type": block_type,
+                                "code": code 
+                            }
+                     
+                    else: #  # 如果本块前面有注释，且本块是注释
+                        temp_dict = {
+                                "file":filename,
+                                "range": [comment_dict["range"][0], end_idx + 1],
+                                "type": block_type,
+                                "code": comment_dict["code"] + code
+                            }
+                        comment_dict = temp_dict
                     # print(code)
                     # print(block_type)
                     
@@ -175,8 +190,21 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                         comment_dict= {}
                         
                     # 如果本块前面有注释，且本块不是注释
-                    elif comment_dict and block_type != 'multiline_comment': 
-                       
+                    elif comment_dict and block_type != 'multiline_comment' and block_type != 'multi_comment': 
+                        if (block_type == "function") and ( '\r' in code or '\n' in code):
+                            code_next   = "" 
+                            
+                            i_temp = end_idx + 1
+                            end_idx = end_finder(i_temp, block_type) - 1  # 转换为索引
+                            
+                            # 确保不超出范围
+                            end_idx = min(end_idx, total_lines - 1)
+                            
+                            # 提取代码块内容
+                            code = '\n'.join(lines[start_idx:end_idx + 1])
+                            # print(code)
+                            # sys.exit()
+                        
                         chunks.append({
                             "file":filename,
                             "range": [comment_dict['range'][0], end_idx + 1],
@@ -185,36 +213,29 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                         })
                         #print(chunks)
                         comment_dict= {}
-                    
-                    # 如果本块前面没有注释，且本块是注释
-                    elif comment_dict and block_type == 'multiline_comment': 
-                        
+                      
+                    # 如果本块前面是注释，且本块是注释
+                    elif comment_dict and block_type == 'multi_comment': 
+                        # print(code)
+                        # print(block_type)
                         chunks.append({
                                 comment_dict
                             })
-                        chunks.append({
-                                "file":filename,
-                                "range": [start_line, end_idx + 1],
-                                "type": block_type,
-                                "code": code 
-                            })
-                        comment_dict= {}
                     
                     # 如果本块前面没有注释
                     else:
                         
-                        # 函数的参数列表可能会换行，需要特殊处理
-                        if (block_type == "function") and ( '\r' not in code or '\n' not in code):
+                        # 函数的参数列表可能会换行，有多行参数，需要特殊处理
+                        if (block_type == "function") and ( '\r' in code or '\n' in code):
                             code_next   = "" 
-                            # 提取名称，如果有
-                            name_group = 4 # 函数组名
-                            name = match.group(name_group) if len(match.groups()) >= name_group else None
+                            
                             i_temp = end_idx + 1
-                            end_idx = end_finder(i_temp, name) - 1  # 转换为索引
+                            end_idx = end_finder(i_temp, block_type) - 1  # 转换为索引
                             
                             # 确保不超出范围
                             end_idx = min(end_idx, total_lines - 1)
-                            
+                            # print(end_idx)
+                            # sys.exit()
                             # 提取代码块内容
                             code = '\n'.join(lines[start_idx:end_idx + 1])
                             
