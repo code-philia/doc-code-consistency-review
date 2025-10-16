@@ -3,7 +3,7 @@
  ****************************/
 let activeView = 'statsView'; // 当前活动视图
 
-const { createApp, ref, onMounted, computed, nextTick } = Vue;
+const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
     regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike, updateHighlightPositions
@@ -87,6 +87,12 @@ const app = createApp({
         const currentFlowchart = ref(null);
         const isGeneratingFlowchart = ref(false);
         const flowchartError = ref(null);
+        
+        // 需求反生成相关状态
+        const currentReverseRequirement = ref(null);
+        const isGeneratingReverse = ref(false);
+        const reverseError = ref(null);
+        const isViewingFlowchart = ref(false);
 
         /***********************
          * 文件加载相关方法
@@ -2200,6 +2206,12 @@ const app = createApp({
             currentFlowchart.value = null;
             isGeneratingFlowchart.value = false;
             flowchartError.value = null;
+            
+            // 清理需求反生成状态
+            currentReverseRequirement.value = null;
+            isGeneratingReverse.value = false;
+            reverseError.value = null;
+            isViewingFlowchart.value = false;
 
             // 清理页面上的高亮元素
             try {
@@ -2219,6 +2231,92 @@ const app = createApp({
 
             // 暴露到全局，供外部调用（如关闭按钮）
             window.resetProjectState = resetProjectState;
+        };
+
+        /***********************
+         * 需求反生成相关方法
+         ***********************/
+        const generateReverseRequirement = async () => {
+            if (!selectedReviewAlignment.value) {
+                ElMessage.error('未选择对齐关系');
+                return;
+            }
+
+            isGeneratingReverse.value = true;
+            reverseError.value = null;
+            currentReverseRequirement.value = null;
+            currentFlowchart.value = null;
+
+            try {
+                // 构建需求和代码内容
+                const docRanges = selectedReviewAlignment.value.docRanges || [];
+                const codeRanges = selectedReviewAlignment.value.codeRanges || [];
+                
+                if (codeRanges.length === 0) {
+                    reverseError.value = '未找到相关代码范围';
+                    ElMessage.error('未找到相关代码范围');
+                    return;
+                }
+
+                // 构建需求内容
+                let requirementContent = "";
+                for (const docRange of docRanges) {
+                    requirementContent += docRange.content + "\n";
+                }
+
+                // 构建代码内容
+                let codeContent = "";
+                for (const codeRange of codeRanges) {
+                    codeContent += `文件: ${codeRange.filename}\n`;
+                    codeContent += `代码:\n${codeRange.content}\n\n`;
+                }
+
+                const response = await axios.post('/api/generate-reverse-requirement', {
+                    requirementContent: requirementContent,
+                    codeContent: codeContent
+                });
+
+                if (response.data.status === 'success') {
+                    currentReverseRequirement.value = response.data.generatedRequirement;
+                    
+                    // 如果同时返回了流程图，也设置流程图
+                    if (response.data.mermaidCode) {
+                        let mermaidCode = response.data.mermaidCode.replace(/\\n/g, '\n').trim();
+                        currentFlowchart.value = mermaidCode;
+                        
+                        // 等待DOM更新后渲染Mermaid图表
+                        await nextTick();
+                        try {
+                            const element = document.getElementById('mermaid-flowchart');
+                            if (element) {
+                                element.innerHTML = '';
+                                const { svg } = await mermaid.render('mermaid-graph', mermaidCode);
+                                element.innerHTML = svg;
+                            }
+                        } catch (mermaidError) {
+                            console.error('Mermaid渲染错误:', mermaidError);
+                            reverseError.value = 'Mermaid图表渲染失败: ' + mermaidError.message;
+                        }
+                    }
+                    
+                    ElMessage.success('需求反生成成功');
+                } else {
+                    reverseError.value = response.data.message || '需求反生成失败';
+                    ElMessage.error(reverseError.value);
+                }
+            } catch (error) {
+                console.error('需求反生成时出错:', error);
+                reverseError.value = '网络错误或服务器异常';
+                ElMessage.error('需求反生成失败');
+            } finally {
+                isGeneratingReverse.value = false;
+            }
+        };
+
+        const regenerateReverseRequirement = () => {
+            currentReverseRequirement.value = null;
+            currentFlowchart.value = null;
+            generateReverseRequirement();
         };
 
         /***********************
@@ -2399,6 +2497,30 @@ const app = createApp({
         };
 
         /***********************
+         * 监听器
+         ***********************/
+        // 监听选项卡切换，当切换到需求反生成选项卡时自动发送请求
+        watch(activeReviewTab, (newTab, oldTab) => {
+            if (newTab === 'requirement-reverse' && selectedReviewAlignment.value) {
+                // 清除之前的状态
+                currentReverseRequirement.value = null;
+                currentFlowchart.value = null;
+                reverseError.value = null;
+                
+                // 自动发送请求
+                generateReverseRequirement();
+            }
+        });
+
+        // 监听问题单详情弹窗关闭事件，重置选项卡到第一个选项
+        watch(showReviewDialog, (newValue, oldValue) => {
+            if (oldValue === true && newValue === false) {
+                // 弹窗从打开状态变为关闭状态，重置选项卡
+                activeReviewTab.value = 'issues';
+            }
+        });
+
+        /***********************
          * 暴露到模板
          ***********************/
         return {
@@ -2506,6 +2628,14 @@ const app = createApp({
             regenerateFlowchart,
             clearFlowchart,
             viewFlowchart,
+            
+            // 需求反生成相关
+            currentReverseRequirement,
+            isGeneratingReverse,
+            reverseError,
+            isViewingFlowchart,
+            generateReverseRequirement,
+            regenerateReverseRequirement,
             
             // 刷新高亮功能
             refreshHighlights

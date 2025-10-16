@@ -1828,7 +1828,71 @@
     margin-top: 20px;
 }
 
-/* Element UI Tree 组件样式覆盖 */
+.requirement-reverse-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reverse-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* 内容展示区域 */
+.reverse-display {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reverse-requirement-section {
+    background: #fff;
+    border: 1px solid #e4e7ed;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.reverse-requirement-content {
+    padding: 12px;
+    min-height: 150px;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.reverse-requirement-content .markdown-content-rendered {
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* 流程图区域 - 简化样式 */
+.flowchart-section {
+    background: #fff;
+    border: 1px solid #e4e7ed;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.mermaid-diagram {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 250px;
+    padding: 12px;
+}
+
+.mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
+    transform: scale(0.85);
+}
+
+/* 错误信息 */
+.error-message {
+    margin-top: 12px;
+}
 .el-tree {
     background-color: transparent !important;
     color: var(--text-primary);

@@ -592,42 +592,52 @@
                                 <div class="review-thoughts-rendered" v-html="renderMarkdownWithLatex(selectedReviewAlignment.reviewThoughts || '暂无审查思考过程')"></div>
                             </div>
                         </el-tab-pane>
-                        <el-tab-pane label="代码流程图" name="flowchart">
-                            <div class="flowchart-container">
-                                <div v-if="!currentFlowchart" class="flowchart-actions">
+                        <el-tab-pane label="需求反生成" name="requirement-reverse">
+                            <div class="requirement-reverse-container">
+                                <div v-if="!currentReverseRequirement && !currentFlowchart" class="reverse-actions">
                                     <el-button 
-                                        type="plain" 
-                                        @click="generateFlowchart" 
-                                        :loading="isGeneratingFlowchart"
+                                        type="primary" 
+                                        @click="generateReverseRequirement" 
+                                        :loading="isGeneratingReverse"
                                     >
-                                        <span v-if="!isGeneratingFlowchart">生成流程图</span>
+                                        <span v-if="!isGeneratingReverse">需求反生成</span>
                                         <span v-else>生成中...</span>
                                     </el-button>
                                 </div>
-                                <div v-if="currentFlowchart" class="flowchart-display">
-                                    <div class="flowchart-actions" style="margin-bottom: 10px;">
+                                <div v-if="currentReverseRequirement || currentFlowchart" class="reverse-display">
+                                    <div class="reverse-actions">
                                         <el-button 
                                             type="plain" 
-                                            @click="regenerateFlowchart" 
-                                            :loading="isGeneratingFlowchart"
+                                            @click="regenerateReverseRequirement" 
+                                            :loading="isGeneratingReverse"
                                         >
                                             重新生成
                                         </el-button>
                                         <el-button 
+                                            v-if="currentFlowchart"
                                             type="primary" 
                                             @click="viewFlowchart" 
                                             :loading="isViewingFlowchart"
-                                            style="margin-left: 10px;"
                                         >
                                             <i class="fas fa-external-link-alt"></i>
-                                            <span>查看流程图</span>
+                                            查看流程图
                                         </el-button>
                                     </div>
-                                    <div id="mermaid-flowchart" class="mermaid-diagram"></div>
+                                    
+                                    <!-- 需求内容 -->
+                                    <div v-if="currentReverseRequirement" class="reverse-requirement-section">
+                                        <div class="reverse-requirement-content" v-html="renderMarkdownWithLatex(currentReverseRequirement)"></div>
+                                    </div>
+                                    
+                                    <!-- 分隔线 -->
+                                    <el-divider v-if="currentReverseRequirement && currentFlowchart"></el-divider>
+                                    <div v-if="currentFlowchart" class="flowchart-section">
+                                        <div id="mermaid-flowchart" class="mermaid-diagram"></div>
+                                    </div>
                                 </div>
-                                <div v-if="flowchartError" class="error-message">
+                                <div v-if="reverseError" class="error-message">
                                     <el-alert 
-                                        :title="flowchartError" 
+                                        :title="reverseError" 
                                         type="error" 
                                         show-icon 
                                         :closable="false"

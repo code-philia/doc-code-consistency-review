@@ -180,40 +180,37 @@ def parse_review_output(response):
         }
 
 # ================= 需求反生成 =================
-def query_generated_requirement(related_code):
+def query_generated_requirement(related_code, reference_requirement=""):
     """
-    需求反生成
+    根据相关代码生成需求
     
-    参数:
-        related_code: 相关代码块列表，每个代码块包含文件名、内容等信息
-        
-    返回:
-        generated_requirement: 审查过程
+    Args:
+        related_code: 相关代码块列表
+        reference_requirement: 参考需求内容，用于格式和风格参考
+    
+    Returns:
+        生成的需求内容
     """
-    # 1. 拼接相关代码
-    code_context = "\n\n".join(
-        f"所属文件: {block['filename']}\n"
-        f"代码:\n{block['content']}"
-        for idx, block in enumerate(related_code)
-    )
+    # 构建代码上下文
+    code_context = ""
+    for i, code_block in enumerate(related_code):
+        filename = code_block.get('filename', f'code_block_{i+1}')
+        content = code_block.get('content', '')
+        code_context += f"## 文件: {filename}\n```\n{content}\n```\n\n"
     
-    # 2. 构造提示词
-    template = GENERATE_PROMPT_TEMPLATE
-    prompt = template.format(
+    # 如果没有提供参考需求，使用默认提示
+    if not reference_requirement:
+        reference_requirement = "暂无参考需求，请根据代码功能自行生成合适的需求描述。"
+    
+    # 格式化prompt
+    prompt = GENERATE_PROMPT_TEMPLATE.format(
+        reference_requirement=reference_requirement,
         related_code=code_context
     )
     
-    # 3. 调用LLM
-    try:
-        response = query_llm(prompt)
-        print("LLM response:", response.content)
-        output = response.content
-        
-    except Exception as e:
-        print(f"审查过程中出错: {str(e)}")
-        return None, None
-    
-    return output
+    # 调用LLM
+    response = query_llm(prompt)
+    return response.content
     
 def query_flow_chart(code_content):
     prompt = f"""请分析以下代码，生成一个清晰的Mermaid流程图来展示代码的执行流程。

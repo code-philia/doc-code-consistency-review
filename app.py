@@ -1093,6 +1093,48 @@ def generate_flowchart():
         print(f"Error generating flowchart: {str(e)}")
         return jsonify({"status": "error", "message": f"Failed to generate flowchart: {str(e)}"}), 500
 
+@app.route('/api/generate-reverse-requirement', methods=['POST'])
+def generate_reverse_requirement():
+    try:
+        data = request.get_json()
+        requirement_content = data.get('requirementContent')
+        code_content = data.get('codeContent')
+        
+        if not code_content:
+            return jsonify({"status": "error", "message": "Missing code content"}), 400
+        
+        # 构建代码块列表，格式与现有函数兼容
+        code_blocks = []
+        if isinstance(code_content, list):
+            for code_block in code_content:
+                code_blocks.append({
+                    'filename': code_block.get('filename', 'unknown'),
+                    'content': code_block.get('content', '')
+                })
+        else:
+            # 如果是字符串，创建单个代码块
+            code_blocks.append({
+                'filename': 'code',
+                'content': code_content
+            })
+        
+        # 调用LLM生成需求，传入参考需求内容
+        generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
+        
+        # 调用LLM生成流程图
+        mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else 
+                                       '\n\n'.join([block.get('content', '') for block in code_content]))
+
+        return jsonify({
+            "status": "success",
+            "generatedRequirement": generated_requirement,
+            "mermaidCode": mermaid_code
+        })
+
+    except Exception as e:
+        print(f"Error generating reverse requirement: {str(e)}")
+        return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
+
 @app.route('/api/review-alignment', methods=['POST'])
 def review_alignment():
     data = request.json
