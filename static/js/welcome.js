@@ -101,7 +101,6 @@ const app = createApp({
             axios.post('/project/create', payload)
                 .then(res => {
                     if (res.data.status === 'success') {
-                        ElMessage.success('项目创建成功！');
                         showNewProjForm.value = false;
                         window.location.href = `/project?name=${projectForm.projectName}&path=${res.data.project_path}`;
                     }
@@ -137,7 +136,6 @@ const app = createApp({
                 .then(res => {
                     if (res.data.status === 'success') {
                         showImportDialog.value = false;
-                        ElMessage.success('项目验证成功，正在打开...');
                         openProject(res.data.project);
                     }
                 })
@@ -187,8 +185,6 @@ const app = createApp({
                     // 自动填充项目信息
                     projectForm.projectName = folderName;
                     projectForm.projectLocation = response.data.serverPath;
-                    
-                    ElMessage.success(`文件夹 "${folderName}" 上传成功！`);
                 } else {
                     ElMessage.error(response.data.message || '上传失败');
                 }
@@ -203,9 +199,7 @@ const app = createApp({
         };
 
         const refreshHistory = async () => {
-            ElMessage.info('正在刷新历史记录...');
             await fetchRecentProjects();
-            ElMessage.success('历史记录已刷新！');
         };
 
         // 上下文菜单方法
@@ -229,7 +223,6 @@ const app = createApp({
                 await axios.delete('/project/history', {
                     data: { path: contextMenu.project.path }
                 });
-                ElMessage.success('历史记录已删除！');
                 await fetchRecentProjects(); // 刷新列表
             } catch (err) {
                 console.error('删除历史记录失败:', err);

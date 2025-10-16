@@ -257,8 +257,6 @@ const app = createApp({
                         await fetchAlignments();
                     }
 
-                    ElMessage.info(`已审查: ${alignment.name}`);
-
                     // 添加延迟以模拟处理时间
                     await new Promise(resolve => setTimeout(resolve, 800));
                 }
@@ -268,7 +266,7 @@ const app = createApp({
                 await fetchAlignments(); // 确保右侧面板显示最新状态
                 await fetchIssues();
 
-                ElMessage.success(`自动审查完成！共审查 ${unreviewed.length} 个对齐关系`);
+                ElMessage.success(`自动审查完成！`);
             } catch (error) {
                 console.error('自动审查过程中出现错误:', error);
                 ElMessage.error(`自动审查失败: ${error.message}`);
@@ -804,7 +802,7 @@ const app = createApp({
                 if (totalUnalignedCount === 0) {
                     ElMessage.info('所有需求点都已对齐，无需处理');
                 } else {
-                    ElMessage.success(`自动对齐完成！共处理 ${processedCount} 个未对齐需求点`);
+                    ElMessage.success(`自动对齐完成！`);
                 }
             } catch (error) {
                 console.error('自动对齐过程中出现错误:', error);
@@ -840,7 +838,6 @@ const app = createApp({
 
                     // 实时更新统计数据
                     await fetchAllAlignments();
-                    ElMessage.info(`已对齐需求点: ${requirement.name}`);
 
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
@@ -1718,7 +1715,6 @@ const app = createApp({
                     link.click();
                     document.body.removeChild(link);
                     
-                    ElMessage.success(`成功生成并下载问题单docx文件：${docxFilename}`);
                     showExportDialog.value = false;
                 } else {
                     ElMessage.error('导出失败：' + response.data.message);
@@ -1750,8 +1746,6 @@ const app = createApp({
                     });
                     
                     if (response.data.status === 'success') {
-                        ElMessage.success('项目删除成功');
-                        // 跳转到欢迎页面
                         window.location.href = '/';
                     } else {
                         ElMessage.error('删除失败：' + response.data.message);
@@ -1794,7 +1788,6 @@ const app = createApp({
                     const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
                     if (idx > -1) issues.value[idx].status = 'confirmed';
                     selectedIssue.value.status = 'confirmed';
-                    ElMessage.success('问题单已确认。');
                 } else {
                     ElMessage.error('确认失败：' + response.data.message);
                 }
@@ -1822,7 +1815,6 @@ const app = createApp({
                     const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
                     if (idx > -1) issues.value[idx].status = 'false_positive';
                     selectedIssue.value.status = 'false_positive';
-                    ElMessage.success('问题单已标记为误报。');
                 } else {
                     ElMessage.error('标记失败：' + response.data.message);
                 }
@@ -1875,7 +1867,6 @@ const app = createApp({
                     
                     const statusText = newStatus === 'confirmed' ? '已确认' : 
                                      newStatus === 'false_positive' ? '误报' : '未确认';
-                    ElMessage.success(`状态已更新为：${statusText}`);
                 } else {
                     ElMessage.error('状态更新失败：' + response.data.message);
                 }
@@ -1901,7 +1892,6 @@ const app = createApp({
                     const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
                     if (idx > -1) issues.value.splice(idx, 1);
                     selectedIssue.value = null;
-                    ElMessage.success('问题单已删除。');
                 } else {
                     ElMessage.error('删除失败：' + response.data.message);
                 }
@@ -2028,7 +2018,6 @@ const app = createApp({
                         `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
                         alignment
                     );
-                    ElMessage.success('重命名成功！');
                 } catch (err) {
                     // 如果后端更新失败，则恢复前端的名称
                     alignment.name = oldName;
@@ -2094,7 +2083,6 @@ const app = createApp({
                         await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}&id=${alignment.id}`);
                         alignmentResults.value.splice(idx, 1);
                         await fetchAllAlignments();
-                        ElMessage.success('对齐关系已删除');
                     } catch (err) {
                         console.error("Error deleting alignment:", err);
                         ElMessage.error(`删除失败: ${err.message}`);
@@ -2106,7 +2094,6 @@ const app = createApp({
                         `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
                         alignment
                     );
-                    ElMessage.success('范围已删除');
                 } catch (err) {
                     console.error("Error updating alignment:", err);
                     ElMessage.error(`更新失败: ${err.message}`);
@@ -2162,7 +2149,6 @@ const app = createApp({
                     level: issue.level
                 });
                 if (response.data.status === 'success') {
-                    ElMessage.success('问题单已更新');
                 } else {
                     ElMessage.error(response.data.message || '保存失败');
                     // 可选：回滚内容
@@ -2411,7 +2397,6 @@ const app = createApp({
                         }
                     }
                     
-                    ElMessage.success('需求反生成成功');
                 } else {
                     reverseError.value = response.data.message || '需求反生成失败';
                     ElMessage.error(reverseError.value);
@@ -2489,7 +2474,6 @@ const app = createApp({
                         flowchartError.value = 'Mermaid图表渲染失败: ' + mermaidError.message;
                     }
                     
-                    ElMessage.success('流程图生成成功');
                 } else {
                     flowchartError.value = response.data.message || '生成流程图失败';
                     ElMessage.error(flowchartError.value);
