@@ -558,68 +558,6 @@ def generate_requirement_endpoint():
     return jsonify({"generatedRequirement":generate_requirement})
 
 
-@app.route('/api/parse-requirement', methods=['POST'])
-def parse_requirement():
-    data = request.json
-    requirements = data.get('requirements', '')
-    
-    # 解析需求文档成为需求点列表
-    requirement_point_list = parse_markdown(requirements)
-    
-    for point in requirement_point_list:
-        point["associated_code"] = []
-
-    return jsonify({"requirementPoints": requirement_point_list})
-
-@app.route('/api/auto-align', methods=['POST'])
-def auto_align():
-    data = request.json
-    requirements = data.get('requirements', '')
-    code_files = data.get('codeFiles', [])
-    
-    # 解析需求文档成为需求点列表
-    requirement_point_list = parse_markdown(requirements)
-    
-    # 解析代码文件
-    code_blocks = []
-    for file in code_files:
-        code_block = split_code(file['name'], file['content'])
-        code_blocks.extend(code_block)
-
-    for point in requirement_point_list:
-        related_code = query_related_code(point, code_blocks)
-        point["associated_code"] = related_code # [{"filename":, "content":, "start_line":, "end_line":}]
-        
-    return jsonify({"requirementPoints": requirement_point_list})
-
-@app.route('/api/align-single-requirement', methods=['POST'])
-def align_single_requirement():
-    data = request.json
-    requirement = data.get('requirement')
-    code_files = data.get('codeFiles', [])
-    
-    requirement_point_list = [requirement]
-    
-    # 解析代码文件
-    code_blocks = []
-    for file in code_files:
-        code_block = split_code(file['name'], file['content'])
-        code_blocks.extend(code_block)
-
-    # for point in requirement_point_list:
-    #     def generate_random_string(length=10):
-    #         return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
-    #     random_string = generate_random_string()
-        
-    #     point["associated_code"] = [{"filename": "mock.cpp", "content": random_string, "start_line": 1, "end_line": 5}]
-
-    for point in requirement_point_list:
-        related_code = query_related_code(point, code_blocks)
-        point["associated_code"] = related_code # [{"filename":, "content":, "start_line":, "end_line":}]
-        
-    return jsonify({"requirementPoint": requirement_point_list[0]})
-
-
 @app.route('/api/requirement-decomposition', methods=['POST'])
 def requirement_decomposition():
     """处理需求分解请求"""
