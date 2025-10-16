@@ -281,11 +281,46 @@ def get_filename_without_extension(filepath):
     """获取不带扩展名的文件名"""
     return os.path.splitext(os.path.basename(filepath))[0]
 
-def chunk_list(lst, limit):
-    result = []
-    for i in range(0, len(lst), limit):
-        result.append(lst[i:i+limit])
-    return result
+# def chunk_list(lst, limit):
+#     result = []
+#     for i in range(0, len(lst), limit):
+#         result.append(lst[i:i+limit])
+#     return result
+
+def chunk_list(code_blocks, max_chunk_size):
+    all_chunks = []
+    current_chunk = []
+    max_chunk_size = 30000
+    for block in code_blocks:
+        block_str_len = len(str(block))
+
+        # 某个块本身就大于max_chunk_size
+        if block_str_len >= max_chunk_size:
+            # 当前有未保存的chunk，先保存
+            if len(current_chunk) > 0:
+                all_chunks.append(current_chunk)
+                current_chunk = []
+            
+            # 将这个大块独立为一个chunk，最后到模型输入处截断
+            all_chunks.append([block])
+
+        # 正常块，先尝试放入
+        potential_chunk = current_chunk + [block]
+        potential_chunk_len = len(str(potential_chunk))
+
+        if potential_chunk_len < max_chunk_size:
+            current_chunk.append(block)
+        else: #放入后超了max_chunk_size，放入新的chunk
+            if len(current_chunk) > 0:
+                all_chunks.append(current_chunk)
+            current_chunk = [block]
+
+    if len(current_chunk) > 0:
+        all_chunks.append(current_chunk)
+
+    print(f"共有{len(code_blocks)}个代码块，分{len(all_chunks)}次询问模型")
+    return all_chunks
+
 
 
 def replace_text_in_docx(doc, replacements):
@@ -464,7 +499,40 @@ def include_related_blocks(related_code, all_code_blocks):
                     if block.get('id') == related_id:
                         key = (block['file'], tuple(block['range']))
                         if key not in added_keys:
-                            result_blocks.append(block)
+                            
+                            # 按照related_range添加具体的代码片段
+                            temp_block = {}
+                            temp_block['file'] = block['file']
+                            temp_block['range'] = []
+                            
+                            re_id = [matched_block['related_range'][str(block['id'])]]
+                            if len(re_id) > 1:
+                                temp_block['range'].append(re_id)
+                            else:
+                                temp_block['range'] = [re_id[0], re_id[0]]
+                            # print(temp_block['range'])
+                            temp_block['type'] = block['type']
+                            # # 按照\n切分
+                            temp_list = block['code'].split('\n')
+                                          
+                            pos_start = temp_block['range'][0] - block['range'][0]
+                            pos_end = temp_block['range'][1] - block['range'][0]
+                            
+                            temp_block['code'] = temp_list[pos_start:pos_end+1][0]
+                            
+                            
+                            temp_block['id'] = block['id']
+                            temp_block['related_id'] = []
+                            temp_block['related_id'].append(matched_block['id'])
+                            temp_block['related_range'] = {str(matched_block['id']):block['related_range'][str(matched_block['id'])]}
+                            
+                            # key = (block['file'], temp_block['range'])
+                            # print(key)
+                            # print(temp_block)
+                            result_blocks.append(temp_block)
+                            # print(block)
+                            # sys.exit()
+                            # result_blocks.append(block)
                             added_keys.add(key)
                         break
     
