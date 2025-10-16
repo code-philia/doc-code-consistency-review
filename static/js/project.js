@@ -1,7 +1,7 @@
 /****************************
  * 全局状态与配置
  ****************************/
-let activeView = 'statsView'; // 当前活动视图
+let activeView = 'alignmentView'; // 当前活动视图
 
 const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
@@ -2649,6 +2649,14 @@ const app = createApp({
  ****************************/
 app.use(ElementPlus);
 app.mount('#app');
+
+// 初始化默认视图
+document.addEventListener('DOMContentLoaded', function() {
+    // 确保DOM已加载完成后再初始化视图
+    setTimeout(() => {
+        switchView('alignment');
+    }, 100);
+});
 
 // 全局关闭项目函数：调用组件内的重置函数，然后跳转到欢迎页
 window.closeProject = async () => {
