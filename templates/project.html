@@ -491,6 +491,13 @@
                     >
                         <!-- 对齐关系右键菜单 -->
                         <template v-if="contextMenu.selectedAlignment">
+                            <div class="context-menu-item" @click="singleAlignment">
+                                <i class="fas fa-link"></i> 对齐
+                            </div>
+                            <div class="context-menu-item" @click="singleReview">
+                                <i class="fas fa-tasks"></i> 审查
+                            </div>
+                            <div class="context-menu-separator"></div>
                             <div class="context-menu-item" @click="renameAlignment">
                                 <i class="fas fa-pen"></i> 重命名
                             </div>

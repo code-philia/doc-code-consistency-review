@@ -2061,6 +2061,101 @@ const app = createApp({
             }).catch(() => { });
         };
 
+        // 单独对齐功能
+        const singleAlignment = async () => {
+            if (!contextMenu.value.selectedAlignment) return;
+            const alignment = contextMenu.value.selectedAlignment;
+
+            // 检查是否已有代码对齐
+            if (alignment.codeRanges && alignment.codeRanges.length > 0) {
+                ElMessageBox.confirm(
+                    `对齐关系 "${alignment.name}" 已有代码对齐，是否删除现有对齐并重新对齐？`,
+                    '确认重新对齐',
+                    {
+                        confirmButtonText: '重新对齐',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                ).then(async () => {
+                    await performSingleAlignment(alignment);
+                }).catch(() => {});
+            } else {
+                await performSingleAlignment(alignment);
+            }
+        };
+
+        // 执行单独对齐
+        const performSingleAlignment = async (alignment) => {
+            try {
+                ElMessage.info(`开始为 "${alignment.name}" 进行对齐...`);
+                
+                // 调用对齐API
+                await addMockCodeToRequirement(selectedDocFile.value, alignment);
+                
+                // 刷新对齐数据
+                await fetchAlignments();
+                await fetchAllAlignments();
+                
+                ElMessage.success(`"${alignment.name}" 对齐完成！`);
+            } catch (error) {
+                console.error('单独对齐失败:', error);
+                ElMessage.error(`对齐失败: ${error.message}`);
+            }
+        };
+
+        // 单独审查功能
+        const singleReview = async () => {
+            if (!contextMenu.value.selectedAlignment) return;
+            const alignment = contextMenu.value.selectedAlignment;
+
+            // 检查是否有代码对齐
+            if (!alignment.codeRanges || alignment.codeRanges.length === 0) {
+                ElMessage.warning('该对齐关系还没有代码对齐，请先进行对齐');
+                return;
+            }
+
+            // 检查是否已审查
+            if (alignment.isReviewed) {
+                ElMessageBox.confirm(
+                    `对齐关系 "${alignment.name}" 已审查过，是否重新审查？`,
+                    '确认重新审查',
+                    {
+                        confirmButtonText: '重新审查',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                ).then(async () => {
+                    await performSingleReview(alignment);
+                }).catch(() => {});
+            } else {
+                await performSingleReview(alignment);
+            }
+        };
+
+        // 执行单独审查
+        const performSingleReview = async (alignment) => {
+            try {
+                ElMessage.info(`开始为 "${alignment.name}" 进行审查...`);
+                
+                // 调用后端审查API
+                await axios.post('/api/review-alignment', {
+                    projectPath: projectPath.value,
+                    docFile: selectedDocFile.value,
+                    alignment: alignment
+                });
+                
+                // 刷新对齐数据
+                await fetchAlignments();
+                await fetchAllAlignments();
+                await fetchIssues();
+                
+                ElMessage.success(`"${alignment.name}" 审查完成！`);
+            } catch (error) {
+                console.error('单独审查失败:', error);
+                ElMessage.error(`审查失败: ${error.message}`);
+            }
+        };
+
         // 删除对齐关系中的范围
         const removeRange = async (alignment, type, index) => {
             if (type === 'doc') {
@@ -2660,17 +2755,22 @@ const app = createApp({
             isAutoAligning,
             alignmentProgress,
             toggleAutoAlignment,
+            singleAlignment,
+
             // 统计数据
             requirementStats,
             totalRequirements,
             totalAlignedRequirements,
             totalReviewedRequirements,
             codeFileStats,
+
             // 自动审查功能
             startAutoReview,
             isAutoReviewing,
             reviewProgress,
             toggleAutoReview,
+            singleReview,
+
             // 问题单数据
             fetchIssues,
             exportConfirmedIssues,
