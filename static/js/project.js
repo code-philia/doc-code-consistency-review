@@ -1118,6 +1118,49 @@ const app = createApp({
             }
         };
 
+        // 精确移除特定范围的高亮块
+        const removeSpecificHighlights = (ranges, type, alignmentId) => {
+            if (!ranges || ranges.length === 0) return;
+            
+            ranges.forEach(range => {
+                // 移除需求高亮
+                if (type === 'doc') {
+                    const highlightsToRemove = document.querySelectorAll(
+                        `.requirement-highlight[data-alignment-id="${alignmentId}"][data-range-start="${range.start}"][data-range-end="${range.end}"]`
+                    );
+                    highlightsToRemove.forEach(el => {
+                        const parent = el.parentNode;
+                        parent.insertBefore(document.createTextNode(el.textContent), el);
+                        parent.removeChild(el);
+                        parent.normalize();
+                    });
+                }
+                // 移除代码高亮
+                else if (type === 'code') {
+                    const highlightsToRemove = document.querySelectorAll(
+                        `.code-highlight[data-alignment-id="${alignmentId}"][data-range-start="${range.start}"][data-range-end="${range.end}"]`
+                    );
+                    highlightsToRemove.forEach(el => {
+                        const parent = el.parentNode;
+                        parent.insertBefore(document.createTextNode(el.textContent), el);
+                        parent.removeChild(el);
+                        parent.normalize();
+                    });
+                }
+            });
+        };
+
+        // 刷新筛选状态下的对齐列表
+        const refreshFilteredAlignments = () => {
+            if (isFiltered.value) {
+                // 重新应用当前的筛选条件
+                const currentFilteredIds = filteredAlignments.value.map(a => a.id);
+                filteredAlignments.value = alignmentResults.value.filter(alignment => 
+                    currentFilteredIds.includes(alignment.id)
+                );
+            }
+        };
+
         // 根据当前需求文档的对齐关系高亮当前代码文件
         const highlightCurrentCodeFileBasedOnDoc = () => {
             if (!selectedDocFile.value || !selectedCodeFile.value || !alignmentResults.value) {
@@ -2155,9 +2198,22 @@ const app = createApp({
                             parent.normalize();
                         });
                         
+                        // 移除代码高亮
+                        const codeHighlightsToRemove = document.querySelectorAll(`.code-highlight[data-alignment-id="${alignmentToDelete.id}"]`);
+                        codeHighlightsToRemove.forEach(el => {
+                            const parent = el.parentNode;
+                            parent.insertBefore(document.createTextNode(el.textContent), el);
+                            parent.removeChild(el);
+                            parent.normalize();
+                        });
+                        
                         alignmentResults.value.splice(index, 1);
                         // 更新所有对齐数据以保持统计信息同步
                         await fetchAllAlignments();
+                        
+                        // 刷新筛选状态下的对齐列表
+                        refreshFilteredAlignments();
+                        
                         ElMessage.info('对齐项已删除。');
                     }
                 } catch (err) {
@@ -2264,10 +2320,18 @@ const app = createApp({
 
         // 删除对齐关系中的范围
         const removeRange = async (alignment, type, index) => {
+            // 保存要删除的范围信息，用于精确移除高亮
+            const rangeToRemove = type === 'doc' ? alignment.docRanges[index] : alignment.codeRanges[index];
+            
             if (type === 'doc') {
                 alignment.docRanges.splice(index, 1);
             } else {
                 alignment.codeRanges.splice(index, 1);
+            }
+
+            // 精确移除被删除范围的高亮
+            if (rangeToRemove) {
+                removeSpecificHighlights([rangeToRemove], type, alignment.id);
             }
 
             // 当删除所有代码范围时，重置审查状态
@@ -2300,6 +2364,9 @@ const app = createApp({
                     ElMessage.error(`更新失败: ${err.message}`);
                 }
             }
+
+            // 刷新筛选状态下的对齐列表
+            refreshFilteredAlignments();
         };
 
         const showReviewResult = () => {
