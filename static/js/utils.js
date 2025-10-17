@@ -331,38 +331,71 @@ function findOffsetFromPosition(container, offset, rootElement, reduce = null) {
     return null;
 }
 
-// 获取原始文档中的范围
+// 获取原始文档中的范围 - 简化版本，确保选中完整的parse元素
 export function getSourceDocumentRange(rootElement, range) {
-    const limitedRange = new Range();
-    limitedRange.setStartBefore(rootElement);
-    limitedRange.setEndAfter(rootElement);
-
-    const comp = (i) => range.compareBoundaryPoints(i, limitedRange);
-
-    if (
-        comp(Range.END_TO_START) >= 0       // range start is behind element's end
-        || comp(Range.START_TO_END) <= 0    // range end is before element's start
-    ) {
+    // 查找所有涉及到的具有parse-start和parse-end属性的元素
+    const involvedElements = [];
+    
+    // 获取选择范围内的所有节点
+    const walker = document.createTreeWalker(
+        rootElement,
+        NodeFilter.SHOW_ELEMENT,
+        {
+            acceptNode: function(node) {
+                // 检查节点是否与选择范围相交
+                if (node.hasAttribute && node.hasAttribute('parse-start') && node.hasAttribute('parse-end')) {
+                    const nodeRange = document.createRange();
+                    nodeRange.selectNodeContents(node);
+                    
+                    // 检查是否与用户选择范围相交
+                    try {
+                        const startComparison = range.compareBoundaryPoints(Range.END_TO_START, nodeRange);
+                        const endComparison = range.compareBoundaryPoints(Range.START_TO_END, nodeRange);
+                        
+                        // 如果有交集，则包含此元素
+                        if (startComparison <= 0 && endComparison >= 0) {
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                    } catch (e) {
+                        // 如果比较失败，检查节点是否在选择范围内
+                        if (range.intersectsNode && range.intersectsNode(node)) {
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                    }
+                }
+                return NodeFilter.FILTER_SKIP;
+            }
+        }
+    );
+    
+    let node;
+    while (node = walker.nextNode()) {
+        const parseStart = parseInt(node.getAttribute('parse-start'));
+        const parseEnd = parseInt(node.getAttribute('parse-end'));
+        
+        if (!isNaN(parseStart) && !isNaN(parseEnd)) {
+            involvedElements.push({
+                element: node,
+                start: parseStart,
+                end: parseEnd
+            });
+        }
+    }
+    
+    // 如果没有找到任何parse元素，返回[0, 0]
+    if (involvedElements.length === 0) {
         return [0, 0];
     }
-
-    if (comp(Range.START_TO_START) > 0) { // range start is behind element start
-        limitedRange.setStart(range.startContainer, range.startOffset);
-    }
-
-    if (comp(Range.END_TO_END) < 0) {     // range end is before element end
-        limitedRange.setEnd(range.endContainer, range.endOffset);
-    }
-
-    console.log(limitedRange.startContainer, limitedRange.startOffset, limitedRange.endContainer, limitedRange.endOffset);
-
-    const startOffset = findOffsetFromPosition(limitedRange.startContainer, limitedRange.startOffset, rootElement, 'start');
-    const endOffset = findOffsetFromPosition(limitedRange.endContainer, limitedRange.endOffset, rootElement, 'end');
-
-    if (startOffset === null || endOffset === null) {
-        return [0, 0];
-    }
-
+    
+    // 按起始位置排序
+    involvedElements.sort((a, b) => a.start - b.start);
+    
+    // 返回第一个元素的开始位置和最后一个元素的结束位置
+    const startOffset = involvedElements[0].start;
+    const endOffset = involvedElements[involvedElements.length - 1].end;
+    
+    console.log('Selected complete parse elements:', involvedElements.map(el => ({start: el.start, end: el.end})));
+    
     return [startOffset, endOffset];
 }
 

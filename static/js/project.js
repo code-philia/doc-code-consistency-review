@@ -966,9 +966,29 @@ const app = createApp({
                 return;
             }
             if (!newAlignmentName.value.trim()) {
-                // 从选中的内容中提取纯文本作为名称
-                const extractedName = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
-                newAlignmentName.value = extractedName;
+                // 从实际选中的完整parse元素中提取纯文本作为名称
+                const docElement = document.getElementById('doc-content');
+                if (docElement) {
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const [startOffset, endOffset] = getSourceDocumentRange(docElement, range);
+                        
+                        // 从原始文档内容中提取对应范围的文本
+                        const docFileContent = selectedDocRawContent.value;
+                        const selectedText = docFileContent.substring(startOffset, endOffset);
+                        const extractedName = extractPlainTextFromMarkdown(selectedText, 20);
+                        newAlignmentName.value = extractedName;
+                    } else {
+                        // 如果没有选择范围，使用原来的逻辑作为后备
+                        const extractedName = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
+                        newAlignmentName.value = extractedName;
+                    }
+                } else {
+                    // 如果找不到文档元素，使用原来的逻辑作为后备
+                    const extractedName = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
+                    newAlignmentName.value = extractedName;
+                }
             }
 
             // 为文档范围添加filename和行号信息
