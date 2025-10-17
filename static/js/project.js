@@ -1305,6 +1305,48 @@ const app = createApp({
             }
         };
 
+        // 处理需求高亮块的右键点击事件
+        const handleHighlightBlockRightClick = (event) => {
+            event.preventDefault(); // 阻止默认右键菜单
+            
+            const target = event.target;
+            if (!target.classList.contains('highlight-block')) return;
+
+            const type = target.getAttribute('data-type');
+            // 只处理文档类型的高亮块
+            if (type !== 'doc') return;
+
+            const rangeStart = parseInt(target.getAttribute('data-range-start'));
+            const rangeEnd = parseInt(target.getAttribute('data-range-end'));
+
+            if (isNaN(rangeStart) || isNaN(rangeEnd)) return;
+
+            // 查找与此高亮块对应的对齐关系
+            const correspondingAlignment = findAlignmentByDocRange(rangeStart, rangeEnd);
+            
+            if (!correspondingAlignment) {
+                ElMessage.warning('未找到与此高亮块对应的对齐关系');
+                return;
+            }
+
+            // 显示右键菜单
+            showContextMenu(event, correspondingAlignment);
+
+            // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
+            handleHighlightBlockClick(event);
+        };
+
+        // 根据文档范围查找对应的对齐关系
+        const findAlignmentByDocRange = (rangeStart, rangeEnd) => {
+            return alignmentResults.value.find(alignment => {
+                return alignment.docRanges && alignment.docRanges.some(docRange =>
+                    docRange.documentId === selectedDocFile.value &&
+                    // 检查范围是否有交集
+                    docRange.end > rangeStart && docRange.start < rangeEnd
+                );
+            });
+        };
+
         // 根据docRange查找文档中所有有交集的高亮元素
         const findIntersectingHighlightElements = (start, end) => {
             const docPanel = document.querySelector('.content-text-doc');
@@ -2364,6 +2406,7 @@ const app = createApp({
             const docPanel = document.querySelector('.content-text-doc');
             if (docPanel) {
                 docPanel.addEventListener('click', handleHighlightBlockClick);
+                docPanel.addEventListener('contextmenu', handleHighlightBlockRightClick);
             }
             
             // 添加点击高亮代码片段的事件监听器
