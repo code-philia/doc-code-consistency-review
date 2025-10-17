@@ -1347,6 +1347,48 @@ const app = createApp({
             });
         };
 
+        // 代码高亮块右键菜单处理函数
+        const handleCodeHighlightBlockRightClick = (event) => {
+            event.preventDefault(); // 阻止默认右键菜单
+            
+            const target = event.target;
+            if (!target.classList.contains('highlight-block')) return;
+
+            const type = target.getAttribute('data-type');
+            // 只处理代码类型的高亮块
+            if (type !== 'code') return;
+
+            const rangeStart = parseInt(target.getAttribute('data-range-start'));
+            const rangeEnd = parseInt(target.getAttribute('data-range-end'));
+
+            if (isNaN(rangeStart) || isNaN(rangeEnd)) return;
+
+            // 查找与此高亮块对应的对齐关系（返回第一个匹配的）
+            const correspondingAlignment = findAlignmentByCodeRange(rangeStart, rangeEnd);
+            
+            if (!correspondingAlignment) {
+                ElMessage.warning('未找到与此高亮块对应的对齐关系');
+                return;
+            }
+
+            // 显示右键菜单
+            showContextMenu(event, correspondingAlignment);
+
+            // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
+            handleHighlightBlockClick(event);
+        };
+
+        // 根据代码范围查找对应的对齐关系（返回第一个匹配的）
+        const findAlignmentByCodeRange = (rangeStart, rangeEnd) => {
+            return alignmentResults.value.find(alignment => {
+                return alignment.codeRanges && alignment.codeRanges.some(codeRange =>
+                    codeRange.documentId === selectedCodeFile.value &&
+                    // 检查范围是否有交集
+                    codeRange.end > rangeStart && codeRange.start < rangeEnd
+                );
+            });
+        };
+
         // 根据docRange查找文档中所有有交集的高亮元素
         const findIntersectingHighlightElements = (start, end) => {
             const docPanel = document.querySelector('.content-text-doc');
@@ -2413,6 +2455,7 @@ const app = createApp({
             const codePanel = document.querySelector('.content-text-code');
             if (codePanel) {
                 codePanel.addEventListener('click', handleHighlightBlockClick);
+                codePanel.addEventListener('contextmenu', handleCodeHighlightBlockRightClick);
             }
 
             // 添加split-panel宽度变化监听器
