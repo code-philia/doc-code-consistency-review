@@ -909,7 +909,9 @@ const app = createApp({
          * 状态计算函数
          ***********************/
         const getAlignmentStatus = (alignment) => {
-            if (!alignment.codeRanges || alignment.codeRanges.length === 0) {
+            const noDoc = !alignment.docRanges || alignment.docRanges.length === 0;
+            const noCode = !alignment.codeRanges || alignment.codeRanges.length === 0;
+            if (noDoc || noCode) {
                 return {
                     status: 'unaligned',
                     text: '未对齐',
@@ -1798,6 +1800,55 @@ const app = createApp({
             }
         };
 
+        // 添加需求范围到现有对齐关系
+        const addDocToAlignment = async (alignment) => {
+            if (!currentSelection.value || !alignment) return;
+
+            // 获取需求文档内容以转换字符偏移为行号
+            const docFileContent = selectedDocRawContent.value;
+            const { startLine, endLine } = convertOffsetToLineNumbers(
+                docFileContent,
+                currentSelection.value.start,
+                currentSelection.value.end
+            );
+
+            const docRange = {
+                documentId: currentSelection.value.documentId,
+                filename: currentSelection.value.documentId, // 文件名
+                start: currentSelection.value.start,
+                end: currentSelection.value.end,
+                startLine: startLine, // 起始行号
+                endLine: endLine, // 结束行号
+                content: currentSelection.value.content
+            };
+
+            alignment.docRanges.push(docRange);
+            
+            showAlignmentDialog.value = false;
+            
+            // 保存当前选择信息，因为稍后会清空currentSelection
+            const selectionInfo = currentSelection.value;
+            currentSelection.value = null;
+
+            try {
+                await axios.post(
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
+                    alignment
+                );
+                
+                // 更新所有对齐数据以保持统计信息同步
+                await fetchAllAlignments();
+                
+                // 高亮选中的需求文档部分
+                highlightRequirementRange(selectionInfo.start, selectionInfo.end, alignment.id);
+                
+                ElMessage.success('已添加到对齐关系');
+            } catch (err) {
+                console.error("Error updating alignment:", err);
+                ElMessage.error(`更新对齐关系失败: ${err.message}`);
+            }
+        };
+
         // 导出表单相关状态
         const showExportDialog = ref(false);
         const exportForm = ref({
@@ -2446,14 +2497,16 @@ const app = createApp({
                 removeSpecificHighlights([rangeToRemove], type, alignment.id);
             }
 
-            // 当删除所有代码范围时，重置审查状态
-            if (alignment.codeRanges.length === 0) {
+            // 当删除所有代码范围或所有需求范围时，重置为未审查/未对齐
+            const noCode = alignment.codeRanges.length === 0;
+            const noDoc = alignment.docRanges.length === 0;
+            if (noCode || noDoc) {
                 alignment.isReviewed = false;
                 alignment.reviewThoughts = '';
             }
 
             // 如果对齐关系中没有范围了，删除整个对齐关系
-            if (alignment.docRanges.length === 0 && alignment.codeRanges.length === 0) {
+            if (noDoc && noCode) {
                 const idx = alignmentResults.value.indexOf(alignment);
                 if (idx !== -1) {
                     try {
@@ -3033,6 +3086,7 @@ const app = createApp({
             getAlignmentStatus,
             handleCodeSelection,
             addToAlignment,
+            addDocToAlignment,
             showCodeSelectionDialog,
             // 需求分解功能
             startAutoSplit,
