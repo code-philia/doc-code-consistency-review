@@ -6,7 +6,7 @@ let activeView = 'alignmentView'; // 当前活动视图
 const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
-    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike, updateHighlightPositions, extractPlainTextFromMarkdown
+    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike, updateHighlightPositions, extractPlainTextFromMarkdown, removeAllHighlights
 } from './utils.js';
 import { mermaid } from './thirdParty/bundle.js';
 
@@ -2126,6 +2126,90 @@ const app = createApp({
         };
 
         /***********************
+         * 重新对齐和重新审查功能
+         ***********************/
+        const restartAlignment = async () => {
+            try {
+                const result = await ElMessageBox.confirm(
+                    '这将清除已有的代码对齐结果，保留需求分解结果，然后重新开始自动对齐。确认继续？',
+                    '重新对齐',
+                    {
+                        confirmButtonText: '确认',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+
+                if (result === 'confirm') {                    
+                    // 调用后端清除代码范围
+                    const response = await axios.post('/api/clear-code-ranges', {
+                        projectPath: projectPath.value
+                    });
+                    
+                    if (response.data.status === 'success') {
+                        // 清除前端代码高亮
+                        removeAllHighlights();
+                        
+                        // 重新获取对齐数据
+                        await fetchAllAlignments();
+                        await fetchAlignments();
+                                                
+                        // 开始自动对齐
+                        await startAutoAlignment();
+                    } else {
+                        throw new Error(response.data.message || '清除代码范围失败');
+                    }
+                }
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('重新对齐失败:', error);
+                    ElMessage.error(`重新对齐失败: ${error.message}`);
+                }
+            }
+        };
+
+        const restartReview = async () => {
+            try {
+                const result = await ElMessageBox.confirm(
+                    '这将清除已有的审查结果，然后重新开始自动审查。确认继续？',
+                    '重新审查',
+                    {
+                        confirmButtonText: '确认',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+
+                if (result === 'confirm') {                    
+                    // 调用后端清除审查结果
+                    const response = await axios.post('/api/clear-review-results', {
+                        projectPath: projectPath.value
+                    });
+                    
+                    if (response.data.status === 'success') {
+                        // 清空前端审查相关状态
+                        issues.value = [];
+                        selectedIssue.value = null;
+                        
+                        // 重新获取对齐数据（更新审查状态）
+                        await fetchAllAlignments();
+                        await fetchAlignments();
+                                                
+                        // 开始自动审查
+                        await startAutoReview();
+                    } else {
+                        throw new Error(response.data.message || '清除审查结果失败');
+                    }
+                }
+            } catch (error) {
+                if (error !== 'cancel') {
+                    console.error('重新审查失败:', error);
+                    ElMessage.error(`重新审查失败: ${error.message}`);
+                }
+            }
+        };
+
+        /***********************
          * 对齐结果与右键菜单管理
          ***********************/
         const contextMenu = ref({
@@ -2973,6 +3057,10 @@ const app = createApp({
             reviewProgress,
             toggleAutoReview,
             singleReview,
+
+            // 重新对齐和重新审查功能
+            restartAlignment,
+            restartReview,
 
             // 问题单数据
             fetchIssues,

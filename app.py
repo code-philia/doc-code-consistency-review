@@ -1463,6 +1463,104 @@ def clear_project_results():
         return jsonify({'status': 'error', 'message': str(e)})
 
 
+@app.route('/api/clear-code-ranges', methods=['POST'])
+def clear_code_ranges():
+    """清除所有对齐关系中的代码范围部分，保留对齐关系和文档范围"""
+    data = request.json
+    project_path = data.get('projectPath')
+    
+    if not project_path:
+        return jsonify({"status": "error", "message": "缺少项目路径参数"}), 400
+    
+    try:
+        results_dir = os.path.join(project_path, 'results')
+        if not os.path.exists(results_dir):
+            return jsonify({"status": "success", "message": "结果目录不存在，无需清除"})
+        
+        # 遍历所有对齐文件
+        for filename in os.listdir(results_dir):
+            if filename.endswith('.json'):
+                file_path = os.path.join(results_dir, filename)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        alignments = json.load(f)
+                    
+                    # 清除每个对齐关系的代码范围和审查状态
+                    for alignment_id, alignment in alignments.items():
+                        if isinstance(alignment, dict):
+                            # 清除代码范围
+                            alignment['codeRanges'] = []
+                            # 重置审查状态
+                            alignment['isReviewed'] = False
+                            alignment['reviewThoughts'] = ''
+                    
+                    # 保存修改后的文件
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(alignments, f, ensure_ascii=False, indent=2)
+                        
+                except (json.JSONDecodeError, IOError) as e:
+                    print(f"处理文件 {filename} 时出错: {e}")
+                    continue
+        
+        return jsonify({"status": "success", "message": "已清除所有对齐关系中的代码范围"})
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"清除代码范围失败: {str(e)}"}), 500
+
+
+@app.route('/api/clear-review-results', methods=['POST'])
+def clear_review_results():
+    """清空项目的审查结果：问题单结果，并重置对齐关系的审查状态"""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'})
+        
+        if not os.path.exists(project_path):
+            return jsonify({'status': 'error', 'message': '项目路径不存在'})
+        
+        # 清空问题单文件
+        issues_file = os.path.join(project_path, 'issues.json')
+        if os.path.exists(issues_file):
+            os.remove(issues_file)
+        
+        # 清空审查结果（如果有单独的审查结果文件）
+        review_dir = os.path.join(project_path, 'reviews')
+        if os.path.exists(review_dir):
+            shutil.rmtree(review_dir)
+            os.makedirs(review_dir, exist_ok=True)
+        
+        # 重置所有对齐关系文件中的审查状态
+        results_dir = os.path.join(project_path, 'results')
+        if os.path.exists(results_dir):
+            for filename in os.listdir(results_dir):
+                if filename.endswith('.json'):
+                    file_path = os.path.join(results_dir, filename)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            alignments = json.load(f)
+                        
+                        # 重置每个对齐关系的审查状态
+                        for alignment_id, alignment in alignments.items():
+                            alignment['isReviewed'] = False
+                            alignment['reviewThoughts'] = ''
+                        
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            json.dump(alignments, f, indent=4, ensure_ascii=False)
+                    except Exception as e:
+                        print(f"处理文件 {filename} 时出错: {e}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': '审查结果已清空'
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 @app.route('/project/issue/update', methods=['POST'])
 def update_issue_content():
     data = request.json

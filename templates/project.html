@@ -71,6 +71,12 @@
                         <span v-if="!isAutoReviewing">自动审查</span>
                         <span v-else>停止审查</span>
                     </div>
+                    <div class="dropdown-item" @click="restartAlignment">
+                        <i class="fas fa-redo"></i> 重新对齐
+                    </div>
+                    <div class="dropdown-item" @click="restartReview">
+                        <i class="fas fa-redo-alt"></i> 重新审查
+                    </div>
                 </div>
             </div>
         </div>
