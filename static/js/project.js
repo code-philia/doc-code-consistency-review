@@ -2137,9 +2137,37 @@ const app = createApp({
 
         const showContextMenu = (event, alignment) => {
             contextMenu.value.visible = true;
-            contextMenu.value.top = event.clientY;
-            contextMenu.value.left = event.clientX;
             contextMenu.value.selectedAlignment = alignment;
+
+            // 先设置菜单可见，以便获取菜单尺寸
+            nextTick(() => {
+                const menuElement = document.querySelector('.context-menu');
+                if (!menuElement) return;
+
+                const menuRect = menuElement.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                let left = event.clientX;
+                let top = event.clientY;
+
+                // 检查右边界，如果菜单会超出右边界，则显示在鼠标左侧
+                if (left + menuRect.width > viewportWidth) {
+                    left = event.clientX - menuRect.width;
+                }
+
+                // 检查下边界，如果菜单会超出下边界，则显示在鼠标上方
+                if (top + menuRect.height > viewportHeight) {
+                    top = event.clientY - menuRect.height;
+                }
+
+                // 确保菜单不会超出左边界和上边界
+                left = Math.max(0, left);
+                top = Math.max(0, top);
+
+                contextMenu.value.left = left;
+                contextMenu.value.top = top;
+            });
 
             // 添加一个全局点击事件监听器来隐藏菜单
             document.addEventListener('click', hideContextMenu);
