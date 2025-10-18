@@ -113,7 +113,50 @@ const app = createApp({
                 const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`);
                 if (response.data.status === 'success' && response.data.data) {
                     // 后端返回的是以ID为键的对象，转换为数组以便渲染
-                    alignmentResults.value = Object.values(response.data.data);
+                    let alignments = Object.values(response.data.data);
+                    
+                    // 对对齐关系进行排序
+                    alignments.sort((a, b) => {
+                        // 判断是否为自动分解生成的对齐关系（ID以"auto_"开头）
+                        const isAutoA = a.id && a.id.startsWith('auto_');
+                        const isAutoB = b.id && b.id.startsWith('auto_');
+                        
+                        if (isAutoA && isAutoB) {
+                            // 两个都是自动分解：按起始位置排序
+                            const startA = a.docRanges && a.docRanges.length > 0 ? a.docRanges[0].start : 0;
+                            const startB = b.docRanges && b.docRanges.length > 0 ? b.docRanges[0].start : 0;
+                            return startA - startB;
+                        } else if (!isAutoA && !isAutoB) {
+                            // 两个都是标注文件：按名称（category）排序，数字开头的优先
+                            const nameA = a.name || '';
+                            const nameB = b.name || '';
+                            
+                            // 检查是否以数字开头
+                            const numMatchA = nameA.match(/^(\d+)/);
+                            const numMatchB = nameB.match(/^(\d+)/);
+                            
+                            if (numMatchA && numMatchB) {
+                                // 两个都以数字开头，按数字大小排序
+                                const numA = parseInt(numMatchA[1]);
+                                const numB = parseInt(numMatchB[1]);
+                                return numA - numB;
+                            } else if (numMatchA && !numMatchB) {
+                                // A以数字开头，B不是，A排在前面
+                                return -1;
+                            } else if (!numMatchA && numMatchB) {
+                                // B以数字开头，A不是，B排在前面
+                                return 1;
+                            } else {
+                                // 两个都不以数字开头，按字母顺序排序
+                                return nameA.localeCompare(nameB);
+                            }
+                        } else {
+                            // 混合情况：标注文件排在前面，自动分解排在后面
+                            return isAutoA ? 1 : -1;
+                        }
+                    });
+                    
+                    alignmentResults.value = alignments;
                     
                     // 在下一个tick中添加高亮，确保DOM已更新
                     await nextTick(() => {
