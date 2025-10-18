@@ -329,17 +329,30 @@
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel right-sidebar" collapsible>
                                     <div class="panel-title">
-                                        <i class="fas fa-link"></i>
-                                        <span>对齐与审查</span>
-                                        <el-button 
-                                            v-if="isFiltered" 
-                                            @click="showAllAlignments" 
-                                            size="small" 
-                                            type="primary" 
-                                            style="margin-left: auto; font-size: 11px;"
-                                        >
-                                            全部
-                                        </el-button>
+                                        <div style="display: flex; align-items: center;">
+                                            <i class="fas fa-link"></i>
+                                            <span style="margin-left: 8px;">对齐与审查</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center;">
+                                            <el-button 
+                                                v-if="isFiltered" 
+                                                @click="showAllAlignments" 
+                                                size="small"
+                                                plain
+                                                type="primary" 
+                                            >
+                                                全部
+                                            </el-button>
+                                            <el-button 
+                                                @click="refreshAlignments" 
+                                                size="small" 
+                                                text
+                                                plain
+                                                type="primary"
+                                            >
+                                                 刷新
+                                            </el-button>
+                                        </div>
                                     </div>
                                     <div class="content-card">
                                         <div class="alignment-list">

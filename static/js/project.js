@@ -1163,6 +1163,25 @@ const app = createApp({
             }
         };
 
+        // 刷新对齐关系和高亮
+        const refreshAlignments = async () => {
+            try {                
+                // 重新获取对齐关系
+                await fetchAlignments();
+                
+                // 重新加载高亮
+                await nextTick(() => {
+                    reloadHighlights();
+                    if (selectedCodeFile.value && alignmentResults.value) {
+                        highlightCurrentCodeFileBasedOnDoc();
+                    }
+                });
+            } catch (error) {
+                console.error('刷新对齐关系失败:', error);
+                ElMessage.error(`刷新失败: ${error.message}`);
+            }
+        };
+
         // 精确移除特定范围的高亮块
         const removeSpecificHighlights = (ranges, type, alignmentId) => {
             if (!ranges || ranges.length === 0) return;
@@ -3225,8 +3244,9 @@ const app = createApp({
             generateReverseRequirement,
             regenerateReverseRequirement,
             
-            // 刷新高亮功能
-            refreshHighlights
+            // 刷新
+            refreshHighlights,
+            refreshAlignments
         };
     }
 });
