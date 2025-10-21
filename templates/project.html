@@ -151,6 +151,25 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- 进度显示区域 -->
+                <div class="progress-section" v-show="showProgress">
+                    <div class="progress-header">
+                        <i class="fas fa-tasks"></i>
+                        <span class="progress-title">${ progressTitle }</span>
+                    </div>
+                    <div class="progress-content">
+                        <div class="current-file">
+                            <span class="file-name">${ currentProcessingFile }</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+                            </div>
+                            <span class="progress-text">${ progressCurrent }/${ progressTotal } (${ Math.round(progressPercentage) }%)</span>
+                        </div>
+                    </div>
+                </div>
             </el-splitter-panel>
 
             <el-splitter-panel class="main-content">

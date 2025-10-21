@@ -94,6 +94,17 @@ const app = createApp({
         const reverseError = ref(null);
         const isViewingFlowchart = ref(false);
 
+        // 进度显示相关状态
+        const showProgress = ref(false);
+        const progressTitle = ref('');
+        const currentProcessingFile = ref('');
+        const progressCurrent = ref(0);
+        const progressTotal = ref(0);
+        const progressPercentage = computed(() => {
+            if (progressTotal.value === 0) return 0;
+            return (progressCurrent.value / progressTotal.value) * 100;
+        });
+
         /***********************
          * 文件加载相关方法
          ***********************/
@@ -250,6 +261,30 @@ const app = createApp({
             }
         };
 
+        // 进度管理辅助函数
+        const startProgress = (title, total) => {
+            showProgress.value = true;
+            progressTitle.value = title;
+            progressCurrent.value = 0;
+            progressTotal.value = total;
+            currentProcessingFile.value = '';
+        };
+
+        const updateProgress = (current, fileName = '') => {
+            progressCurrent.value = current;
+            if (fileName) {
+                currentProcessingFile.value = fileName;
+            }
+        };
+
+        const stopProgress = () => {
+            showProgress.value = false;
+            progressTitle.value = '';
+            progressCurrent.value = 0;
+            progressTotal.value = 0;
+            currentProcessingFile.value = '';
+        };
+
         /***********************
          * 自动审查功能
          ***********************/
@@ -276,32 +311,59 @@ const app = createApp({
                 });
 
                 reviewProgress.value.total = unreviewed.length;
+                
+                // 按文档分组处理
+                const groupedByDoc = {};
+                unreviewed.forEach(({ docFile, alignment }) => {
+                    if (!groupedByDoc[docFile]) {
+                        groupedByDoc[docFile] = [];
+                    }
+                    groupedByDoc[docFile].push(alignment);
+                });
 
-                for (const { docFile, alignment } of unreviewed) {
+                for (const [docFile, alignments] of Object.entries(groupedByDoc)) {
                     // 检查是否需要中断
                     if (!isAutoReviewing.value) {
                         break;
                     }
 
-                    reviewProgress.value.current++;
+                    // 启动当前文档的进度显示
+                    startProgress('自动审查', alignments.length);
 
-                    // 调用后端进行审查
-                    await axios.post('/api/review-alignment', {
-                        projectPath: projectPath.value,
-                        docFile: docFile,
-                        alignment: alignment
-                    });
+                    for (let i = 0; i < alignments.length; i++) {
+                        const alignment = alignments[i];
+                        
+                        // 检查是否需要中断
+                        if (!isAutoReviewing.value) {
+                            break;
+                        }
 
-                    // 实时更新统计数据
-                    await fetchAllAlignments();
+                        reviewProgress.value.current++;
+                        
+                        // 更新进度显示
+                        updateProgress(i, docFile);
 
-                    // 如果当前审查的对齐关系属于当前选中的文档，实时更新右侧面板
-                    if (docFile === selectedDocFile.value) {
-                        await fetchAlignments();
+                        // 调用后端进行审查
+                        await axios.post('/api/review-alignment', {
+                            projectPath: projectPath.value,
+                            docFile: docFile,
+                            alignment: alignment
+                        });
+
+                        // 实时更新统计数据
+                        await fetchAllAlignments();
+
+                        // 如果当前审查的对齐关系属于当前选中的文档，实时更新右侧面板
+                        if (docFile === selectedDocFile.value) {
+                            await fetchAlignments();
+                        }
+
+                        // 添加延迟以模拟处理时间
+                        await new Promise(resolve => setTimeout(resolve, 800));
                     }
 
-                    // 添加延迟以模拟处理时间
-                    await new Promise(resolve => setTimeout(resolve, 800));
+                    // 停止当前文档的进度显示
+                    stopProgress();
                 }
 
                 // 重新加载所有对齐数据和问题单
@@ -316,6 +378,8 @@ const app = createApp({
             } finally {
                 isAutoReviewing.value = false;
                 reviewProgress.value = { current: 0, total: 0 };
+                // 停止进度显示
+                stopProgress();
             }
         };
 
@@ -825,7 +889,9 @@ const app = createApp({
                 let totalUnalignedCount = 0;
                 let processedCount = 0;
 
-                for (const docFile of projectFiles.value.doc_files) {
+                for (let i = 0; i < projectFiles.value.doc_files.length; i++) {
+                    const docFile = projectFiles.value.doc_files[i];
+                    
                     // 检查是否需要中断
                     if (!isAutoAligning.value) {
                         break;
@@ -853,6 +919,8 @@ const app = createApp({
             } finally {
                 isAutoAligning.value = false;
                 alignmentProgress.value = { current: 0, total: 0 };
+                // 停止进度显示
+                stopProgress();
             }
         };
 
@@ -866,15 +934,25 @@ const app = createApp({
                     !alignment.codeRanges || alignment.codeRanges.length === 0
                 );
 
+                // 启动当前文档的进度显示
+                if (unalignedRequirements.length > 0) {
+                    startProgress('自动对齐', unalignedRequirements.length);
+                }
+
                 alignmentProgress.value.total += unalignedRequirements.length;
 
-                for (const requirement of unalignedRequirements) {
+                for (let i = 0; i < unalignedRequirements.length; i++) {
+                    const requirement = unalignedRequirements[i];
+                    
                     // 检查是否需要中断
                     if (!isAutoAligning.value) {
                         break;
                     }
 
                     alignmentProgress.value.current++;
+                    
+                    // 更新进度显示
+                    updateProgress(i, docFile);
 
                     // 为未对齐的需求点生成mock代码对齐
                     await addMockCodeToRequirement(docFile, requirement);
@@ -883,6 +961,11 @@ const app = createApp({
                     await fetchAllAlignments();
 
                     await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                // 停止当前文档的进度显示
+                if (unalignedRequirements.length > 0) {
+                    stopProgress();
                 }
 
                 return unalignedRequirements.length;
@@ -2219,6 +2302,8 @@ const app = createApp({
                 // 停止对齐
                 isAutoAligning.value = false;
                 alignmentProgress.value = { current: 0, total: 0 };
+                // 停止进度显示
+                stopProgress();
                 ElMessage.info('已停止自动对齐');
             } else {
                 // 开始对齐
@@ -2231,6 +2316,8 @@ const app = createApp({
                 // 停止审查
                 isAutoReviewing.value = false;
                 reviewProgress.value = { current: 0, total: 0 };
+                // 停止进度显示
+                stopProgress();
                 ElMessage.info('已停止自动审查');
             } else {
                 // 开始审查
@@ -3258,7 +3345,15 @@ const app = createApp({
             refreshAlignments,
             
             // 行号生成
-            getLineNumbers
+            getLineNumbers,
+            
+            // 进度显示相关
+            showProgress,
+            progressTitle,
+            currentProcessingFile,
+            progressCurrent,
+            progressTotal,
+            progressPercentage
         };
     }
 });
