@@ -3071,7 +3071,16 @@ const app = createApp({
             }
         };
 
-        // 刷新高亮功能
+        // 生成行号数组的辅助函数
+        const getLineNumbers = (startLine, endLine) => {
+            const numbers = [];
+            for (let i = startLine; i <= endLine; i++) {
+                numbers.push(i);
+            }
+            return numbers;
+        };
+
+        // 刷新高亮
         const refreshHighlights = () => {
             try {
                 // 调用utils.js中的updateHighlightPositions函数重新计算高亮位置
@@ -3246,7 +3255,10 @@ const app = createApp({
             
             // 刷新
             refreshHighlights,
-            refreshAlignments
+            refreshAlignments,
+            
+            // 行号生成
+            getLineNumbers
         };
     }
 });

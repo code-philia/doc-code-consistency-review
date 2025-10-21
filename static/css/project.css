@@ -1982,6 +1982,46 @@
     background-color: #67c23a;
 }
 
+.code-content-with-lines {
+    display: flex;
+    border-radius: 4px;
+    overflow: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    margin: 8px 0;
+}
+
+.line-numbers {
+    color: var(--text-secondary);
+    background-color: transparent;
+    padding: 8px 4px;
+    text-align: right;
+    user-select: none;
+    min-width: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.line-number {
+    display: block;
+    padding: 0 4px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.code-text {
+    flex: 1;
+    padding: 8px;
+    white-space: pre;
+    overflow: auto;
+    background-color: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
 /* 问题级别显示样式 */
 .issue-level {
     padding: 2px 6px;

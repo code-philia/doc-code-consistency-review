@@ -611,7 +611,12 @@
                                     <span class="file-name">${ range.filename }</span>
                                     <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
                                 </div>
-                                <pre class="code-content"><code>${ range.content }</code></pre>
+                                <pre class="code-content-with-lines">
+                                    <div class="line-numbers">
+                                        <span v-for="lineNum in getLineNumbers(range.startLine, range.endLine)" :key="lineNum" class="line-number">${ lineNum }</span>
+                                    </div>
+                                    <code class="code-text">${ range.content }</code>
+                                </pre>
                             </div>
                         </div>
                     </div>
