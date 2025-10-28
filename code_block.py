@@ -91,9 +91,9 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
          "enum"),
         
         # 7. 预处理指令块 (#if, #ifdef等多行结构)
-        (re.compile(r'^\s*#\s*(if|ifdef|ifndef|elif)'), 
-         lambda i, name: find_preprocessor_block_end(lines, i),
-         "preprocessor_block"),
+        # (re.compile(r'^\s*#\s*(if|ifdef|ifndef|elif)'), 
+        #  lambda i, name: find_preprocessor_block_end(lines, i),
+        #  "preprocessor_block"),
         
         # 1. 单行注释 //
         (re.compile(r'^[\s\ufeff]*//.*$'),

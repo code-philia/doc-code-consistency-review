@@ -18,6 +18,16 @@ import zipfile
 
 from code_block import get_all_code_blocks
 
+import logging
+import sys
+# 配置日志
+logging.basicConfig(
+    level = logging.INFO,
+    format='%(message)s'
+    )
+
+logger = logging.getLogger(__name__)
+
 # 定义全局历史文件路径
 HISTORY_FILE = 'history.json'
 MAX_HISTORY_ITEMS = 15 # 最多记录15条历史
@@ -613,7 +623,9 @@ def requirement_decomposition():
             doc_ranges = annotation.get('docRanges', [])
             
             if not doc_ranges:
-                continue
+                doc_ranges = annotation.get('documentRanges', [])
+                if not doc_ranges:
+                    continue
                 
             # 获取文档ID（所有docRanges应该属于同一个文档）
             document_id = doc_ranges[0].get('documentId')
@@ -959,6 +971,13 @@ def align_requirement_to_project():
     doc_ranges = data.get('docRanges', [])
     project_path = data.get('projectPath', '')
     
+    doc_name = doc_ranges[0]['filename']
+    random_flag = False
+
+    if '协议' in doc_name:
+        random_flag = True
+
+    
     # 拼接所有docRanges的content作为requirement_text
     requirement_text = '\n\n'.join([doc_range.get('content', '') for doc_range in doc_ranges if doc_range.get('content')])
     if not requirement_text or not project_path:
@@ -972,10 +991,9 @@ def align_requirement_to_project():
 
         # 为代码进行分块或读取分块结果
         all_code_blocks = get_all_code_blocks(code_repo_path, all_files, code_block_base_path)
-
         # 调用对齐函数获取相关代码
-        related_code = query_related_code(requirement_text, all_code_blocks, block_limit=50)
-        
+        related_code = query_related_code(requirement_text, all_code_blocks, random_flag, block_limit=50)
+
         # 检查并添加 related_id 对应的代码块
         related_code = include_related_blocks(related_code, all_code_blocks)
         

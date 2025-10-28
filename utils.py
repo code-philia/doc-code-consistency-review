@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import tiktoken
 from doc2md import docToMd
+import random
+import sys
 
 def count_lines_of_code(filepath):
     """一个简单的代码行数统计函数，忽略空行"""
@@ -287,13 +289,18 @@ def get_filename_without_extension(filepath):
 #         result.append(lst[i:i+limit])
 #     return result
 
-def chunk_list(code_blocks, max_chunk_size):
+def chunk_list(code_blocks, max_chunk_size, random_flag):
     all_chunks = []
     current_chunk = []
     max_chunk_size = 30000
+
+    # 尝试随机打乱list中元素顺序
+    if random_flag:
+        random.shuffle(code_blocks)
+    
     for block in code_blocks:
         block_str_len = len(str(block))
-
+        
         # 某个块本身就大于max_chunk_size
         if block_str_len >= max_chunk_size:
             # 当前有未保存的chunk，先保存
@@ -497,43 +504,47 @@ def include_related_blocks(related_code, all_code_blocks):
                 # 在所有代码块中查找对应的 related_id
                 for block in all_code_blocks:
                     if block.get('id') == related_id:
-                        key = (block['file'], tuple(block['range']))
-                        if key not in added_keys:
+                        # key = (block['file'], tuple(block['range']))
+                        # if key not in added_keys:
                             
-                            # 按照related_range添加具体的代码片段
-                            temp_block = {}
-                            temp_block['file'] = block['file']
-                            temp_block['range'] = []
+                        # 按照related_range添加具体的代码片段
+                        temp_block = {}
+                        temp_block['file'] = block['file']
+                        temp_block['range'] = []
+                        
+                        re_id = [matched_block['related_range'][str(block['id'])]]
+                        if len(re_id) > 1:
+                            temp_block['range'].append(re_id)
+                        else:
+                            temp_block['range'] = [re_id[0], re_id[0]]
                             
-                            re_id = [matched_block['related_range'][str(block['id'])]]
-                            if len(re_id) > 1:
-                                temp_block['range'].append(re_id)
-                            else:
-                                temp_block['range'] = [re_id[0], re_id[0]]
+                        # key = (block['file'], temp_block['range'])
+                        # if key not in added_keys:
                             # print(temp_block['range'])
-                            temp_block['type'] = block['type']
-                            # # 按照\n切分
-                            temp_list = block['code'].split('\n')
-                                          
-                            pos_start = temp_block['range'][0] - block['range'][0]
-                            pos_end = temp_block['range'][1] - block['range'][0]
-                            
-                            temp_block['code'] = temp_list[pos_start:pos_end+1][0]
-                            
-                            
-                            temp_block['id'] = block['id']
-                            temp_block['related_id'] = []
-                            temp_block['related_id'].append(matched_block['id'])
-                            temp_block['related_range'] = {str(matched_block['id']):block['related_range'][str(matched_block['id'])]}
-                            
-                            # key = (block['file'], temp_block['range'])
-                            # print(key)
-                            # print(temp_block)
-                            result_blocks.append(temp_block)
-                            # print(block)
-                            # sys.exit()
-                            # result_blocks.append(block)
-                            added_keys.add(key)
+                        temp_block['type'] = block['type']
+                        # # 按照\n切分
+                        temp_list = block['code'].split('\n')
+                                      
+                        pos_start = temp_block['range'][0] - block['range'][0]
+                        pos_end = temp_block['range'][1] - block['range'][0]
+                        
+                        temp_block['code'] = temp_list[pos_start:pos_end+1][0]
+                        
+                        
+                        temp_block['id'] = block['id']
+                        temp_block['related_id'] = []
+                        temp_block['related_id'].append(matched_block['id'])
+                        temp_block['related_range'] = {str(matched_block['id']):block['related_range'][str(matched_block['id'])]}
+                        
+                        
+                        # print(key)
+                        # print(temp_block)
+                        result_blocks.append(temp_block)
+                        
+                        # print(block)
+                        # sys.exit()
+                        # result_blocks.append(block)
+                        added_keys.add(key)
                         break
     
     return result_blocks

@@ -4,10 +4,13 @@ import json
 from prompt import ALIGN_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE
 from openai import OpenAI
 from utils import chunk_list
-
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8001/v1")
 API_KEY = os.environ.get("API_KEY", "0")
-MODEL_NAME = "deepseek-coder-6.7b-instruct"
+
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8002/v1")
+# MODEL_NAME = "Qwen/Qwen3-8B"
+
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+MODEL_NAME = "Qwen3-32B"
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -30,17 +33,6 @@ def query_llm(message, history=None):
     )
     result = response.choices[0].message
     return result
-
-# ================= 对齐 相关代码 =================
-def query_related_code(requirement, code_blocks, block_limit=None):
-    if block_limit:
-        chunked_code_blocks = chunk_list(code_blocks, block_limit)
-        related_code_blocks = []
-        for c in chunked_code_blocks:
-            related_code_blocks.extend(query_related_code_block(requirement, c))
-        return related_code_blocks
-    else:
-        return query_related_code_block(requirement, code_blocks)
 
 def query_related_code_block(requirement, code_blocks):
     """
@@ -70,6 +62,44 @@ def query_related_code_block(requirement, code_blocks):
     print("parsed llm output: ", parsed_output)
     
     return parsed_output
+
+# ================= 对齐 相关代码 =================
+def query_related_code(requirement, code_blocks, random_flag, block_limit=None):
+
+    if block_limit:
+        chunked_code_blocks = chunk_list(code_blocks, block_limit, random_flag)
+        
+        related_code_blocks = []
+        for c in chunked_code_blocks:
+            res = query_related_code_block(requirement, c)
+            related_code_blocks.extend(res)
+        
+        print(related_code_blocks)
+        similarity_results = []
+        if (len(related_code_blocks) == 1):
+            similarity_results = related_code_blocks
+        elif (len(related_code_blocks) > 1):
+            max_sim_results = []
+            max_sim = 0
+            for item in related_code_blocks:
+                if item['similarity'] >= max_sim:
+                    max_sim = item['similarity']
+                    if item['similarity'] == max_sim:
+                        max_sim_results.append(item)
+                    elif item['similarity'] > max_sim:
+                        max_sim_results = []
+                        max_sim_results = [item]
+                if item['similarity'] >= 0.9:
+                    similarity_results.append(item)
+            if len(similarity_results) == 0:
+               similarity_results = max_sim_results  
+        
+        
+        print("************")   
+        print(similarity_results)   
+        return similarity_results
+    else:
+        return query_related_code_block(requirement, code_blocks)
 
 def parse_alignment_output(response):
     """
