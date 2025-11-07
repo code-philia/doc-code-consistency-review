@@ -309,7 +309,7 @@
                                                 size="small" 
                                                 type="primary" 
                                                 plain
-                                                @click="startAutoMarkdownSplit">
+                                                @click="startAutoSplit">
                                                 <span>需求分解</span>
                                             </el-button>
                                             <el-button 
@@ -649,11 +649,11 @@
                                 <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
                                     <div class="issue-header">
                                         <!-- 问题级别：编辑模式下显示下拉框，非编辑模式显示文本 -->
-                                        <div v-if="editingIssueId !== issue.id" class="issue-level" :class="issue.level?.toLowerCase()">
+                                        <div v-if="!issue._isEditing" class="issue-level" :class="issue.level?.toLowerCase()">
                                             ${ issueLevelText(issue.level) }
                                         </div>
                                         <div v-else class="issue-level-selector">
-                                            <button 
+                                            <div 
                                                 v-for="level in [{ value: 'high', label: '重大' }, { value: 'medium', label: '严重' }, { value: 'low', label: '一般' }]"
                                                 :key="level.value"
                                                 class="level-btn"
@@ -661,7 +661,7 @@
                                                 @click="issue.level = level.value"
                                             >
                                                 ${ level.label }
-                                            </button>
+                                        </div>
                                         </div>
                                         
                                         <span 
@@ -677,7 +677,7 @@
                                                     : '未确认') }
                                         </span>
                                         <div class="issue-actions">
-                                            <button v-if="editingIssueId !== issue.id" class="action-btn edit-btn" @click="toggleEditIssue(issue)">
+                                            <button v-if="!issue._isEditing" class="action-btn edit-btn" @click="toggleEditIssue(issue)">
                                                 <i class="fas fa-edit"></i> 编辑
                                             </button>
                                             <button v-else class="action-btn save-btn" @click="saveIssue(issue)">
@@ -687,8 +687,8 @@
                                     </div>
                                     <div 
                                         class="issue-summary" 
-                                        :contenteditable="editingIssueId === issue.id"
-                                        :class="{ 'editable': editingIssueId === issue.id }"
+                                        :contenteditable="issue._isEditing"
+                                        :class="{ 'editable': issue._isEditing }"
                                         @blur="updateIssueContentOnBlur($event, issue)"
                                     >
                                         ${ issue.description }

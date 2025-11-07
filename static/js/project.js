@@ -413,11 +413,13 @@ const app = createApp({
                 if (response.data.status === 'success') {
                     const issuesData = response.data.data || [];
 
-                    // 为没有缩略信息的旧问题单提供兼容性支持
+                    // Compatibility: enrich old issues lacking brief fields
                     for (const issue of issuesData) {
+                        // Initialize per-issue editing state
+                        if (issue._isEditing === undefined) issue._isEditing = false;
                         if (!issue.briefRequirement || !issue.briefCode) {
                             try {
-                                // 根据alignmentId查找对齐关系获取缩略信息
+                                // Lookup alignment by alignmentId to fill brief info
                                 const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(issue.relatedDocFile)}`);
                                 if (alignmentResponse.data.status === 'success') {
                                     const alignments = alignmentResponse.data.data || {};
@@ -2700,29 +2702,33 @@ const app = createApp({
         };
 
         const toggleEditIssue = (issue) => {
-            if (editingIssueId.value === issue.id) {
-                // 如果当前是编辑状态，则取消编辑
-                const originalIssue = issues.value.find(i => i.id === issue.id);
-                if (originalIssue) {
-                    originalIssue.description = issueContentBeforeEdit.value;
+            // Set other issues to non-editing; toggle only current issue
+            issues.value.forEach(i => {
+                if (i.id !== issue.id && i._isEditing) {
+                    // Optional: revert other items' content when cancelling edit
+                    // i.description = i.description;
                 }
-                editingIssueId.value = null;
-            } else {
-                // 进入编辑状态
-                editingIssueId.value = issue.id;
+                i._isEditing = (i.id === issue.id) ? !issue._isEditing : false;
+            });
+
+            if (issue._isEditing) {
+                // Backup content when entering edit mode
                 issueContentBeforeEdit.value = issue.description;
+            } else {
+                // Optional: restore original content when exiting edit mode
+                // issue.description = issueContentBeforeEdit.value; // 如需恢复请取消注释
             }
         };
 
         const updateIssueContentOnBlur = (event, issue) => {
-            // 当用户离开编辑区域时，更新数据模型中的内容
-            if (editingIssueId.value === issue.id) {
+            // Update model when editor loses focus
+            if (issue._isEditing) {
                 issue.description = event.target.innerText;
             }
         };
 
         const saveIssue = async (issue) => {
-            editingIssueId.value = null; // 退出编辑模式
+            issue._isEditing = false; // Exit edit mode
             try {
                 const response = await axios.post('/project/issue/update', {
                     path: projectPath.value,
@@ -2733,7 +2739,7 @@ const app = createApp({
                 if (response.data.status === 'success') {
                 } else {
                     ElMessage.error(response.data.message || '保存失败');
-                    // 可选：回滚内容
+                    // Optional: rollback content
                     issue.description = issueContentBeforeEdit.value;
                 }
             } catch (error) {

@@ -1139,6 +1139,16 @@
     border-left: 1px solid var(--border-color);
 }
 
+.review-right-panel .review-tabs {
+    height: 100%;
+}
+
+.review-right-panel .review-tabs .el-tabs__content {
+    height: calc(100% - var(--el-tabs-header-height, 40px));
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .review-left-section {
     flex: 1;
     display: flex;
