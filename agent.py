@@ -1,7 +1,7 @@
 import os
 import re
 import json
-from prompt import ALIGN_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE
+from prompt import ALIGN_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE
 from openai import OpenAI
 from utils import chunk_list
 API_KEY = os.environ.get("API_KEY", "0")
@@ -80,7 +80,7 @@ def query_related_code(requirement, code_blocks, random_flag, block_limit=None):
             similarity_results = related_code_blocks
         elif (len(related_code_blocks) > 1):
             max_sim_results = []
-            max_sim = 0
+            max_sim = -1.0
             for item in related_code_blocks:
                 if item['similarity'] >= max_sim:
                     max_sim = item['similarity']
@@ -157,7 +157,8 @@ def query_review_result(requirement, related_code):
     )
     
     # 2. 构造提示词
-    template = REVIEW_PROMPT_TEMPLATE
+    # template = REVIEW_PROMPT_TEMPLATE
+    template = THINKING_PROMPT_TEMPLATE
     prompt = template.format(
         requirement=requirement_context,
         related_code=code_context

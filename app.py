@@ -1152,49 +1152,99 @@ def review_alignment():
     return jsonify({"status": "success"})
 
 
+# def generate_and_save_issue(project_path, alignment, issue_details, doc_file):
+#     issue_id = str(uuid.uuid4())
+    
+#     # 从LLM返回的issue详情中提取信息
+#     level = issue_details.get('level', 'medium')
+#     summary = issue_details.get('summary', '未提供摘要')
+#     description = issue_details.get('description', '未提供详细描述')
+
+#     # 获取缩略信息
+#     brief_requirement = alignment.get('docRanges', [{}])[0].get('content', '')[:30] + '...'
+#     brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')[:30] + '...'
+
+#     new_issue = {
+#         "id": issue_id,
+#         "level": level,
+#         "summary": summary,
+#         "description": description,
+#         "status": "unconfirmed",
+#         "alignmentId": alignment.get('id'),
+#         "relatedDocFile": doc_file,
+#         "relatedRequirementId": alignment.get('id'), # 兼容旧字段
+#         "briefRequirement": brief_requirement,
+#         "briefCode": brief_code,
+#         "createdDate": datetime.now().isoformat(),
+#         "updatedDate": datetime.now().isoformat()
+#     }
+
+#     issues_file = os.path.join(project_path, 'issues.json')
+#     try:
+#         issues_data = []
+#         if os.path.exists(issues_file):
+#             with open(issues_file, 'r', encoding='utf-8') as f:
+#                 try:
+#                     issues_data = json.load(f)
+#                 except json.JSONDecodeError:
+#                     pass # 文件为空或损坏
+        
+#         issues_data.append(new_issue)
+        
+#         with open(issues_file, 'w', encoding='utf-8') as f:
+#             json.dump(issues_data, f, ensure_ascii=False, indent=4)
+#     except Exception as e:
+#         print(f"Failed to save issue: {str(e)}")
+
 def generate_and_save_issue(project_path, alignment, issue_details, doc_file):
     issue_id = str(uuid.uuid4())
     
     # 从LLM返回的issue详情中提取信息
-    level = issue_details.get('level', 'medium')
-    summary = issue_details.get('summary', '未提供摘要')
-    description = issue_details.get('description', '未提供详细描述')
+    # level = issue_details.get('level', 'medium')
+    # summary = issue_details.get('summary', '未提供摘要')
+    # description = issue_details.get('description', '未提供详细描述')
+    
+    for item in issue_details:
+        level = item.get('level', 'medium')
+        summary = item.get('summary', '未提供摘要')
+        description = item.get('description', '未提供详细描述')
 
-    # 获取缩略信息
-    brief_requirement = alignment.get('docRanges', [{}])[0].get('content', '')[:30] + '...'
-    brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')[:30] + '...'
+        # 获取缩略信息
+        brief_requirement = alignment.get('docRanges', [{}])[0].get('content', '')[:30] + '...'
+        brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')[:30] + '...'
+    
+        new_issue = {
+            "id": issue_id,
+            "level": level,
+            "summary": summary,
+            "description": description,
+            "status": "unconfirmed",
+            "alignmentId": alignment.get('id'),
+            "relatedDocFile": doc_file,
+            "relatedRequirementId": alignment.get('id'), # 兼容旧字段
+            "briefRequirement": brief_requirement,
+            "briefCode": brief_code,
+            "createdDate": datetime.now().isoformat(),
+            "updatedDate": datetime.now().isoformat()
+        }
 
-    new_issue = {
-        "id": issue_id,
-        "level": level,
-        "summary": summary,
-        "description": description,
-        "status": "unconfirmed",
-        "alignmentId": alignment.get('id'),
-        "relatedDocFile": doc_file,
-        "relatedRequirementId": alignment.get('id'), # 兼容旧字段
-        "briefRequirement": brief_requirement,
-        "briefCode": brief_code,
-        "createdDate": datetime.now().isoformat(),
-        "updatedDate": datetime.now().isoformat()
-    }
+        issues_file = os.path.join(project_path, 'issues.json')
+        try:
+            issues_data = []
+            if os.path.exists(issues_file):
+                with open(issues_file, 'r', encoding='utf-8') as f:
+                    try:
+                        issues_data = json.load(f)
+                    except json.JSONDecodeError:
+                        pass # 文件为空或损坏
+            
+            issues_data.append(new_issue)
+            
+            with open(issues_file, 'w', encoding='utf-8') as f:
+                json.dump(issues_data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"Failed to save issue: {str(e)}")
 
-    issues_file = os.path.join(project_path, 'issues.json')
-    try:
-        issues_data = []
-        if os.path.exists(issues_file):
-            with open(issues_file, 'r', encoding='utf-8') as f:
-                try:
-                    issues_data = json.load(f)
-                except json.JSONDecodeError:
-                    pass # 文件为空或损坏
-        
-        issues_data.append(new_issue)
-        
-        with open(issues_file, 'w', encoding='utf-8') as f:
-            json.dump(issues_data, f, ensure_ascii=False, indent=4)
-    except Exception as e:
-        print(f"Failed to save issue: {str(e)}")
 
 def get_filename_without_extension(filename):
     """去掉文件名的扩展名"""

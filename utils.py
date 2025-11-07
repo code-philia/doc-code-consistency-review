@@ -484,6 +484,13 @@ def include_related_blocks(related_code, all_code_blocks):
                     block['range'][1] >= range_info[1]):
                     matched_blocks.append(block)
                     break
+                
+                # 如果精确匹配失败，尝试找到小于该范围的代码块
+                elif (block['file'] == file_name and 
+                    block['range'][0] >= range_info[0] and 
+                    block['range'][1] <= range_info[1]):
+                    matched_blocks.append(block)
+
     
     # 创建结果集合，避免重复
     result_blocks = []
