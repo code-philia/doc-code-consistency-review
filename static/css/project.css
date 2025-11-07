@@ -1559,16 +1559,8 @@
     font-weight: 800;
 }
 
-.issue-level.high {
-    color: #9d2330;
-}
-
-.issue-level.medium {
-    color: #b38b11;
-}
-
-.issue-level.low {
-    color: #0c5460;
+.issue-level.high, .issue-level.medium, .issue-level.low {
+    color: white;
 }
 
 .issue-level.false_positive {
@@ -1951,13 +1943,16 @@
     background-color: rgba(52, 152, 219, 0.05);
 }
 
-/* 问题级别选择器样式 */
 .issue-level-selector {
-    display: flex;
-    gap: 2px;
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 0;
     border-radius: 4px;
     overflow: hidden;
     border: 1px solid #dcdfe6;
+    margin-right: 12px;
+    flex-shrink: 0;
+    align-items: stretch;
 }
 
 .level-btn {
@@ -1969,6 +1964,10 @@
     cursor: pointer;
     transition: all 0.2s;
     min-width: 24px;
+    margin: 0; 
+    white-space: nowrap;
+    box-sizing: border-box;
+    flex: 0 0 auto;
 }
 
 .level-btn:hover {
@@ -1981,14 +1980,17 @@
 }
 
 .level-btn.high.active {
+    color: white;
     background-color: #f56c6c;
 }
 
 .level-btn.medium.active {
+    color: white;
     background-color: #e6a23c;
 }
 
 .level-btn.low.active {
+    color: white;
     background-color: #67c23a;
 }
 
