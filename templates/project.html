@@ -470,6 +470,7 @@
                                 </div>
                                 <div class="issue-table">
                                     <div class="issue-row issue-header-row">
+                                        <div class="issue-cell issue-id-cell">ID</div>
                                         <div class="issue-cell issue-level-cell">等级</div>
                                         <div class="issue-cell issue-description-cell">问题描述</div>
                                         <div class="issue-cell issue-req-cell">相关需求</div>
@@ -484,6 +485,7 @@
                                         @click="selectIssue(issue)"
                                         @dblclick="showIssueDetail(issue)"
                                     >
+                                        <div class="issue-cell issue-id-cell">${ issue.displayId || 'ISSUE-???' }</div>
                                         <div class="issue-cell issue-level-cell">
                                             <span class="issue-level" :class="issue.level?.toLowerCase()">
                                                 ${ issueLevelText(issue.level) }
@@ -647,6 +649,10 @@
                         <el-tab-pane label="问题单" name="issues">
                             <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="issues-container">
                                 <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
+                                    <div class="issue-meta-line">
+                                        <div class="issue-display-id">${ issue.displayId || 'ISSUE-???' }</div>
+                                        <div class="issue-description-text" :title="issue.summary">${ issue.summary || '无问题概要' }</div>
+                                    </div>
                                     <div class="issue-header">
                                         <!-- 问题级别：编辑模式下显示下拉框，非编辑模式显示文本 -->
                                         <div v-if="!issue._isEditing" class="issue-level" :class="issue.level?.toLowerCase()">
@@ -677,6 +683,9 @@
                                                     : '未确认') }
                                         </span>
                                         <div class="issue-actions">
+                                            <button class="action-btn secondary" @click="deleteIssue(issue)">
+                                                <i class="fas fa-trash"></i> 删除
+                                            </button>
                                             <button v-if="!issue._isEditing" class="action-btn edit-btn" @click="toggleEditIssue(issue)">
                                                 <i class="fas fa-edit"></i> 编辑
                                             </button>

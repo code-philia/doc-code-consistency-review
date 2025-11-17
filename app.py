@@ -1152,6 +1152,74 @@ def review_alignment():
     return jsonify({"status": "success"})
 
 
+@app.route('/api/clear-alignment-review', methods=['POST'])
+def clear_alignment_review():
+    """Clear review state for a single alignment and delete its related issues."""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        doc_file = data.get('docFile')
+        alignment_id = data.get('alignmentId')
+
+        if not all([project_path, doc_file, alignment_id]):
+            return jsonify({"status": "error", "message": "Missing required parameters"}), 400
+
+        if not os.path.exists(project_path):
+            return jsonify({"status": "error", "message": "Project path does not exist"}), 404
+
+        # Reset review state in the alignment file
+        doc_name_without_ext = get_filename_without_extension(doc_file)
+        alignments_file = os.path.join(project_path, 'results', f'{doc_name_without_ext}.json')
+
+        if not os.path.exists(alignments_file):
+            return jsonify({"status": "error", "message": "Alignment file not found"}), 404
+
+        reset_done = False
+        try:
+            with open(alignments_file, 'r', encoding='utf-8') as f:
+                alignments_data = json.load(f)
+
+            if alignment_id in alignments_data and isinstance(alignments_data[alignment_id], dict):
+                alignments_data[alignment_id]['isReviewed'] = False
+                alignments_data[alignment_id]['reviewThoughts'] = ''
+                reset_done = True
+
+            with open(alignments_file, 'w', encoding='utf-8') as f:
+                json.dump(alignments_data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Failed to reset alignment review: {str(e)}"}), 500
+
+        # Delete related issues for this alignment
+        removed_issues = 0
+        issues_file = os.path.join(project_path, 'issues.json')
+        if os.path.exists(issues_file):
+            try:
+                with open(issues_file, 'r', encoding='utf-8') as f:
+                    issues = json.load(f)
+
+                # Keep issues that are NOT related to the current alignment
+                filtered = []
+                for issue in issues:
+                    # Match both by alignmentId and relatedDocFile to be precise
+                    if issue.get('alignmentId') == alignment_id and issue.get('relatedDocFile') == doc_file:
+                        removed_issues += 1
+                        continue
+                    filtered.append(issue)
+
+                with open(issues_file, 'w', encoding='utf-8') as f:
+                    json.dump(filtered, f, ensure_ascii=False, indent=2)
+            except Exception as e:
+                return jsonify({"status": "error", "message": f"Failed to delete related issues: {str(e)}"}), 500
+
+        return jsonify({
+            "status": "success",
+            "resetDone": reset_done,
+            "removedIssues": removed_issues
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
 # def generate_and_save_issue(project_path, alignment, issue_details, doc_file):
 #     issue_id = str(uuid.uuid4())
     
@@ -1197,53 +1265,67 @@ def review_alignment():
 #         print(f"Failed to save issue: {str(e)}")
 
 def generate_and_save_issue(project_path, alignment, issue_details, doc_file):
-    issue_id = str(uuid.uuid4())
-    
-    # 从LLM返回的issue详情中提取信息
-    # level = issue_details.get('level', 'medium')
-    # summary = issue_details.get('summary', '未提供摘要')
-    # description = issue_details.get('description', '未提供详细描述')
-    
+    # 读取已有问题单以计算下一个展示ID
+    issues_file = os.path.join(project_path, 'issues.json')
+    existing_issues = []
+    if os.path.exists(issues_file):
+        try:
+            with open(issues_file, 'r', encoding='utf-8') as f:
+                existing_issues = json.load(f)
+        except json.JSONDecodeError:
+            existing_issues = []
+
+    # 提取已使用的展示ID序号并确定起始编号
+    used_numbers = set()
+    pattern = re.compile(r'^ISSUE-(\d+)$')
+    for iss in existing_issues:
+        disp = iss.get('displayId')
+        if isinstance(disp, str):
+            m = pattern.match(disp)
+            if m:
+                try:
+                    used_numbers.add(int(m.group(1)))
+                except ValueError:
+                    pass
+
+    next_number = (max(used_numbers) + 1) if used_numbers else 1
+
+    # 批量构建新问题单并一次性写入
     for item in issue_details:
+        issue_id = str(uuid.uuid4())
         level = item.get('level', 'medium')
         summary = item.get('summary', '未提供摘要')
         description = item.get('description', '未提供详细描述')
 
-        # 获取缩略信息
         brief_requirement = alignment.get('docRanges', [{}])[0].get('content', '')[:30] + '...'
         brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')[:30] + '...'
-    
+
+        display_id = f"ISSUE-{next_number:03d}"
+        next_number += 1
+
         new_issue = {
             "id": issue_id,
+            "displayId": display_id,
             "level": level,
             "summary": summary,
             "description": description,
             "status": "unconfirmed",
             "alignmentId": alignment.get('id'),
             "relatedDocFile": doc_file,
-            "relatedRequirementId": alignment.get('id'), # 兼容旧字段
+            "relatedRequirementId": alignment.get('id'),
             "briefRequirement": brief_requirement,
             "briefCode": brief_code,
             "createdDate": datetime.now().isoformat(),
             "updatedDate": datetime.now().isoformat()
         }
 
-        issues_file = os.path.join(project_path, 'issues.json')
-        try:
-            issues_data = []
-            if os.path.exists(issues_file):
-                with open(issues_file, 'r', encoding='utf-8') as f:
-                    try:
-                        issues_data = json.load(f)
-                    except json.JSONDecodeError:
-                        pass # 文件为空或损坏
-            
-            issues_data.append(new_issue)
-            
-            with open(issues_file, 'w', encoding='utf-8') as f:
-                json.dump(issues_data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            print(f"Failed to save issue: {str(e)}")
+        existing_issues.append(new_issue)
+
+    try:
+        with open(issues_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_issues, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Failed to save issue: {str(e)}")
 
 
 def get_filename_without_extension(filename):
@@ -1408,6 +1490,22 @@ def add_issue():
             with open(issues_file, 'r', encoding='utf-8') as f:
                 issues = json.load(f)
         
+        # 若未提供展示ID，则分配一个全局唯一的展示ID
+        if not issue_data.get('displayId'):
+            used_numbers = set()
+            pattern = re.compile(r'^ISSUE-(\d+)$')
+            for iss in issues:
+                disp = iss.get('displayId')
+                if isinstance(disp, str):
+                    m = pattern.match(disp)
+                    if m:
+                        try:
+                            used_numbers.add(int(m.group(1)))
+                        except ValueError:
+                            pass
+            next_number = (max(used_numbers) + 1) if used_numbers else 1
+            issue_data['displayId'] = f"ISSUE-{next_number:03d}"
+
         # 添加新问题单
         issues.append(issue_data)
         

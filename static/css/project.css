@@ -772,6 +772,60 @@
     flex-direction: column;
 }
 
+.issue-table {
+    width: 100%;
+}
+
+.issue-row {
+    display: grid;
+    grid-template-columns: 120px 90px 1.3fr 1.4fr 1.4fr 110px;
+    align-items: center;
+    gap: 0;
+    padding: 6px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.issue-header-row {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.issue-cell {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.issue-id-cell {
+    color: #333;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.issue-meta-line {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    margin: 8px 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.issue-display-id {
+    font-weight: 700;
+    color: #333;
+    font-size: 13px;
+}
+
+.issue-description-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
 
 .code-line {
     display: flex;
@@ -2137,4 +2191,43 @@
 
 .issue-level.low {
     background-color: #67c23a;
+}
+/* Issues list table layout and spacing */
+.issue-table {
+    --issue-col-template: 150px 110px 1.3fr 1.4fr 1.4fr 120px;
+}
+
+.issue-table .issue-header-row,
+.issue-table .issue-row {
+    display: grid;
+    grid-template-columns: var(--issue-col-template);
+    align-items: center;
+    column-gap: 14px; /* enlarge spacing between ID and Level */
+}
+
+.issue-table .issue-cell {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.issue-table .issue-id-cell {
+    color: #333;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+/* Detail view meta line differentiation */
+.issue-meta-line {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    margin: 8px 0;
+    color: var(--text-secondary);
+    font-size: 12px;
+    background-color: #f8fbff; /* subtle background differentiation */
+    border: 1px solid #e6effa;
+    border-radius: 4px;
+    padding: 6px 8px;
 }

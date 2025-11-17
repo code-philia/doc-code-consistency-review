@@ -2593,7 +2593,7 @@ const app = createApp({
             // 检查是否已审查
             if (alignment.isReviewed) {
                 ElMessageBox.confirm(
-                    `对齐关系 "${alignment.name}" 已审查过，是否重新审查？`,
+                    `对齐关系 "${alignment.name}" 已审查过。重新审查将清空历史结果（审查思考与关联问题单），是否继续？`,
                     '确认重新审查',
                     {
                         confirmButtonText: '重新审查',
@@ -2601,7 +2601,32 @@ const app = createApp({
                         type: 'warning'
                     }
                 ).then(async () => {
-                    await performSingleReview(alignment);
+                    try {
+                        // First clear previous review results for this alignment
+                        const resp = await axios.post('/api/clear-alignment-review', {
+                            projectPath: projectPath.value,
+                            docFile: selectedDocFile.value,
+                            alignmentId: alignment.id
+                        });
+
+                        if (resp.data && resp.data.status === 'success') {
+                            const removed = resp.data.removedIssues || 0;
+                            ElMessage.success(`已清空历史审查结果（删除关联问题单 ${removed} 条）。`);
+                        } else {
+                            throw new Error(resp.data?.message || '清理历史审查结果失败');
+                        }
+
+                        // Refresh alignments and issues after clearing
+                        await fetchAlignments();
+                        await fetchAllAlignments();
+                        await fetchIssues();
+
+                        // Then perform re-review
+                        await performSingleReview(alignment);
+                    } catch (err) {
+                        console.error('清理并重新审查失败:', err);
+                        ElMessage.error(`清理或重新审查失败: ${err.message}`);
+                    }
                 }).catch(() => {});
             } else {
                 await performSingleReview(alignment);
@@ -2746,6 +2771,47 @@ const app = createApp({
                 console.error('保存问题单失败:', error);
                 ElMessage.error('保存问题单时发生错误');
                 issue.description = issueContentBeforeEdit.value;
+            }
+        };
+
+        // 删除指定问题单（审查结果详情弹窗中的每条问题单）
+        const deleteIssue = async (issue) => {
+            if (!issue) return;
+
+            try {
+                const result = await ElMessageBox.confirm(
+                    `确定删除问题单 ${issue.displayId || ''} 吗？`,
+                    '删除问题单',
+                    {
+                        confirmButtonText: '删除',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
+                    }
+                );
+
+                if (result === 'confirm') {
+                    const response = await axios.delete(
+                        `/project/issues/${issue.id}?path=${encodeURIComponent(projectPath.value)}`
+                    );
+
+                    if (response.data.status === 'success') {
+                        const idx = issues.value.findIndex(i => i.id === issue.id);
+                        if (idx > -1) {
+                            issues.value.splice(idx, 1);
+                        }
+                        if (selectedIssue.value && selectedIssue.value.id === issue.id) {
+                            selectedIssue.value = null;
+                        }
+                        ElMessage.success('问题单已删除');
+                    } else {
+                        ElMessage.error('删除失败：' + (response.data.message || '未知错误'));
+                    }
+                }
+            } catch (error) {
+                if (error === 'cancel') return; // 用户取消不提示错误
+                console.error('删除问题单失败:', error);
+                ElMessage.error('删除失败：' + (error.response?.data?.message || error.message));
             }
         };
 
@@ -3302,6 +3368,7 @@ const app = createApp({
             markFalsePositive,
             cycleIssueStatus,
             deleteSelectedIssue,
+            deleteIssue,
             ignoreIssue,
             showIssueDetail,
             editingIssueId,
