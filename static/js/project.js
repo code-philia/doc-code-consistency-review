@@ -121,7 +121,7 @@ const app = createApp({
             }
 
             try {
-                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`);
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`);
                 if (response.data.status === 'success' && response.data.data) {
                     // 后端返回的是以ID为键的对象，转换为数组以便渲染
                     let alignments = Object.values(response.data.data);
@@ -391,7 +391,7 @@ const app = createApp({
 
             for (const docFile of projectFiles.value.doc_files) {
                 try {
-                    const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`);
+                    const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc`);
                     if (response.data.status === 'success' && response.data.data) {
                         alignments[docFile] = Object.values(response.data.data);
                     } else {
@@ -420,7 +420,7 @@ const app = createApp({
                         if (!issue.briefRequirement || !issue.briefCode) {
                             try {
                                 // Lookup alignment by alignmentId to fill brief info
-                                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(issue.relatedDocFile)}`);
+                                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(issue.relatedDocFile)}&kind=doc`);
                                 if (alignmentResponse.data.status === 'success') {
                                     const alignments = alignmentResponse.data.data || {};
                                     const alignment = alignments[issue.alignmentId];
@@ -533,6 +533,17 @@ const app = createApp({
                                     highlightCurrentCodeFileBasedOnDoc();
                                 }
                             });
+                            try {
+                                const resp = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(fileName)}&kind=code`);
+                                if (resp.data.status === 'success') {
+                                    alignmentResults.value = Object.values(resp.data.data || {});
+                                    await nextTick(() => {
+                                        reloadHighlights();
+                                    });
+                                }
+                            } catch (err) {
+                                console.error('加载代码文件相关的对齐关系失败:', err);
+                            }
                         }
                     } catch (e) {
                         renderError.value = e.message;
@@ -864,6 +875,43 @@ const app = createApp({
             }
         }
 
+        const startAutoCodeSplit = async () => {
+            if (projectFiles.value.code_files.length === 0) {
+                ElMessage.warning('请先添加代码文件');
+                return;
+            }
+            try {
+                await ElMessageBox.confirm(
+                    '代码分解将清空所有现有的需求片段、对齐结果、审查结果和问题单。是否继续？',
+                    '确认代码分解',
+                    {
+                        confirmButtonText: '继续',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                    }
+                );
+            } catch {
+                return;
+            }
+            try {
+                await clearAllResults();
+                ElMessage.info('开始代码分解，生成代码块对齐关系...');
+                const response = await axios.post('/api/code-decomposition', {
+                    projectPath: projectPath.value
+                });
+                if (response.data.status === 'success') {
+                    ElMessage.success('代码分解完成！');
+                    await fetchAlignments();
+                    await fetchAllAlignments();
+                } else {
+                    ElMessage.error(`代码分解失败: ${response.data.message}`);
+                }
+            } catch (error) {
+                console.error('代码分解过程中出现错误:', error);
+                ElMessage.error(`代码分解失败: ${error.message}`);
+            }
+        };
+
         /***********************
          * 自动对齐功能
          ***********************/
@@ -928,7 +976,7 @@ const app = createApp({
 
         const processUnalignedRequirements = async (docFile) => {
             try {
-                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`);
+                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc`);
                 const existingAlignments = alignmentResponse.data.status === 'success' ? Object.values(alignmentResponse.data.data || {}) : [];
 
                 // 找到所有未对齐的需求点（codeRanges为空或不存在）
@@ -998,7 +1046,7 @@ const app = createApp({
 
                 // 保存对齐结果到文件
                 await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`,
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc`,
                     updatedAlignment
                 );
 
@@ -1022,7 +1070,7 @@ const app = createApp({
                 
                 try {
                     await axios.post(
-                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFile)}`,
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc`,
                         fallbackAlignment
                     );
                 } catch (saveError) {
@@ -1152,7 +1200,7 @@ const app = createApp({
             // 发送到后端保存
             try {
                 await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}`,
                     newAlignment
                 );
 
@@ -1914,7 +1962,7 @@ const app = createApp({
 
             try {
                 await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
                     alignment
                 );
                 
@@ -1979,7 +2027,7 @@ const app = createApp({
 
             try {
                 await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
                     alignment
                 );
                 
@@ -2478,7 +2526,7 @@ const app = createApp({
                 alignment.name = newName.trim();
                 try {
                     await axios.post(
-                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
                         alignment
                     );
                 } catch (err) {
@@ -2500,7 +2548,7 @@ const app = createApp({
                 type: 'warning'
             }).then(async () => {
                 try {
-                    await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}&id=${alignmentToDelete.id}`);
+                    await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignmentToDelete.id}`);
                     const index = alignmentResults.value.findIndex(a => a.id === alignmentToDelete.id);
                     if (index > -1) {
                         // 移除对应的高亮
@@ -2686,7 +2734,7 @@ const app = createApp({
                 const idx = alignmentResults.value.indexOf(alignment);
                 if (idx !== -1) {
                     try {
-                        await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}&id=${alignment.id}`);
+                        await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignment.id}`);
                         alignmentResults.value.splice(idx, 1);
                         await fetchAllAlignments();
                     } catch (err) {
@@ -2697,7 +2745,7 @@ const app = createApp({
             } else {
                 try {
                     await axios.post(
-                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(selectedDocFile.value)}`,
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
                         alignment
                     );
                 } catch (err) {
@@ -2827,7 +2875,7 @@ const app = createApp({
                 }
 
                 // 使用新的API端点加载对齐关系数据
-                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&doc_filename=${encodeURIComponent(docFilename)}`);
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFilename)}&kind=doc`);
                 if (response.data.status === 'success') {
                     const alignments = response.data.data || {};
 
@@ -3321,6 +3369,8 @@ const app = createApp({
             // 需求分解功能
             startAutoSplit,
             startAutoMarkdownSplit,
+            // 代码分解功能
+            startAutoCodeSplit,
             // 自动对齐功能
             startAutoAlignment,
             isAutoAligning,

@@ -61,6 +61,10 @@
                             </div>
                         </div>
                     </div>
+                    <div class="dropdown-item" @click="startAutoCodeSplit">
+                        <i class="fas fa-sitemap"></i>
+                        <span>代码分解</span>
+                    </div>
                     <div class="dropdown-item" @click="toggleAutoAlignment">
                         <i class="fas fa-link"></i> 
                         <span v-if="!isAutoAligning">自动对齐</span>
