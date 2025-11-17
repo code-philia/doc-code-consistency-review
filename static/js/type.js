@@ -1,6 +1,8 @@
+import {generateUUIDLike} from './utils.js'
+
 export class Annotation {
     constructor() {
-        this.id = crypto.randomUUID();
+        this.id = generateUUIDLike();
         this.category = "新标注";
         this.docRanges = [];
         this.codeRanges = [];
@@ -28,7 +30,7 @@ export class CodeRange {
 
 export class File {
     constructor(name, content, renderedDocument, type, localPath, lastModified = new Date().toISOString()) {
-        this.id = crypto.randomUUID();
+        this.id = generateUUIDLike();
         this.name = name;
         this.content = content;
         this.renderedDocument = renderedDocument || '';
