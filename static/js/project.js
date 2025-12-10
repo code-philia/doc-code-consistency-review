@@ -81,6 +81,11 @@ const app = createApp({
         const isFiltered = ref(false);
         const viewMode = ref('all');
         const statusFilters = ref(['unaligned', 'unreviewed', 'reviewed']);
+        
+        // 联动交互状态
+        const currentSelectedAlignmentId = ref(null);
+        const currentDocBlockIndex = ref(0);
+        const currentCodeBlockIndex = ref(0);
 
         const codeFileLines = ref({});
         const codeScale = ref(0);
@@ -1479,63 +1484,149 @@ const app = createApp({
             const target = event.target;
             if (!target.classList.contains('highlight-block')) return;
 
-            const type = target.getAttribute('data-type');
-            const rangeStart = parseInt(target.getAttribute('data-range-start'));
-            const rangeEnd = parseInt(target.getAttribute('data-range-end'));
+            // 获取对齐ID
+            const alignmentId = target.getAttribute('data-alignment-id');
+            if (!alignmentId) return;
 
-            if (isNaN(rangeStart) || isNaN(rangeEnd)) return;
+            const alignment = alignmentResults.value.find(a => a.id === alignmentId);
+            if (!alignment) return;
 
-            // 查找所有与点击位置重叠的高亮块
-            const panel = type === 'doc' 
-                ? document.querySelector('.content-text-doc')
-                : document.querySelector('.content-text-code');
+            // 选中对齐关系
+            selectAlignment(alignment);
+        };
+
+        // 选中对齐关系的核心逻辑
+        const selectAlignment = async (alignment) => {
+            if (!alignment) return;
+
+            currentSelectedAlignmentId.value = alignment.id;
+            currentDocBlockIndex.value = 0;
+            currentCodeBlockIndex.value = 0;
+
+            // 1. 侧边栏联动：重置筛选条件，滚动到对齐项，高亮
+            statusFilters.value = ['unaligned', 'unreviewed', 'reviewed'];
+            await nextTick();
+            scrollToAlignmentInSidebar(alignment.id);
+
+            // 2. 视图联动：打开文件，滚动到对应位置，高亮
             
-            if (!panel) return;
-
-            const allHighlightBlocks = panel.querySelectorAll('.highlight-block');
-            const overlappingRanges = [];
-
-            // 检查所有高亮块是否与点击的高亮块重叠
-            allHighlightBlocks.forEach(block => {
-                const blockStart = parseInt(block.getAttribute('data-range-start'));
-                const blockEnd = parseInt(block.getAttribute('data-range-end'));
-                const blockType = block.getAttribute('data-type');
-
-                if (blockType === type && !isNaN(blockStart) && !isNaN(blockEnd)) {
-                    // 检查是否与点击的高亮块有交集
-                    if (Math.max(blockStart, rangeStart) < Math.min(blockEnd, rangeEnd)) {
-                        overlappingRanges.push({
-                            start: blockStart,
-                            end: blockEnd
-                        });
-                    }
+            // 处理文档视图
+            if (alignment.docRanges && alignment.docRanges.length > 0) {
+                const docRange = alignment.docRanges[0];
+                if (selectedDocFile.value !== docRange.documentId) {
+                    await fetchFileContent(docRange.documentId, 'doc');
                 }
-            });
-
-            // 如果没有找到重叠的范围，至少包含点击的范围
-            if (overlappingRanges.length === 0) {
-                overlappingRanges.push({
-                    start: rangeStart,
-                    end: rangeEnd
-                });
+                await nextTick();
+                
+                // 查找并高亮文档块
+                setTimeout(() => {
+                    const highlightElements = findIntersectingHighlightElements(docRange.start, docRange.end);
+                    const parseElements = findIntersectingParseElements(docRange.start, docRange.end);
+                    const allElements = [...highlightElements, ...parseElements];
+                    const uniqueElements = [...new Set(allElements)];
+                    scrollToFirstAndHighlightAll(uniqueElements);
+                }, 100);
             }
 
-            // 根据类型调用相应的筛选函数
-            if (type === 'doc') {
-                filterAlignmentsByMultipleDocRanges(overlappingRanges);
+            // 处理代码视图
+            if (alignment.codeRanges && alignment.codeRanges.length > 0) {
+                const codeRange = alignment.codeRanges[0];
+                if (selectedCodeFile.value !== codeRange.documentId) {
+                    await fetchFileContent(codeRange.documentId, 'code');
+                }
+                await nextTick();
+
+                // 查找并高亮代码块
+                setTimeout(() => {
+                    const highlightElements = findIntersectingCodeHighlightElements(codeRange.start, codeRange.end);
+                    scrollToFirstAndHighlightAllCode(highlightElements);
+                }, 100);
+            }
+        };
+
+        // 侧边栏点击处理
+        const handleAlignmentItemClick = (alignment) => {
+            selectAlignment(alignment);
+        };
+
+        // 滚动侧边栏到指定对齐项
+        const scrollToAlignmentInSidebar = (alignmentId) => {
+            const element = document.getElementById(`alignment-item-${alignmentId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                highlightTemp(element);
+            }
+        };
+
+        // 临时高亮元素（淡黄色3秒）
+        const highlightTemp = (element) => {
+            if (!element) return;
+            const originalBg = element.style.backgroundColor;
+            const originalTransition = element.style.transition;
+
+            element.style.transition = 'background-color 0.3s ease';
+            element.style.backgroundColor = 'rgba(255, 255, 183, 0.8)';
+
+            setTimeout(() => {
+                element.style.backgroundColor = originalBg;
+                setTimeout(() => {
+                    element.style.transition = originalTransition;
+                }, 300);
+            }, 3000);
+        };
+
+        // 需求块导航
+        const navigateDocBlock = async (step) => {
+            if (!currentSelectedAlignmentId.value) return;
+            const alignment = alignmentResults.value.find(a => a.id === currentSelectedAlignmentId.value);
+            if (!alignment || !alignment.docRanges || alignment.docRanges.length === 0) return;
+
+            let newIndex = currentDocBlockIndex.value + step;
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= alignment.docRanges.length) newIndex = alignment.docRanges.length - 1;
+            
+            if (newIndex !== currentDocBlockIndex.value) {
+                currentDocBlockIndex.value = newIndex;
+                const docRange = alignment.docRanges[newIndex];
                 
-                // 点击文档高亮块后，滚动到第一个筛选结果的代码区域
-                nextTick(() => {
-                    scrollToFirstFilteredCodeRange();
-                });
-            } else if (type === 'code') {
-                const documentId = selectedCodeFile.value;
-                filterAlignmentsByMultipleCodeRanges(overlappingRanges, documentId);
+                if (selectedDocFile.value !== docRange.documentId) {
+                    await fetchFileContent(docRange.documentId, 'doc');
+                }
+                await nextTick();
                 
-                // 点击代码高亮块后，滚动到第一个筛选结果的文档区域
-                nextTick(() => {
-                    scrollToFirstFilteredDocRange();
-                });
+                setTimeout(() => {
+                    const highlightElements = findIntersectingHighlightElements(docRange.start, docRange.end);
+                    const parseElements = findIntersectingParseElements(docRange.start, docRange.end);
+                    const allElements = [...highlightElements, ...parseElements];
+                    const uniqueElements = [...new Set(allElements)];
+                    scrollToFirstAndHighlightAll(uniqueElements);
+                }, 100);
+            }
+        };
+
+        // 代码块导航
+        const navigateCodeBlock = async (step) => {
+            if (!currentSelectedAlignmentId.value) return;
+            const alignment = alignmentResults.value.find(a => a.id === currentSelectedAlignmentId.value);
+            if (!alignment || !alignment.codeRanges || alignment.codeRanges.length === 0) return;
+
+            let newIndex = currentCodeBlockIndex.value + step;
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex >= alignment.codeRanges.length) newIndex = alignment.codeRanges.length - 1;
+            
+            if (newIndex !== currentCodeBlockIndex.value) {
+                currentCodeBlockIndex.value = newIndex;
+                const codeRange = alignment.codeRanges[newIndex];
+                
+                if (selectedCodeFile.value !== codeRange.documentId) {
+                    await fetchFileContent(codeRange.documentId, 'code');
+                }
+                await nextTick();
+                
+                setTimeout(() => {
+                    const highlightElements = findIntersectingCodeHighlightElements(codeRange.start, codeRange.end);
+                    scrollToFirstAndHighlightAllCode(highlightElements);
+                }, 100);
             }
         };
 
@@ -3463,9 +3554,11 @@ const app = createApp({
             generateReverseRequirement,
             regenerateReverseRequirement,
             
-            // 刷新
-            refreshHighlights,
-            refreshAlignments,
+            // 联动相关
+            currentSelectedAlignmentId,
+            navigateDocBlock,
+            navigateCodeBlock,
+            handleAlignmentItemClick,
             
             // 行号生成
             getLineNumbers,
