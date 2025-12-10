@@ -65,10 +65,19 @@
                         <i class="fas fa-sitemap"></i>
                         <span>代码分解</span>
                     </div>
-                    <div class="dropdown-item" @click="toggleAutoAlignment">
-                        <i class="fas fa-link"></i> 
-                        <span v-if="!isAutoAligning">自动对齐</span>
-                        <span v-else>停止对齐</span>
+                    <div class="dropdown-item has-submenu">
+                        <i class="fas fa-link"></i> 自动对齐
+                        <div class="submenu">
+                            <div class="submenu-item" @click="startAutoAlignmentReqToCode">
+                                <i class="fas fa-arrow-right"></i> 需求 → 代码
+                            </div>
+                            <div class="submenu-item" @click="startAutoAlignmentCodeToReq">
+                                <i class="fas fa-arrow-left"></i> 代码 → 需求
+                            </div>
+                            <div class="submenu-item" @click="stopAutoAlignment" v-if="isAutoAligning">
+                                <i class="fas fa-stop"></i> 停止对齐
+                            </div>
+                        </div>
                     </div>
                     <div class="dropdown-item" @click="toggleAutoReview">
                         <i class="fas fa-tasks"></i> 
@@ -377,69 +386,49 @@
                                             </el-button>
                                         </div>
                                     </div>
-                                    <div class="content-card">
+                                    
+                                    <div class="sidebar-controls" style="padding: 10px; border-bottom: 1px solid #ebeef5; background-color: #fff;">
+                                        <div style="margin-bottom: 10px; display: flex; justify-content: center;">
+                                             <el-radio-group v-model="viewMode" size="small">
+                                                <el-radio-button label="all">全部数据</el-radio-button>
+                                                <el-radio-button label="current">当前文件</el-radio-button>
+                                            </el-radio-group>
+                                        </div>
+                                        <div>
+                                            <el-select v-model="statusFilters" multiple collapse-tags placeholder="筛选状态" size="small" style="width: 100%">
+                                                <el-option label="未对齐" value="unaligned"></el-option>
+                                                <el-option label="未审查" value="unreviewed"></el-option>
+                                                <el-option label="已审查" value="reviewed"></el-option>
+                                            </el-select>
+                                        </div>
+                                    </div>
+
+                                    <div class="content-card" style="padding: 0; overflow-y: auto;">
                                         <div class="alignment-list">
-                                            <el-collapse v-if="(isFiltered ? filteredAlignments : alignmentResults).length > 0">
-                                                <el-collapse-item 
-                                                    v-for="(alignment, index) in (isFiltered ? filteredAlignments : alignmentResults)" 
+                                            <div v-if="sidebarAlignments.length > 0">
+                                                 <div 
+                                                    v-for="alignment in sidebarAlignments" 
                                                     :key="alignment.id"
-                                                    :title="alignment.name"
+                                                    class="alignment-list-item"
                                                     @contextmenu.prevent="showContextMenu($event, alignment)"
-                                                >
-                                                    <template #title>
-                                                        <div class="alignment-header">
-                                                            <el-tooltip effect="light" :content="alignment.name" placement="left">
-                                                                <span class="alignment-title">${ alignment.name }</span>
-                                                            </el-tooltip>
-                                                            <el-tag 
-                                                                :type="getAlignmentStatus(alignment).type" 
-                                                                size="small" 
-                                                                class="review-tag"
-                                                            >
-                                                                ${ getAlignmentStatus(alignment).text }
-                                                            </el-tag>
-                                                        </div>
-                                                    </template>
-                                                    
-                                                    <div class="alignment-content">
-                                                        <div v-if="alignment.docRanges.length > 0" class="alignment-section">
-                                                            <h4>需求文档范围</h4>
-                                                            <div v-for="(range, rIndex) in alignment.docRanges" :key="'doc-'+rIndex" class="range-item">
-                                                                <div class="range-header">
-                                                                    <span>${ range.documentId }</span>
-                                                                    <el-button 
-                                                                        type="danger" 
-                                                                        size="small"
-                                                                        link
-                                                                        @click="removeRange(alignment, 'doc', rIndex)"
-                                                                    >×</el-button>
-                                                                </div>
-                                                                <div class="range-content" @click="handleAlignmentDocRangeClick(range)" style="cursor: pointer;">
-                                                                    <pre class="truncated-code">${ range.content }</pre>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div v-if="alignment.codeRanges.length > 0" class="alignment-section">
-                                                            <h4>代码范围</h4>
-                                                            <div v-for="(range, rIndex) in alignment.codeRanges" :key="'code-'+rIndex" class="range-item">
-                                                                <div class="range-header">
-                                                                    <span>${ range.documentId }</span>
-                                                                    <el-button 
-                                                                        type="danger" 
-                                                                        size="small"
-                                                                        link
-                                                                        @click="removeRange(alignment, 'code', rIndex)"
-                                                                    >×</el-button>
-                                                                </div>
-                                                                <div class="range-content" @click="handleAlignmentCodeRangeClick(range)" style="cursor: pointer;">
-                                                                    <pre class="truncated-code">${ range.content }</pre>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </el-collapse-item>
-                                            </el-collapse>
-                                            <div v-else class="empty-message">
+                                                    style="padding: 10px 15px; border-bottom: 1px solid #ebeef5; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s;"
+                                                    onmouseover="this.style.backgroundColor='#f5f7fa'"
+                                                    onmouseout="this.style.backgroundColor='transparent'"
+                                                 >
+                                                    <el-tooltip effect="light" :content="alignment.name" placement="left">
+                                                        <span class="alignment-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; font-size: 14px; color: #606266;">${ alignment.name }</span>
+                                                    </el-tooltip>
+                                                    <el-tag 
+                                                        :type="getAlignmentStatus(alignment).type" 
+                                                        size="small" 
+                                                        class="review-tag"
+                                                        effect="plain"
+                                                    >
+                                                        ${ getAlignmentStatus(alignment).text }
+                                                    </el-tag>
+                                                 </div>
+                                            </div>
+                                            <div v-else class="empty-message" style="padding: 30px 0; text-align: center; color: #909399; font-size: 13px;">
                                                 暂无对齐结果
                                             </div>
                                         </div>

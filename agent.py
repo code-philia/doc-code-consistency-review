@@ -1,7 +1,7 @@
 import os
 import re
 import json
-from prompt import ALIGN_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE
+from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE
 from openai import OpenAI
 from utils import chunk_list
 API_KEY = os.environ.get("API_KEY", "0")
@@ -100,6 +100,68 @@ def query_related_code(requirement, code_blocks, random_flag, block_limit=None):
         return similarity_results
     else:
         return query_related_code_block(requirement, code_blocks)
+
+def query_related_requirement_block(code, req_blocks):
+    """
+    查询与代码最相关的需求块
+    
+    参数:
+        code: 代码内容
+        req_blocks: 需求块列表
+        
+    返回:
+        相关需求块列表
+    """
+    # 构造提示词
+    template = ALIGN_REQ_PROMPT_TEMPLATE
+    prompt = template.format(
+        code_content=code,
+        req_content=req_blocks
+    )
+
+    # 解析回复
+    response = query_llm(prompt)
+    llm_output = response.content
+    print("original llm output (req): ", llm_output)
+    parsed_output = parse_alignment_output(llm_output)
+    print("parsed llm output (req): ", parsed_output)
+    
+    return parsed_output
+
+def query_related_requirement(code, req_blocks, random_flag, block_limit=None):
+    if block_limit:
+        chunked_req_blocks = chunk_list(req_blocks, block_limit, random_flag)
+        
+        related_req_blocks = []
+        for c in chunked_req_blocks:
+            res = query_related_requirement_block(code, c)
+            related_req_blocks.extend(res)
+        
+        print(related_req_blocks)
+        similarity_results = []
+        if (len(related_req_blocks) == 1):
+            similarity_results = related_req_blocks
+        elif (len(related_req_blocks) > 1):
+            max_sim_results = []
+            max_sim = -1.0
+            for item in related_req_blocks:
+                if item.get('similarity', 0) >= max_sim:
+                    max_sim = item.get('similarity', 0)
+                    if item.get('similarity', 0) == max_sim:
+                        max_sim_results.append(item)
+                    elif item.get('similarity', 0) > max_sim:
+                        max_sim_results = []
+                        max_sim_results = [item]
+                if item.get('similarity', 0) >= 0.9:
+                    similarity_results.append(item)
+            if len(similarity_results) == 0:
+               similarity_results = max_sim_results  
+        
+        print("************")   
+        print(similarity_results)   
+        return similarity_results
+    else:
+        return query_related_requirement_block(code, req_blocks)
 
 def parse_alignment_output(response):
     """

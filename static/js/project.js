@@ -79,6 +79,8 @@ const app = createApp({
         // 筛选相关状态
         const filteredAlignments = ref(null);
         const isFiltered = ref(false);
+        const viewMode = ref('all');
+        const statusFilters = ref(['unaligned', 'unreviewed', 'reviewed']);
 
         const codeFileLines = ref({});
         const codeScale = ref(0);
@@ -114,14 +116,8 @@ const app = createApp({
         const fetchAlignments = async () => {
             if (!projectPath.value) return;
 
-            // 如果没有选中文档，返回空列表
-            if (!selectedDocFile.value) {
-                alignmentResults.value = [];
-                return;
-            }
-
             try {
-                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`);
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`);
                 if (response.data.status === 'success' && response.data.data) {
                     // 后端返回的是以ID为键的对象，转换为数组以便渲染
                     let alignments = Object.values(response.data.data);
@@ -799,7 +795,7 @@ const app = createApp({
             // 显示确认对话框
             try {
                 await ElMessageBox.confirm(
-                    '需求分解将清空所有现有的需求片段、对齐结果、审查结果和问题单。是否继续？',
+                    '需求分解将重新生成需求片段文件。是否继续？',
                     '确认需求分解',
                     {
                         confirmButtonText: '继续',
@@ -812,16 +808,13 @@ const app = createApp({
             }
             
             try {
-                // 先清空所有结果
-                await clearAllResults();
-                
                 ElMessage.info('开始需求分解，生成需求点...');
                 const response = await axios.post('api/requirement-decomposition',{
                     projectPath: projectPath.value
                 });
                 if(response.data.status==='success'){
                     ElMessage.success('需求分解完成！');
-                    await fetchAlignments();
+                    // await fetchAlignments(); // 分解不再直接产生对齐结果
                 }
                 else{
                     ElMessage.error(`需求分解失败: ${response.data.message}`);
@@ -842,7 +835,7 @@ const app = createApp({
             // 显示确认对话框
             try {
                 await ElMessageBox.confirm(
-                    '自动分解将清空所有现有的需求片段、对齐结果、审查结果和问题单。是否继续？',
+                    '自动分解将重新生成需求片段文件。是否继续？',
                     '确认自动分解',
                     {
                         confirmButtonText: '继续',
@@ -855,15 +848,13 @@ const app = createApp({
             }
             
             try {
-                await clearAllResults();
-                
                 ElMessage.info('开始自动分解需求文档...');
                 const response = await axios.post('api/auto-markdown-split',{
                     projectPath: projectPath.value
                 });
                 if(response.data.status==='success'){
                     ElMessage.success('自动分解完成！');
-                    await fetchAlignments();
+                    // await fetchAlignments();
                 }
                 else{
                     ElMessage.error(`自动分解失败: ${response.data.message}`);
@@ -882,7 +873,7 @@ const app = createApp({
             }
             try {
                 await ElMessageBox.confirm(
-                    '代码分解将清空所有现有的需求片段、对齐结果、审查结果和问题单。是否继续？',
+                    '代码分解将重新生成代码块文件。是否继续？',
                     '确认代码分解',
                     {
                         confirmButtonText: '继续',
@@ -894,15 +885,14 @@ const app = createApp({
                 return;
             }
             try {
-                await clearAllResults();
-                ElMessage.info('开始代码分解，生成代码块对齐关系...');
+                ElMessage.info('开始代码分解，生成代码块...');
                 const response = await axios.post('/api/code-decomposition', {
                     projectPath: projectPath.value
                 });
                 if (response.data.status === 'success') {
                     ElMessage.success('代码分解完成！');
-                    await fetchAlignments();
-                    await fetchAllAlignments();
+                    // await fetchAlignments();
+                    // await fetchAllAlignments();
                 } else {
                     ElMessage.error(`代码分解失败: ${response.data.message}`);
                 }
@@ -915,171 +905,147 @@ const app = createApp({
         /***********************
          * 自动对齐功能
          ***********************/
-        const startAutoAlignment = async () => {
-            if (isAutoAligning.value) {
-                ElMessage.warning('自动对齐正在进行中，请稍候...');
-                return;
-            }
+        const stopAutoAlignment = () => {
+            isAutoAligning.value = false;
+        };
 
-            if (projectFiles.value.doc_files.length === 0) {
-                ElMessage.warning('请先添加需求文档');
-                return;
-            }
-
-            if (projectFiles.value.code_files.length === 0) {
-                ElMessage.warning('请先添加代码文件');
-                return;
-            }
-
+        const startAutoAlignmentReqToCode = async () => {
+            if (isAutoAligning.value) return;
             isAutoAligning.value = true;
-            ElMessage.info('开始自动对齐，正在扫描未对齐的需求点...');
+            ElMessage.info('开始自动对齐（需求 → 代码）...');
 
             try {
-                // 扫描所有文档中未对齐的需求点
-                let totalUnalignedCount = 0;
-                let processedCount = 0;
+                // 1. 获取需求分块
+                const chunksResponse = await axios.get('/api/get-requirement-chunks', {
+                    params: { projectPath: projectPath.value }
+                });
+                const requirements = chunksResponse.data.data || [];
+                
+                if (requirements.length === 0) {
+                    ElMessage.warning('未找到需求分块，请先进行需求分解');
+                    isAutoAligning.value = false;
+                    return;
+                }
 
-                for (let i = 0; i < projectFiles.value.doc_files.length; i++) {
-                    const docFile = projectFiles.value.doc_files[i];
-                    
-                    // 检查是否需要中断
-                    if (!isAutoAligning.value) {
-                        break;
+                // 初始化进度
+                startProgress('自动对齐 (需求 → 代码)', requirements.length);
+                alignmentProgress.value.total = requirements.length;
+                alignmentProgress.value.current = 0;
+
+                // 2. 遍历处理
+                for (let i = 0; i < requirements.length; i++) {
+                    if (!isAutoAligning.value) break;
+
+                    const req = requirements[i];
+                    updateProgress(i, req.docRanges[0]?.filename || 'Unknown');
+                    alignmentProgress.value.current++;
+
+                    try {
+                        // 调用对齐API
+                        const alignResponse = await axios.post('/api/align-requirement-to-project', {
+                            docRanges: req.docRanges,
+                            projectPath: projectPath.value
+                        });
+
+                        const codeRanges = alignResponse.data.status === 'success' ? alignResponse.data.codeRanges : [];
+                        
+                        // 构造并保存对齐关系
+                        const alignment = {
+                            ...req,
+                            codeRanges: codeRanges,
+                            // 保持其他字段默认
+                        };
+
+                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`, alignment);
+
+                    } catch (err) {
+                        console.error('对齐出错:', err);
                     }
-
-                    const unalignedCount = await processUnalignedRequirements(docFile);
-                    totalUnalignedCount += unalignedCount;
-                    processedCount += unalignedCount;
-
-                    // 实时更新统计数据 - 触发响应式更新
-                    await nextTick();
+                    
+                    if (i % 5 === 0) await nextTick();
                 }
 
-                // 重新加载所有对齐数据以更新统计信息
                 await fetchAllAlignments();
+                ElMessage.success('需求 → 代码 对齐完成！');
 
-                if (totalUnalignedCount === 0) {
-                    ElMessage.info('所有需求点都已对齐，无需处理');
-                } else {
-                    ElMessage.success(`自动对齐完成！`);
-                }
             } catch (error) {
-                console.error('自动对齐过程中出现错误:', error);
-                ElMessage.error(`自动对齐失败: ${error.message}`);
+                ElMessage.error(`对齐失败: ${error.message}`);
             } finally {
                 isAutoAligning.value = false;
-                alignmentProgress.value = { current: 0, total: 0 };
-                // 停止进度显示
                 stopProgress();
             }
         };
 
-        const processUnalignedRequirements = async (docFile) => {
+        const startAutoAlignmentCodeToReq = async () => {
+            if (isAutoAligning.value) return;
+            isAutoAligning.value = true;
+            ElMessage.info('开始自动对齐（代码 → 需求）...');
+
             try {
-                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc`);
-                const existingAlignments = alignmentResponse.data.status === 'success' ? Object.values(alignmentResponse.data.data || {}) : [];
-
-                // 找到所有未对齐的需求点（codeRanges为空或不存在）
-                const unalignedRequirements = existingAlignments.filter(alignment =>
-                    !alignment.codeRanges || alignment.codeRanges.length === 0
-                );
-
-                // 启动当前文档的进度显示
-                if (unalignedRequirements.length > 0) {
-                    startProgress('自动对齐', unalignedRequirements.length);
-                }
-
-                alignmentProgress.value.total += unalignedRequirements.length;
-
-                for (let i = 0; i < unalignedRequirements.length; i++) {
-                    const requirement = unalignedRequirements[i];
-                    
-                    // 检查是否需要中断
-                    if (!isAutoAligning.value) {
-                        break;
-                    }
-
-                    alignmentProgress.value.current++;
-                    
-                    // 更新进度显示
-                    updateProgress(i, docFile);
-
-                    // 为未对齐的需求点生成mock代码对齐
-                    await addMockCodeToRequirement(docFile, requirement);
-
-                    // 实时更新统计数据
-                    await fetchAllAlignments();
-
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-
-                // 停止当前文档的进度显示
-                if (unalignedRequirements.length > 0) {
-                    stopProgress();
-                }
-
-                return unalignedRequirements.length;
-            } catch (error) {
-                console.error(`处理文档 ${docFile} 时出错:`, error);
-                throw error;
-            }
-        };
-
-        const addMockCodeToRequirement = async (docFile, requirement) => {
-            try {
-                // 调用新的API获取真实的代码对齐结果
-                const alignResponse = await axios.post('/api/align-requirement-to-project', {
-                    docRanges: requirement.docRanges || [],
-                    projectPath: projectPath.value
+                // 1. 获取代码分块
+                const chunksResponse = await axios.get('/api/get-code-chunks', {
+                    params: { projectPath: projectPath.value }
                 });
-
-                if (alignResponse.data.status !== 'success') {
-                    throw new Error(alignResponse.data.message || '对齐API调用失败');
+                const codeBlocks = chunksResponse.data.data || [];
+                
+                if (codeBlocks.length === 0) {
+                    ElMessage.warning('未找到代码分块，请先进行代码分解');
+                    isAutoAligning.value = false;
+                    return;
                 }
 
-                const codeRanges = alignResponse.data.codeRanges || [];
-                
-                const updatedAlignment = {
-                    ...requirement,
-                    codeRanges: codeRanges
-                };
+                // 初始化进度
+                startProgress('自动对齐 (代码 → 需求)', codeBlocks.length);
+                alignmentProgress.value.total = codeBlocks.length;
+                alignmentProgress.value.current = 0;
 
-                // 保存对齐结果到文件
-                await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc`,
-                    updatedAlignment
-                );
+                // 2. 遍历处理
+                for (let i = 0; i < codeBlocks.length; i++) {
+                    if (!isAutoAligning.value) break;
 
-                // 如果当前选中的是这个文档，更新前端显示
-                if (selectedDocFile.value === docFile) {
-                    const index = alignmentResults.value.findIndex(a => a.id === requirement.id);
-                    if (index > -1) {
-                        alignmentResults.value[index] = updatedAlignment;
+                    const block = codeBlocks[i];
+                    updateProgress(i, block.codeRanges[0]?.filename || 'Unknown');
+                    alignmentProgress.value.current++;
+
+                    try {
+                        // 调用对齐API
+                        const alignResponse = await axios.post('/api/align-code-to-requirement', {
+                            codeRanges: block.codeRanges,
+                            projectPath: projectPath.value
+                        });
+
+                        const docRanges = alignResponse.data.status === 'success' ? alignResponse.data.docRanges : [];
+                        
+                        // 构造并保存对齐关系
+                        const alignment = {
+                            ...block,
+                            docRanges: docRanges,
+                            // 保持其他字段默认
+                        };
+
+                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`, alignment);
+
+                    } catch (err) {
+                        console.error('对齐出错:', err);
                     }
+                    
+                    if (i % 5 === 0) await nextTick();
                 }
 
-                console.log(`为需求点添加代码对齐: ${requirement.name}，找到 ${codeRanges.length} 个相关代码块`);
+                await fetchAllAlignments();
+                ElMessage.success('代码 → 需求 对齐完成！');
+
             } catch (error) {
-                console.error(`为需求点 ${requirement.name} 添加代码对齐失败:`, error);
-                
-                // 如果API调用失败，回退到空的codeRanges
-                const fallbackAlignment = {
-                    ...requirement,
-                    codeRanges: []
-                };
-                
-                try {
-                    await axios.post(
-                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc`,
-                        fallbackAlignment
-                    );
-                } catch (saveError) {
-                    console.error('保存空对齐关系也失败:', saveError);
-                }
-                
-                throw error;
+                ElMessage.error(`对齐失败: ${error.message}`);
+            } finally {
+                isAutoAligning.value = false;
+                stopProgress();
             }
         };
+
+
+
+
 
         /***********************
          * 状态计算函数
@@ -1109,6 +1075,34 @@ const app = createApp({
                 type: 'warning'
             };
         };
+
+        const sidebarAlignments = computed(() => {
+            let source = alignmentResults.value;
+
+            if (isFiltered.value && filteredAlignments.value) {
+                return filteredAlignments.value;
+            }
+
+            // Apply View Mode
+            if (viewMode.value === 'current') {
+                source = source.filter(a =>
+                    (a.docRanges && a.docRanges.some(r => r.documentId === selectedDocFile.value)) ||
+                    (a.codeRanges && a.codeRanges.some(r => r.documentId === selectedCodeFile.value))
+                );
+            }
+
+            // Apply Status Filter
+            if (statusFilters.value.length > 0) {
+                source = source.filter(a => {
+                    const statusObj = getAlignmentStatus(a);
+                    return statusFilters.value.includes(statusObj.status);
+                });
+            } else {
+                return []; 
+            }
+
+            return source;
+        });
 
         /***********************
          * 对齐关系创建
@@ -2356,8 +2350,8 @@ const app = createApp({
                 stopProgress();
                 ElMessage.info('已停止自动对齐');
             } else {
-                // 开始对齐
-                await startAutoAlignment();
+                // 默认为 需求 -> 代码 对齐
+                await startAutoAlignmentReqToCode();
             }
         };
 
@@ -2405,7 +2399,7 @@ const app = createApp({
                         await fetchAlignments();
                                                 
                         // 开始自动对齐
-                        await startAutoAlignment();
+                        await startAutoAlignmentReqToCode();
                     } else {
                         throw new Error(response.data.message || '清除代码范围失败');
                     }
@@ -2943,6 +2937,7 @@ const app = createApp({
          ***********************/
         onMounted(async () => {
             await fetchProjectMetadata();
+            await fetchAlignments();
             await fetchIssues();
             
             // 添加点击高亮需求片段的事件监听器
@@ -3372,7 +3367,9 @@ const app = createApp({
             // 代码分解功能
             startAutoCodeSplit,
             // 自动对齐功能
-            startAutoAlignment,
+            startAutoAlignmentReqToCode,
+            startAutoAlignmentCodeToReq,
+            stopAutoAlignment,
             isAutoAligning,
             alignmentProgress,
             toggleAutoAlignment,
@@ -3435,6 +3432,9 @@ const app = createApp({
             filteredAlignments,
             isFiltered,
             showAllAlignments,
+            viewMode,
+            statusFilters,
+            sidebarAlignments,
             
             // 反向映射功能
             handleAlignmentDocRangeClick,

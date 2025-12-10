@@ -5,8 +5,9 @@ import sqlite3
 import json as pyjson
 import socket
 from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension,\
-    replace_text_in_docx, generate_issue_content, include_related_blocks, split_markdown_to_blocks
-from agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart
+    replace_text_in_docx, generate_issue_content, include_related_blocks
+from agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart, query_related_requirement
+from doc_block import chunk_markdown
 import random
 import string
 from datetime import datetime, timedelta
@@ -710,20 +711,13 @@ def generate_requirement_endpoint():
 
 @app.route('/api/requirement-decomposition', methods=['POST'])
 def requirement_decomposition():
-    """处理需求分解请求"""
+    """处理需求分解请求 - 保存到JSONL文件"""
     try:
         data = request.get_json()
         project_path = data.get('projectPath')
         
         if not project_path:
             return jsonify({'status':'error', 'message': '缺少项目路径'})
-
-        init_project_db(project_path)
-        # 清空两表
-        conn = get_db_conn(project_path)
-        conn.execute('DELETE FROM issues')
-        conn.execute('DELETE FROM alignments')
-        conn.commit()
 
         annotations_dir = os.path.join(project_path, 'annotations')
         if not os.path.exists(annotations_dir):
@@ -745,12 +739,7 @@ def requirement_decomposition():
         annotations = annotation_data.get('annotations', [])
         processed_count = 0
         
-        # 直接写入数据库
-        conn = get_db_conn(project_path)
-        cur = conn.cursor()
-        
-        # 按文档分组处理需求点
-        doc_requirements = {}
+        requirements_list = []
         
         for annotation in annotations:
             req_id = annotation.get('id')
@@ -762,14 +751,14 @@ def requirement_decomposition():
                 if not doc_ranges:
                     continue
                 
-            # 获取文档ID（所有docRanges应该属于同一个文档）
+            # 获取文档ID
             document_id = doc_ranges[0].get('documentId')
             doc_name = doc_id_to_name.get(document_id)
             
             if not doc_name:
                 continue
                 
-            # 构建需求点对象，处理docRanges
+            # 构建需求点对象
             processed_doc_ranges = []
             for doc_range in doc_ranges:
                 processed_range = doc_range.copy()
@@ -781,33 +770,22 @@ def requirement_decomposition():
                 'id': req_id,
                 'name': category,
                 'docRanges': processed_doc_ranges,
-                'codeRanges': [],
+                'codeRanges': [], # 初始为空
                 'isReviewed': False,
                 'reviewThoughts': ''
             }
-            
-            # 按文档分组
-            if doc_name not in doc_requirements:
-                doc_requirements[doc_name] = []
-            doc_requirements[doc_name].append(requirement_point)
+            requirements_list.append(requirement_point)
             processed_count += 1
         
-        for doc_name, requirements in doc_requirements.items():
-            for req in requirements:
-                cur.execute(
-                    'INSERT INTO alignments(id,name,isReviewed,reviewThoughts,docRanges,codeRanges,createdAt,updatedAt) '
-                    'VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
-                    'ON CONFLICT(id) DO UPDATE SET name=excluded.name,isReviewed=excluded.isReviewed,reviewThoughts=excluded.reviewThoughts,docRanges=excluded.docRanges,codeRanges=excluded.codeRanges,updatedAt=CURRENT_TIMESTAMP',
-                    (
-                        req['id'], req['name'], 0, '', pyjson.dumps(req['docRanges']), pyjson.dumps([])
-                    )
-                )
-        conn.commit()
-        conn.close()
+        # 保存到 requirements.jsonl
+        requirements_file = os.path.join(project_path, 'requirements.jsonl')
+        with open(requirements_file, 'w', encoding='utf-8') as f:
+            for req in requirements_list:
+                f.write(json.dumps(req, ensure_ascii=False) + '\n')
         
         return jsonify({
             'status': 'success',
-            'message': '需求分解完成',
+            'message': '需求分解完成，结果已保存',
             'processedCount': processed_count
         })
         
@@ -817,7 +795,7 @@ def requirement_decomposition():
 
 @app.route('/api/auto-markdown-split', methods=['POST'])
 def auto_markdown_split():
-    """处理自动Markdown分解请求"""
+    """处理自动Markdown分解请求 - 保存到JSONL文件"""
     try:
         data = request.get_json()
         project_path = data.get('projectPath')
@@ -840,15 +818,8 @@ def auto_markdown_split():
         if not md_files:
             return jsonify({'status':'error', 'message': '未找到Markdown文档'})
 
-        # 清空两表并写入数据库
-        init_project_db(project_path)
-        conn = get_db_conn(project_path)
-        conn.execute('DELETE FROM issues')
-        conn.execute('DELETE FROM alignments')
-        conn.commit()
-        cur = conn.cursor()
-        
         processed_count = 0
+        requirements_list = []
         
         # 处理每个markdown文件
         for md_file in md_files:
@@ -856,21 +827,27 @@ def auto_markdown_split():
                 md_content = f.read()
             
             # 分解markdown内容
-            blocks = split_markdown_to_blocks(md_content)
+            doc_name = os.path.basename(md_file)
+            blocks = chunk_markdown(doc_name, md_content)
             
             if not blocks:
                 continue
             
             # 构建需求点
-            doc_name = os.path.basename(md_file)
             doc_base_name = get_filename_without_extension(doc_name)
             # 为每个块创建需求点
             for i, block_info in enumerate(blocks):
                 req_id = f"auto_{doc_base_name}_{i+1}"
                 
                 # 提取标题作为需求点名称
-                lines = block_info['content'].split('\n')
-                title = lines[0].strip('#').strip() if lines else f"需求点 {i+1}"
+                # 如果是header类型，直接用内容；否则用截断的内容
+                content = block_info['content'].strip()
+                if block_info.get('type') == 'header':
+                    title = content.lstrip('#').strip()
+                else:
+                    lines = content.split('\n')
+                    title = lines[0].strip()[:20] if lines else f"需求点 {i+1}"
+                    if len(lines[0]) > 20: title += "..."
                 
                 requirement_point = {
                     'id': req_id,
@@ -881,23 +858,23 @@ def auto_markdown_split():
                         'content': block_info['content'],
                         'start': block_info['start'],
                         'end': block_info['end']
-                    }]
+                    }],
+                    'codeRanges': [],
+                    'isReviewed': False,
+                    'reviewThoughts': ''
                 }
-                cur.execute(
-                    'INSERT INTO alignments(id,name,isReviewed,reviewThoughts,docRanges,codeRanges,createdAt,updatedAt) '
-                    'VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
-                    'ON CONFLICT(id) DO UPDATE SET name=excluded.name,docRanges=excluded.docRanges,codeRanges=excluded.codeRanges,updatedAt=CURRENT_TIMESTAMP',
-                    (
-                        requirement_point['id'], requirement_point['name'], 0, '', pyjson.dumps(requirement_point['docRanges']), pyjson.dumps([])
-                    )
-                )
+                requirements_list.append(requirement_point)
                 processed_count += 1
-        conn.commit()
-        conn.close()
+        
+        # 保存到 requirements.jsonl
+        requirements_file = os.path.join(project_path, 'requirements.jsonl')
+        with open(requirements_file, 'w', encoding='utf-8') as f:
+            for req in requirements_list:
+                f.write(json.dumps(req, ensure_ascii=False) + '\n')
         
         return jsonify({
             'status': 'success',
-            'message': '自动分解完成',
+            'message': '自动分解完成，结果已保存',
             'processedCount': processed_count
         })
         
@@ -1436,17 +1413,23 @@ def get_alignments():
     project_path = request.args.get('path')
     file_path = request.args.get('file')
     kind = request.args.get('kind', 'doc')
-    if not all([project_path, file_path]):
-        return jsonify({"status": "error", "message": "缺少项目路径或文件参数。"}), 400
+    if not project_path:
+        return jsonify({"status": "error", "message": "缺少项目路径参数。"}), 400
 
     try:
         import_json_to_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
-        target = file_path
-        col = 'docRanges' if kind == 'doc' else 'codeRanges'
-        query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments WHERE EXISTS (SELECT 1 FROM json_each({col}) jr WHERE json_extract(jr.value,'$.documentId') = ?)"
-        cur.execute(query, (target,))
+        
+        if file_path:
+            target = file_path
+            col = 'docRanges' if kind == 'doc' else 'codeRanges'
+            query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments WHERE EXISTS (SELECT 1 FROM json_each({col}) jr WHERE json_extract(jr.value,'$.documentId') = ?)"
+            cur.execute(query, (target,))
+        else:
+            query = "SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments"
+            cur.execute(query)
+            
         rows = cur.fetchall()
         result = {}
         for r in rows:
@@ -1769,17 +1752,12 @@ def update_issue_content():
      
 @app.route('/api/code-decomposition', methods=['POST'])
 def code_decomposition():
-    """将代码分块为仅包含代码范围的对齐关系并写入数据库"""
+    """将代码分块为仅包含代码范围的对齐关系并保存到文件"""
     try:
         data = request.get_json()
         project_path = data.get('projectPath')
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
-        init_project_db(project_path)
-        conn = get_db_conn(project_path)
-        conn.execute('DELETE FROM issues')
-        conn.execute('DELETE FROM alignments')
-        conn.commit()
 
         code_repo_path = os.path.join(project_path, 'code_repo')
         if not os.path.exists(code_repo_path):
@@ -1790,57 +1768,10 @@ def code_decomposition():
         os.makedirs(code_block_base_path, exist_ok=True)
         all_code_blocks = get_all_code_blocks(code_repo_path, all_files, code_block_base_path)
 
-        cur = conn.cursor()
-        processed_count = 0
-        for block in all_code_blocks:
-            start_line = max(1, block['range'][0])
-            end_line = max(start_line, block['range'][1])
-            req_id = f"code_{block['file']}_{start_line}_{end_line}"
+        # 仅确保文件生成，不写入数据库
+        processed_count = len(all_code_blocks)
 
-            file_path = os.path.join(code_repo_path, block['file'])
-            range_content = ''
-            char_start = 0
-            char_end = 0
-            if os.path.exists(file_path):
-                try:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        original_content = f.read()
-                        lines = original_content.splitlines(keepends=True)
-                        if start_line <= len(lines):
-                            end_line = min(len(lines), end_line)
-                            char_start = sum(len(line) for line in lines[:start_line-1])
-                            char_end = sum(len(line) for line in lines[:end_line])
-                            range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
-                except Exception:
-                    pass
-
-            code_range = {
-                'filename': block['file'],
-                'documentId': block['file'],
-                'content': range_content or block.get('content', ''),
-                'startLine': start_line,
-                'endLine': end_line,
-                'start': char_start,
-                'end': char_end,
-            }
-
-            cur.execute(
-                'INSERT INTO alignments(id,name,isReviewed,reviewThoughts,docRanges,codeRanges,createdAt,updatedAt) '
-                'VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
-                'ON CONFLICT(id) DO UPDATE SET name=excluded.name,docRanges=excluded.docRanges,codeRanges=excluded.codeRanges,updatedAt=CURRENT_TIMESTAMP',
-                (
-                    req_id,
-                    f"代码块 {start_line}-{end_line}",
-                    0,
-                    '',
-                    pyjson.dumps([]),
-                    pyjson.dumps([code_range])
-                )
-            )
-            processed_count += 1
-        conn.commit()
-        conn.close()
-        return jsonify({'status': 'success', 'message': '代码分解完成', 'processedCount': processed_count})
+        return jsonify({'status': 'success', 'message': '代码分解完成，结果已保存', 'processedCount': processed_count})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
@@ -1870,6 +1801,171 @@ def get_alignment_by_id():
         return jsonify({'status': 'success', 'data': alignment})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/get-requirement-chunks', methods=['GET'])
+def get_requirement_chunks():
+    """获取需求分块列表"""
+    try:
+        project_path = request.args.get('projectPath')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'})
+            
+        requirements_file = os.path.join(project_path, 'requirements.jsonl')
+        if not os.path.exists(requirements_file):
+             return jsonify({'status': 'success', 'data': []})
+             
+        requirements = []
+        with open(requirements_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    requirements.append(json.loads(line.strip()))
+                    
+        return jsonify({'status': 'success', 'data': requirements})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/get-code-chunks', methods=['GET'])
+def get_code_chunks():
+    """获取代码分块列表"""
+    try:
+        project_path = request.args.get('projectPath')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'})
+            
+        code_block_base_path = os.path.join(project_path, 'code_block_repo')
+        code_block_file_path = os.path.join(code_block_base_path, 'code_blocks.jsonl')
+        
+        if not os.path.exists(code_block_file_path):
+             return jsonify({'status': 'success', 'data': []})
+             
+        code_blocks = []
+        with open(code_block_file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    code_blocks.append(json.loads(line.strip()))
+        
+        # 将原始代码块格式转换为对齐关系格式（方便前端处理）
+        formatted_blocks = []
+        code_repo_path = os.path.join(project_path, 'code_repo')
+        
+        for block in code_blocks:
+            start_line = max(1, block['range'][0])
+            end_line = max(start_line, block['range'][1])
+            req_id = f"code_{block['file']}_{start_line}_{end_line}"
+            
+            # 读取实际内容
+            file_path = os.path.join(code_repo_path, block['file'])
+            range_content = ''
+            char_start = 0
+            char_end = 0
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        original_content = f.read()
+                        lines = original_content.splitlines(keepends=True)
+                        if start_line <= len(lines):
+                            end_line_actual = min(len(lines), end_line)
+                            char_start = sum(len(line) for line in lines[:start_line-1])
+                            char_end = sum(len(line) for line in lines[:end_line_actual])
+                            range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line_actual]])
+                except Exception:
+                    pass
+            
+            code_range = {
+                'filename': block['file'],
+                'documentId': block['file'],
+                'content': range_content or block.get('content', ''),
+                'startLine': start_line,
+                'endLine': end_line,
+                'start': char_start,
+                'end': char_end,
+            }
+            
+            formatted_blocks.append({
+                'id': req_id,
+                'name': f"代码块 {start_line}-{end_line}",
+                'docRanges': [],
+                'codeRanges': [code_range],
+                'isReviewed': False,
+                'reviewThoughts': ''
+            })
+            
+        return jsonify({'status': 'success', 'data': formatted_blocks})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/align-code-to-requirement', methods=['POST'])
+def align_code_to_requirement():
+    """为单个代码块在项目中查找相关需求"""
+    try:
+        data = request.json
+        code_ranges = data.get('codeRanges', [])
+        project_path = data.get('projectPath', '')
+        
+        if not code_ranges or not project_path:
+             return jsonify({"status": "error", "message": "缺少代码内容或项目路径参数"}), 400
+
+        # 获取需求块
+        requirements_file = os.path.join(project_path, 'requirements.jsonl')
+        if not os.path.exists(requirements_file):
+             return jsonify({"status": "success", "docRanges": []}) # 没有需求文件，无法对齐
+             
+        requirements = []
+        with open(requirements_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    # 提取简化的需求信息用于匹配
+                    req_full = json.loads(line.strip())
+                    doc_range = req_full['docRanges'][0]
+                    requirements.append({
+                        "filename": doc_range.get('filename'),
+                        "content": doc_range.get('content')
+                    })
+        
+        code_content = code_ranges[0].get('content', '')
+        
+        # 调用LLM
+        related_reqs = query_related_requirement(code_content, requirements, random_flag=False, block_limit=50)
+        
+        # 转换结果为docRanges
+        doc_ranges = []
+        
+        # 加载完整需求信息以获取位置信息
+        full_requirements_map = {} # (filename, content_hash) -> full_req
+        with open(requirements_file, 'r', encoding='utf-8') as f:
+             for line in f:
+                if line.strip():
+                    req = json.loads(line.strip())
+                    d = req['docRanges'][0]
+                    # 简单使用 content 前50个字符作为key的一部分，实际应更严谨
+                    key = f"{d.get('filename')}_{d.get('content')[:50]}" 
+                    full_requirements_map[key] = d
+
+        for item in related_reqs:
+            # item: {'filename': ..., 'content': ..., 'similarity': ...}
+            # 尝试找回原始位置信息
+            key = f"{item.get('filename')}_{item.get('content')[:50]}"
+            original_doc_range = full_requirements_map.get(key)
+            
+            if original_doc_range:
+                doc_ranges.append(original_doc_range)
+            else:
+                # 如果找不到原始信息（不太可能，除非LLM修改了内容），则构造一个基本的
+                doc_ranges.append({
+                    'filename': item.get('filename'),
+                    'documentId': item.get('filename'),
+                    'content': item.get('content'),
+                    'start': 0, # 未知
+                    'end': 0    # 未知
+                })
+
+        return jsonify({
+            "status": "success",
+            "docRanges": doc_ranges
+        })
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"对齐过程中出错: {str(e)}"}), 500
 
 def find_available_port(start_port):
     port = start_port
