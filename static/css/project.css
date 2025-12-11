@@ -1748,6 +1748,15 @@
     background-color: rgba(64, 158, 255, 0.2) !important;
 }
 
+.linked-yellow {
+    background-color: rgba(255, 255, 183, 0.8) !important;
+    transition: background-color 0.2s ease;
+}
+
+.alignment-list-item.linked-yellow {
+    background-color: rgba(255, 255, 183, 0.8) !important;
+}
+
 .export-btn {
     background-color: #28a745;
     color: white;

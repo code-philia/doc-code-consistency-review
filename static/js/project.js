@@ -87,6 +87,10 @@ const app = createApp({
         const currentDocBlockIndex = ref(0);
         const currentCodeBlockIndex = ref(0);
 
+        let linkedDocElement = null;
+        let linkedCodeElement = null;
+        let linkedAlignmentIdPersist = null;
+
         // 分解块数据
         const docBlocks = ref([]);
         const codeBlocks = ref([]);
@@ -1571,73 +1575,75 @@ const app = createApp({
         };
 
         // 处理新高亮块的点击事件
-        const handleHighlightBlockClick = (event) => {
-            const target = event.target;
-            if (!target.classList.contains('highlight-block')) return;
+        const handleHighlightBlockClick = async (event) => {
+            const target = event.target.closest('.highlight-block');
+            if (!target) return;
 
-            // 获取对齐ID
-            const alignmentIdAttr = target.getAttribute('data-alignment-id');
-            if (!alignmentIdAttr) return;
+            const type = target.getAttribute('data-type');
+            const rangeStart = parseInt(target.getAttribute('data-range-start'));
+            const rangeEnd = parseInt(target.getAttribute('data-range-end'));
 
-            // 处理多个ID的情况，默认选择第一个
+            const alignmentIdAttr = target.getAttribute('data-alignment-id') || '';
             const alignmentIds = alignmentIdAttr.split(',').filter(id => id);
-            if (alignmentIds.length === 0) return;
+            const alignmentId = alignmentIds[0] || null;
 
-            const alignmentId = alignmentIds[0];
+            let alignment = null;
+            if (alignmentId) {
+                alignment = alignmentResults.value.find(a => a.id === alignmentId) || null;
+            }
 
-            const alignment = alignmentResults.value.find(a => a.id === alignmentId);
-            if (!alignment) return;
+            if (type === 'code') {
+                if (!alignment) {
+                    alignment = findAlignmentByCodeRange(rangeStart, rangeEnd);
+                }
+                if (!alignment) return;
 
-            // 选中对齐关系
-            selectAlignment(alignment);
+                clearLinkedAll();
+                target.classList.add('linked-yellow');
+                linkedCodeElement = target;
+
+                applyAlignmentYellow(alignment.id);
+
+                if (alignment.docRanges && alignment.docRanges.length > 0) {
+                    await applyDocYellowRange(alignment.docRanges[0]);
+                }
+            } else if (type === 'doc') {
+                if (!alignment) {
+                    alignment = findAlignmentByDocRange(rangeStart, rangeEnd);
+                }
+                if (!alignment) return;
+
+                clearLinkedAll();
+                target.classList.add('linked-yellow');
+                linkedDocElement = target;
+
+                applyAlignmentYellow(alignment.id);
+
+                if (alignment.codeRanges && alignment.codeRanges.length > 0) {
+                    await applyCodeYellowRange(alignment.codeRanges[0]);
+                }
+            }
         };
 
         // 选中对齐关系的核心逻辑
         const selectAlignment = async (alignment) => {
             if (!alignment) return;
-
             currentSelectedAlignmentId.value = alignment.id;
             currentDocBlockIndex.value = 0;
             currentCodeBlockIndex.value = 0;
 
-            // 1. 侧边栏联动：重置筛选条件，滚动到对齐项，高亮
             statusFilters.value = ['unaligned', 'unreviewed', 'reviewed'];
             await nextTick();
             scrollToAlignmentInSidebar(alignment.id);
 
-            // 2. 视图联动：打开文件，滚动到对应位置，高亮
-            
-            // 处理文档视图
+            clearLinkedAll();
+            applyAlignmentYellow(alignment.id);
+
             if (alignment.docRanges && alignment.docRanges.length > 0) {
-                const docRange = alignment.docRanges[0];
-                if (selectedDocFile.value !== docRange.documentId) {
-                    await fetchFileContent(docRange.documentId, 'doc');
-                }
-                await nextTick();
-                
-                // 查找并高亮文档块
-                setTimeout(() => {
-                    const highlightElements = findIntersectingHighlightElements(docRange.start, docRange.end);
-                    const parseElements = findIntersectingParseElements(docRange.start, docRange.end);
-                    const allElements = [...highlightElements, ...parseElements];
-                    const uniqueElements = [...new Set(allElements)];
-                    scrollToFirstAndHighlightAll(uniqueElements);
-                }, 100);
+                await applyDocYellowRange(alignment.docRanges[0]);
             }
-
-            // 处理代码视图
             if (alignment.codeRanges && alignment.codeRanges.length > 0) {
-                const codeRange = alignment.codeRanges[0];
-                if (selectedCodeFile.value !== codeRange.documentId) {
-                    await fetchFileContent(codeRange.documentId, 'code');
-                }
-                await nextTick();
-
-                // 查找并高亮代码块
-                setTimeout(() => {
-                    const highlightElements = findIntersectingCodeHighlightElements(codeRange.start, codeRange.end);
-                    scrollToFirstAndHighlightAllCode(highlightElements);
-                }, 100);
+                await applyCodeYellowRange(alignment.codeRanges[0]);
             }
         };
 
@@ -1651,7 +1657,6 @@ const app = createApp({
             const element = document.getElementById(`alignment-item-${alignmentId}`);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                highlightTemp(element);
             }
         };
 
@@ -1690,14 +1695,8 @@ const app = createApp({
                     await fetchFileContent(docRange.documentId, 'doc');
                 }
                 await nextTick();
-                
-                setTimeout(() => {
-                    const highlightElements = findIntersectingHighlightElements(docRange.start, docRange.end);
-                    const parseElements = findIntersectingParseElements(docRange.start, docRange.end);
-                    const allElements = [...highlightElements, ...parseElements];
-                    const uniqueElements = [...new Set(allElements)];
-                    scrollToFirstAndHighlightAll(uniqueElements);
-                }, 100);
+                clearDocYellow();
+                await applyDocYellowRange(docRange);
             }
         };
 
@@ -1719,11 +1718,81 @@ const app = createApp({
                     await fetchFileContent(codeRange.documentId, 'code');
                 }
                 await nextTick();
-                
-                setTimeout(() => {
-                    const highlightElements = findIntersectingCodeHighlightElements(codeRange.start, codeRange.end);
-                    scrollToFirstAndHighlightAllCode(highlightElements);
-                }, 100);
+                clearCodeYellow();
+                await applyCodeYellowRange(codeRange);
+            }
+        };
+
+        const clearDocYellow = () => {
+            if (linkedDocElement) {
+                linkedDocElement.classList.remove('linked-yellow');
+                linkedDocElement = null;
+            }
+        };
+
+        const clearCodeYellow = () => {
+            if (linkedCodeElement) {
+                linkedCodeElement.classList.remove('linked-yellow');
+                linkedCodeElement = null;
+            }
+        };
+
+        const clearAlignmentYellow = () => {
+            if (linkedAlignmentIdPersist) {
+                const el = document.getElementById(`alignment-item-${linkedAlignmentIdPersist}`);
+                if (el) el.classList.remove('linked-yellow');
+                linkedAlignmentIdPersist = null;
+            }
+        };
+
+        const clearLinkedAll = () => {
+            clearDocYellow();
+            clearCodeYellow();
+            clearAlignmentYellow();
+        };
+
+        const applyAlignmentYellow = (alignmentId) => {
+            clearAlignmentYellow();
+            const el = document.getElementById(`alignment-item-${alignmentId}`);
+            if (el) {
+                el.classList.add('linked-yellow');
+                linkedAlignmentIdPersist = alignmentId;
+            }
+        };
+
+        const applyDocYellowRange = async (docRange) => {
+            if (!docRange) return;
+            if (selectedDocFile.value !== docRange.documentId) {
+                await fetchFileContent(docRange.documentId, 'doc');
+            }
+            await nextTick();
+            const docPanel = document.querySelector('.content-text-doc');
+            if (!docPanel) return;
+            const candidates = Array.from(docPanel.querySelectorAll('.highlight-block[data-type="doc"]'))
+                .filter(el => parseInt(el.getAttribute('data-range-start')) <= docRange.end && parseInt(el.getAttribute('data-range-end')) >= docRange.start);
+            const target = candidates[0] || null;
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'start' });
+                target.classList.add('linked-yellow');
+                linkedDocElement = target;
+            }
+        };
+
+        const applyCodeYellowRange = async (codeRange) => {
+            if (!codeRange) return;
+            if (selectedCodeFile.value !== codeRange.documentId) {
+                await fetchFileContent(codeRange.documentId, 'code');
+            }
+            await nextTick();
+            const codePanel = document.querySelector('.content-text-code');
+            if (!codePanel) return;
+            const candidates = Array.from(codePanel.querySelectorAll('.code-highlight'))
+                .filter(el => parseInt(el.getAttribute('data-range-start')) <= codeRange.end && parseInt(el.getAttribute('data-range-end')) >= codeRange.start);
+            const target = candidates[0] || null;
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'start' });
+                target.classList.add('linked-yellow');
+                linkedCodeElement = target;
             }
         };
 
