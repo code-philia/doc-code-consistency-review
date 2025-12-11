@@ -87,6 +87,10 @@ const app = createApp({
         const currentDocBlockIndex = ref(0);
         const currentCodeBlockIndex = ref(0);
 
+        // 分解块数据
+        const docBlocks = ref([]);
+        const codeBlocks = ref([]);
+
         const codeFileLines = ref({});
         const codeScale = ref(0);
 
@@ -117,6 +121,34 @@ const app = createApp({
          ***********************/
         // 存储所有文档的对齐数据
         const allAlignments = ref({});
+
+        // 获取分解块数据
+        const fetchDecompositionBlocks = async () => {
+            if (!projectPath.value) return;
+            
+            try {
+                // 获取需求分解块
+                const docResp = await axios.get(`/api/get-requirement-chunks?projectPath=${encodeURIComponent(projectPath.value)}`);
+                if (docResp.data.status === 'success') {
+                    // 后端返回的是包装过的对齐格式，我们需要提取原始的docRanges
+                    // docResp.data.data 是 requirements 列表，每个 req 有 docRanges[0]
+                    docBlocks.value = docResp.data.data.map(req => {
+                        return req.docRanges && req.docRanges.length > 0 ? req.docRanges[0] : null;
+                    }).filter(b => b !== null);
+                }
+                
+                // 获取代码分解块
+                const codeResp = await axios.get(`/api/get-code-chunks?projectPath=${encodeURIComponent(projectPath.value)}`);
+                if (codeResp.data.status === 'success') {
+                     // 同样后端返回的是包装格式
+                     codeBlocks.value = codeResp.data.data.map(req => {
+                         return req.codeRanges && req.codeRanges.length > 0 ? req.codeRanges[0] : null;
+                     }).filter(b => b !== null);
+                }
+            } catch (error) {
+                console.error("获取分解块数据失败:", error);
+            }
+        };
 
         const fetchAlignments = async () => {
             if (!projectPath.value) return;
@@ -2501,7 +2533,7 @@ const app = createApp({
                         removeAllHighlights();
                         
                         // 重新获取对齐数据
-                        await fetchAllAlignments();
+                        // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
                         await fetchAlignments();
                                                 
                         // 开始自动对齐
@@ -2542,7 +2574,7 @@ const app = createApp({
                         selectedIssue.value = null;
                         
                         // 重新获取对齐数据（更新审查状态）
-                        await fetchAllAlignments();
+                        // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
                         await fetchAlignments();
                                                 
                         // 开始自动审查
@@ -3044,6 +3076,8 @@ const app = createApp({
          ***********************/
         onMounted(async () => {
             await fetchProjectMetadata();
+            // 先加载分解块数据，再加载对齐数据
+            await fetchDecompositionBlocks();
             await fetchAlignments();
             await fetchIssues();
             
