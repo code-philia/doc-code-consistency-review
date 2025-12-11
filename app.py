@@ -739,11 +739,9 @@ def requirement_decomposition():
         annotations = annotation_data.get('annotations', [])
         processed_count = 0
         
-        requirements_list = []
+        req_blocks = []
         
         for annotation in annotations:
-            req_id = annotation.get('id')
-            category = annotation.get('category')
             doc_ranges = annotation.get('docRanges', [])
             
             if not doc_ranges:
@@ -758,30 +756,26 @@ def requirement_decomposition():
             if not doc_name:
                 continue
                 
-            # 构建需求点对象
-            processed_doc_ranges = []
+            # 构建需求块对象 (扁平化，每个docRange作为一个独立的块)
             for doc_range in doc_ranges:
-                processed_range = doc_range.copy()
-                processed_range['filename'] = doc_name
-                processed_range['documentId'] = doc_name
-                processed_doc_ranges.append(processed_range)
-            
-            requirement_point = {
-                'id': req_id,
-                'name': category,
-                'docRanges': processed_doc_ranges,
-                'codeRanges': [], # 初始为空
-                'isReviewed': False,
-                'reviewThoughts': ''
-            }
-            requirements_list.append(requirement_point)
-            processed_count += 1
+                req_block = {
+                    'filename': doc_name,
+                    'documentId': doc_name,
+                    'content': doc_range.get('content'),
+                    'start': doc_range.get('start'),
+                    'end': doc_range.get('end')
+                }
+                req_blocks.append(req_block)
+                processed_count += 1
         
-        # 保存到 requirements.jsonl
-        requirements_file = os.path.join(project_path, 'requirements.jsonl')
-        with open(requirements_file, 'w', encoding='utf-8') as f:
-            for req in requirements_list:
-                f.write(json.dumps(req, ensure_ascii=False) + '\n')
+        # 保存到 doc_block_repo/doc_blocks.jsonl
+        doc_block_repo = os.path.join(project_path, 'doc_block_repo')
+        os.makedirs(doc_block_repo, exist_ok=True)
+        doc_blocks_file = os.path.join(doc_block_repo, 'doc_blocks.jsonl')
+        
+        with open(doc_blocks_file, 'w', encoding='utf-8') as f:
+            for block in req_blocks:
+                f.write(json.dumps(block, ensure_ascii=False) + '\n')
         
         return jsonify({
             'status': 'success',
@@ -819,7 +813,7 @@ def auto_markdown_split():
             return jsonify({'status':'error', 'message': '未找到Markdown文档'})
 
         processed_count = 0
-        requirements_list = []
+        req_blocks = []
         
         # 处理每个markdown文件
         for md_file in md_files:
@@ -833,44 +827,26 @@ def auto_markdown_split():
             if not blocks:
                 continue
             
-            # 构建需求点
-            doc_base_name = get_filename_without_extension(doc_name)
-            # 为每个块创建需求点
-            for i, block_info in enumerate(blocks):
-                req_id = f"auto_{doc_base_name}_{i+1}"
-                
-                # 提取标题作为需求点名称
-                # 如果是header类型，直接用内容；否则用截断的内容
-                content = block_info['content'].strip()
-                if block_info.get('type') == 'header':
-                    title = content.lstrip('#').strip()
-                else:
-                    lines = content.split('\n')
-                    title = lines[0].strip()[:20] if lines else f"需求点 {i+1}"
-                    if len(lines[0]) > 20: title += "..."
-                
-                requirement_point = {
-                    'id': req_id,
-                    'name': title,
-                    'docRanges': [{
-                        'filename': doc_name,
-                        'documentId': doc_name,
-                        'content': block_info['content'],
-                        'start': block_info['start'],
-                        'end': block_info['end']
-                    }],
-                    'codeRanges': [],
-                    'isReviewed': False,
-                    'reviewThoughts': ''
+            # 构建需求块
+            for block_info in blocks:
+                req_block = {
+                    'filename': doc_name,
+                    'documentId': doc_name,
+                    'content': block_info['content'],
+                    'start': block_info['start'],
+                    'end': block_info['end']
                 }
-                requirements_list.append(requirement_point)
+                req_blocks.append(req_block)
                 processed_count += 1
         
-        # 保存到 requirements.jsonl
-        requirements_file = os.path.join(project_path, 'requirements.jsonl')
-        with open(requirements_file, 'w', encoding='utf-8') as f:
-            for req in requirements_list:
-                f.write(json.dumps(req, ensure_ascii=False) + '\n')
+        # 保存到 doc_block_repo/doc_blocks.jsonl
+        doc_block_repo = os.path.join(project_path, 'doc_block_repo')
+        os.makedirs(doc_block_repo, exist_ok=True)
+        doc_blocks_file = os.path.join(doc_block_repo, 'doc_blocks.jsonl')
+        
+        with open(doc_blocks_file, 'w', encoding='utf-8') as f:
+            for block in req_blocks:
+                f.write(json.dumps(block, ensure_ascii=False) + '\n')
         
         return jsonify({
             'status': 'success',
@@ -1810,15 +1786,38 @@ def get_requirement_chunks():
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
             
-        requirements_file = os.path.join(project_path, 'requirements.jsonl')
-        if not os.path.exists(requirements_file):
+        doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
+        doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
+        
+        if not os.path.exists(doc_block_file_path):
              return jsonify({'status': 'success', 'data': []})
              
         requirements = []
-        with open(requirements_file, 'r', encoding='utf-8') as f:
+        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
             for line in f:
                 if line.strip():
-                    requirements.append(json.loads(line.strip()))
+                    block = json.loads(line.strip())
+                    # 转换回前端期望的格式 (如果需要兼容旧逻辑)
+                    # 但根据需求，前端可能也需要更新以适应新格式
+                    # 这里我们将其包装为对齐关系格式，以便前端复用现有的渲染逻辑
+                    
+                    req_id = f"auto_{get_filename_without_extension(block['filename'])}_{block['start']}"
+                    
+                    # 尝试提取标题
+                    content = block['content'].strip()
+                    lines = content.split('\n')
+                    title = lines[0].strip()[:20] if lines else f"需求块"
+                    if len(lines[0]) > 20: title += "..."
+                    
+                    req_point = {
+                        'id': req_id,
+                        'name': title,
+                        'docRanges': [block],
+                        'codeRanges': [],
+                        'isReviewed': False,
+                        'reviewThoughts': ''
+                    }
+                    requirements.append(req_point)
                     
         return jsonify({'status': 'success', 'data': requirements})
     except Exception as e:
@@ -1906,20 +1905,21 @@ def align_code_to_requirement():
              return jsonify({"status": "error", "message": "缺少代码内容或项目路径参数"}), 400
 
         # 获取需求块
-        requirements_file = os.path.join(project_path, 'requirements.jsonl')
-        if not os.path.exists(requirements_file):
+        doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
+        doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
+        
+        if not os.path.exists(doc_block_file_path):
              return jsonify({"status": "success", "docRanges": []}) # 没有需求文件，无法对齐
              
         requirements = []
-        with open(requirements_file, 'r', encoding='utf-8') as f:
+        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
             for line in f:
                 if line.strip():
                     # 提取简化的需求信息用于匹配
-                    req_full = json.loads(line.strip())
-                    doc_range = req_full['docRanges'][0]
+                    block = json.loads(line.strip())
                     requirements.append({
-                        "filename": doc_range.get('filename'),
-                        "content": doc_range.get('content')
+                        "filename": block.get('filename'),
+                        "content": block.get('content')
                     })
         
         code_content = code_ranges[0].get('content', '')
@@ -1932,14 +1932,13 @@ def align_code_to_requirement():
         
         # 加载完整需求信息以获取位置信息
         full_requirements_map = {} # (filename, content_hash) -> full_req
-        with open(requirements_file, 'r', encoding='utf-8') as f:
+        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
              for line in f:
                 if line.strip():
-                    req = json.loads(line.strip())
-                    d = req['docRanges'][0]
+                    block = json.loads(line.strip())
                     # 简单使用 content 前50个字符作为key的一部分，实际应更严谨
-                    key = f"{d.get('filename')}_{d.get('content')[:50]}" 
-                    full_requirements_map[key] = d
+                    key = f"{block.get('filename')}_{block.get('content')[:50]}" 
+                    full_requirements_map[key] = block
 
         for item in related_reqs:
             # item: {'filename': ..., 'content': ..., 'similarity': ...}

@@ -122,6 +122,7 @@ const app = createApp({
             if (!projectPath.value) return;
 
             try {
+                // 始终获取项目所有对齐关系，不传递file参数
                 const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`);
                 if (response.data.status === 'success' && response.data.data) {
                     // 后端返回的是以ID为键的对象，转换为数组以便渲染
@@ -172,26 +173,16 @@ const app = createApp({
                     
                     // 在下一个tick中添加高亮，确保DOM已更新
                     await nextTick(() => {
-                        // 为每个对齐关系的docRanges添加高亮
-                        alignmentResults.value.forEach(alignment => {
-                            if (alignment.docRanges && alignment.docRanges.length > 0) {
-                                alignment.docRanges.forEach(range => {
-                                    highlightRequirementRange(range.start, range.end, alignment.id);
-                                });
-                            }
-                        });
+                         reloadHighlights();
                     });
                 } else {
-                    ElMessage.error(`加载对齐数据失败: ${response.data.message}`);
-                }
-            } catch (err) {
-                // 如果是404或空文件，静默处理
-                if (err.response && err.response.status === 404) {
                     alignmentResults.value = [];
-                } else {
-                    console.error("Error fetching alignments:", err);
-                    ElMessage.error(`加载对齐数据失败: ${err.message}`);
+                    ElMessage.warning(response.data.message || '获取对齐关系失败');
                 }
+            } catch (error) {
+                console.error('获取对齐关系出错:', error);
+                alignmentResults.value = [];
+                ElMessage.error('获取对齐关系出错: ' + error.message);
             }
         };
 
@@ -534,17 +525,12 @@ const app = createApp({
                                     highlightCurrentCodeFileBasedOnDoc();
                                 }
                             });
-                            try {
-                                const resp = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(fileName)}&kind=code`);
-                                if (resp.data.status === 'success') {
-                                    alignmentResults.value = Object.values(resp.data.data || {});
-                                    await nextTick(() => {
-                                        reloadHighlights();
-                                    });
-                                }
-                            } catch (err) {
-                                console.error('加载代码文件相关的对齐关系失败:', err);
-                            }
+                            
+                            // 当选择代码文件时，重新获取所有对齐结果，由前端筛选
+                            await fetchAlignments();
+                            await nextTick(() => {
+                                reloadHighlights();
+                            });
                         }
                     } catch (e) {
                         renderError.value = e.message;
@@ -800,12 +786,13 @@ const app = createApp({
             // 显示确认对话框
             try {
                 await ElMessageBox.confirm(
-                    '需求分解将重新生成需求片段文件。是否继续？',
+                    '需求分解将清空当前数据库中的所有对齐关系和问题单。是否确认继续？',
                     '确认需求分解',
                     {
-                        confirmButtonText: '继续',
+                        confirmButtonText: '确定清空并分解',
                         cancelButtonText: '取消',
                         type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
                     }
                 );
             } catch {
@@ -813,13 +800,22 @@ const app = createApp({
             }
             
             try {
-                ElMessage.info('开始需求分解，生成需求点...');
+                // 先清空所有结果
+                await axios.post('/api/clear-project-results', {
+                    projectPath: projectPath.value
+                });
+                
+                // 刷新界面状态
+                // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
+                await fetchAlignments();
+                await fetchIssues();
+                
+                ElMessage.info('已清空旧数据，开始需求分解...');
                 const response = await axios.post('api/requirement-decomposition',{
                     projectPath: projectPath.value
                 });
                 if(response.data.status==='success'){
                     ElMessage.success('需求分解完成！');
-                    // await fetchAlignments(); // 分解不再直接产生对齐结果
                 }
                 else{
                     ElMessage.error(`需求分解失败: ${response.data.message}`);
@@ -840,12 +836,13 @@ const app = createApp({
             // 显示确认对话框
             try {
                 await ElMessageBox.confirm(
-                    '自动分解将重新生成需求片段文件。是否继续？',
+                    '自动分解将清空当前数据库中的所有对齐关系和问题单。是否确认继续？',
                     '确认自动分解',
                     {
-                        confirmButtonText: '继续',
+                        confirmButtonText: '确定清空并分解',
                         cancelButtonText: '取消',
                         type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
                     }
                 );
             } catch {
@@ -853,13 +850,22 @@ const app = createApp({
             }
             
             try {
-                ElMessage.info('开始自动分解需求文档...');
+                // 先清空所有结果
+                await axios.post('/api/clear-project-results', {
+                    projectPath: projectPath.value
+                });
+                
+                // 刷新界面状态
+                // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
+                await fetchAlignments();
+                await fetchIssues();
+                
+                ElMessage.info('已清空旧数据，开始自动分解需求文档...');
                 const response = await axios.post('api/auto-markdown-split',{
                     projectPath: projectPath.value
                 });
                 if(response.data.status==='success'){
                     ElMessage.success('自动分解完成！');
-                    // await fetchAlignments();
                 }
                 else{
                     ElMessage.error(`自动分解失败: ${response.data.message}`);
@@ -878,26 +884,35 @@ const app = createApp({
             }
             try {
                 await ElMessageBox.confirm(
-                    '代码分解将重新生成代码块文件。是否继续？',
+                    '代码分解将清空当前数据库中的所有对齐关系和问题单。是否确认继续？',
                     '确认代码分解',
                     {
-                        confirmButtonText: '继续',
+                        confirmButtonText: '确定清空并分解',
                         cancelButtonText: '取消',
                         type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
                     }
                 );
             } catch {
                 return;
             }
             try {
-                ElMessage.info('开始代码分解，生成代码块...');
+                // 先清空所有结果
+                await axios.post('/api/clear-project-results', {
+                    projectPath: projectPath.value
+                });
+                
+                // 刷新界面状态
+                // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
+                await fetchAlignments();
+                await fetchIssues();
+                
+                ElMessage.info('已清空旧数据，开始代码分解...');
                 const response = await axios.post('/api/code-decomposition', {
                     projectPath: projectPath.value
                 });
                 if (response.data.status === 'success') {
                     ElMessage.success('代码分解完成！');
-                    // await fetchAlignments();
-                    // await fetchAllAlignments();
                 } else {
                     ElMessage.error(`代码分解失败: ${response.data.message}`);
                 }
@@ -2656,7 +2671,8 @@ const app = createApp({
                         
                         alignmentResults.value.splice(index, 1);
                         // 更新所有对齐数据以保持统计信息同步
-                        await fetchAllAlignments();
+                        // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用，使用 fetchAlignments 代替
+                        await fetchAlignments();
                         
                         // 刷新筛选状态下的对齐列表
                         refreshFilteredAlignments();
@@ -2703,7 +2719,7 @@ const app = createApp({
                 
                 // 刷新对齐数据
                 await fetchAlignments();
-                await fetchAllAlignments();
+                // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
                 
                 ElMessage.success(`"${alignment.name}" 对齐完成！`);
             } catch (error) {
@@ -3569,7 +3585,9 @@ const app = createApp({
             currentProcessingFile,
             progressCurrent,
             progressTotal,
-            progressPercentage
+            progressPercentage,
+
+            refreshAlignments
         };
     }
 });

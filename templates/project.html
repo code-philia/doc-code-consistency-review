@@ -319,8 +319,8 @@
                                         </div>
                                         <div style="display: flex; align-items: center;">
                                             <el-button-group size="small" style="margin-right: 10px;" v-if="currentSelectedAlignmentId">
-                                                <el-button size="small" icon="ArrowUp" @click="navigateDocBlock(-1)" title="上一块"></el-button>
-                                                <el-button size="small" icon="ArrowDown" @click="navigateDocBlock(1)" title="下一块"></el-button>
+                                                <el-button size="small" @click="navigateDocBlock(-1)" title="上一块">↑</el-button>
+                                                <el-button size="small" @click="navigateDocBlock(1)" title="下一块">↓</el-button>
                                             </el-button-group>
                                             <el-button 
                                                 size="small" 
@@ -350,9 +350,16 @@
                                         </div>
                                         <div style="display: flex; align-items: center;">
                                             <el-button-group size="small" style="margin-right: 10px;" v-if="currentSelectedAlignmentId">
-                                                <el-button size="small" icon="ArrowUp" @click="navigateCodeBlock(-1)" title="上一块"></el-button>
-                                                <el-button size="small" icon="ArrowDown" @click="navigateCodeBlock(1)" title="下一块"></el-button>
+                                                <el-button size="small" @click="navigateCodeBlock(-1)" title="上一块">↑</el-button>
+                                                <el-button size="small" @click="navigateCodeBlock(1)" title="下一块">↓</el-button>
                                             </el-button-group>
+                                            <el-button 
+                                                size="small" 
+                                                type="success" 
+                                                plain
+                                                @click="startAutoCodeSplit">
+                                                <span>代码分解</span>
+                                            </el-button>
                                             <el-button 
                                                 size="small" 
                                                 type="success"
@@ -403,7 +410,7 @@
                                             </el-radio-group>
                                         </div>
                                         <div>
-                                            <el-select v-model="statusFilters" multiple collapse-tags placeholder="筛选状态" size="small" style="width: 100%">
+                                            <el-select v-model="statusFilters" multiple placeholder="筛选状态" size="small" style="width: 100%">
                                                 <el-option label="未对齐" value="unaligned"></el-option>
                                                 <el-option label="未审查" value="unreviewed"></el-option>
                                                 <el-option label="已审查" value="reviewed"></el-option>
