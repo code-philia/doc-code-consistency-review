@@ -773,6 +773,10 @@ def requirement_decomposition():
         os.makedirs(doc_block_repo, exist_ok=True)
         doc_blocks_file = os.path.join(doc_block_repo, 'doc_blocks.jsonl')
         
+        # 如果文件存在，先删除
+        if os.path.exists(doc_blocks_file):
+            os.remove(doc_blocks_file)
+        
         with open(doc_blocks_file, 'w', encoding='utf-8') as f:
             for block in req_blocks:
                 f.write(json.dumps(block, ensure_ascii=False) + '\n')
@@ -843,6 +847,10 @@ def auto_markdown_split():
         doc_block_repo = os.path.join(project_path, 'doc_block_repo')
         os.makedirs(doc_block_repo, exist_ok=True)
         doc_blocks_file = os.path.join(doc_block_repo, 'doc_blocks.jsonl')
+        
+        # 如果文件存在，先删除
+        if os.path.exists(doc_blocks_file):
+            os.remove(doc_blocks_file)
         
         with open(doc_blocks_file, 'w', encoding='utf-8') as f:
             for block in req_blocks:
@@ -1742,6 +1750,12 @@ def code_decomposition():
         all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
         code_block_base_path = os.path.join(project_path, 'code_block_repo')
         os.makedirs(code_block_base_path, exist_ok=True)
+        
+        # 删除现有的 code_blocks.jsonl
+        code_blocks_file = os.path.join(code_block_base_path, 'code_blocks.jsonl')
+        if os.path.exists(code_blocks_file):
+            os.remove(code_blocks_file)
+            
         all_code_blocks = get_all_code_blocks(code_repo_path, all_files, code_block_base_path)
 
         # 仅确保文件生成，不写入数据库
