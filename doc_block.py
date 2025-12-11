@@ -4,26 +4,29 @@ from typing import List, Dict
 
 def chunk_markdown(filename: str, content: str) -> List[Dict]:
     """
-    Split markdown content into granular blocks (Paragraphs, Headers, Code Blocks, Math, Tables).
-    Tracks character offsets.
+    Split markdown content into granular blocks using Semantic Grouping strategy.
+    
+    Strategy:
+    1. Headers (H1-H6) act as primary delimiters and start new blocks.
+    2. Code blocks (```...```) are treated as standalone blocks (critical for code alignment).
+    3. Normal text (paragraphs, lists, blockquotes) following a header are grouped with that header 
+       or form a block if they appear before any header.
+    4. Consecutive text elements are merged to avoid over-fragmentation.
     """
     blocks = []
     lines = content.splitlines(keepends=True)
-    total_len = len(content)
     
     current_offset = 0
     
     # State constants
     STATE_NORMAL = 0
     STATE_CODE_BLOCK = 1
-    STATE_MATH_BLOCK = 2
-    STATE_TABLE = 3
     
     state = STATE_NORMAL
     buffer_lines = []
     buffer_start_offset = 0
     
-    # Context variables for block parsing
+    # Context variables
     code_fence_char = ''
     code_fence_len = 0
     
@@ -33,22 +36,13 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
         line_len = len(line)
         stripped_line = line.strip()
         
-        # Determine next state based on current line and state
-        
+        # --- STATE: CODE BLOCK ---
         if state == STATE_CODE_BLOCK:
             buffer_lines.append(line)
             # Check for closing fence
-            # Fence must match the opening fence char and be at least as long
             if stripped_line.startswith(code_fence_char * code_fence_len):
-                # End of code block
-                block_content = "".join(buffer_lines)
-                blocks.append({
-                    "type": "code_block",
-                    "content": block_content,
-                    "start": buffer_start_offset,
-                    "end": buffer_start_offset + len(block_content),
-                    "filename": filename
-                })
+                # End of code block - Save immediately as a standalone block
+                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename, "code_block")
                 buffer_lines = []
                 state = STATE_NORMAL
             
@@ -56,56 +50,14 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
             i += 1
             continue
             
-        if state == STATE_MATH_BLOCK:
-            buffer_lines.append(line)
-            if stripped_line == '$$':
-                # End of math block
-                block_content = "".join(buffer_lines)
-                blocks.append({
-                    "type": "math_block",
-                    "content": block_content,
-                    "start": buffer_start_offset,
-                    "end": buffer_start_offset + len(block_content),
-                    "filename": filename
-                })
-                buffer_lines = []
-                state = STATE_NORMAL
-            
-            current_offset += line_len
-            i += 1
-            continue
-            
-        if state == STATE_TABLE:
-            # Check if table continues
-            # Table lines usually start with |
-            if stripped_line.startswith('|'):
-                buffer_lines.append(line)
-                current_offset += line_len
-                i += 1
-                continue
-            else:
-                # End of table
-                block_content = "".join(buffer_lines)
-                blocks.append({
-                    "type": "table",
-                    "content": block_content,
-                    "start": buffer_start_offset,
-                    "end": buffer_start_offset + len(block_content),
-                    "filename": filename
-                })
-                buffer_lines = []
-                state = STATE_NORMAL
-                # Re-evaluate current line in NORMAL state
-                continue
-
-        # STATE_NORMAL
+        # --- STATE: NORMAL ---
         
-        # Check for Code Block Start
+        # 1. Check for Code Block Start
         code_match = re.match(r'^(\s*)(`{3,}|~{3,})', line)
         if code_match:
-            # Flush current buffer if any
+            # Flush previous text buffer
             if buffer_lines:
-                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename)
+                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename, "text")
                 buffer_lines = []
             
             state = STATE_CODE_BLOCK
@@ -117,99 +69,23 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
             current_offset += line_len
             i += 1
             continue
-
-        # Check for Math Block Start
-        if stripped_line == '$$':
-            if buffer_lines:
-                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename)
-                buffer_lines = []
             
-            state = STATE_MATH_BLOCK
-            buffer_start_offset = current_offset
-            buffer_lines.append(line)
-            
-            current_offset += line_len
-            i += 1
-            continue
-
-        # Check for Header
+        # 2. Check for Header
         if re.match(r'^#{1,6}\s', line):
+            # Flush previous text buffer
             if buffer_lines:
-                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename)
+                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename, "text")
                 buffer_lines = []
             
-            # Header is a block itself
-            blocks.append({
-                "type": "header",
-                "content": line,
-                "start": current_offset,
-                "end": current_offset + line_len,
-                "filename": filename
-            })
-            current_offset += line_len
-            i += 1
-            continue
-
-        # Check for Table Start
-        # A table must have a header row and a separator row.
-        # Simple check: line starts with | and next line starts with | and contains ---
-        if stripped_line.startswith('|') and i + 1 < len(lines) and re.match(r'^\s*\|.*[-]{3,}', lines[i+1]):
-            if buffer_lines:
-                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename)
-                buffer_lines = []
-            
-            state = STATE_TABLE
+            # Start new buffer with this header
             buffer_start_offset = current_offset
             buffer_lines.append(line)
-            current_offset += line_len
-            i += 1
-            continue
-
-        # Check for Blank Line (Paragraph Separator)
-        if not stripped_line:
-            if buffer_lines:
-                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename)
-                buffer_lines = []
             
-            # We don't create blocks for empty lines, just skip
             current_offset += line_len
             i += 1
             continue
             
-        # Check for Blockquote
-        if stripped_line.startswith('>'):
-             # If current buffer is not empty and not a quote, flush it
-            if buffer_lines and not buffer_lines[0].strip().startswith('>'):
-                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename)
-                buffer_lines = []
-                buffer_start_offset = current_offset
-            elif not buffer_lines:
-                buffer_start_offset = current_offset
-            
-            buffer_lines.append(line)
-            current_offset += line_len
-            i += 1
-            continue
-
-        # Check for List Item
-        if re.match(r'^(\s*)([*+-]|\d+\.)\s+', line):
-             # If current buffer is not empty and not a list, flush it
-             # Note: This is a simple heuristic. It might split lists if they have paragraphs in between.
-            if buffer_lines and not re.match(r'^(\s*)([*+-]|\d+\.)\s+', buffer_lines[-1]):
-                 # If previous line was text, and this is a list, flush text.
-                 # Markdown allows tight lists. But for decomposition, separating text and list is usually good.
-                _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename)
-                buffer_lines = []
-                buffer_start_offset = current_offset
-            elif not buffer_lines:
-                buffer_start_offset = current_offset
-            
-            buffer_lines.append(line)
-            current_offset += line_len
-            i += 1
-            continue
-
-        # Normal text line
+        # 3. Normal Text (Paragraphs, Lists, Tables, Blockquotes, etc.)
         if not buffer_lines:
             buffer_start_offset = current_offset
         buffer_lines.append(line)
@@ -218,51 +94,21 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
 
     # Flush remaining buffer
     if buffer_lines:
-        # Check state to close properly if file ends abruptly
-        if state == STATE_CODE_BLOCK:
-             # Unclosed code block, treat as code block or text? Treat as code block for robustness
-             block_content = "".join(buffer_lines)
-             blocks.append({
-                "type": "code_block",
-                "content": block_content,
-                "start": buffer_start_offset,
-                "end": buffer_start_offset + len(block_content),
-                "filename": filename
-            })
-        elif state == STATE_MATH_BLOCK:
-             block_content = "".join(buffer_lines)
-             blocks.append({
-                "type": "math_block",
-                "content": block_content,
-                "start": buffer_start_offset,
-                "end": buffer_start_offset + len(block_content),
-                "filename": filename
-            })
-        elif state == STATE_TABLE:
-             block_content = "".join(buffer_lines)
-             blocks.append({
-                "type": "table",
-                "content": block_content,
-                "start": buffer_start_offset,
-                "end": buffer_start_offset + len(block_content),
-                "filename": filename
-            })
-        else:
-            _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename)
+        block_type = "code_block" if state == STATE_CODE_BLOCK else "text"
+        _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename, block_type)
 
     return blocks
 
-def _flush_buffer(blocks, lines, start_offset, filename):
+def _flush_buffer(blocks, lines, start_offset, filename, block_type):
     content = "".join(lines)
-    # determine type heuristically if needed, currently default to paragraph/text
-    # Check if it looks like a list
-    if re.match(r'^(\s*)([*+-]|\d+\.)\s+', lines[0]):
-        block_type = "list"
-    elif lines[0].strip().startswith('>'):
-        block_type = "quote"
-    else:
-        block_type = "paragraph"
-        
+    
+    # Ignore purely empty blocks (whitespace only) unless it's a code block (which might be empty)
+    if not content.strip() and block_type != "code_block":
+        return
+
+    # For text blocks, if it's extremely short (e.g. just a newline), skip or merge?
+    # Here we just skip purely empty ones.
+    
     blocks.append({
         "type": block_type,
         "content": content,
