@@ -1266,21 +1266,64 @@ const app = createApp({
         };
 
         // 高亮需求文档范围
-        const highlightRequirementRange = (start, end, alignmentId) => {
+        const highlightRequirementRange = (start, end, alignmentId, isAlignment = true) => {
+            // 检查是否已存在相同范围和类型的的高亮块
+            const existingHighlight = document.querySelector(
+                `.highlight-block[data-range-start="${start}"][data-range-end="${end}"]`
+            );
+
+            if (existingHighlight && isAlignment) {
+                // 如果存在，追加ID
+                const currentIds = existingHighlight.getAttribute('data-alignment-id') || '';
+                const idList = currentIds.split(',').filter(id => id);
+                if (!idList.includes(alignmentId)) {
+                    idList.push(alignmentId);
+                    existingHighlight.setAttribute('data-alignment-id', idList.join(','));
+                }
+                // 确保样式正确
+                if (!existingHighlight.classList.contains('highlight-block')) {
+                     existingHighlight.classList.add('highlight-block');
+                     existingHighlight.classList.add('alignment-active');
+                }
+                return;
+            }
+
             const highlights = highlightRange(start, end, 'doc', alignmentId);
             
             // 设置淡雅的蓝色背景和标识属性
-            highlights.forEach(highlight => {
+            highlights.forEach(highlight => {              
                 highlight.style.backgroundColor = 'rgba(173, 216, 230, 0.25)';
                 highlight.classList.add('requirement-highlight');
                 highlight.setAttribute('data-alignment-id', alignmentId);
                 highlight.setAttribute('data-range-start', start);
                 highlight.setAttribute('data-range-end', end);
+                highlight.setAttribute('data-type', 'doc');
             });
         };
 
         // 高亮代码范围
-        const highlightCodeRange = (start, end, alignmentId) => {
+        const highlightCodeRange = (start, end, alignmentId, isAlignment = true) => {
+            // 检查是否已存在相同范围和类型的的高亮块
+            const existingHighlight = document.querySelector(
+                `.code-highlight[data-range-start="${start}"][data-range-end="${end}"]`
+            );
+
+            if (existingHighlight && isAlignment) {
+                // 如果存在，追加ID
+                const currentIds = existingHighlight.getAttribute('data-alignment-id') || '';
+                const idList = currentIds.split(',').filter(id => id);
+                if (!idList.includes(alignmentId)) {
+                    idList.push(alignmentId);
+                    existingHighlight.setAttribute('data-alignment-id', idList.join(','));
+                }
+                // 确保样式正确
+                 if (!existingHighlight.classList.contains('code-highlight')) {
+                     existingHighlight.classList.add('code-highlight');
+                     existingHighlight.classList.add('alignment-active');
+                }
+                return;
+            }
+
             const highlights = highlightRange(start, end, 'code', alignmentId);
             
             // 设置淡雅的绿色背景和标识属性
@@ -1290,6 +1333,7 @@ const app = createApp({
                 highlight.setAttribute('data-alignment-id', alignmentId);
                 highlight.setAttribute('data-range-start', start);
                 highlight.setAttribute('data-range-end', end);
+                highlight.setAttribute('data-type', 'code');
             });
         };
 
@@ -1532,8 +1576,14 @@ const app = createApp({
             if (!target.classList.contains('highlight-block')) return;
 
             // 获取对齐ID
-            const alignmentId = target.getAttribute('data-alignment-id');
-            if (!alignmentId) return;
+            const alignmentIdAttr = target.getAttribute('data-alignment-id');
+            if (!alignmentIdAttr) return;
+
+            // 处理多个ID的情况，默认选择第一个
+            const alignmentIds = alignmentIdAttr.split(',').filter(id => id);
+            if (alignmentIds.length === 0) return;
+
+            const alignmentId = alignmentIds[0];
 
             const alignment = alignmentResults.value.find(a => a.id === alignmentId);
             if (!alignment) return;

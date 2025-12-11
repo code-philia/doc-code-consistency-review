@@ -1687,6 +1687,8 @@
     z-index: 1;
     mix-blend-mode: multiply;
     cursor: pointer;
+    background-color: rgba(64, 158, 255, 0.2);
+    transition: background-color 0.3s;
 }
 
 .content-text-doc,
@@ -1704,6 +1706,46 @@
 .highlight-block + * {
     position: relative;
     z-index: 2;
+}
+
+.highlight-block:hover {
+    background-color: rgba(64, 158, 255, 0.4);
+}
+
+.highlight-block-gray {
+    background-color: rgba(200, 200, 200, 0.3) !important;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.highlight-block-gray:hover {
+    background-color: rgba(200, 200, 200, 0.5) !important;
+}
+
+.highlight-block.alignment-active {
+    background-color: rgba(64, 158, 255, 0.2) !important;
+}
+
+.highlight-block.alignment-active:hover {
+    background-color: rgba(64, 158, 255, 0.4) !important;
+}
+
+.code-highlight {
+    background-color: rgba(64, 158, 255, 0.2);
+    cursor: pointer;
+    display: block;
+    width: 100%;
+}
+
+.code-highlight-gray {
+    background-color: rgba(200, 200, 200, 0.3) !important;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+}
+
+.code-highlight.alignment-active {
+    background-color: rgba(64, 158, 255, 0.2) !important;
 }
 
 .export-btn {
