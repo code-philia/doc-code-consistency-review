@@ -263,10 +263,34 @@ def init_project_db(project_path):
             'title TEXT,'
             'content TEXT,'
             'status TEXT,'
+            'relatedDocFile TEXT,'
+            'relatedRequirementId TEXT,'
+            'briefRequirement TEXT,'
+            'briefCode TEXT,'
             'createdAt TEXT DEFAULT CURRENT_TIMESTAMP,'
             'updatedAt TEXT,'
             'FOREIGN KEY(alignmentId) REFERENCES alignments(id) ON DELETE CASCADE)'
         )
+        try:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('PRAGMA table_info(issues)')
+            cols = {row[1] if not isinstance(row, sqlite3.Row) else row['name'] for row in cur.fetchall()}
+            add_cols = [
+                ('relatedDocFile', 'TEXT'),
+                ('relatedRequirementId', 'TEXT'),
+                ('briefRequirement', 'TEXT'),
+                ('briefCode', 'TEXT')
+            ]
+            for name, typ in add_cols:
+                if name not in cols:
+                    try:
+                        cur.execute(f'ALTER TABLE issues ADD COLUMN {name} {typ}')
+                    except Exception:
+                        pass
+            conn.commit()
+        except Exception:
+            pass
         conn.execute('CREATE INDEX IF NOT EXISTS idx_issues_alignmentId ON issues(alignmentId)')
     finally:
         conn.close()
@@ -309,7 +333,15 @@ def import_json_to_db(project_path):
                     except Exception:
                         continue
         cur.execute('SELECT COUNT(1) AS c FROM issues')
-        need_import_issues = (cur.fetchone()['c'] == 0)
+        total_issues = cur.fetchone()['c']
+        need_import_issues = (total_issues == 0)
+        try:
+            cur.execute("SELECT COUNT(1) AS c FROM issues WHERE IFNULL(relatedDocFile,'')='' OR IFNULL(briefRequirement,'')='' OR IFNULL(briefCode,'')='' ")
+            missing_fields = cur.fetchone()['c']
+            if missing_fields and missing_fields > 0:
+                need_import_issues = True
+        except Exception:
+            pass
         issues_file = os.path.join(project_path, 'issues.json')
         if need_import_issues and os.path.exists(issues_file):
             try:
@@ -318,15 +350,33 @@ def import_json_to_db(project_path):
                 for issue in issues or []:
                     try:
                         cur.execute(
-                            'INSERT OR IGNORE INTO issues(displayId,alignmentId,severity,title,content,status,createdAt,updatedAt)'
-                            ' VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                            'INSERT INTO issues(displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
+                            'VALUES (?,?,?,?,?,?,?,?,?,?,?,?) '
+                            'ON CONFLICT(displayId) DO UPDATE SET '
+                            'alignmentId=excluded.alignmentId, '
+                            'severity=excluded.severity, '
+                            'title=excluded.title, '
+                            'content=excluded.content, '
+                            'status=excluded.status, '
+                            'relatedDocFile=excluded.relatedDocFile, '
+                            'relatedRequirementId=excluded.relatedRequirementId, '
+                            'briefRequirement=excluded.briefRequirement, '
+                            'briefCode=excluded.briefCode, '
+                            'createdAt=excluded.createdAt, '
+                            'updatedAt=excluded.updatedAt',
                             (
-                                issue.get('displayId'),
-                                issue.get('alignmentId'),
-                                issue.get('level') or issue.get('severity'),
-                                issue.get('title') or '',
-                                issue.get('description') or issue.get('content') or '',
-                                issue.get('status') or ''
+                                issue['id'],
+                                issue['alignmentId'],
+                                issue['level'],
+                                issue['summary'],
+                                issue['description'],
+                                issue['status'] or 'unconfirmed',
+                                issue['relatedDocFile'],
+                                issue['relatedRequirementId'],
+                                issue['briefRequirement'],
+                                issue['briefCode'],
+                                issue['createdDate'] or datetime.now().isoformat(),
+                                issue['updatedDate'] or datetime.now().isoformat()
                             )
                         )
                     except Exception:
@@ -472,6 +522,15 @@ def import_project():
             return jsonify({"status": "error", "message": "'metadata.json' 文件中缺少 'project_name' 字段。"}), 400
         
         update_history(project_name, project_path)
+
+        # 如为原始版本（不存在 project.db），初始化数据库并迁移旧数据
+        try:
+            db_path = get_db_path(project_path)
+            if not os.path.exists(db_path):
+                init_project_db(project_path)
+                import_json_to_db(project_path)
+        except Exception:
+            pass
 
         # 验证成功，返回项目信息
         project_data = {
@@ -1238,15 +1297,19 @@ def review_alignment():
             brief_req = alignment.get('docRanges', [{}])[0].get('content', '')
             brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')
             cur.execute(
-                'INSERT INTO issues(displayId,alignmentId,severity,title,content,status,createdAt,updatedAt) '
-                'VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                'INSERT INTO issues(displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
+                'VALUES (?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
                 (
                     display_id,
                     alignment.get('id'),
                     issue.get('level') or issue.get('severity'),
                     issue.get('summary') or '',
                     issue.get('description') or '',
-                    'unconfirmed'
+                    'unconfirmed',
+                    doc_file,
+                    alignment.get('id'),
+                    brief_req,
+                    brief_code
                 )
             )
             conn.commit()
@@ -1516,7 +1579,7 @@ def get_issues():
         import_json_to_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
-        cur.execute('SELECT id,displayId,alignmentId,severity,title,content,status,createdAt,updatedAt FROM issues ORDER BY id ASC')
+        cur.execute('SELECT id,displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt FROM issues ORDER BY id ASC')
         rows = cur.fetchall()
         issues = []
         for r in rows:
@@ -1525,9 +1588,13 @@ def get_issues():
                 'displayId': r['displayId'],
                 'alignmentId': r['alignmentId'],
                 'level': r['severity'],
-                'title': r['title'],
-                'description': r['content'],
-                'status': r['status'],
+                'summary': r['title'] or '',
+                'description': r['content'] or '',
+                'status': r['status'] or 'unconfirmed',
+                'relatedDocFile': r['relatedDocFile'] or '',
+                'relatedRequirementId': r['relatedRequirementId'] or '',
+                'briefRequirement': r['briefRequirement'] or '',
+                'briefCode': r['briefCode'] or '',
                 'createdDate': r['createdAt'],
                 'updatedDate': r['updatedAt']
             })
