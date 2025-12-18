@@ -275,62 +275,6 @@ export function normalizePath(path) {
 /****************************
  * 标注工具函数
  ****************************/
-
-// 计算在元素内的文本偏移量
-function getCaretCharacterOffsetWithin(container, offset, element) {
-    let caretOffset = null;
-    const preCaretRange = new Range();
-    preCaretRange.selectNodeContents(element);
-    preCaretRange.setEnd(container, offset);
-    caretOffset = preCaretRange.toString().length;
-    return caretOffset;
-}
-
-// 计算在原始文档中的偏移量
-function findOffsetFromPosition(container, offset, rootElement, reduce = null) {
-    let node = container;
-    for (; node; node = node.parentNode) {
-        let parseStart;
-        let parseEnd;  // NOTE We use this because <td> parse-start will start from '| xxx' in source document
-        if (
-            node instanceof HTMLElement
-            && (parseStart = node.getAttribute('parse-start')) !== null
-            && (parseEnd = node.getAttribute('parse-end')) !== null
-        ) {
-            const i = parseInt(parseStart);
-            const j = parseInt(parseEnd);
-            if (!Number.isNaN(i) && !Number.isNaN(j)) {
-                // TODO: reduce to the start or end of math element
-                if (node.classList.contains('parse-math')) {
-                    if (reduce === 'start') {
-                        return i;
-                    }
-                    if (reduce === 'end') {
-                        return j;
-                    }
-                }
-
-                // container: contain the text
-                // offset: the offset in the text
-                // node: the node that contains the parse-start and parse-end attributes
-                const _offset = getCaretCharacterOffsetWithin(container, offset, node);
-                if (_offset === 0) return i;
-
-                // NOTE e.g., <td> parse-start will start from '| xxx' in source document, and similarly there are other elements that text content starts at different offset
-                // NOTE do not use getTextContentBytesLength here because it is the length as string in sourceDocument
-                return _offset === null ? null : j - ((node.textContent?.length ?? 0) - _offset);
-            }
-        }
-
-        if (node === rootElement) {
-            const _offset = getCaretCharacterOffsetWithin(container, offset, rootElement);
-            return _offset;
-        }
-    }
-
-    return null;
-}
-
 // 获取原始文档中的范围 - 简化版本，确保选中完整的parse元素
 export function getSourceDocumentRange(rootElement, range) {
     // 查找所有涉及到的具有parse-start和parse-end属性的元素
@@ -670,6 +614,62 @@ function calculateHighlightBlockPosition(start, end, type) {
         top: top,
         height: height
     };
+}
+
+export function renderDecompositionBlock(start, end, type = 'doc') {
+    const editorDiv = document.querySelector(`.content-text-${type}`);
+    if (!editorDiv) return;
+
+    const blockInfo = calculateHighlightBlockPosition(start, end, type);
+    if (!blockInfo) return;
+
+    const div = document.createElement('div');
+    div.className = 'decomposition-highlight';
+    div.setAttribute('data-range-start', start);
+    div.setAttribute('data-range-end', end);
+    div.setAttribute('data-type', type);
+    
+    div.style.position = 'absolute';
+    div.style.left = '0';
+    div.style.right = '0';
+    div.style.top = `${blockInfo.top}px`;
+    div.style.height = `${blockInfo.height}px`;
+    div.style.backgroundColor = 'rgba(200, 200, 200, 0.3)';
+    div.style.pointerEvents = 'none';
+    div.style.zIndex = '1';
+    
+    editorDiv.appendChild(div);
+}
+
+export function updateDecompositionPositions(type) {
+    const selector = type ? `.content-text-${type} .decomposition-highlight` : '.decomposition-highlight';
+    const highlights = document.querySelectorAll(selector);
+    
+    highlights.forEach(div => {
+        const start = parseInt(div.getAttribute('data-range-start'));
+        const end = parseInt(div.getAttribute('data-range-end'));
+        const divType = div.getAttribute('data-type') || type;
+        
+        if (!isNaN(start) && !isNaN(end) && divType) {
+            const blockInfo = calculateHighlightBlockPosition(start, end, divType);
+            if (blockInfo) {
+                div.style.top = `${blockInfo.top}px`;
+                div.style.height = `${blockInfo.height}px`;
+            }
+        }
+    });
+}
+
+/*
+export function renderCodeBlockHighlight(startLine, endLine) {
+    // Deprecated in favor of offset-based rendering
+}
+*/
+
+
+export function clearDecompositionHighlights(type) {
+    const selector = type ? `.content-text-${type} .decomposition-highlight` : '.decomposition-highlight';
+    document.querySelectorAll(selector).forEach(el => el.remove());
 }
 
 // 移除所有高亮

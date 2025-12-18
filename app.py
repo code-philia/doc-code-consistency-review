@@ -1677,120 +1677,6 @@ def get_alignment_by_id():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
-@app.route('/api/get-requirement-chunks', methods=['GET'])
-def get_requirement_chunks():
-    """获取需求分块列表"""
-    try:
-        project_path = request.args.get('projectPath')
-        if not project_path:
-            return jsonify({'status': 'error', 'message': '缺少项目路径'})
-            
-        doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
-        doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
-        
-        if not os.path.exists(doc_block_file_path):
-             return jsonify({'status': 'success', 'data': []})
-             
-        requirements = []
-        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip():
-                    block = json.loads(line.strip())
-                    # 转换回前端期望的格式 (如果需要兼容旧逻辑)
-                    # 但根据需求，前端可能也需要更新以适应新格式
-                    # 这里我们将其包装为对齐关系格式，以便前端复用现有的渲染逻辑
-                    
-                    req_id = f"auto_{get_filename_without_extension(block['filename'])}_{block['start']}"
-                    
-                    # 尝试提取标题
-                    content = block['content'].strip()
-                    lines = content.split('\n')
-                    title = lines[0].strip()[:20] if lines else f"需求块"
-                    if len(lines[0]) > 20: title += "..."
-                    
-                    req_point = {
-                        'id': req_id,
-                        'name': title,
-                        'docRanges': [block],
-                        'codeRanges': [],
-                        'isReviewed': False,
-                        'reviewThoughts': ''
-                    }
-                    requirements.append(req_point)
-                    
-        return jsonify({'status': 'success', 'data': requirements})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
-
-@app.route('/api/get-code-chunks', methods=['GET'])
-def get_code_chunks():
-    """获取代码分块列表"""
-    try:
-        project_path = request.args.get('projectPath')
-        if not project_path:
-            return jsonify({'status': 'error', 'message': '缺少项目路径'})
-            
-        code_block_base_path = os.path.join(project_path, 'code_block_repo')
-        code_block_file_path = os.path.join(code_block_base_path, 'code_blocks.jsonl')
-        
-        if not os.path.exists(code_block_file_path):
-             return jsonify({'status': 'success', 'data': []})
-             
-        code_blocks = []
-        with open(code_block_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip():
-                    code_blocks.append(json.loads(line.strip()))
-        
-        # 将原始代码块格式转换为对齐关系格式（方便前端处理）
-        formatted_blocks = []
-        code_repo_path = os.path.join(project_path, 'code_repo')
-        
-        for block in code_blocks:
-            start_line = max(1, block['range'][0])
-            end_line = max(start_line, block['range'][1])
-            req_id = f"code_{block['file']}_{start_line}_{end_line}"
-            
-            # 读取实际内容
-            file_path = os.path.join(code_repo_path, block['file'])
-            range_content = ''
-            char_start = 0
-            char_end = 0
-            if os.path.exists(file_path):
-                try:
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        original_content = f.read()
-                        lines = original_content.splitlines(keepends=True)
-                        if start_line <= len(lines):
-                            end_line_actual = min(len(lines), end_line)
-                            char_start = sum(len(line) for line in lines[:start_line-1])
-                            char_end = sum(len(line) for line in lines[:end_line_actual])
-                            range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line_actual]])
-                except Exception:
-                    pass
-            
-            code_range = {
-                'filename': block['file'],
-                'documentId': block['file'],
-                'content': range_content or block.get('content', ''),
-                'startLine': start_line,
-                'endLine': end_line,
-                'start': char_start,
-                'end': char_end,
-            }
-            
-            formatted_blocks.append({
-                'id': req_id,
-                'name': f"代码块 {start_line}-{end_line}",
-                'docRanges': [],
-                'codeRanges': [code_range],
-                'isReviewed': False,
-                'reviewThoughts': ''
-            })
-            
-        return jsonify({'status': 'success', 'data': formatted_blocks})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
 
 
 @app.route('/api/get-doc-blocks', methods=['GET'])
@@ -1814,6 +1700,41 @@ def get_doc_blocks():
                     doc_blocks.append(json.loads(line.strip()))
         
         return jsonify({'status': 'success', 'data': doc_blocks})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+@app.route('/api/get-code-blocks', methods=['GET'])
+def get_code_blocks():
+    """获取代码分块列表 (原始格式)"""
+    try:
+        project_path = request.args.get('projectPath')
+        filename = request.args.get('filename') # 可选：按文件名筛选
+        
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'})
+            
+        code_block_base_path = os.path.join(project_path, 'code_block_repo')
+        code_block_file_path = os.path.join(code_block_base_path, 'code_blocks.jsonl')
+        
+        if not os.path.exists(code_block_file_path):
+             return jsonify({'status': 'success', 'data': []})
+             
+        code_blocks = []
+        with open(code_block_file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        block = json.loads(line.strip())
+                        # 如果提供了文件名，则进行筛选
+                        if filename:
+                            if block.get('file') == filename:
+                                code_blocks.append(block)
+                        else:
+                            code_blocks.append(block)
+                    except json.JSONDecodeError:
+                        continue
+        
+        return jsonify({'status': 'success', 'data': code_blocks})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 

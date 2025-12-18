@@ -6,7 +6,8 @@ let activeView = 'alignmentView'; // 当前活动视图
 const { createApp, ref, onMounted, computed, nextTick, watch } = Vue;
 const { ElMessage, ElMessageBox } = ElementPlus;
 import {
-    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers, highlightRange, generateUUIDLike, updateHighlightPositions, extractPlainTextFromMarkdown, removeAllHighlights
+    regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers,  generateUUIDLike, updateHighlightPositions, extractPlainTextFromMarkdown, removeAllHighlights,
+    clearDecompositionHighlights, renderDecompositionBlock, updateDecompositionPositions
 } from './utils.js';
 import { mermaid } from './thirdParty/bundle.js';
 
@@ -126,31 +127,104 @@ const app = createApp({
         // 存储所有文档的对齐数据
         const allAlignments = ref({});
 
-        // 获取分解块数据
-        const fetchDecompositionBlocks = async () => {
+        // 加载并渲染需求分解块
+        const loadAndRenderDocBlocks = async () => {
             if (!projectPath.value) return;
-            
             try {
-                // 获取需求分解块
-                const docResp = await axios.get(`/api/get-requirement-chunks?projectPath=${encodeURIComponent(projectPath.value)}`);
-                if (docResp.data.status === 'success') {
-                    // 后端返回的是包装过的对齐格式，我们需要提取原始的docRanges
-                    // docResp.data.data 是 requirements 列表，每个 req 有 docRanges[0]
-                    docBlocks.value = docResp.data.data.map(req => {
-                        return req.docRanges && req.docRanges.length > 0 ? req.docRanges[0] : null;
-                    }).filter(b => b !== null);
-                }
-                
-                // 获取代码分解块
-                const codeResp = await axios.get(`/api/get-code-chunks?projectPath=${encodeURIComponent(projectPath.value)}`);
-                if (codeResp.data.status === 'success') {
-                     // 同样后端返回的是包装格式
-                     codeBlocks.value = codeResp.data.data.map(req => {
-                         return req.codeRanges && req.codeRanges.length > 0 ? req.codeRanges[0] : null;
-                     }).filter(b => b !== null);
+                const response = await axios.get(`/api/get-doc-blocks?projectPath=${encodeURIComponent(projectPath.value)}`);
+                if (response.data.status === 'success') {
+                    const blocks = response.data.data;
+                    docBlocks.value = blocks; // Store for other uses if needed
+                    
+                    // Clear existing highlights
+                    clearDecompositionHighlights('doc');
+                    
+                    // Render highlights for current file
+                    if (selectedDocFile.value) {
+                        const currentFileBlocks = blocks.filter(b => b.filename === selectedDocFile.value);
+                        await nextTick(() => {
+                            currentFileBlocks.forEach(block => {
+                                renderDecompositionBlock(block.start, block.end, 'doc');
+                            });
+                        });
+                    }
                 }
             } catch (error) {
-                console.error("获取分解块数据失败:", error);
+                console.error("加载需求分解块失败:", error);
+            }
+        };
+
+        // Helper to convert line range to char offsets
+        const getOffsetsFromLineRange = (content, startLine, endLine) => {
+            if (!content) return { start: 0, end: 0 };
+            const lines = content.split(/\r\n|\r|\n/);
+            
+            let currentOffset = 0;
+            let startOffset = 0;
+            let endOffset = 0;
+            
+            // Lines are 1-based
+            for (let i = 0; i < lines.length; i++) {
+                const lineLength = lines[i].length + 1; // +1 for newline
+                
+                if (i + 1 === startLine) {
+                    startOffset = currentOffset;
+                }
+                
+                if (i + 1 === endLine) {
+                    endOffset = currentOffset + lines[i].length; // End of the line content (excluding newline usually, or including?)
+                    // If we want to highlight the whole line, usually we include content.
+                    // The decompose block usually implies the content of the lines.
+                    break;
+                }
+                
+                currentOffset += lineLength;
+            }
+            
+            // Handle case where endLine is beyond file length
+            if (endLine > lines.length) {
+                endOffset = currentOffset; 
+            }
+            
+            return { start: startOffset, end: endOffset };
+        };
+
+        // 加载并渲染代码分解块
+        const loadAndRenderCodeBlocks = async () => {
+            if (!projectPath.value) return;
+            try {
+                // 请求获取当前代码文件的代码块，如果没有选中文件则获取所有（取决于后端实现，这里传递文件名以支持后端筛选）
+                const response = await axios.get(`/api/get-code-blocks?projectPath=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(selectedCodeFile.value || '')}`);
+                if (response.data.status === 'success') {
+                    const blocks = response.data.data;
+                    codeBlocks.value = blocks; // Store
+                    
+                    // Clear existing highlights
+                    clearDecompositionHighlights('code');
+                    
+                    // Render highlights for current file
+                    if (selectedCodeFile.value) {
+                        // Filter blocks for the current file
+                        // The JSON structure has "file" property
+                        const currentFileBlocks = blocks.filter(b => b.file === selectedCodeFile.value);
+                        
+                        await nextTick(() => {
+                            currentFileBlocks.forEach(block => {
+                                if (block.range && Array.isArray(block.range) && block.range.length === 2) {
+                                    const [startLine, endLine] = block.range;
+                                    const { start, end } = getOffsetsFromLineRange(selectedCodeRawContent.value, startLine, endLine);
+                                    
+                                    renderDecompositionBlock(start, end, 'code');
+                                } else if (block.start !== undefined && block.end !== undefined) {
+                                    // Fallback if backend returns offsets
+                                    renderDecompositionBlock(block.start, block.end, 'code');
+                                }
+                            });
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("加载代码分解块失败:", error);
             }
         };
 
@@ -209,7 +283,7 @@ const app = createApp({
                     
                     // 在下一个tick中添加高亮，确保DOM已更新
                     await nextTick(() => {
-                         reloadHighlights();
+                         // reloadHighlights(); (Removed)
                     });
                 } else {
                     alignmentResults.value = [];
@@ -541,32 +615,21 @@ const app = createApp({
                                 isFiltered.value = false;
                             }
                             
+                            // Load and render decomposition blocks
+                            await loadAndRenderDocBlocks();
+
                             // 当选择文档时，获取该文档的对齐结果
                             await fetchAlignments();
-                            // 重新加载高亮
-                            await nextTick(() => {
-                                reloadHighlights();
-                                // 切换需求文档时，根据相关对齐关系自动高亮当前代码文件
-                                if (selectedCodeFile.value && alignmentResults.value) {
-                                    highlightCurrentCodeFileBasedOnDoc();
-                                }
-                            });
                         } else if (fileType === 'code') {
                             selectedCodeFile.value = fileName;
                             selectedCodeRawContent.value = content;
                             selectedCodeContent.value = formatCodeWithLineNumbers(content);
-                            // 切换代码文件时，根据相关对齐关系自动高亮当前代码文件
-                            await nextTick(() => {
-                                if (selectedDocFile.value && alignmentResults.value) {
-                                    highlightCurrentCodeFileBasedOnDoc();
-                                }
-                            });
                             
+                            // Load and render decomposition blocks
+                            await loadAndRenderCodeBlocks();
+
                             // 当选择代码文件时，重新获取所有对齐结果，由前端筛选
                             await fetchAlignments();
-                            await nextTick(() => {
-                                reloadHighlights();
-                            });
                         }
                     } catch (e) {
                         renderError.value = e.message;
@@ -852,6 +915,7 @@ const app = createApp({
                 });
                 if(response.data.status==='success'){
                     ElMessage.success('需求分解完成！');
+                    await loadAndRenderDocBlocks();
                 }
                 else{
                     ElMessage.error(`需求分解失败: ${response.data.message}`);
@@ -891,17 +955,15 @@ const app = createApp({
                     projectPath: projectPath.value
                 });
                 
-                // 刷新界面状态
-                // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
                 await fetchAlignments();
                 await fetchIssues();
                 
-                ElMessage.info('已清空旧数据，开始自动分解需求文档...');
                 const response = await axios.post('api/auto-markdown-split',{
                     projectPath: projectPath.value
                 });
                 if(response.data.status==='success'){
                     ElMessage.success('自动分解完成！');
+                    await loadAndRenderDocBlocks();
                 }
                 else{
                     ElMessage.error(`自动分解失败: ${response.data.message}`);
@@ -938,17 +1000,15 @@ const app = createApp({
                     projectPath: projectPath.value
                 });
                 
-                // 刷新界面状态
-                // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
                 await fetchAlignments();
                 await fetchIssues();
                 
-                ElMessage.info('已清空旧数据，开始代码分解...');
                 const response = await axios.post('/api/code-decomposition', {
                     projectPath: projectPath.value
                 });
                 if (response.data.status === 'success') {
                     ElMessage.success('代码分解完成！');
+                    await loadAndRenderCodeBlocks();
                 } else {
                     ElMessage.error(`代码分解失败: ${response.data.message}`);
                 }
@@ -1257,9 +1317,6 @@ const app = createApp({
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
 
-                // 高亮选中的需求文档部分
-                highlightRequirementRange(currentSelection.value.start, currentSelection.value.end, id);
-
                 ElMessage.success('对齐关系创建成功');
             } catch (err) {
                 console.error("Error saving alignment:", err);
@@ -1269,177 +1326,24 @@ const app = createApp({
             }
         };
 
-        // 高亮需求文档范围
-        const highlightRequirementRange = (start, end, alignmentId, isAlignment = true) => {
-            // 检查是否已存在相同范围和类型的的高亮块
-            const existingHighlight = document.querySelector(
-                `.highlight-block[data-range-start="${start}"][data-range-end="${end}"]`
-            );
 
-            if (existingHighlight && isAlignment) {
-                // 如果存在，追加ID
-                const currentIds = existingHighlight.getAttribute('data-alignment-id') || '';
-                const idList = currentIds.split(',').filter(id => id);
-                if (!idList.includes(alignmentId)) {
-                    idList.push(alignmentId);
-                    existingHighlight.setAttribute('data-alignment-id', idList.join(','));
-                }
-                // 确保样式正确
-                if (!existingHighlight.classList.contains('highlight-block')) {
-                     existingHighlight.classList.add('highlight-block');
-                     existingHighlight.classList.add('alignment-active');
-                }
-                return;
-            }
 
-            const highlights = highlightRange(start, end, 'doc', alignmentId);
-            
-            // 设置淡雅的蓝色背景和标识属性
-            highlights.forEach(highlight => {              
-                highlight.style.backgroundColor = 'rgba(173, 216, 230, 0.25)';
-                highlight.classList.add('requirement-highlight');
-                highlight.setAttribute('data-alignment-id', alignmentId);
-                highlight.setAttribute('data-range-start', start);
-                highlight.setAttribute('data-range-end', end);
-                highlight.setAttribute('data-type', 'doc');
-            });
-        };
 
-        // 高亮代码范围
-        const highlightCodeRange = (start, end, alignmentId, isAlignment = true) => {
-            // 检查是否已存在相同范围和类型的的高亮块
-            const existingHighlight = document.querySelector(
-                `.code-highlight[data-range-start="${start}"][data-range-end="${end}"]`
-            );
 
-            if (existingHighlight && isAlignment) {
-                // 如果存在，追加ID
-                const currentIds = existingHighlight.getAttribute('data-alignment-id') || '';
-                const idList = currentIds.split(',').filter(id => id);
-                if (!idList.includes(alignmentId)) {
-                    idList.push(alignmentId);
-                    existingHighlight.setAttribute('data-alignment-id', idList.join(','));
-                }
-                // 确保样式正确
-                 if (!existingHighlight.classList.contains('code-highlight')) {
-                     existingHighlight.classList.add('code-highlight');
-                     existingHighlight.classList.add('alignment-active');
-                }
-                return;
-            }
 
-            const highlights = highlightRange(start, end, 'code', alignmentId);
-            
-            // 设置淡雅的绿色背景和标识属性
-            highlights.forEach(highlight => {
-                highlight.style.backgroundColor = 'rgba(173, 216, 230, 0.25)';
-                highlight.classList.add('code-highlight');
-                highlight.setAttribute('data-alignment-id', alignmentId);
-                highlight.setAttribute('data-range-start', start);
-                highlight.setAttribute('data-range-end', end);
-                highlight.setAttribute('data-type', 'code');
-            });
-        };
-
-        // 重新加载当前文档的所有高亮
-        const reloadHighlights = () => {
-            // 重新加载需求文档高亮
-            if (selectedDocFile.value && alignmentResults.value) {
-                // 清除现有需求高亮
-                const existingDocHighlights = document.querySelectorAll('.requirement-highlight');
-                existingDocHighlights.forEach(el => {
-                    const parent = el.parentNode;
-                    parent.insertBefore(document.createTextNode(el.textContent), el);
-                    parent.removeChild(el);
-                    parent.normalize();
-                });
-
-                // 重新应用所有对齐关系的文档高亮
-                alignmentResults.value.forEach(alignment => {
-                    if (alignment.docRanges && alignment.docRanges.length > 0) {
-                        alignment.docRanges.forEach(range => {
-                            if (range.documentId === selectedDocFile.value) {
-                                highlightRequirementRange(range.start, range.end, alignment.id);
-                            }
-                        });
-                    }
-                });
-            }
-
-            // 重新加载代码高亮
-            if (selectedCodeFile.value && alignmentResults.value) {
-                // 清除现有代码高亮
-                const existingCodeHighlights = document.querySelectorAll('.code-highlight');
-                existingCodeHighlights.forEach(el => {
-                    const parent = el.parentNode;
-                    parent.insertBefore(document.createTextNode(el.textContent), el);
-                    parent.removeChild(el);
-                    parent.normalize();
-                });
-
-                // 重新应用所有对齐关系的代码高亮
-                alignmentResults.value.forEach(alignment => {
-                    if (alignment.codeRanges && alignment.codeRanges.length > 0) {
-                        alignment.codeRanges.forEach(range => {
-                            if (range.documentId === selectedCodeFile.value) {
-                                highlightCodeRange(range.start, range.end, alignment.id);
-                            }
-                        });
-                    }
-                });
-            }
-        };
 
         // 刷新对齐关系和高亮
         const refreshAlignments = async () => {
             try {                
                 // 重新获取对齐关系
                 await fetchAlignments();
-                
-                // 重新加载高亮
-                await nextTick(() => {
-                    reloadHighlights();
-                    if (selectedCodeFile.value && alignmentResults.value) {
-                        highlightCurrentCodeFileBasedOnDoc();
-                    }
-                });
             } catch (error) {
                 console.error('刷新对齐关系失败:', error);
                 ElMessage.error(`刷新失败: ${error.message}`);
             }
         };
 
-        // 精确移除特定范围的高亮块
-        const removeSpecificHighlights = (ranges, type, alignmentId) => {
-            if (!ranges || ranges.length === 0) return;
-            
-            ranges.forEach(range => {
-                // 移除需求高亮
-                if (type === 'doc') {
-                    const highlightsToRemove = document.querySelectorAll(
-                        `.requirement-highlight[data-alignment-id="${alignmentId}"][data-range-start="${range.start}"][data-range-end="${range.end}"]`
-                    );
-                    highlightsToRemove.forEach(el => {
-                        const parent = el.parentNode;
-                        parent.insertBefore(document.createTextNode(el.textContent), el);
-                        parent.removeChild(el);
-                        parent.normalize();
-                    });
-                }
-                // 移除代码高亮
-                else if (type === 'code') {
-                    const highlightsToRemove = document.querySelectorAll(
-                        `.code-highlight[data-alignment-id="${alignmentId}"][data-range-start="${range.start}"][data-range-end="${range.end}"]`
-                    );
-                    highlightsToRemove.forEach(el => {
-                        const parent = el.parentNode;
-                        parent.insertBefore(document.createTextNode(el.textContent), el);
-                        parent.removeChild(el);
-                        parent.normalize();
-                    });
-                }
-            });
-        };
+
 
         // 刷新筛选状态下的对齐列表
         const refreshFilteredAlignments = () => {
@@ -1452,38 +1356,7 @@ const app = createApp({
             }
         };
 
-        // 根据当前需求文档的对齐关系高亮当前代码文件
-        const highlightCurrentCodeFileBasedOnDoc = () => {
-            if (!selectedDocFile.value || !selectedCodeFile.value || !alignmentResults.value) {
-                return;
-            }
 
-            // 清除现有代码高亮
-            const existingCodeHighlights = document.querySelectorAll('.code-highlight');
-            existingCodeHighlights.forEach(el => {
-                const parent = el.parentNode;
-                parent.insertBefore(document.createTextNode(el.textContent), el);
-                parent.removeChild(el);
-                parent.normalize();
-            });
-
-            // 查找与当前需求文档相关的对齐关系，并高亮对应的代码文件部分
-            alignmentResults.value.forEach(alignment => {
-                // 检查该对齐关系是否包含当前需求文档
-                const hasCurrentDoc = alignment.docRanges && alignment.docRanges.some(range => 
-                    range.documentId === selectedDocFile.value
-                );
-                
-                if (hasCurrentDoc && alignment.codeRanges) {
-                    // 高亮该对齐关系中当前代码文件的相关部分
-                    alignment.codeRanges.forEach(range => {
-                        if (range.documentId === selectedCodeFile.value) {
-                            highlightCodeRange(range.start, range.end, alignment.id);
-                        }
-                    });
-                }
-            });
-        };
 
         /***********************
          * 点击高亮筛选功能
@@ -2220,25 +2093,6 @@ const app = createApp({
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
                 
-                // 高亮该对齐关系中当前代码文件的所有代码片段
-                if (selectionInfo && selectionInfo.type === 'code') {
-                    // 清除当前代码文件中该对齐关系的所有高亮
-                    const existingHighlights = document.querySelectorAll(`.code-highlight[data-alignment-id="${alignment.id}"]`);
-                    existingHighlights.forEach(el => {
-                        const parent = el.parentNode;
-                        parent.insertBefore(document.createTextNode(el.textContent), el);
-                        parent.removeChild(el);
-                        parent.normalize();
-                    });
-                    
-                    // 重新高亮该对齐关系中当前代码文件的所有代码片段
-                    alignment.codeRanges.forEach(range => {
-                        if (range.documentId === selectedCodeFile.value) {
-                            highlightCodeRange(range.start, range.end, alignment.id);
-                        }
-                    });
-                }
-                
                 ElMessage.success('已添加到对齐关系');
             } catch (err) {
                 console.error("Error updating alignment:", err);
@@ -2284,9 +2138,6 @@ const app = createApp({
                 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
-                
-                // 高亮选中的需求文档部分
-                highlightRequirementRange(selectionInfo.start, selectionInfo.end, alignment.id);
                 
                 ElMessage.success('已添加到对齐关系');
             } catch (err) {
@@ -2970,7 +2821,7 @@ const app = createApp({
 
             // 精确移除被删除范围的高亮
             if (rangeToRemove) {
-                removeSpecificHighlights([rangeToRemove], type, alignment.id);
+                // removeSpecificHighlights([rangeToRemove], type, alignment.id);
             }
 
             // 当删除所有代码范围或所有需求范围时，重置为未审查/未对齐
@@ -3185,9 +3036,11 @@ const app = createApp({
         const recalculateHighlightPositions = () => {
             // 重新计算需求文档的高亮位置
             updateHighlightPositions('doc');
+            updateDecompositionPositions('doc');
             
             // 重新计算代码的高亮位置
             updateHighlightPositions('code');
+            updateDecompositionPositions('code');
         };
 
         /***********************
@@ -3196,7 +3049,8 @@ const app = createApp({
         onMounted(async () => {
             await fetchProjectMetadata();
             // 先加载分解块数据，再加载对齐数据
-            await fetchDecompositionBlocks();
+            await loadAndRenderDocBlocks();
+            await loadAndRenderCodeBlocks();
             await fetchAlignments();
             await fetchIssues();
             
@@ -3272,6 +3126,15 @@ const app = createApp({
 
             // 清理页面上的高亮元素
             try {
+                // Remove decomposition highlights
+                clearDecompositionHighlights('doc');
+                clearDecompositionHighlights('code');
+                
+                // Remove alignment highlights
+                removeAllHighlights('doc');
+                removeAllHighlights('code');
+                
+                // Remove deprecated highlights if any remain (fallback)
                 const highlights = document.querySelectorAll('.requirement-highlight, .code-highlight');
                 highlights.forEach(el => {
                     const parent = el.parentNode;
