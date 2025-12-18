@@ -271,26 +271,6 @@ def init_project_db(project_path):
             'updatedAt TEXT,'
             'FOREIGN KEY(alignmentId) REFERENCES alignments(id) ON DELETE CASCADE)'
         )
-        try:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute('PRAGMA table_info(issues)')
-            cols = {row[1] if not isinstance(row, sqlite3.Row) else row['name'] for row in cur.fetchall()}
-            add_cols = [
-                ('relatedDocFile', 'TEXT'),
-                ('relatedRequirementId', 'TEXT'),
-                ('briefRequirement', 'TEXT'),
-                ('briefCode', 'TEXT')
-            ]
-            for name, typ in add_cols:
-                if name not in cols:
-                    try:
-                        cur.execute(f'ALTER TABLE issues ADD COLUMN {name} {typ}')
-                    except Exception:
-                        pass
-            conn.commit()
-        except Exception:
-            pass
         conn.execute('CREATE INDEX IF NOT EXISTS idx_issues_alignmentId ON issues(alignmentId)')
     finally:
         conn.close()
@@ -742,30 +722,6 @@ def get_file_content():
     except Exception as e:
         return jsonify({"status": "error", "message": f"读取文件内容时出错: {e}"}), 500
 
-# alignment and review
-@app.route('/api/query-related-code', methods=['POST'])
-def query_related_code_endpoint():
-    data = request.json
-    requirement = data.get('requirement', '')
-    code_files = data.get('codeFiles', [])
-
-    related_code = query_related_code(requirement, code_files, split_code=True)
-    # related_code = [{'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 1, 'end': 5},
-    #                 {'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 10, 'end': 15},
-    #                 {'filename': 'acme.c', 'content': 'int main() { return 0; }', 'start': 90, 'end': 95}]
-    # related_code.append({"filename": "apputils.c", "content": "int main() { return 0; }", "start": 6, "end": 10})
-    return jsonify({"relatedCode": related_code})
-
-
-@app.route('/api/generate-requirement', methods=['POST'])
-def generate_requirement_endpoint():
-    data = request.json
-    related_code = data.get('relatedCode', [])
-    
-    generate_requirement = query_generated_requirement(related_code)
-    # generate_requirement = "This is a mock generated requirement based on the provided code blocks."
-    
-    return jsonify({"generatedRequirement":generate_requirement})
 
 
 @app.route('/api/requirement-decomposition', methods=['POST'])
@@ -1101,6 +1057,9 @@ def download_file(filename):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+#####################################
+# 核心流程函数
+#####################################
 @app.route('/api/align-requirement-to-project', methods=['POST'])
 def align_requirement_to_project():
     """
@@ -1264,7 +1223,6 @@ def review_alignment():
     
     # 3. 保存更新后的对齐关系到数据库
     try:
-        init_project_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         cur.execute(
@@ -1279,7 +1237,6 @@ def review_alignment():
     # 4. 如果有，生成并保存问题单到数据库
     if issue:
         try:
-            init_project_db(project_path)
             conn = get_db_conn(project_path)
             cur = conn.cursor()
             # 分配展示ID
@@ -1342,112 +1299,6 @@ def clear_alignment_review():
         return jsonify({"status": "error", "message": str(e)})
 
 
-# def generate_and_save_issue(project_path, alignment, issue_details, doc_file):
-#     issue_id = str(uuid.uuid4())
-    
-#     # 从LLM返回的issue详情中提取信息
-#     level = issue_details.get('level', 'medium')
-#     summary = issue_details.get('summary', '未提供摘要')
-#     description = issue_details.get('description', '未提供详细描述')
-
-#     # 获取缩略信息
-#     brief_requirement = alignment.get('docRanges', [{}])[0].get('content', '')[:30] + '...'
-#     brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')[:30] + '...'
-
-#     new_issue = {
-#         "id": issue_id,
-#         "level": level,
-#         "summary": summary,
-#         "description": description,
-#         "status": "unconfirmed",
-#         "alignmentId": alignment.get('id'),
-#         "relatedDocFile": doc_file,
-#         "relatedRequirementId": alignment.get('id'), # 兼容旧字段
-#         "briefRequirement": brief_requirement,
-#         "briefCode": brief_code,
-#         "createdDate": datetime.now().isoformat(),
-#         "updatedDate": datetime.now().isoformat()
-#     }
-
-#     issues_file = os.path.join(project_path, 'issues.json')
-#     try:
-#         issues_data = []
-#         if os.path.exists(issues_file):
-#             with open(issues_file, 'r', encoding='utf-8') as f:
-#                 try:
-#                     issues_data = json.load(f)
-#                 except json.JSONDecodeError:
-#                     pass # 文件为空或损坏
-        
-#         issues_data.append(new_issue)
-        
-#         with open(issues_file, 'w', encoding='utf-8') as f:
-#             json.dump(issues_data, f, ensure_ascii=False, indent=4)
-#     except Exception as e:
-#         print(f"Failed to save issue: {str(e)}")
-
-def generate_and_save_issue(project_path, alignment, issue_details, doc_file):
-    # 读取已有问题单以计算下一个展示ID
-    issues_file = os.path.join(project_path, 'issues.json')
-    existing_issues = []
-    if os.path.exists(issues_file):
-        try:
-            with open(issues_file, 'r', encoding='utf-8') as f:
-                existing_issues = json.load(f)
-        except json.JSONDecodeError:
-            existing_issues = []
-
-    # 提取已使用的展示ID序号并确定起始编号
-    used_numbers = set()
-    pattern = re.compile(r'^ISSUE-(\d+)$')
-    for iss in existing_issues:
-        disp = iss.get('displayId')
-        if isinstance(disp, str):
-            m = pattern.match(disp)
-            if m:
-                try:
-                    used_numbers.add(int(m.group(1)))
-                except ValueError:
-                    pass
-
-    next_number = (max(used_numbers) + 1) if used_numbers else 1
-
-    # 批量构建新问题单并一次性写入
-    for item in issue_details:
-        issue_id = str(uuid.uuid4())
-        level = item.get('level', 'medium')
-        summary = item.get('summary', '未提供摘要')
-        description = item.get('description', '未提供详细描述')
-
-        brief_requirement = alignment.get('docRanges', [{}])[0].get('content', '')[:30] + '...'
-        brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')[:30] + '...'
-
-        display_id = f"ISSUE-{next_number:03d}"
-        next_number += 1
-
-        new_issue = {
-            "id": issue_id,
-            "displayId": display_id,
-            "level": level,
-            "summary": summary,
-            "description": description,
-            "status": "unconfirmed",
-            "alignmentId": alignment.get('id'),
-            "relatedDocFile": doc_file,
-            "relatedRequirementId": alignment.get('id'),
-            "briefRequirement": brief_requirement,
-            "briefCode": brief_code,
-            "createdDate": datetime.now().isoformat(),
-            "updatedDate": datetime.now().isoformat()
-        }
-
-        existing_issues.append(new_issue)
-
-    try:
-        with open(issues_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_issues, f, ensure_ascii=False, indent=4)
-    except Exception as e:
-        print(f"Failed to save issue: {str(e)}")
 
 
 def get_filename_without_extension(filename):
@@ -1464,7 +1315,6 @@ def get_alignments():
         return jsonify({"status": "error", "message": "缺少项目路径参数。"}), 400
 
     try:
-        import_json_to_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         
@@ -1503,7 +1353,6 @@ def add_alignment():
         return jsonify({"status": "error", "message": "缺少项目路径或无效的对齐数据。"}), 400
 
     try:
-        init_project_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         cur.execute(
@@ -1534,7 +1383,6 @@ def delete_alignment():
     if not all([project_path, alignment_id]):
         return jsonify({"status": "error", "message": "缺少项目路径或对齐ID参数。"}), 400
     try:
-        init_project_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         cur.execute('DELETE FROM alignments WHERE id=?', (alignment_id,))
@@ -1545,38 +1393,12 @@ def delete_alignment():
         return jsonify({"status": "error", "message": f"删除对齐项时出错: {e}"}), 500
 
 
-@app.route('/project/alignment-file', methods=['GET'])
-def get_alignment_file():
-    """根据文件路径加载对齐关系文件"""
-    file_path = request.args.get('path')
-    if not file_path:
-        return jsonify({"status": "error", "message": "缺少文件路径参数。"}), 400
-
-    if not os.path.exists(file_path):
-        return jsonify({"status": "error", "message": "对齐关系文件不存在。"}), 404
-
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        # 将字典格式转换为列表格式
-        if isinstance(data, dict):
-            alignments = list(data.values())
-        else:
-            alignments = data
-            
-        return jsonify({"status": "success", "data": alignments}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"读取对齐文件失败: {e}"}), 500
-
 @app.route('/project/issues', methods=['GET'])
 def get_issues():
     try:
         project_path = request.args.get('path')
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
-        init_project_db(project_path)
-        import_json_to_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         cur.execute('SELECT id,displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt FROM issues ORDER BY id ASC')
@@ -1610,7 +1432,6 @@ def add_issue():
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
         issue_data = request.json or {}
-        init_project_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         # 分配展示ID
@@ -1752,7 +1573,6 @@ def clear_review_results():
         if not os.path.exists(project_path):
             return jsonify({'status': 'error', 'message': '项目路径不存在'})
         
-        init_project_db(project_path)
         conn = get_db_conn(project_path)
         try:
             conn.execute('DELETE FROM issues')
@@ -1783,7 +1603,6 @@ def update_issue_content():
         return jsonify({"status": "error", "message": "缺少项目路径或问题单ID"}), 400
 
     try:
-        init_project_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         cur.execute('UPDATE issues SET content=?, status=?, severity=?, updatedAt=CURRENT_TIMESTAMP WHERE id=?', (
@@ -1839,7 +1658,6 @@ def get_alignment_by_id():
     if not project_path or not alignment_id:
         return jsonify({'status': 'error', 'message': '缺少项目路径或对齐ID'}), 400
     try:
-        init_project_db(project_path)
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         cur.execute('SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments WHERE id=?', (alignment_id,))
@@ -1971,6 +1789,31 @@ def get_code_chunks():
             })
             
         return jsonify({'status': 'success', 'data': formatted_blocks})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+@app.route('/api/get-doc-blocks', methods=['GET'])
+def get_doc_blocks():
+    """获取需求分块列表"""
+    try:
+        project_path = request.args.get('projectPath')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'})
+            
+        doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
+        doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
+        
+        if not os.path.exists(doc_block_file_path):
+             return jsonify({'status': 'success', 'data': []})
+             
+        doc_blocks = []
+        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    doc_blocks.append(json.loads(line.strip()))
+        
+        return jsonify({'status': 'success', 'data': doc_blocks})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
