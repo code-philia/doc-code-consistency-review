@@ -318,7 +318,7 @@
                                             <i class="fas fa-file-word"></i> <span style="margin-left: 8px;">${ selectedDocFile || '请选择需求文档' }</span>
                                         </div>
                                         <div style="display: flex; align-items: center;">
-                                            <el-button-group size="small" style="margin-right: 10px;" v-if="currentSelectedAlignmentId">
+                                            <el-button-group size="small" style="margin-right: 10px;">
                                                 <el-button size="small" @click="navigateDocBlock(-1)" title="上一块">↑</el-button>
                                                 <el-button size="small" @click="navigateDocBlock(1)" title="下一块">↓</el-button>
                                             </el-button-group>
@@ -349,7 +349,7 @@
                                             <i class="fas fa-file-code"></i> <span style="margin-left: 8px;">${ selectedCodeFile || '请选择代码文件' }</span>
                                         </div>
                                         <div style="display: flex; align-items: center;">
-                                            <el-button-group size="small" style="margin-right: 10px;" v-if="currentSelectedAlignmentId">
+                                            <el-button-group size="small" style="margin-right: 10px;">
                                                 <el-button size="small" @click="navigateCodeBlock(-1)" title="上一块">↑</el-button>
                                                 <el-button size="small" @click="navigateCodeBlock(1)" title="下一块">↓</el-button>
                                             </el-button-group>
