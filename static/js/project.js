@@ -127,24 +127,52 @@ const app = createApp({
         // 存储所有文档的对齐数据
         const allAlignments = ref({});
 
+        // 监听对齐数据变化，更新高亮
+        watch(allAlignments, async () => {
+            if (selectedDocFile.value) {
+                await loadAndRenderDocBlocks(false);
+            }
+            if (selectedCodeFile.value) {
+                await loadAndRenderCodeBlocks(false);
+            }
+        }, { deep: true });
+
         // 加载并渲染需求分解块
-        const loadAndRenderDocBlocks = async () => {
+        const loadAndRenderDocBlocks = async (reload = true) => {
             if (!projectPath.value) return;
             try {
-                const response = await axios.get(`/api/get-doc-blocks?projectPath=${encodeURIComponent(projectPath.value)}`);
-                if (response.data.status === 'success') {
-                    const blocks = response.data.data;
-                    docBlocks.value = blocks; // Store for other uses if needed
-                    
+                let blocks = docBlocks.value;
+                if (reload || !blocks || blocks.length === 0) {
+                    const response = await axios.get(`/api/get-doc-blocks?projectPath=${encodeURIComponent(projectPath.value)}`);
+                    if (response.data.status === 'success') {
+                        blocks = response.data.data;
+                        docBlocks.value = blocks; // Store for other uses if needed
+                    }
+                }
+                
+                if (blocks) {
                     // Clear existing highlights
                     clearDecompositionHighlights('doc');
                     
                     // Render highlights for current file
                     if (selectedDocFile.value) {
                         const currentFileBlocks = blocks.filter(b => b.filename === selectedDocFile.value);
+                        
+                        // 获取当前文件的对齐信息
+                        const currentFileAlignments = allAlignments.value[selectedDocFile.value] || [];
+                        const alignedRanges = new Set();
+                        currentFileAlignments.forEach(alignment => {
+                            if (alignment.docRanges) {
+                                alignment.docRanges.forEach(range => {
+                                    alignedRanges.add(`${range.start}-${range.end}`);
+                                });
+                            }
+                        });
+
                         await nextTick(() => {
                             currentFileBlocks.forEach(block => {
-                                renderDecompositionBlock(block.start, block.end, 'doc');
+                                const isAligned = alignedRanges.has(`${block.start}-${block.end}`);
+                                renderDecompositionBlock(block.start, block.end, 'doc', isAligned);
                             });
                         });
                     }
@@ -190,15 +218,20 @@ const app = createApp({
         };
 
         // 加载并渲染代码分解块
-        const loadAndRenderCodeBlocks = async () => {
+        const loadAndRenderCodeBlocks = async (reload = true) => {
             if (!projectPath.value) return;
             try {
-                // 请求获取当前代码文件的代码块，如果没有选中文件则获取所有（取决于后端实现，这里传递文件名以支持后端筛选）
-                const response = await axios.get(`/api/get-code-blocks?projectPath=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(selectedCodeFile.value || '')}`);
-                if (response.data.status === 'success') {
-                    const blocks = response.data.data;
-                    codeBlocks.value = blocks; // Store
-                    
+                let blocks = codeBlocks.value;
+                if (reload || !blocks || blocks.length === 0) {
+                    // 请求获取当前代码文件的代码块，如果没有选中文件则获取所有（取决于后端实现，这里传递文件名以支持后端筛选）
+                    const response = await axios.get(`/api/get-code-blocks?projectPath=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(selectedCodeFile.value || '')}`);
+                    if (response.data.status === 'success') {
+                        blocks = response.data.data;
+                        codeBlocks.value = blocks; // Store
+                    }
+                }
+                
+                if (blocks) {
                     // Clear existing highlights
                     clearDecompositionHighlights('code');
                     
@@ -208,16 +241,36 @@ const app = createApp({
                         // The JSON structure has "file" property
                         const currentFileBlocks = blocks.filter(b => b.file === selectedCodeFile.value);
                         
+                        // 获取当前代码文件的对齐信息
+                        const alignedCodeRanges = new Set();
+                        Object.values(allAlignments.value).forEach(alignments => {
+                            alignments.forEach(alignment => {
+                                if (alignment.codeRanges) {
+                                    alignment.codeRanges.forEach(range => {
+                                        if (range.documentId === selectedCodeFile.value || range.filename === selectedCodeFile.value) {
+                                            alignedCodeRanges.add(`${range.start}-${range.end}`);
+                                        }
+                                    });
+                                }
+                            });
+                        });
+
                         await nextTick(() => {
                             currentFileBlocks.forEach(block => {
+                                let start, end;
                                 if (block.range && Array.isArray(block.range) && block.range.length === 2) {
                                     const [startLine, endLine] = block.range;
-                                    const { start, end } = getOffsetsFromLineRange(selectedCodeRawContent.value, startLine, endLine);
-                                    
-                                    renderDecompositionBlock(start, end, 'code');
+                                    const offsets = getOffsetsFromLineRange(selectedCodeRawContent.value, startLine, endLine);
+                                    start = offsets.start;
+                                    end = offsets.end;
                                 } else if (block.start !== undefined && block.end !== undefined) {
-                                    // Fallback if backend returns offsets
-                                    renderDecompositionBlock(block.start, block.end, 'code');
+                                    start = block.start;
+                                    end = block.end;
+                                }
+                                
+                                if (start !== undefined && end !== undefined) {
+                                    const isAligned = alignedCodeRanges.has(`${start}-${end}`);
+                                    renderDecompositionBlock(start, end, 'code', isAligned);
                                 }
                             });
                         });

@@ -616,7 +616,7 @@ function calculateHighlightBlockPosition(start, end, type) {
     };
 }
 
-export function renderDecompositionBlock(start, end, type = 'doc') {
+export function renderDecompositionBlock(start, end, type = 'doc', isAligned = false) {
     const editorDiv = document.querySelector(`.content-text-${type}`);
     if (!editorDiv) return;
 
@@ -634,7 +634,7 @@ export function renderDecompositionBlock(start, end, type = 'doc') {
     div.style.right = '0';
     div.style.top = `${blockInfo.top}px`;
     div.style.height = `${blockInfo.height}px`;
-    div.style.backgroundColor = 'rgba(200, 200, 200, 0.3)';
+    div.style.backgroundColor = isAligned ? 'rgba(173, 216, 230, 0.4)' : 'rgba(200, 200, 200, 0.3)';
     div.style.pointerEvents = 'none';
     div.style.zIndex = '1';
     
