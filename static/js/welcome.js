@@ -288,7 +288,6 @@ app.mount('#app');
 const navItems = document.querySelectorAll('.nav-item');
 const sections = {
     'start': document.getElementById('start-section'),
-    'semi-auto': document.getElementById('semi-auto-section'),
     'annotation': document.getElementById('annotation-section'),
 };
 
