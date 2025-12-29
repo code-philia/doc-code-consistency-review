@@ -382,13 +382,13 @@
                                         </div>
                                         <div style="display: flex; align-items: center;">
                                             <el-button 
-                                                v-if="isFiltered" 
-                                                @click="showAllAlignments" 
-                                                size="small"
+                                                @click="cancelSelection" 
+                                                size="small" 
+                                                text
                                                 plain
-                                                type="primary" 
+                                                type="primary"
                                             >
-                                                全部
+                                                 取消选中
                                             </el-button>
                                             <el-button 
                                                 @click="refreshAlignments" 
@@ -397,7 +397,7 @@
                                                 plain
                                                 type="primary"
                                             >
-                                                 刷新
+                                                 刷新列表
                                             </el-button>
                                         </div>
                                     </div>

@@ -624,7 +624,7 @@ export function renderDecompositionBlock(start, end, type = 'doc', isAligned = f
     if (!blockInfo) return;
 
     const div = document.createElement('div');
-    div.className = 'decomposition-highlight';
+    div.className = 'decomposition-highlight highlight-block';
     div.setAttribute('data-range-start', start);
     div.setAttribute('data-range-end', end);
     div.setAttribute('data-type', type);
@@ -635,7 +635,7 @@ export function renderDecompositionBlock(start, end, type = 'doc', isAligned = f
     div.style.top = `${blockInfo.top}px`;
     div.style.height = `${blockInfo.height}px`;
     div.style.backgroundColor = isAligned ? 'rgba(173, 216, 230, 0.4)' : 'rgba(200, 200, 200, 0.3)';
-    div.style.pointerEvents = 'none';
+    div.style.pointerEvents = 'auto';
     div.style.zIndex = '1';
     
     editorDiv.appendChild(div);

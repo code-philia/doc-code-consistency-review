@@ -1518,45 +1518,44 @@ const app = createApp({
                 alignment = alignmentResults.value.find(a => a.id === alignmentId) || null;
             }
 
-            if (type === 'code') {
-                if (!alignment) {
+            if (!alignment) {
+                if (type === 'code') {
                     alignment = findAlignmentByCodeRange(rangeStart, rangeEnd);
-                }
-                if (!alignment) return;
-
-                clearLinkedAll();
-                target.classList.add('linked-yellow');
-                linkedCodeElement = target;
-
-                applyAlignmentYellow(alignment.id);
-
-                if (alignment.docRanges && alignment.docRanges.length > 0) {
-                    await applyDocYellowRange(alignment.docRanges[0]);
-                }
-            } else if (type === 'doc') {
-                if (!alignment) {
+                } else if (type === 'doc') {
                     alignment = findAlignmentByDocRange(rangeStart, rangeEnd);
                 }
-                if (!alignment) return;
-
-                clearLinkedAll();
-                target.classList.add('linked-yellow');
-                linkedDocElement = target;
-
-                applyAlignmentYellow(alignment.id);
-
-                if (alignment.codeRanges && alignment.codeRanges.length > 0) {
-                    await applyCodeYellowRange(alignment.codeRanges[0]);
-                }
             }
+            
+            if (!alignment) return;
+
+            // Calculate indices
+            let docIndex = 0;
+            let codeIndex = 0;
+
+            if (type === 'doc' && alignment.docRanges) {
+                // Find index of the clicked range in alignment.docRanges
+                const idx = alignment.docRanges.findIndex(r => 
+                    r.documentId === selectedDocFile.value && 
+                    Math.max(r.start, rangeStart) < Math.min(r.end, rangeEnd)
+                );
+                if (idx !== -1) docIndex = idx;
+            } else if (type === 'code' && alignment.codeRanges) {
+                 const idx = alignment.codeRanges.findIndex(r => 
+                    r.documentId === selectedCodeFile.value && 
+                    Math.max(r.start, rangeStart) < Math.min(r.end, rangeEnd)
+                );
+                if (idx !== -1) codeIndex = idx;
+            }
+
+            selectAlignment(alignment, docIndex, codeIndex);
         };
 
         // 选中对齐关系的核心逻辑
-        const selectAlignment = async (alignment) => {
+        const selectAlignment = async (alignment, docIndex = 0, codeIndex = 0) => {
             if (!alignment) return;
             currentSelectedAlignmentId.value = alignment.id;
-            currentDocBlockIndex.value = 0;
-            currentCodeBlockIndex.value = 0;
+            currentDocBlockIndex.value = docIndex;
+            currentCodeBlockIndex.value = codeIndex;
 
             statusFilters.value = ['unaligned', 'unreviewed', 'reviewed'];
             await nextTick();
@@ -1566,10 +1565,12 @@ const app = createApp({
             applyAlignmentYellow(alignment.id);
 
             if (alignment.docRanges && alignment.docRanges.length > 0) {
-                await applyDocYellowRange(alignment.docRanges[0]);
+                const targetDocIndex = (docIndex >= 0 && docIndex < alignment.docRanges.length) ? docIndex : 0;
+                await applyDocYellowRange(alignment.docRanges[targetDocIndex]);
             }
             if (alignment.codeRanges && alignment.codeRanges.length > 0) {
-                await applyCodeYellowRange(alignment.codeRanges[0]);
+                const targetCodeIndex = (codeIndex >= 0 && codeIndex < alignment.codeRanges.length) ? codeIndex : 0;
+                await applyCodeYellowRange(alignment.codeRanges[targetCodeIndex]);
             }
         };
 
@@ -1677,6 +1678,13 @@ const app = createApp({
             clearAlignmentYellow();
         };
 
+        const cancelSelection = () => {
+            currentSelectedAlignmentId.value = null;
+            currentDocBlockIndex.value = 0;
+            currentCodeBlockIndex.value = 0;
+            clearLinkedAll();
+        };
+
         const applyAlignmentYellow = (alignmentId) => {
             clearAlignmentYellow();
             const el = document.getElementById(`alignment-item-${alignmentId}`);
@@ -1712,7 +1720,7 @@ const app = createApp({
             await nextTick();
             const codePanel = document.querySelector('.content-text-code');
             if (!codePanel) return;
-            const candidates = Array.from(codePanel.querySelectorAll('.code-highlight'))
+            const candidates = Array.from(codePanel.querySelectorAll('.highlight-block[data-type="code"]'))
                 .filter(el => parseInt(el.getAttribute('data-range-start')) <= codeRange.end && parseInt(el.getAttribute('data-range-end')) >= codeRange.start);
             const target = candidates[0] || null;
             if (target) {
@@ -3589,6 +3597,8 @@ const app = createApp({
             showCodeSelectionDialog,
             // 需求分解功能
             startAutoSplit,
+            cancelSelection,
+            refreshAlignments: fetchAlignments,
             startAutoMarkdownSplit,
             // 代码分解功能
             startAutoCodeSplit,
