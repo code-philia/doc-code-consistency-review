@@ -1754,6 +1754,214 @@ def get_code_blocks():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
+
+def _find_first_file_by_basename(base_dir: str, basename: str):
+    if not base_dir or not basename or not os.path.isdir(base_dir):
+        return None
+    direct_path = os.path.join(base_dir, basename)
+    if os.path.exists(direct_path):
+        return direct_path
+    for root, _, files in os.walk(base_dir):
+        if basename in files:
+            return os.path.join(root, basename)
+    return None
+
+
+def _read_text_file(file_path: str):
+    if not file_path or not os.path.exists(file_path):
+        return None
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        return f.read()
+
+
+def _read_doc_raw_content(project_path: str, filename: str):
+    doc_repo_path = os.path.join(project_path, 'doc_repo')
+    metadata_file = os.path.join(project_path, 'metadata.json')
+    if os.path.exists(metadata_file):
+        try:
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = pyjson.load(f)
+            if metadata.get('doc_repo'):
+                doc_repo_path = metadata.get('doc_repo')
+        except Exception:
+            pass
+
+    if filename and filename.lower().endswith('.md'):
+        file_path = _find_first_file_by_basename(doc_repo_path, os.path.basename(filename))
+        return _read_text_file(file_path)
+
+    if filename:
+        prefix = filename.split('.')[0]
+        converted_md = os.path.join(project_path, 'doc_repo_converted', prefix, prefix + '.md')
+        converted_content = _read_text_file(converted_md)
+        if converted_content is not None:
+            return converted_content
+
+        file_path = _find_first_file_by_basename(doc_repo_path, os.path.basename(filename))
+        return _read_text_file(file_path)
+
+    return None
+
+
+def _offset_to_line_numbers(text: str, start: int, end: int):
+    if text is None:
+        return 1, 1
+    n = len(text)
+    try:
+        s = max(0, min(int(start), n))
+    except Exception:
+        s = 0
+    try:
+        e = max(0, min(int(end), n))
+    except Exception:
+        e = s
+    start_line = text.count('\n', 0, s) + 1
+    end_line = text.count('\n', 0, e) + 1
+    return start_line, end_line
+
+
+def _line_range_to_char_offsets(text: str, start_line: int, end_line: int):
+    if text is None:
+        return 0, 0
+    lines = text.splitlines(keepends=True)
+    if not lines:
+        return 0, 0
+    s = max(1, int(start_line or 1))
+    e = max(s, int(end_line or s))
+    s = min(s, len(lines))
+    e = min(e, len(lines))
+    char_start = sum(len(line) for line in lines[:s - 1])
+    char_end = sum(len(line) for line in lines[:e])
+    return char_start, char_end
+
+
+def _compact_title_from_text(text: str, max_len: int = 24):
+    if not text:
+        return '未命名'
+    t = re.sub(r'\s+', ' ', text).strip()
+    t = re.sub(r'[`*_>#-]+', '', t).strip()
+    if len(t) <= max_len:
+        return t or '未命名'
+    return t[:max_len].rstrip() + '…'
+
+
+@app.route('/api/get-requirement-chunks', methods=['GET'])
+def get_requirement_chunks():
+    try:
+        project_path = request.args.get('projectPath')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
+
+        doc_block_file_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
+        if not os.path.exists(doc_block_file_path):
+            return jsonify({'status': 'success', 'data': []})
+
+        chunks = []
+        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
+            for i, line in enumerate(f):
+                if not line.strip():
+                    continue
+                try:
+                    block = pyjson.loads(line.strip())
+                except Exception:
+                    continue
+
+                filename = block.get('filename') or block.get('documentId') or ''
+                content = block.get('content') or ''
+                start = block.get('start') if block.get('start') is not None else 0
+                end = block.get('end') if block.get('end') is not None else 0
+
+                raw_doc = _read_doc_raw_content(project_path, filename)
+                start_line, end_line = _offset_to_line_numbers(raw_doc, start, end)
+
+                doc_range = {
+                    'documentId': filename,
+                    'filename': filename,
+                    'start': start,
+                    'end': end,
+                    'content': content,
+                    'startLine': start_line,
+                    'endLine': end_line
+                }
+
+                chunk_id = f"auto_req_{uuid.uuid4().hex}"
+                chunk_name = _compact_title_from_text(content, 24)
+                chunks.append({
+                    'id': chunk_id,
+                    'name': chunk_name,
+                    'isReviewed': False,
+                    'reviewThoughts': '',
+                    'docRanges': [doc_range],
+                    'codeRanges': []
+                })
+
+        chunks.sort(key=lambda x: ((x.get('docRanges') or [{}])[0].get('filename') or '', (x.get('docRanges') or [{}])[0].get('start') or 0))
+        return jsonify({'status': 'success', 'data': chunks})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/get-code-chunks', methods=['GET'])
+def get_code_chunks():
+    try:
+        project_path = request.args.get('projectPath')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
+
+        code_block_file_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
+        if not os.path.exists(code_block_file_path):
+            return jsonify({'status': 'success', 'data': []})
+
+        code_repo_path = os.path.join(project_path, 'code_repo')
+        chunks = []
+        with open(code_block_file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    block = pyjson.loads(line.strip())
+                except Exception:
+                    continue
+
+                file_rel = block.get('file') or ''
+                rng = block.get('range') or []
+                if not (isinstance(rng, list) and len(rng) == 2):
+                    continue
+                start_line = int(rng[0])
+                end_line = int(rng[1])
+                content = block.get('code') or block.get('content') or ''
+
+                abs_code_path = os.path.join(code_repo_path, file_rel) if file_rel else None
+                raw_code = _read_text_file(abs_code_path)
+                char_start, char_end = _line_range_to_char_offsets(raw_code, start_line, end_line)
+
+                code_range = {
+                    'documentId': file_rel,
+                    'filename': file_rel,
+                    'start': char_start,
+                    'end': char_end,
+                    'content': content,
+                    'startLine': start_line,
+                    'endLine': end_line
+                }
+
+                chunk_id = f"auto_code_{uuid.uuid4().hex}"
+                chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
+                chunks.append({
+                    'id': chunk_id,
+                    'name': chunk_name,
+                    'isReviewed': False,
+                    'reviewThoughts': '',
+                    'docRanges': [],
+                    'codeRanges': [code_range]
+                })
+
+        chunks.sort(key=lambda x: ((x.get('codeRanges') or [{}])[0].get('filename') or '', (x.get('codeRanges') or [{}])[0].get('startLine') or 0))
+        return jsonify({'status': 'success', 'data': chunks})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 @app.route('/api/align-code-to-requirement', methods=['POST'])
 def align_code_to_requirement():
     """为单个代码块在项目中查找相关需求"""

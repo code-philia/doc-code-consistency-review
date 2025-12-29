@@ -182,7 +182,7 @@ def parse_alignment_output(response):
             else:
                 json_str = response.strip()
 
-        data = json.loads(json_str)
+        data = _safe_json_loads(json_str)
         if isinstance(data, dict):
             return [data]
         elif isinstance(data, list):
@@ -260,7 +260,7 @@ def parse_review_output(response):
             else:
                 json_str = response
 
-        data = json.loads(json_str)
+        data = _safe_json_loads(json_str)
         return {
             "review_process": data.get("review_process", "未能解析出审查过程。"),
             "issue": data.get("issue")
@@ -271,6 +271,61 @@ def parse_review_output(response):
             "review_process": response,
             "issue": None
         }
+
+
+def _repair_json_text(text: str) -> str:
+    s = text or ""
+    out = []
+    in_string = False
+    i = 0
+    allowed_escapes = {'"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u'}
+
+    while i < len(s):
+        ch = s[i]
+
+        if not in_string:
+            out.append(ch)
+            if ch == '"':
+                in_string = True
+            i += 1
+            continue
+
+        if ch == '"':
+            backslashes = 0
+            j = i - 1
+            while j >= 0 and s[j] == '\\':
+                backslashes += 1
+                j -= 1
+            out.append(ch)
+            if backslashes % 2 == 0:
+                in_string = False
+            i += 1
+            continue
+
+        if ch == '\n' or ch == '\r':
+            out.append('\\n')
+            i += 1
+            continue
+
+        if ch == '\\':
+            nxt = s[i + 1] if i + 1 < len(s) else ''
+            if not nxt or nxt not in allowed_escapes:
+                out.append('\\\\')
+                i += 1
+                continue
+
+        out.append(ch)
+        i += 1
+
+    return ''.join(out)
+
+
+def _safe_json_loads(text: str):
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        repaired = _repair_json_text(text)
+        return json.loads(repaired)
 
 # ================= 需求反生成 =================
 def query_generated_requirement(related_code, reference_requirement=""):
