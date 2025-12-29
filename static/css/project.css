@@ -637,66 +637,6 @@
     font-size: 10px;
     padding: 2px 5px;
     border-radius: 2px;
-    margin-right: 8px;
-}
-
-.issue-type.error {
-    background-color: #ffccc7;
-    color: #f5222d;
-}
-
-.issue-type.warning {
-    background-color: #fffbe6;
-    color: #faad14;
-}
-
-.issue-title {
-    font-weight: 600;
-    flex: 1;
-}
-
-.issue-description {
-    font-size: 10px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
-
-.issue-meta {
-    font-size: 10px;
-    color: #999;
-    margin-top: 6px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.req-item {
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    border-left: 2px solid #1abc9c;
-    background-color: #f6ffed;
-    border-radius: 0 3px 3px 0;
-}
-
-.req-item.generated {
-    border-left-color: #3498db;
-    background-color: #e6f7ff;
-}
-
-.req-id {
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: var(--text-primary);
-}
-
-.req-text {
-    font-size: 11px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
-
-.req-meta {
-    font-size: 10px;
-    color: #999;
     margin-top: 6px;
 }
 
@@ -2281,4 +2221,123 @@
     border: 1px solid #e6effa;
     border-radius: 4px;
     padding: 6px 8px;
+}
+
+/* Sidebar Filter Controls */
+.sidebar-controls {
+    padding: 15px;
+    border-bottom: 1px solid #ebeef5;
+    background-color: #fff;
+    flex-shrink: 0;
+}
+
+.filter-row {
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.filter-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Full Width Radio Group */
+.full-width-radio {
+    display: flex !important;
+    width: 100%;
+}
+
+.full-width-radio .el-radio-button {
+    flex: 1;
+    display: flex;
+    margin: 0 !important;
+}
+
+.full-width-radio .el-radio-button__inner {
+    width: 100%;
+    padding: 8px 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 500;
+    border-radius: 0 !important;
+    border-left: 0 !important;
+    box-shadow: none !important;
+}
+
+.full-width-radio .el-radio-button:first-child .el-radio-button__inner {
+    border-left: 1px solid #dcdfe6 !important;
+    border-radius: 4px 0 0 4px !important;
+}
+
+.full-width-radio .el-radio-button:last-child .el-radio-button__inner {
+    border-radius: 0 4px 4px 0 !important;
+}
+
+.full-width-radio .el-radio-button.is-active .el-radio-button__inner {
+    border-left: 1px solid #409eff !important;
+}
+
+/* Status Checkbox Group */
+.status-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.status-checkbox-group .el-checkbox {
+    margin-right: 0 !important;
+}
+
+.status-checkbox-group .el-checkbox__label {
+    padding-left: 6px;
+    font-size: 12px;
+}
+
+/* Full Width Select - Deprecated but kept for compatibility */
+.full-width-select {
+    width: 100%;
+}
+
+/* Ensure alignment items match padding */
+.alignment-list-item {
+    padding: 10px 15px !important;
+    border-bottom: 1px solid #ebeef5;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.alignment-list-item:hover {
+    background-color: #f5f7fa;
+}
+
+.alignment-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+    font-size: 14px;
+    color: #606266;
+}
+
+.sidebar-empty-message {
+    padding: 30px 0;
+    text-align: center;
+    color: #909399;
+    font-size: 13px;
+}
+
+.sidebar-list-container {
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.alignment-list {
+    flex: 1;
+    overflow-y: auto;
 }
