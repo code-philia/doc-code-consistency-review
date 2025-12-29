@@ -1211,6 +1211,8 @@ def review_alignment():
     if not all([project_path, doc_file, alignment]):
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
+    init_project_db(project_path)
+
     # 1. 调用 agent 获取审查结果
     review_process, issue = query_review_result(
         alignment.get('docRanges', []),
@@ -1220,26 +1222,24 @@ def review_alignment():
     # 2. 更新对齐关系
     alignment['isReviewed'] = True
     alignment['reviewThoughts'] = review_process
-    
-    # 3. 保存更新后的对齐关系到数据库
+
+    if isinstance(issue, list):
+        issues_list = [x for x in issue if isinstance(x, dict)]
+    elif isinstance(issue, dict):
+        issues_list = [issue]
+    else:
+        issues_list = []
+
     try:
         conn = get_db_conn(project_path)
         cur = conn.cursor()
+
         cur.execute(
             'UPDATE alignments SET isReviewed=1, reviewThoughts=?, updatedAt=CURRENT_TIMESTAMP WHERE id=?',
             (alignment.get('reviewThoughts') or '', alignment.get('id'))
         )
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Failed to save alignment: {str(e)}"}), 500
 
-    # 4. 如果有，生成并保存问题单到数据库
-    if issue:
-        try:
-            conn = get_db_conn(project_path)
-            cur = conn.cursor()
-            # 分配展示ID
+        if issues_list:
             cur.execute("SELECT displayId FROM issues WHERE displayId LIKE 'ISSUE-%'")
             used = set()
             for r in cur.fetchall():
@@ -1250,31 +1250,47 @@ def review_alignment():
                     except Exception:
                         pass
             next_number = (max(used) + 1) if used else 1
-            display_id = f"ISSUE-{next_number:03d}"
-            brief_req = alignment.get('docRanges', [{}])[0].get('content', '')
-            brief_code = alignment.get('codeRanges', [{}])[0].get('content', '')
-            cur.execute(
-                'INSERT INTO issues(displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-                'VALUES (?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                (
-                    display_id,
-                    alignment.get('id'),
-                    issue.get('level') or issue.get('severity'),
-                    issue.get('summary') or '',
-                    issue.get('description') or '',
-                    'unconfirmed',
-                    doc_file,
-                    alignment.get('id'),
-                    brief_req,
-                    brief_code
+
+            brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
+            brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
+
+            for one in issues_list:
+                display_id = f"ISSUE-{next_number:03d}"
+                next_number += 1
+
+                severity = one.get('level') or one.get('severity')
+                title = one.get('summary') or one.get('title') or ''
+                content = one.get('description') or one.get('content') or ''
+                status = one.get('status') or 'unconfirmed'
+
+                cur.execute(
+                    'INSERT INTO issues(displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
+                    'VALUES (?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                    (
+                        display_id,
+                        alignment.get('id'),
+                        severity,
+                        title,
+                        content,
+                        status,
+                        doc_file,
+                        alignment.get('id'),
+                        brief_req,
+                        brief_code
+                    )
                 )
-            )
-            conn.commit()
+
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        try:
+            conn.rollback()
             conn.close()
         except Exception:
             pass
+        return jsonify({"status": "error", "message": f"Failed to save review result: {str(e)}"}), 500
 
-    return jsonify({"status": "success"})
+    return jsonify({"status": "success", "createdIssues": len(issues_list)})
 
 
 @app.route('/api/clear-alignment-review', methods=['POST'])
