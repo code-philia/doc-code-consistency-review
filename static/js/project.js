@@ -2716,12 +2716,62 @@ const app = createApp({
             try {
                 ElMessage.info(`开始为 "${alignment.name}" 进行对齐...`);
                 
-                // 调用对齐API
-                await addMockCodeToRequirement(selectedDocFile.value, alignment);
+                const hasDocRanges = Array.isArray(alignment.docRanges) && alignment.docRanges.length > 0;
+                const hasCodeRanges = Array.isArray(alignment.codeRanges) && alignment.codeRanges.length > 0;
+
+                let sourceType = null;
+                if (hasDocRanges && !hasCodeRanges) {
+                    sourceType = 'doc';
+                } else if (hasCodeRanges && !hasDocRanges) {
+                    sourceType = 'code';
+                } else if (!hasDocRanges && !hasCodeRanges) {
+                    throw new Error('该对齐关系既没有需求范围也没有代码范围，无法对齐');
+                } else {
+                    const matchesCurrentDoc = selectedDocFile.value && alignment.docRanges.some(r => r.documentId === selectedDocFile.value);
+                    const matchesCurrentCode = selectedCodeFile.value && alignment.codeRanges.some(r => r.documentId === selectedCodeFile.value);
+                    sourceType = matchesCurrentCode && !matchesCurrentDoc ? 'code' : 'doc';
+                }
+
+                if (alignment.isReviewed) {
+                    await axios.post('/api/clear-alignment-review', {
+                        projectPath: projectPath.value,
+                        alignmentId: alignment.id
+                    });
+                }
+
+                const updatedAlignment = {
+                    ...alignment,
+                    isReviewed: false,
+                    reviewThoughts: ''
+                };
+
+                if (sourceType === 'doc') {
+                    ElMessage.info('当前为未对齐的需求块，将匹配代码块...');
+                    const alignResponse = await axios.post('/api/align-requirement-to-project', {
+                        docRanges: updatedAlignment.docRanges,
+                        projectPath: projectPath.value
+                    });
+                    if (!alignResponse.data || alignResponse.data.status !== 'success') {
+                        throw new Error(alignResponse.data?.message || '需求 → 代码 对齐失败');
+                    }
+                    updatedAlignment.codeRanges = alignResponse.data.codeRanges || [];
+                } else {
+                    ElMessage.info('当前为未对齐的代码块，将匹配需求块...');
+                    const alignResponse = await axios.post('/api/align-code-to-requirement', {
+                        codeRanges: updatedAlignment.codeRanges,
+                        projectPath: projectPath.value
+                    });
+                    if (!alignResponse.data || alignResponse.data.status !== 'success') {
+                        throw new Error(alignResponse.data?.message || '代码 → 需求 对齐失败');
+                    }
+                    updatedAlignment.docRanges = alignResponse.data.docRanges || [];
+                }
+
+                await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`, updatedAlignment);
                 
                 // 刷新对齐数据
                 await fetchAlignments();
-                // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
+                refreshFilteredAlignments();
                 
                 ElMessage.success(`"${alignment.name}" 对齐完成！`);
             } catch (error) {
