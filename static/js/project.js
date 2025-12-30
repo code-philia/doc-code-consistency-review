@@ -72,6 +72,8 @@ const app = createApp({
         const currentSelection = ref(null);
         const newAlignmentName = ref('');
         const showReviewDialog = ref(false);
+        const showAlignmentDirectionDialog = ref(false);
+        const alignmentDirectionMode = ref('auto');
         const selectedReviewAlignment = ref(null);
         const activeReviewTab = ref('issues');
         const editingIssueId = ref(null);
@@ -1245,6 +1247,14 @@ const app = createApp({
             }
         };
 
+        const startAutoAlignmentWithDirection = async (direction) => {
+            if (direction === 'reqToCode') {
+                await startAutoAlignmentReqToCode();
+            } else if (direction === 'codeToReq') {
+                await startAutoAlignmentCodeToReq();
+            }
+        };
+
 
 
 
@@ -1874,6 +1884,16 @@ const app = createApp({
 
             // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
             handleHighlightBlockClick(event);
+        };
+
+        const handleAlignmentDirectionSelect = async (direction) => {
+            showAlignmentDirectionDialog.value = false;
+            if (!direction) return;
+            if (alignmentDirectionMode.value === 'auto') {
+                await startAutoAlignmentWithDirection(direction);
+            } else if (alignmentDirectionMode.value === 'restart') {
+                await doRestartAlignment(direction);
+            }
         };
 
         // 根据代码范围查找对应的对齐关系（返回第一个匹配的）
@@ -2592,17 +2612,19 @@ const app = createApp({
         /***********************
          * 自动对齐和审查切换功能
          ***********************/
+        const openAlignmentDirectionDialog = (mode) => {
+            alignmentDirectionMode.value = mode;
+            showAlignmentDirectionDialog.value = true;
+        };
+
         const toggleAutoAlignment = async () => {
             if (isAutoAligning.value) {
-                // 停止对齐
                 isAutoAligning.value = false;
                 alignmentProgress.value = { current: 0, total: 0 };
-                // 停止进度显示
                 stopProgress();
                 ElMessage.info('已停止自动对齐');
             } else {
-                // 默认为 需求 -> 代码 对齐
-                await startAutoAlignmentReqToCode();
+                openAlignmentDirectionDialog('auto');
             }
         };
 
@@ -2623,44 +2645,31 @@ const app = createApp({
         /***********************
          * 重新对齐和重新审查功能
          ***********************/
-        const restartAlignment = async () => {
+        const doRestartAlignment = async (direction) => {
             try {
-                const result = await ElMessageBox.confirm(
-                    '这将清除已有的代码对齐结果，保留需求分解结果，然后重新开始自动对齐。确认继续？',
-                    '重新对齐',
-                    {
-                        confirmButtonText: '确认',
-                        cancelButtonText: '取消',
-                        type: 'warning'
-                    }
-                );
-
-                if (result === 'confirm') {                    
-                    // 调用后端清除代码范围
-                    const response = await axios.post('/api/clear-code-ranges', {
-                        projectPath: projectPath.value
-                    });
-                    
-                    if (response.data.status === 'success') {
-                        // 清除前端代码高亮
-                        removeAllHighlights();
-                        
-                        // 重新获取对齐数据
-                        // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
-                        await fetchAlignments();
-                                                
-                        // 开始自动对齐
-                        await startAutoAlignmentReqToCode();
-                    } else {
-                        throw new Error(response.data.message || '清除代码范围失败');
-                    }
+                const response = await axios.post('/api/clear-code-ranges', {
+                    projectPath: projectPath.value
+                });
+                
+                if (response.data.status === 'success') {
+                    removeAllHighlights();
+                    await fetchAlignments();
+                    await startAutoAlignmentWithDirection(direction);
+                } else {
+                    throw new Error(response.data.message || '清除代码范围失败');
                 }
             } catch (error) {
-                if (error !== 'cancel') {
-                    console.error('重新对齐失败:', error);
-                    ElMessage.error(`重新对齐失败: ${error.message}`);
-                }
+                console.error('重新对齐失败:', error);
+                ElMessage.error(`重新对齐失败: ${error.message}`);
             }
+        };
+
+        const restartAlignment = async () => {
+            if (isAutoAligning.value) {
+                ElMessage.warning('当前正在自动对齐，请先停止');
+                return;
+            }
+            openAlignmentDirectionDialog('restart');
         };
 
         const restartReview = async () => {
@@ -3653,6 +3662,7 @@ const app = createApp({
             selectedDocRawContent,
             handleDocSelection,
             showAlignmentDialog,
+            showAlignmentDirectionDialog,
             currentSelection,
             newAlignmentName,
             createAlignment,
@@ -3692,6 +3702,7 @@ const app = createApp({
             alignmentProgress,
             toggleAutoAlignment,
             singleAlignment,
+            handleAlignmentDirectionSelect,
 
             // 统计数据
             requirementStats,

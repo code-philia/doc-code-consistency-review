@@ -604,6 +604,22 @@
             </template>
         </el-dialog>
 
+        <el-dialog
+            v-model="showAlignmentDirectionDialog"
+            title="选择自动对齐方向"
+            width="420px"
+            :close-on-click-modal="false"
+        >
+            <div style="margin-bottom: 16px; font-size: 14px; line-height: 1.6;">
+                请选择自动对齐的方向。对于重新对齐，将清除已有的代码对齐结果后按所选方向重新执行自动对齐。
+            </div>
+            <template #footer>
+                <el-button @click="showAlignmentDirectionDialog = false">取消</el-button>
+                <el-button type="primary" @click="handleAlignmentDirectionSelect('reqToCode')">需求 → 代码</el-button>
+                <el-button type="success" @click="handleAlignmentDirectionSelect('codeToReq')">代码 → 需求</el-button>
+            </template>
+        </el-dialog>
+
         <!-- 审查结果详情弹窗 -->
         <el-dialog 
             v-model="showReviewDialog" 
