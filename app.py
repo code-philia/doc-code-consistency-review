@@ -1553,7 +1553,7 @@ def clear_project_results():
 
 @app.route('/api/clear-code-ranges', methods=['POST'])
 def clear_code_ranges():
-    """清除所有对齐关系中的代码范围部分，保留对齐关系和文档范围"""
+    """清空项目中的所有对齐关系"""
     data = request.json
     project_path = data.get('projectPath')
     
@@ -1565,15 +1565,15 @@ def clear_code_ranges():
         conn = get_db_conn(project_path)
         try:
             cur = conn.cursor()
-            cur.execute('UPDATE alignments SET codeRanges="[]", isReviewed=0, reviewThoughts=""')
+            cur.execute('DELETE FROM alignments')
             conn.commit()
         finally:
             conn.close()
         
-        return jsonify({"status": "success", "message": "已清除所有对齐关系中的代码范围"})
+        return jsonify({"status": "success", "message": "已清空项目的对齐关系"})
         
     except Exception as e:
-        return jsonify({"status": "error", "message": f"清除代码范围失败: {str(e)}"}), 500
+        return jsonify({"status": "error", "message": f"清空对齐关系失败: {str(e)}"}), 500
 
 
 @app.route('/api/clear-review-results', methods=['POST'])
