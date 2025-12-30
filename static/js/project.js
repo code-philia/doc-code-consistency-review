@@ -2871,6 +2871,9 @@ const app = createApp({
         });
 
         const showContextMenu = (event, alignment) => {
+            // 触发左键选中逻辑
+            handleAlignmentItemClick(alignment);
+
             contextMenu.value.visible = true;
             contextMenu.value.selectedAlignment = alignment;
 
@@ -3775,6 +3778,28 @@ const app = createApp({
             }
         };
 
+        // 导航审查详情
+        const navigateReviewAlignment = (step) => {
+            if (!selectedReviewAlignment.value) return;
+            const currentIndex = alignmentResults.value.findIndex(a => a.id === selectedReviewAlignment.value.id);
+            if (currentIndex === -1) return;
+
+            let newIndex = currentIndex + step;
+            if (newIndex < 0) {
+                ElMessage.info('已经是第一个对齐结果了');
+                return;
+            }
+            if (newIndex >= alignmentResults.value.length) {
+                ElMessage.info('已经是最后一个对齐结果了');
+                return;
+            }
+
+            const nextAlignment = alignmentResults.value[newIndex];
+            selectedReviewAlignment.value = nextAlignment;
+            // 同步更新外部选中状态
+            handleAlignmentItemClick(nextAlignment);
+        };
+
         /***********************
          * 监听器
          ***********************/
@@ -3947,6 +3972,7 @@ const app = createApp({
             navigateDocBlock,
             navigateCodeBlock,
             handleAlignmentItemClick,
+            navigateReviewAlignment,
             
             // 行号生成
             getLineNumbers,

@@ -623,11 +623,23 @@
         <!-- 审查结果详情弹窗 -->
         <el-dialog 
             v-model="showReviewDialog" 
-            :title="'需求点：' + (selectedReviewAlignment?.name || '未知')" 
             width="1200px"
             top="2vh"
             :close-on-click-modal="false"
         >
+            <template #header>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-right: 30px;">
+                    <span class="el-dialog__title">需求点：${ selectedReviewAlignment?.name || '未知' }</span>
+                    <el-button-group>
+                        <el-button size="small" @click="navigateReviewAlignment(-1)">
+                            <i class="fas fa-chevron-left"></i> 上一个
+                        </el-button>
+                        <el-button size="small" @click="navigateReviewAlignment(1)">
+                            下一个 <i class="fas fa-chevron-right"></i>
+                        </el-button>
+                    </el-button-group>
+                </div>
+            </template>
             <div v-if="selectedReviewAlignment" class="review-detail-container">
                 <!-- 左栏：需求和代码 -->
                 <div class="review-left-panel">
