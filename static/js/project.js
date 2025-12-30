@@ -1109,6 +1109,139 @@ const app = createApp({
         /***********************
          * 自动对齐功能
          ***********************/
+        const ensureRequirementDecompositionReady = async () => {
+            if (projectFiles.value.doc_files.length === 0) {
+                ElMessage.warning('请先添加需求文档');
+                return false;
+            }
+
+            try {
+                const chunksResponse = await axios.get('/api/get-requirement-chunks', {
+                    params: { projectPath: projectPath.value }
+                });
+                const requirements = chunksResponse.data.data || [];
+                if (requirements.length > 0) {
+                    return true;
+                }
+            } catch (error) {
+                console.error('检查需求分解结果失败:', error);
+            }
+
+            ElMessage.info('未找到需求分解结果，正在进行需求分解...');
+
+            let success = false;
+            try {
+                const respAnno = await axios.post('api/requirement-decomposition', {
+                    projectPath: projectPath.value
+                });
+                if (respAnno.data && respAnno.data.status === 'success') {
+                    success = true;
+                }
+            } catch (e) {
+                console.warn('基于标注的需求分解失败，将尝试自动Markdown分解:', e);
+            }
+
+            if (!success) {
+                try {
+                    const respAuto = await axios.post('api/auto-markdown-split', {
+                        projectPath: projectPath.value
+                    });
+                    if (respAuto.data && respAuto.data.status === 'success') {
+                        success = true;
+                    }
+                } catch (e) {
+                    console.error('自动Markdown需求分解失败:', e);
+                }
+            }
+
+            if (!success) {
+                ElMessage.error('需求分解失败，请检查项目文档或标注结果');
+                return false;
+            }
+
+            await loadAndRenderDocBlocks();
+
+            try {
+                const chunksResponse = await axios.get('/api/get-requirement-chunks', {
+                    params: { projectPath: projectPath.value }
+                });
+                const requirements = chunksResponse.data.data || [];
+                if (requirements.length > 0) {
+                    ElMessage.success('需求分解完成，已生成需求块');
+                    return true;
+                }
+            } catch (error) {
+                console.error('需求分解完成后检查结果失败:', error);
+            }
+
+            ElMessage.error('需求分解完成但未找到有效需求块，请检查项目配置');
+            return false;
+        };
+
+        const ensureCodeDecompositionReady = async () => {
+            if (projectFiles.value.code_files.length === 0) {
+                ElMessage.warning('请先添加代码文件');
+                return false;
+            }
+
+            try {
+                const chunksResponse = await axios.get('/api/get-code-chunks', {
+                    params: { projectPath: projectPath.value }
+                });
+                const codeBlocks = chunksResponse.data.data || [];
+                if (codeBlocks.length > 0) {
+                    return true;
+                }
+            } catch (error) {
+                console.error('检查代码分解结果失败:', error);
+            }
+
+            ElMessage.info('未找到代码分解结果，正在进行代码分解...');
+
+            let success = false;
+            try {
+                const resp = await axios.post('/api/code-decomposition', {
+                    projectPath: projectPath.value
+                });
+                if (resp.data && resp.data.status === 'success') {
+                    success = true;
+                }
+            } catch (e) {
+                console.error('代码分解失败:', e);
+            }
+
+            if (!success) {
+                ElMessage.error('代码分解失败，请检查项目代码目录');
+                return false;
+            }
+
+            await loadAndRenderCodeBlocks();
+
+            try {
+                const chunksResponse = await axios.get('/api/get-code-chunks', {
+                    params: { projectPath: projectPath.value }
+                });
+                const codeBlocks = chunksResponse.data.data || [];
+                if (codeBlocks.length > 0) {
+                    ElMessage.success('代码分解完成，已生成代码块');
+                    return true;
+                }
+            } catch (error) {
+                console.error('代码分解完成后检查结果失败:', error);
+            }
+
+            ElMessage.error('代码分解完成但未找到有效代码块，请检查项目配置');
+            return false;
+        };
+
+        const ensureDecompositionReady = async () => {
+            const reqOk = await ensureRequirementDecompositionReady();
+            if (!reqOk) return false;
+            const codeOk = await ensureCodeDecompositionReady();
+            if (!codeOk) return false;
+            return true;
+        };
+
         const stopAutoAlignment = () => {
             isAutoAligning.value = false;
         };
@@ -1119,6 +1252,13 @@ const app = createApp({
             ElMessage.info('开始自动对齐（需求 → 代码）...');
 
             try {
+                const ready = await ensureDecompositionReady();
+                if (!ready) {
+                    isAutoAligning.value = false;
+                    stopProgress();
+                    return;
+                }
+
                 // 1. 获取需求分块
                 const chunksResponse = await axios.get('/api/get-requirement-chunks', {
                     params: { projectPath: projectPath.value }
@@ -1126,7 +1266,7 @@ const app = createApp({
                 const requirements = chunksResponse.data.data || [];
                 
                 if (requirements.length === 0) {
-                    ElMessage.warning('未找到需求分块，请先进行需求分解');
+                    ElMessage.warning('未找到需求分块，请检查需求分解结果');
                     isAutoAligning.value = false;
                     return;
                 }
@@ -1186,6 +1326,13 @@ const app = createApp({
             ElMessage.info('开始自动对齐（代码 → 需求）...');
 
             try {
+                const ready = await ensureDecompositionReady();
+                if (!ready) {
+                    isAutoAligning.value = false;
+                    stopProgress();
+                    return;
+                }
+
                 // 1. 获取代码分块
                 const chunksResponse = await axios.get('/api/get-code-chunks', {
                     params: { projectPath: projectPath.value }
@@ -1193,7 +1340,7 @@ const app = createApp({
                 const codeBlocks = chunksResponse.data.data || [];
                 
                 if (codeBlocks.length === 0) {
-                    ElMessage.warning('未找到代码分块，请先进行代码分解');
+                    ElMessage.warning('未找到代码分块，请检查代码分解结果');
                     isAutoAligning.value = false;
                     return;
                 }
@@ -2866,6 +3013,9 @@ const app = createApp({
         // 执行单独对齐
         const performSingleAlignment = async (alignment) => {
             try {
+                const ready = await ensureDecompositionReady();
+                if (!ready) return;
+
                 ElMessage.info(`开始为 "${alignment.name}" 进行对齐...`);
                 
                 const hasDocRanges = Array.isArray(alignment.docRanges) && alignment.docRanges.length > 0;
