@@ -128,7 +128,7 @@ const app = createApp({
         const allAlignments = ref({});
 
         // 监听对齐数据变化，更新高亮
-        watch(allAlignments, async () => {
+        watch(alignmentResults, async () => {
             if (selectedDocFile.value) {
                 await loadAndRenderDocBlocks(false);
             }
@@ -159,15 +159,19 @@ const app = createApp({
                         const currentFileBlocks = blocks.filter(b => b.filename === selectedDocFile.value);
                         
                         // 获取当前文件的对齐信息
-                        const currentFileAlignments = allAlignments.value[selectedDocFile.value] || [];
                         const alignedRanges = new Set();
-                        currentFileAlignments.forEach(alignment => {
-                            if (alignment.docRanges) {
-                                alignment.docRanges.forEach(range => {
-                                    alignedRanges.add(`${range.start}-${range.end}`);
-                                });
-                            }
-                        });
+                        // Use alignmentResults directly as it contains all alignments
+                        if (alignmentResults.value) {
+                            alignmentResults.value.forEach(alignment => {
+                                if (alignment.docRanges) {
+                                    alignment.docRanges.forEach(range => {
+                                        if (range.documentId === selectedDocFile.value) {
+                                            alignedRanges.add(`${range.start}-${range.end}`);
+                                        }
+                                    });
+                                }
+                            });
+                        }
 
                         await nextTick(() => {
                             currentFileBlocks.forEach(block => {
@@ -242,34 +246,63 @@ const app = createApp({
                         const currentFileBlocks = blocks.filter(b => b.file === selectedCodeFile.value);
                         
                         // 获取当前代码文件的对齐信息
-                        const alignedCodeRanges = new Set();
-                        Object.values(allAlignments.value).forEach(alignments => {
-                            alignments.forEach(alignment => {
+                        const alignedCodeRanges = [];
+                        // Use alignmentResults directly as it contains all alignments
+                        if (alignmentResults.value) {
+                            alignmentResults.value.forEach(alignment => {
                                 if (alignment.codeRanges) {
                                     alignment.codeRanges.forEach(range => {
                                         if (range.documentId === selectedCodeFile.value || range.filename === selectedCodeFile.value) {
-                                            alignedCodeRanges.add(`${range.start}-${range.end}`);
+                                            alignedCodeRanges.push(range);
                                         }
                                     });
                                 }
                             });
-                        });
+                        }
 
                         await nextTick(() => {
                             currentFileBlocks.forEach(block => {
                                 let start, end;
+                                let isAligned = false;
+
                                 if (block.range && Array.isArray(block.range) && block.range.length === 2) {
                                     const [startLine, endLine] = block.range;
                                     const offsets = getOffsetsFromLineRange(selectedCodeRawContent.value, startLine, endLine);
                                     start = offsets.start;
                                     end = offsets.end;
+                                    
+                                    // Check alignment using line intersection
+                                    isAligned = alignedCodeRanges.some(r => {
+                                        if (r.startLine !== undefined && r.endLine !== undefined) {
+                                            return Math.max(r.startLine, startLine) <= Math.min(r.endLine, endLine);
+                                        }
+                                        return false;
+                                    });
+                                    
+                                    // Fallback to offset check if line check didn't pass (e.g. missing line info)
+                                    if (!isAligned && start !== undefined && end !== undefined) {
+                                         isAligned = alignedCodeRanges.some(r => {
+                                            if (r.start !== undefined && r.end !== undefined) {
+                                                return Math.max(r.start, start) < Math.min(r.end, end);
+                                            }
+                                            return false;
+                                        });
+                                    }
+
                                 } else if (block.start !== undefined && block.end !== undefined) {
                                     start = block.start;
                                     end = block.end;
+                                    
+                                    // Offset based check
+                                    isAligned = alignedCodeRanges.some(r => {
+                                        if (r.start !== undefined && r.end !== undefined) {
+                                             return Math.max(r.start, start) < Math.min(r.end, end);
+                                        }
+                                        return false;
+                                    });
                                 }
                                 
                                 if (start !== undefined && end !== undefined) {
-                                    const isAligned = alignedCodeRanges.has(`${start}-${end}`);
                                     renderDecompositionBlock(start, end, 'code', isAligned);
                                 }
                             });
@@ -1435,11 +1468,26 @@ const app = createApp({
 
         // 根据代码范围筛选对齐关系
         const filterAlignmentsByCodeRange = (start, end, documentId) => {
+            let startLine, endLine;
+            if (documentId === selectedCodeFile.value) {
+                const lines = convertOffsetToLineNumbers(selectedCodeRawContent.value, start, end);
+                startLine = lines.startLine;
+                endLine = lines.endLine;
+            }
+
             const overlappingAlignments = alignmentResults.value.filter(alignment => {
                 // 检查代码范围是否有交集
-                const hasCodeOverlap = alignment.codeRanges.some(range =>
-                    range.documentId === documentId && range.end > start && range.start < end
-                );
+                const hasCodeOverlap = alignment.codeRanges.some(range => {
+                    if (range.documentId !== documentId) return false;
+
+                    // 优先使用行号交集判断
+                    if (startLine !== undefined && endLine !== undefined && range.startLine !== undefined && range.endLine !== undefined) {
+                        return Math.max(range.startLine, startLine) <= Math.min(range.endLine, endLine);
+                    }
+
+                    // 降级使用偏移量交集判断
+                    return range.end > start && range.start < end;
+                });
                 return hasCodeOverlap;
             });
 
@@ -1481,13 +1529,28 @@ const app = createApp({
 
         // 根据多个代码范围筛选对齐关系（支持重叠高亮块）
         const filterAlignmentsByMultipleCodeRanges = (ranges, documentId) => {
+            const rangesWithLines = ranges.map(range => {
+                if (documentId === selectedCodeFile.value) {
+                    const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, range.start, range.end);
+                    return { ...range, startLine, endLine };
+                }
+                return range;
+            });
+
             const overlappingAlignments = alignmentResults.value.filter(alignment => {
                 // 检查是否与任意一个范围有交集
-                return ranges.some(range => {
-                    return alignment.codeRanges && alignment.codeRanges.some(codeRange =>
-                        codeRange.documentId === documentId &&
-                        codeRange.end > range.start && codeRange.start < range.end
-                    );
+                return rangesWithLines.some(range => {
+                    return alignment.codeRanges && alignment.codeRanges.some(codeRange => {
+                        if (codeRange.documentId !== documentId) return false;
+
+                        // 优先使用行号交集判断
+                        if (range.startLine !== undefined && range.endLine !== undefined && codeRange.startLine !== undefined && codeRange.endLine !== undefined) {
+                            return Math.max(codeRange.startLine, range.startLine) <= Math.min(codeRange.endLine, range.endLine);
+                        }
+
+                        // 降级使用偏移量交集判断
+                        return codeRange.end > range.start && codeRange.start < range.end;
+                    });
                 });
             });
 
@@ -1540,10 +1603,20 @@ const app = createApp({
                 );
                 if (idx !== -1) docIndex = idx;
             } else if (type === 'code' && alignment.codeRanges) {
-                 const idx = alignment.codeRanges.findIndex(r => 
-                    r.documentId === selectedCodeFile.value && 
-                    Math.max(r.start, rangeStart) < Math.min(r.end, rangeEnd)
-                );
+                 // Convert clicked range offsets to line numbers for better matching
+                 const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, rangeStart, rangeEnd);
+                 
+                 const idx = alignment.codeRanges.findIndex(r => {
+                    if (r.documentId !== selectedCodeFile.value) return false;
+                    
+                    // Prioritize line number intersection check
+                    if (r.startLine !== undefined && r.endLine !== undefined) {
+                        return Math.max(r.startLine, startLine) <= Math.min(r.endLine, endLine);
+                    }
+                    
+                    // Fallback to offset intersection check
+                    return Math.max(r.start, rangeStart) < Math.min(r.end, rangeEnd);
+                });
                 if (idx !== -1) codeIndex = idx;
             }
 
@@ -1805,12 +1878,21 @@ const app = createApp({
 
         // 根据代码范围查找对应的对齐关系（返回第一个匹配的）
         const findAlignmentByCodeRange = (rangeStart, rangeEnd) => {
+            // 尝试转换为行号进行查找
+            const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, rangeStart, rangeEnd);
+
             return alignmentResults.value.find(alignment => {
-                return alignment.codeRanges && alignment.codeRanges.some(codeRange =>
-                    codeRange.documentId === selectedCodeFile.value &&
-                    // 检查范围是否有交集
-                    codeRange.end > rangeStart && codeRange.start < rangeEnd
-                );
+                return alignment.codeRanges && alignment.codeRanges.some(codeRange => {
+                    if (codeRange.documentId !== selectedCodeFile.value) return false;
+
+                    // 优先使用行号交集判断
+                    if (codeRange.startLine !== undefined && codeRange.endLine !== undefined) {
+                        return Math.max(codeRange.startLine, startLine) <= Math.min(codeRange.endLine, endLine);
+                    }
+
+                    // 降级使用偏移量交集判断
+                    return codeRange.end > rangeStart && codeRange.start < rangeEnd;
+                });
             });
         };
 
