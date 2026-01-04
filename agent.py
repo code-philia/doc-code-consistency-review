@@ -54,7 +54,7 @@ def query_vector_db(requirement_text, topk=1):
     """
     print(f"[Agent] Searching vector DB for: {requirement_text[:20]}...")
     try:
-        hits = rag_engine.search(requirement_text, topk=topk)
+        hits = rag_engine.search(requirement_text, top_k=topk)
         return hits
     except Exception as e:
         print(f"[Agent] RAG Search Error: {e}")
