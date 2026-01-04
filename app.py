@@ -121,6 +121,7 @@ def create_blank_project(project_name, project_location):
         
         update_history(project_name, project_path)
         init_project_db(project_path)
+        auto_load_rag_db(project_path)
         
         return jsonify({"status": "success", "project_path": project_path}), 200
     except Exception as e:
@@ -186,6 +187,7 @@ def create_project_from_folder(project_name, folder_path):
 
         update_history(project_name, project_path)
         init_project_db(project_path)
+        auto_load_rag_db(project_path)
         
         return jsonify({"status": "success", "project_path": project_path}), 200
     except Exception as e:
@@ -275,6 +277,22 @@ def init_project_db(project_path):
         conn.execute('CREATE INDEX IF NOT EXISTS idx_issues_alignmentId ON issues(alignmentId)')
     finally:
         conn.close()
+
+
+def auto_load_rag_db(project_path):
+    """自动加载项目下的第一个RAG知识库"""
+    rag_db_root = os.path.join(project_path, "rag_database")
+    if os.path.exists(rag_db_root) and os.path.isdir(rag_db_root):
+        # 获取所有子目录
+        subdirs = [d for d in os.listdir(rag_db_root) if os.path.isdir(os.path.join(rag_db_root, d))]
+        if subdirs:
+            # 默认加载第一个（按字母序）
+            first_db = sorted(subdirs)[0]
+            try:
+                print(f"[AutoLoad] Found RAG DBs: {subdirs}, loading: {first_db}")
+                rag_engine.initialize(project_path, db_name=first_db)
+            except Exception as e:
+                print(f"[AutoLoad] Failed to load RAG DB '{first_db}': {e}")
 
 
 def import_json_to_db(project_path):
@@ -468,6 +486,7 @@ def open_project():
     try:
         init_project_db(project_path)
         import_json_to_db(project_path)
+        auto_load_rag_db(project_path)
     except Exception:
         pass
     return jsonify({"status": "success"})
