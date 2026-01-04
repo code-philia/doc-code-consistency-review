@@ -25,6 +25,8 @@
 <body>
 <div id="app">
     <!-- 顶部菜单栏 -->
+    <input type="file" ref="buildKBInput" style="display: none" accept=".json" @change="handleBuildKBFile">
+    <input type="file" ref="switchKBInput" style="display: none" webkitdirectory @change="handleSwitchKBFile">
     <div class="header">
         <div class="menu">
             <div class="menu-item">
@@ -35,6 +37,18 @@
                     </div>
                     <div class="dropdown-item" style="cursor: pointer;" onclick="closeProject()">
                         <i class="fas fa-times-circle"></i> 关闭项目
+                    </div>
+                    
+                    <div class="dropdown-item has-submenu">
+                        <i class="fas fa-database"></i> 知识库管理
+                        <div class="submenu">
+                            <div class="submenu-item" @click="triggerBuildKB">
+                                <i class="fas fa-plus-circle"></i> 新建/重建知识库
+                            </div>
+                            <div class="submenu-item" @click="triggerSwitchKB">
+                                <i class="fas fa-exchange-alt"></i> 切换/加载知识库
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

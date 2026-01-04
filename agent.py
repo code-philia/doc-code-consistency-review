@@ -1,9 +1,10 @@
 import os
 import re
 import json
-from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE
+from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL
 from openai import OpenAI
 from utils import chunk_list
+from rag_chroma import rag_engine
 API_KEY = os.environ.get("API_KEY", "0")
 
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8002/v1")
@@ -17,22 +18,47 @@ def query_llm(message, history=None):
         api_key=API_KEY,
         base_url=API_BASE_URL,
     )
-    
-    if history is None:
-        messages = []
-    else:
-        messages = history
-        
-    messages.append({"role": "user", "content": message})
-    response = client.chat.completions.create(
-        messages=messages, 
+
+    # 简单把 history 展开成一个纯文本对话
+    prompt_parts = []
+    if history:
+        for turn in history:
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
+            # 你想精细一点可以区分 system/user/assistant
+            prompt_parts.append(f"{role.upper()}: {content}")
+    prompt_parts.append(f"USER: {message}\nASSISTANT:")
+    prompt = "\n".join(prompt_parts)
+
+    resp = client.completions.create(
         model=MODEL_NAME,
+        prompt=prompt,
         temperature=0.1,
         top_p=0.9,
-        n= 1
+        max_tokens=1024,
+        n=1,
     )
-    result = response.choices[0].message
-    return result
+
+    text = resp.choices[0].text
+
+    # 为了兼容你后面用的 response.content，这里包一层假的对象
+    class Resp:
+        pass
+    r = Resp()
+    r.content = text.strip()
+    return r
+
+def query_vector_db(requirement_text, topk=1):
+    """
+    直接调用内存中的 RAG 引擎进行检索
+    """
+    print(f"[Agent] Searching vector DB for: {requirement_text[:20]}...")
+    try:
+        hits = rag_engine.search(requirement_text, topk=topk)
+        return hits
+    except Exception as e:
+        print(f"[Agent] RAG Search Error: {e}")
+        return []
 
 def query_related_code_block(requirement, code_blocks):
     """
@@ -46,13 +72,27 @@ def query_related_code_block(requirement, code_blocks):
         相关行号列表
     """
     # related_code_blocks = []
+    results = query_vector_db(requirement, topk=1)
 
-    # 构造提示词
-    template = ALIGN_PROMPT_TEMPLATE
-    prompt = template.format(
-        req_content=requirement,
-        code_content=code_blocks
-    )
+    # 你也可以直接访问字段
+    if results:
+        top = results[0]
+        query_text = top.get("query_text")
+        code_text = top.get("code_text")
+        template = ALIGN_PROMPT_TEMPLATE_ICL
+        prompt = template.format(
+            req_content=requirement,
+            code_content=code_blocks,
+            icl_query_text=query_text,
+            icl_code_text=code_text
+        )
+    else:
+        # 构造提示词
+        template = ALIGN_PROMPT_TEMPLATE
+        prompt = template.format(
+            req_content=requirement,
+            code_content=code_blocks
+        )
 
     # 解析回复
     response = query_llm(prompt)

@@ -3825,6 +3825,134 @@ const app = createApp({
         });
 
         /***********************
+         * RAG 向量库管理 (已修改为文件管理器模式)
+         ***********************/
+        const buildKBInput = ref(null);
+        const switchKBInput = ref(null);
+
+        // 1. 新建知识库：触发文件选择
+        const triggerBuildKB = () => {
+            if (buildKBInput.value) buildKBInput.value.click();
+        };
+        
+        // 处理新建上传 (最终修正版 - 强制对齐 annotations)
+        const handleBuildKBFile = async (event) => {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            
+            // 1. 获取当前项目的基础路径
+            let basePath = projectPath.value;
+            
+            // 2. 确保基础路径不以斜杠结尾（去掉末尾的 / 或 \），方便后面统一拼接
+            if (basePath.endsWith('/') || basePath.endsWith('\\')) {
+                basePath = basePath.slice(0, -1);
+            }
+            
+            // 【修改点】之前是 basePath + '/annotations'，现在直接用 basePath (根目录)
+            const targetPath = basePath; 
+
+            console.log(">>> [Debug] 上传目标文件夹:", targetPath);
+            console.log(">>> [Debug] 原始文件名:", file.name);
+
+            // 4. 净化文件名 (防止冒号报错)
+            const safeFileName = file.name.replace(/:/g, '-');
+
+            const formData = new FormData();
+            formData.append('path', targetPath); // 告诉后端：存到 annotations 文件夹里！
+            formData.append('fileType', 'annotation'); 
+            formData.append('files', file, safeFileName); // 使用净化后的文件名
+
+            ElMessage.info(`正在上传至 annotations 目录...`);
+
+            try {
+                const upRes = await axios.post('/project/upload-files', formData, { 
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                if (upRes.data.status === 'success') {
+                    ElMessage.info('上传成功，开始构建知识库...');
+                    
+                    // 5. 调用构建接口
+                    // 注意：这里传给后端的 annotationFile 必须和上面净化后的 safeFileName 一致
+                    // 且后端代码里必须写的是 os.path.join(project_path, 'annotations', filename)
+                    const dbName = safeFileName.replace(/\.[^/.]+$/, "");
+                    
+                    const buildRes = await axios.post('/api/rag/build', {
+                        projectPath: projectPath.value,
+                        annotationFile: safeFileName, 
+                        dbName: dbName
+                    });
+
+                    if (buildRes.data.status === 'success') {
+                        ElMessage.success('构建成功！');
+                    } else {
+                        console.error(">>> [Debug] 构建失败:", buildRes.data);
+                        ElMessage.error(buildRes.data.message || '构建失败');
+                    }
+                } else {
+                    console.error(">>> [Debug] 上传失败:", upRes.data);
+                    ElMessage.error('上传失败: ' + upRes.data.message);
+                }
+            } catch (e) { 
+                console.error(e);
+                ElMessage.error('操作失败: ' + (e.response?.data?.message || e.message)); 
+            } finally {
+                event.target.value = ''; 
+            }
+        };
+
+        // 2. 切换知识库：触发文件夹选择
+        const triggerSwitchKB = () => {
+            if (switchKBInput.value) switchKBInput.value.click();
+        };
+
+        // 处理切换上传
+        const handleSwitchKBFile = async (event) => {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            
+            // 获取文件夹名 (webkitRelativePath的第一段)
+            const folderName = files[0].webkitRelativePath.split('/')[0];
+            ElMessage.info(`正在加载知识库: ${folderName}...`);
+
+            const formData = new FormData();
+            formData.append('path', projectPath.value); 
+            formData.append('fileType', 'rag_db'); 
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i], files[i].webkitRelativePath);
+            }
+
+            try {
+                // 1. 先把文件夹上传上去
+                const upRes = await axios.post('/project/upload-files', formData, { 
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                if (upRes.data.status === 'success') {
+                    ElMessage.info('上传完成，正在切换...');
+                    
+                    // 【关键修改点】这里必须加上 projectPath: projectPath.value
+                    const switchRes = await axios.post('/api/rag/switch', { 
+                        projectPath: projectPath.value,  // <--- 加上这一行！
+                        dbName: folderName 
+                    });
+                    
+                    if (switchRes.data.status === 'success') {
+                         ElMessage.success(`已切换至: ${folderName}`);
+                         // 可以在这里加个 currentKB.value = folderName; 更新UI显示
+                    } else {
+                         ElMessage.error(switchRes.data.message);
+                    }
+                } else {
+                    ElMessage.error('上传失败: ' + upRes.data.message);
+                }
+            } catch (e) { 
+                ElMessage.error('操作失败: ' + (e.response?.data?.message || e.message)); 
+            }
+            event.target.value = '';
+        };
+        /***********************
          * 暴露到模板
          ***********************/
         return {
@@ -3985,7 +4113,15 @@ const app = createApp({
             progressTotal,
             progressPercentage,
 
-            refreshAlignments
+            refreshAlignments,
+            
+            // RAG 相关
+            buildKBInput,
+            switchKBInput,
+            triggerBuildKB,
+            handleBuildKBFile,
+            triggerSwitchKB,
+            handleSwitchKBFile
         };
     }
 });

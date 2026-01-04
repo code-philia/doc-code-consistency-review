@@ -7,6 +7,7 @@ import socket
 from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension,\
     replace_text_in_docx, generate_issue_content, include_related_blocks
 from agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart, query_related_requirement
+from rag_chroma import rag_engine
 from doc_block import chunk_markdown
 import random
 import string
@@ -584,6 +585,22 @@ def upload_files():
                 total_loc += loc
             metadata['code_scale'] = total_loc
             metadata['code_file_lines'] = code_file_lines
+
+        elif file_type == 'annotation':
+            # 1. 既然 project_path 是根目录，我们在这里手动拼接 annotations
+            target_dir = os.path.join(project_path, 'annotations')
+            
+            # 2. 如果文件夹不存在，自动创建
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+
+            # 3. 保存文件
+            for file in files:
+                # 只取文件名，防止路径包含多余信息
+                filename = os.path.basename(file.filename)
+                save_dest = os.path.join(target_dir, filename)
+                file.save(save_dest)
+                print(f"标注文件已保存至: {save_dest}")
 
         elif file_type == 'doc':
             doc_repo_path = metadata.get('doc_repo')
@@ -2034,6 +2051,97 @@ def align_code_to_requirement():
         
     except Exception as e:
         return jsonify({"status": "error", "message": f"对齐过程中出错: {str(e)}"}), 500
+
+# 1. 获取标注文件列表
+@app.route('/api/files/list-annotations', methods=['GET'])
+def list_annotation_files():
+    project_path = request.args.get('projectPath')
+    
+    if not project_path:
+        return jsonify({"status": "error", "message": "缺少项目路径"})
+    
+    # 拼接 annotations 目录路径
+    ann_dir = os.path.join(project_path, 'annotations')
+    
+    files = []
+    # 检查目录是否存在
+    if os.path.exists(ann_dir) and os.path.isdir(ann_dir):
+        # 遍历目录，只获取 .json 文件
+        files = [f for f in os.listdir(ann_dir) if f.endswith('.json')]
+        # 可选：按修改时间排序，让最新的排在前面
+        # files.sort(key=lambda x: os.path.getmtime(os.path.join(ann_dir, x)), reverse=True)
+    
+    return jsonify({"status": "success", "files": files})
+
+# 2. 构建知识库 (调用 rag_chroma)
+@app.route('/api/rag/build', methods=['POST'])
+def build_rag_db():
+    data = request.json
+    project_path = data.get('projectPath')  # 必传
+    annotation_file = data.get('annotationFile') 
+    db_name = data.get('dbName', 'default_rag')
+
+    if not project_path or not annotation_file:
+        return jsonify({"status": "error", "message": "参数缺失: projectPath 或 annotationFile"})
+
+    # 1. 先初始化 (传入项目路径)
+    try:
+        rag_engine.initialize(project_path, db_name)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"初始化失败: {str(e)}"})
+
+    # 2. 读取文件并构建
+    full_path = os.path.join(project_path, 'annotations', annotation_file)
+    if not os.path.exists(full_path):
+        return jsonify({"status": "error", "message": f"找不到文件: {annotation_file}"})
+
+    try:
+        result = rag_engine.build_from_json(full_path)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# 3. 获取列表 (改为 POST 或者带参数的 GET)
+# 为了方便传路径，建议用 POST，或者 GET ?projectPath=...
+@app.route('/api/rag/list-dbs', methods=['POST']) 
+def list_rag_dbs():
+    data = request.json
+    project_path = data.get('projectPath')
+    
+    if not project_path:
+        return jsonify({"status": "error", "message": "未提供项目路径"})
+
+    # 这里的路径和 rag_chroma.py 里对应
+    kb_root = os.path.join(project_path, "rag_database")
+    
+    dbs = []
+    if os.path.exists(kb_root):
+        dbs = [d for d in os.listdir(kb_root) if os.path.isdir(os.path.join(kb_root, d))]
+    
+    # 如果没有建立过，返回空或者 default
+    if not dbs: 
+        dbs = [] 
+
+    return jsonify({"status": "success", "dbs": dbs})
+
+
+# 4. 切换数据库
+@app.route('/api/rag/switch', methods=['POST'])
+def switch_rag_db():
+    data = request.json
+    project_path = data.get('projectPath') # 必传
+    db_name = data.get('dbName')
+
+    if not project_path or not db_name:
+         return jsonify({"status": "error", "message": "参数缺失"})
+
+    try:
+        # 传入项目路径进行切换
+        rag_engine.initialize(project_path, db_name)
+        return jsonify({"status": "success", "message": f"已切换至 {db_name}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 def find_available_port(start_port):
     port = start_port
