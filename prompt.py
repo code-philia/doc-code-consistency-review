@@ -14,14 +14,20 @@ ALIGN_PROMPT_TEMPLATE_ICL = """你是一位精通航天领域软件系统和C/C+
 
 # 输入
 ## 需求如下：
+```
 {req_content}
+```
 \n## 代码块列表如下：
 {code_content}
 \n## 参考示例如下：
 **示例需求（来自历史标注）**：
+```
 {icl_query_text}
+```
 **示例实现（来自历史标注）**
+```
 {icl_code_text}
+```
 /think
 """
 
@@ -40,9 +46,13 @@ ALIGN_PROMPT_TEMPLATE = """你是一位精通航天领域软件系统和C/C++编
 
 # 输入
 ## 需求如下：
+```
 {req_content}
+```
 \n## 代码块列表如下：
+```
 {code_content}
+```
 /think
 """
 
@@ -61,9 +71,13 @@ ALIGN_REQ_PROMPT_TEMPLATE = """你是一位精通航天领域软件系统和C/C+
 
 # 输入
 ## 代码如下：
+```
 {code_content}
+```
 \n## 需求块列表如下：
+```
 {req_content}
+```
 /think
 """
 
@@ -120,10 +134,14 @@ REVIEW_PROMPT_TEMPLATE = """
 
 # 输入
 ## 需求片段
+```
 {requirement}
+```
 
 ## 相关代码片段
+```
 {related_code}
+```
 /think
 """
 
@@ -180,10 +198,14 @@ THINKING_PROMPT_TEMPLATE = """
 
 # 输入
 ## 需求片段
+```
 {requirement}
+```
 
 ## 相关代码片段
+```
 {related_code}
+```
 /think
 """
 
@@ -196,10 +218,14 @@ GENERATE_PROMPT_TEMPLATE = """
 2. **输出格式**: 使用Markdown格式输出
 
 # 参考需求（用于格式和风格参考）
+```
 {reference_requirement}
+```
 
 # 相关代码
+```
 {related_code}
+```
 
 # 输出要求
 请基于上述代码生成相应的需求描述，参考提供的需求格式和风格。直接输出生成的需求片段，使用Markdown格式。
