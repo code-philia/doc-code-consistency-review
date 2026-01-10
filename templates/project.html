@@ -48,6 +48,9 @@
                             <div class="submenu-item" @click="triggerSwitchKB">
                                 <i class="fas fa-exchange-alt"></i> 切换/加载知识库
                             </div>
+                            <div class="submenu-item" @click="openImportReviewDialog">
+                                <i class="fas fa-tasks"></i> 导入与审查入库
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -948,6 +951,245 @@
                 <el-button @click="showExportDialog = false">取消</el-button>
                 <el-button type="primary" @click="confirmExport">确认导出</el-button>
             </template>
+        </el-dialog>
+        <input 
+            type="file" 
+            ref="switchKBInput" 
+            style="display: none" 
+            @change="handleSwitchKBFile" 
+            webkitdirectory 
+            directory 
+        />
+        <el-dialog 
+            v-model="showCreateKBDialog" 
+            title="新建/重建知识库" 
+            width="500px" 
+            :close-on-click-modal="false"
+        >
+            <el-form :model="kbCreationForm" label-width="100px">
+                <el-form-item label="知识库名称">
+                    <el-input v-model="kbCreationForm.name" placeholder="请输入名称 (如: lib_v1)"></el-input>
+                </el-form-item>
+                
+                <el-form-item label="知识库类型">
+                    <el-select v-model="kbCreationForm.type" placeholder="请选择类型" style="width: 100%">
+                        <el-option label="编程规则" value="rule"></el-option>
+                        <el-option label="问题单" value="issue"></el-option>
+                        <el-option label="典型案例" value="case"></el-option>
+                        <el-option label="其他" value="other"></el-option>
+                    </el-select>
+                </el-form-item>
+                
+                <el-form-item label="源文件">
+                    <div style="display: flex; gap: 10px; width: 100%;">
+                        <el-input v-model="kbCreationForm.fileName" readonly placeholder="选择 .docx 或 .json"></el-input>
+                        <el-button type="primary" @click="triggerFileSelect">选择文件</el-button>
+                    </div>
+                    <input type="file" ref="kbFileInput" style="display: none" accept=".json,.docx" @change="handleKBFileSelect">
+                </el-form-item>
+            </el-form>
+            
+            <template #footer>
+                <el-button @click="showCreateKBDialog = false">取消</el-button>
+                <el-button type="primary" @click="confirmBuildKB" :loading="isBuildingKB">开始构建</el-button>
+            </template>
+        </el-dialog>
+        <el-dialog 
+            v-model="showImportReviewDialog" 
+            title="🛡️ 知识库人工审查与入库" 
+            width="900px"
+            :close-on-click-modal="false"
+            @open="loadInitData" 
+        >
+            <el-steps :active="importStep" finish-status="success" simple style="margin-bottom: 20px;">
+                <el-step title="选择文件">
+                    <template #icon><i class="fas fa-file-upload"></i></template>
+                </el-step>
+                <el-step title="审查入库">
+                    <template #icon><i class="fas fa-check-double"></i></template>
+                </el-step>
+            </el-steps>
+        
+            <div v-if="importStep === 0" class="upload-section">
+                
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <span style="margin-right: 15px; font-weight: bold;">文档类型：</span>
+                    <el-radio-group v-model="importDocType">
+                        <el-radio label="issue" border>问题单 (Issue)</el-radio>
+                        <el-radio label="rule" border>编程规则 (Rule)</el-radio>
+                    </el-radio-group>
+                </div>
+        
+                <el-tabs type="border-card" v-model="fileSourceMode" style="min-height: 200px;">
+                    <el-tab-pane name="server" label="📂 从服务器选择 (testdata)">
+                        <div style="text-align: center; padding: 20px;">
+                            <p style="color: #666; margin-bottom: 10px;">直接选择位于 <code>/testdata</code> 目录下的文件：</p>
+                            <el-select 
+                                v-model="selectedServerFile" 
+                                placeholder="请选择文件..." 
+                                style="width: 300px" 
+                                filterable
+                            >
+                                <el-option
+                                    v-for="file in serverFileList"
+                                    :key="file"
+                                    :label="file"
+                                    :value="file">
+                                    <span style="float: left">${ file }</span>
+                                    <span style="float: right; color: #8492a6; font-size: 13px">
+                                        <i class="fas fa-file-word"></i>
+                                    </span>
+                                </el-option>
+                            </el-select>
+                            <div style="margin-top: 10px;">
+                                <el-button type="text" @click="fetchServerFiles"><i class="fas fa-sync"></i> 刷新列表</el-button>
+                            </div>
+                        </div>
+                    </el-tab-pane>
+        
+                    <el-tab-pane name="local" label="💻 上传本地文件">
+                        <div style="text-align: center; padding: 20px;">
+                            <el-upload
+                                class="upload-demo"
+                                drag
+                                action=""
+                                :auto-upload="false"
+                                :limit="1"
+                                :on-change="handleImportFileChange"
+                                :file-list="importFileList"
+                            >
+                                <i class="el-icon--upload fas fa-cloud-upload-alt" style="font-size: 40px; color: #ccc;"></i>
+                                <div class="el-upload__text">
+                                    拖拽文件到此处，或 <em>点击上传</em>
+                                </div>
+                            </el-upload>
+                        </div>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+        
+            <div v-if="importStep === 1" class="review-section">
+        
+                <div style="margin-bottom: 15px; background: #f5f7fa; padding: 15px; border-radius: 4px; border: 1px solid #e4e7ed;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <span style="font-weight: bold; font-size: 14px; color: #606266;">
+                            <i class="fas fa-database"></i> 目标知识库：
+                        </span>
+                        
+                        <el-select 
+                            v-model="targetKbName" 
+                            filterable 
+                            allow-create 
+                            default-first-option
+                            placeholder="输入新名称 或 选择现有库..."
+                            style="flex-grow: 1;"
+                        >
+                            <el-option
+                                v-for="kb in existingKbList"
+                                :key="kb"
+                                :label="kb"
+                                :value="kb">
+                                <span style="float: left">${ kb }</span>
+                                <span style="float: right; color: #8492a6; font-size: 13px">
+                                    <i class="fas fa-hdd"></i>
+                                </span>
+                            </el-option>
+                        </el-select>
+        
+                        <el-button type="primary" plain @click="triggerTargetKbFolderSelect">
+                            <i class="fas fa-folder-open"></i> 选择本地库文件夹
+                        </el-button>
+                        
+                        <input 
+                            type="file" 
+                            ref="targetKbFolderInput" 
+                            style="display: none" 
+                            webkitdirectory 
+                            directory 
+                            @change="handleTargetKbFolderSelect"
+                        />
+                    </div>
+        
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #909399;">
+                        <span>
+                            <i class="fas fa-info-circle"></i> 提示：选择文件夹后，文件夹名称将自动作为库名。
+                        </span>
+                        <div style="display: flex; gap: 10px;">
+                            <el-tag type="info" effect="plain">共解析: ${ previewTableData.length }</el-tag>
+                            <el-tag type="success" effect="dark">已勾选: ${ selectedReviewItems.length }</el-tag>
+                        </div>
+                    </div>
+                </div>
+                
+                <el-table 
+                    ref="reviewTableRef"
+                    :data="previewTableData" 
+                    style="width: 100%; height: 400px; overflow-y: auto;" 
+                    border
+                    @selection-change="handleReviewSelectionChange"
+                >
+                    <el-table-column type="selection" width="50"></el-table-column>
+                    <el-table-column prop="id" label="ID" width="140" show-overflow-tooltip></el-table-column>
+                    <el-table-column prop="summary" label="摘要" show-overflow-tooltip></el-table-column>
+                    <el-table-column label="操作" width="100" align="center">
+                        <template #default="scope">
+                            <el-button size="small" @click="viewDetail(scope.row)">
+                                <i class="fas fa-eye"></i> 详情
+                            </el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        
+            <template #footer>
+                <div style="display: flex; justify-content: space-between;">
+                    <el-button v-if="importStep === 1" @click="importStep = 0">上一步</el-button>
+                    <div style="flex-grow: 1;"></div>
+                    <el-button @click="showImportReviewDialog = false">关闭</el-button>
+                    
+                    <el-button 
+                        v-if="importStep === 0" 
+                        type="primary" 
+                        @click="startPreview" 
+                        :loading="isUploading"
+                    >
+                        开始解析
+                    </el-button>
+                    
+                    <el-button 
+                        v-if="importStep === 1" 
+                        type="success" 
+                        @click="submitToKb" 
+                        :loading="isCommitting"
+                        :disabled="selectedReviewItems.length === 0"
+                    >
+                        确认入库
+                    </el-button>
+                </div>
+            </template>
+        </el-dialog>
+        
+        <el-dialog
+            v-model="showDetailDialog"
+            title="条目详情"
+            width="600px"
+            append-to-body
+        >
+            <div v-if="currentDetailItem">
+                <el-descriptions :column="1" border>
+                    <el-descriptions-item label="ID">${ currentDetailItem.id }</el-descriptions-item>
+                    <el-descriptions-item label="类型">
+                        <el-tag>${ currentDetailItem.type }</el-tag>
+                    </el-descriptions-item>
+                </el-descriptions>
+                <div style="margin-top: 15px; padding: 10px; background: #f9f9f9; border-radius: 4px; white-space: pre-wrap; font-family: monospace;">
+                    ${ currentDetailItem.content }
+                </div>
+                <div v-if="currentDetailItem.type === '问题单'" style="margin-top: 10px;">
+                    <p><strong>原始字段：</strong></p>
+                    <pre style="background: #eee; padding: 5px; font-size: 12px;">${ JSON.stringify(currentDetailItem.full_data, null, 2) }</pre>
+                </div>
+            </div>
         </el-dialog>
 
     </div>

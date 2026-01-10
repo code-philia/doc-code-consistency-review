@@ -24,6 +24,8 @@ from code_block import get_all_code_blocks
 
 import logging
 import sys
+from utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
+from agent import smart_parse_doc
 # 配置日志
 logging.basicConfig(
     level = logging.INFO,
@@ -2096,30 +2098,224 @@ def list_annotation_files():
 @app.route('/api/rag/build', methods=['POST'])
 def build_rag_db():
     data = request.json
-    project_path = data.get('projectPath')  # 必传
+    project_path = data.get('projectPath')
     annotation_file = data.get('annotationFile') 
     db_name = data.get('dbName', 'default_rag')
+    kb_type = data.get('kbType', 'other') # [新增] 获取知识库类型
 
     if not project_path or not annotation_file:
-        return jsonify({"status": "error", "message": "参数缺失: projectPath 或 annotationFile"})
+        return jsonify({"status": "error", "message": "参数缺失"})
 
-    # 1. 先初始化 (传入项目路径)
     try:
         rag_engine.initialize(project_path, db_name)
     except Exception as e:
         return jsonify({"status": "error", "message": f"初始化失败: {str(e)}"})
 
-    # 2. 读取文件并构建
     full_path = os.path.join(project_path, 'annotations', annotation_file)
     if not os.path.exists(full_path):
         return jsonify({"status": "error", "message": f"找不到文件: {annotation_file}"})
 
     try:
-        result = rag_engine.build_from_json(full_path)
-        return jsonify(result)
+        json_data = None
+        
+        # === Word 文档处理逻辑 (kbType 分流) ===
+        if annotation_file.lower().endswith('.docx'):
+            print(f"[RAG] 解析文档: {annotation_file}, 类型: {kb_type}")
+            
+            # A. 编程规则
+            if kb_type == 'rule':
+                raw_rules = parse_programming_rules(full_path) # 优先用 utils 解析
+                if not raw_rules:
+                    print("[RAG] 正则解析为空，尝试 LLM 兜底...")
+                    doc_text = read_docx_text(full_path)
+                    raw_rules = smart_parse_doc(doc_text, type='rule') # 兜底
+                if raw_rules:
+                    json_data = format_rules_for_rag(raw_rules)
+            
+            # B. 问题单
+            elif kb_type == 'issue':
+                raw_issues = parse_issue_reports(full_path) # 优先用 utils 解析
+                if not raw_issues:
+                    print("[RAG] 表格解析为空，尝试 LLM 兜底...")
+                    doc_text = read_docx_text(full_path)
+                    raw_issues = smart_parse_doc(doc_text, type='issue') # 兜底
+                if raw_issues:
+                    json_data = format_issues_for_rag(raw_issues)
+            
+            # C. 其他/典型案例 (直接 LLM)
+            elif kb_type in ['case', 'other']:
+                doc_text = read_docx_text(full_path)
+                # 简单复用 rule 提取逻辑作为通用提取
+                raw_data = smart_parse_doc(doc_text, type='rule') 
+                if raw_data:
+                    json_data = format_rules_for_rag(raw_data)
+
+            # 保存解析结果并构建
+            if json_data:
+                temp_json = full_path + ".parsed.json"
+                with open(temp_json, 'w', encoding='utf-8') as f:
+                    json.dump(json_data, f, ensure_ascii=False)
+                
+                result = rag_engine.build_from_json(temp_json)
+                try: os.remove(temp_json) 
+                except: pass
+                return jsonify(result)
+            else:
+                return jsonify({"status": "error", "message": "文档解析失败，未能提取有效数据"})
+
+        # === 原有 JSON 逻辑 ===
+        elif annotation_file.lower().endswith('.json'):
+            result = rag_engine.build_from_json(full_path)
+            return jsonify(result)
+            
+        else:
+            return jsonify({"status": "error", "message": "不支持的文件格式"})
+
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+TEST_DATA_DIR = os.path.join(PROJECT_ROOT, 'testdata')
+
+if not os.path.exists(TEST_DATA_DIR):
+    os.makedirs(TEST_DATA_DIR)
+
+# === 路由定义 ===
+@app.route('/review')  # 建议路径也改一下，避免冲突
+def kb_review():       # <--- 重点：把这里改成 kb_review 或其他名字
+    # 获取现有知识库列表
+    # 注意：这里需要引入 os 和 PROJECT_ROOT
+    kb_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rag_database")
+    existing_kbs = []
+    if os.path.exists(kb_root):
+        existing_kbs = [d for d in os.listdir(kb_root) if os.path.isdir(os.path.join(kb_root, d))]
+    
+    return render_template('index.html', kbs=existing_kbs)
+
+# 在 app.py 中添加/修改以下代码
+
+@app.route('/api/list-testdata', methods=['GET'])
+def list_testdata():
+    """列出 testdata 目录下的所有文件"""
+    if not os.path.exists(TEST_DATA_DIR):
+        return jsonify({"status": "success", "files": []})
+    
+    files = [f for f in os.listdir(TEST_DATA_DIR) if os.path.isfile(os.path.join(TEST_DATA_DIR, f)) and not f.startswith('.')]
+    return jsonify({"status": "success", "files": files})
+
+@app.route('/api/list-kbs', methods=['GET'])
+def list_kbs():
+    """列出已有的知识库"""
+    kb_root = os.path.join(PROJECT_ROOT, "rag_database")
+    kbs = []
+    if os.path.exists(kb_root):
+        kbs = [d for d in os.listdir(kb_root) if os.path.isdir(os.path.join(kb_root, d))]
+    return jsonify({"status": "success", "kbs": kbs})
+
+@app.route('/preview', methods=['POST'])
+def preview_file():
+    doc_type = request.form.get('doc_type')
+    use_server_file = request.form.get('use_server_file') == 'true'
+    
+    target_path = ""
+
+    try:
+        if use_server_file:
+            # 模式 A: 使用服务器上的 testdata 文件
+            filename = request.form.get('filename')
+            target_path = os.path.join(TEST_DATA_DIR, filename)
+            if not os.path.exists(target_path):
+                return jsonify({"status": "error", "message": "文件不存在"}), 404
+        else:
+            # 模式 B: 上传新文件
+            if 'file' not in request.files:
+                return jsonify({"error": "没有上传文件"}), 400
+            file = request.files['file']
+            target_path = os.path.join(TEST_DATA_DIR, file.filename)
+            file.save(target_path)
+        
+        # --- 开始解析 ---
+        parsed_data = []
+        
+        if doc_type == 'rule':
+            raw_rules = parse_programming_rules(target_path, debug=False)
+            for r in raw_rules:
+                # 1. 组合用于展示和检索的完整文本
+                # 把“描述”、“违背示例”、“遵循示例”拼在一起
+                combined_content = f"【规则描述】\n{r.get('description', '')}\n"
+                
+                if r.get('violation_code', '').strip():
+                    combined_content += f"\n【❌ 违背示例】\n{r['violation_code']}"
+                
+                if r.get('compliance_code', '').strip():
+                    combined_content += f"\n【✅ 遵循示例】\n{r['compliance_code']}"
+
+                parsed_data.append({
+                    "id": r.get('id', '未知ID'),
+                    "summary": r.get('description', '')[:50] + "...",
+                    "content": combined_content,  # <--- 现在这里包含了完整代码！
+                    "full_data": r,
+                    "type": "编程规则"
+                })
+                
+        elif doc_type == 'issue':
+            raw_issues = parse_issue_reports(target_path, debug=False)
+            for i in raw_issues:
+                # 增强：确保字段存在，防止前端显示空白
+                desc = i.get('desc', '无描述')
+                opinion = i.get('opinion', '无处理意见')
+                
+                parsed_data.append({
+                    "id": i.get('id', '未知ID'),
+                    "summary": desc[:50] + "...",
+                    # 组合详细内容用于展示
+                    "content": f"【问题描述】\n{desc}\n\n【处理意见】\n{opinion}\n\n【追踪ID】\n{i.get('trace_id','')}",
+                    "full_data": i,
+                    "type": "问题单"
+                })
+        
+        return jsonify({"status": "success", "data": parsed_data})
+        
+    except Exception as e:
+        print(f"Preview Error: {e}") # 打印报错以便调试
+        return jsonify({"status": "error", "message": str(e)})
+
+@app.route('/commit', methods=['POST'])
+def commit_knowledge():
+    """接收前端确认的数据 -> 写入 Chroma"""
+    data = request.json
+    kb_name = data.get('kb_name')     # 用户填写的库名，例如 "v2.0_issue_db"
+    selected_items = data.get('items') # 用户勾选的数据
+    # 获取前端传来的项目路径，如果没有则用默认的
+    project_path = data.get('projectPath', PROJECT_ROOT)
+    
+    if not kb_name or not selected_items:
+        return jsonify({"status": "error", "message": "参数不完整"}), 400
+        
+    try:
+        # 使用传入的 project_path 初始化
+        rag_engine.initialize(project_path=project_path, db_name=kb_name)
+        
+        # 2. 转换数据格式适配 add_manual_data
+        # 前端发来的 items 里的 full_data 对应后端的 meta
+        items_to_add = []
+        for item in selected_items:
+            items_to_add.append({
+                "id": item['id'],
+                "content": item['content'], # 检索文本
+                "meta": item['full_data']   # 完整元数据
+            })
+            
+        # 3. 调用我们在 rag_chroma.py 里新加的方法
+        result = rag_engine.add_manual_data(items_to_add)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Commit Error: {e}")
+        return jsonify({"status": "error", "message": str(e)})
 
 # 3. 获取列表 (改为 POST 或者带参数的 GET)
 # 为了方便传路径，建议用 POST，或者 GET ?projectPath=...

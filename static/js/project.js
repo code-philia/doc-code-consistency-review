@@ -3824,95 +3824,146 @@ const app = createApp({
             }
         });
 
-        /***********************
-         * RAG 向量库管理 (已修改为文件管理器模式)
-         ***********************/
-        const buildKBInput = ref(null);
-        const switchKBInput = ref(null);
+        // ============================================================
+        // [RAG 模块] 知识库管理逻辑
+        // ============================================================
 
-        // 1. 新建知识库：触发文件选择
-        const triggerBuildKB = () => {
-            if (buildKBInput.value) buildKBInput.value.click();
-        };
+        // --- 1. 状态定义 ---
+        const showCreateKBDialog = ref(false); // 新建弹窗显示状态
+        const isBuildingKB = ref(false);       // 构建按钮Loading状态
         
-        // 处理新建上传 (最终修正版 - 强制对齐 annotations)
-        const handleBuildKBFile = async (event) => {
+        // 新建表单数据
+        const kbCreationForm = ref({
+            name: '',
+            type: 'rule', // 默认选中'编程规则'
+            file: null,
+            fileName: ''
+        });
+
+        // 绑定隐藏的 input DOM 元素
+        const kbFileInput = ref(null);     // 新建用的 input (文件)
+        const switchKBInput = ref(null);   // 切换用的 input (文件夹)
+
+        // ============================================================
+        // A. 新建/重建知识库 (弹窗模式)
+        // ============================================================
+        
+        // 1. 点击菜单"新建" -> 打开弹窗
+        const triggerBuildKB = () => {
+            // 重置表单
+            kbCreationForm.value = {
+                name: '',
+                type: 'rule',
+                file: null,
+                fileName: ''
+            };
+            showCreateKBDialog.value = true;
+        };
+
+        // 2. 弹窗里点击"选择文件" -> 触发隐藏input
+        const triggerFileSelect = () => {
+            if (kbFileInput.value) kbFileInput.value.click();
+        };
+
+        // 3. input选中文件后 -> 回填到表单
+        const handleKBFileSelect = (event) => {
             const files = event.target.files;
-            if (!files || files.length === 0) return;
-            const file = files[0];
-            
-            // 1. 获取当前项目的基础路径
-            let basePath = projectPath.value;
-            
-            // 2. 确保基础路径不以斜杠结尾（去掉末尾的 / 或 \），方便后面统一拼接
-            if (basePath.endsWith('/') || basePath.endsWith('\\')) {
-                basePath = basePath.slice(0, -1);
+            if (files && files.length > 0) {
+                kbCreationForm.value.file = files[0];
+                kbCreationForm.value.fileName = files[0].name;
+                
+                // 自动填充名称 (如果还没填)
+                if (!kbCreationForm.value.name) {
+                    kbCreationForm.value.name = files[0].name
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/[:\s]/g, '_');
+                }
             }
+            event.target.value = ''; // 清空以允许重复选择
+        };
+
+        // 4. 点击"确认构建" -> 发送请求
+        const confirmBuildKB = async () => {
+            if (!kbCreationForm.value.file) {
+                ElMessage.warning('请选择源文件');
+                return;
+            }
+            if (!kbCreationForm.value.name) {
+                ElMessage.warning('请输入知识库名称');
+                return;
+            }
+
+            isBuildingKB.value = true;
+            const file = kbCreationForm.value.file;
             
-            // 【修改点】之前是 basePath + '/annotations'，现在直接用 basePath (根目录)
-            const targetPath = basePath; 
-
-            console.log(">>> [Debug] 上传目标文件夹:", targetPath);
-            console.log(">>> [Debug] 原始文件名:", file.name);
-
-            // 4. 净化文件名 (防止冒号报错)
+            // 路径处理
+            let basePath = projectPath.value;
+            if (basePath.endsWith('/') || basePath.endsWith('\\')) basePath = basePath.slice(0, -1);
+            
             const safeFileName = file.name.replace(/:/g, '-');
-
             const formData = new FormData();
-            formData.append('path', targetPath); // 告诉后端：存到 annotations 文件夹里！
+            formData.append('path', basePath); 
             formData.append('fileType', 'annotation'); 
-            formData.append('files', file, safeFileName); // 使用净化后的文件名
+            formData.append('files', file, safeFileName);
 
-            ElMessage.info(`正在上传至 annotations 目录...`);
+            ElMessage.info('正在上传并解析...');
 
             try {
+                // 步骤1: 上传
                 const upRes = await axios.post('/project/upload-files', formData, { 
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
 
                 if (upRes.data.status === 'success') {
-                    ElMessage.info('上传成功，开始构建知识库...');
-                    
-                    // 5. 调用构建接口
-                    // 注意：这里传给后端的 annotationFile 必须和上面净化后的 safeFileName 一致
-                    // 且后端代码里必须写的是 os.path.join(project_path, 'annotations', filename)
-                    const dbName = safeFileName.replace(/\.[^/.]+$/, "");
-                    
+                    // 步骤2: 构建 (传参包含 kbType)
                     const buildRes = await axios.post('/api/rag/build', {
                         projectPath: projectPath.value,
-                        annotationFile: safeFileName, 
-                        dbName: dbName
+                        annotationFile: safeFileName,
+                        dbName: kbCreationForm.value.name,
+                        kbType: kbCreationForm.value.type 
                     });
 
                     if (buildRes.data.status === 'success') {
-                        ElMessage.success('构建成功！');
+                        ElMessage.success('知识库构建成功！');
+                        showCreateKBDialog.value = false;
+                        
+                        // 刷新列表 (如果有定义 fetchKBList)
+                        if (typeof fetchKBList === 'function') {
+                            await fetchKBList();
+                        }
+                        
+                        // 自动切换到新库 (如果有定义 handleKBSwitch)
+                        if (typeof handleKBSwitch === 'function') {
+                            handleKBSwitch(kbCreationForm.value.name);
+                        }
                     } else {
-                        console.error(">>> [Debug] 构建失败:", buildRes.data);
-                        ElMessage.error(buildRes.data.message || '构建失败');
+                        ElMessage.error('构建失败: ' + buildRes.data.message);
                     }
                 } else {
-                    console.error(">>> [Debug] 上传失败:", upRes.data);
                     ElMessage.error('上传失败: ' + upRes.data.message);
                 }
-            } catch (e) { 
+            } catch (e) {
                 console.error(e);
-                ElMessage.error('操作失败: ' + (e.response?.data?.message || e.message)); 
+                ElMessage.error('操作失败: ' + (e.response?.data?.message || e.message));
             } finally {
-                event.target.value = ''; 
+                isBuildingKB.value = false;
             }
         };
 
-        // 2. 切换知识库：触发文件夹选择
+        // ============================================================
+        // B. 切换/加载知识库 (文件夹模式)
+        // ============================================================
+
+        // 1. 点击菜单"切换" -> 触发 input
         const triggerSwitchKB = () => {
             if (switchKBInput.value) switchKBInput.value.click();
         };
 
-        // 处理切换上传
+        // 2. 选中文件夹后 -> 上传并切换
         const handleSwitchKBFile = async (event) => {
             const files = event.target.files;
             if (!files || files.length === 0) return;
             
-            // 获取文件夹名 (webkitRelativePath的第一段)
             const folderName = files[0].webkitRelativePath.split('/')[0];
             ElMessage.info(`正在加载知识库: ${folderName}...`);
 
@@ -3924,33 +3975,212 @@ const app = createApp({
             }
 
             try {
-                // 1. 先把文件夹上传上去
-                const upRes = await axios.post('/project/upload-files', formData, { 
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-
+                const upRes = await axios.post('/project/upload-files', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
                 if (upRes.data.status === 'success') {
-                    ElMessage.info('上传完成，正在切换...');
-                    
-                    // 【关键修改点】这里必须加上 projectPath: projectPath.value
+                    // 必须传 projectPath
                     const switchRes = await axios.post('/api/rag/switch', { 
-                        projectPath: projectPath.value,  // <--- 加上这一行！
+                        projectPath: projectPath.value,
                         dbName: folderName 
                     });
-                    
                     if (switchRes.data.status === 'success') {
-                         ElMessage.success(`已切换至: ${folderName}`);
-                         // 可以在这里加个 currentKB.value = folderName; 更新UI显示
+                        ElMessage.success(`已切换至: ${folderName}`);
                     } else {
-                         ElMessage.error(switchRes.data.message);
+                        ElMessage.error(switchRes.data.message);
                     }
                 } else {
                     ElMessage.error('上传失败: ' + upRes.data.message);
                 }
-            } catch (e) { 
-                ElMessage.error('操作失败: ' + (e.response?.data?.message || e.message)); 
-            }
+            } catch (e) { ElMessage.error('操作失败: ' + e.message); }
             event.target.value = '';
+        };
+        // ============================================================
+        // [新增/更新] 知识库审查与入库逻辑
+        // ============================================================
+        const showImportReviewDialog = ref(false);
+        const importStep = ref(0);
+        const importDocType = ref('issue');
+        
+        // 文件源相关
+        const fileSourceMode = ref('server'); // 'server' or 'local'
+        const serverFileList = ref([]);
+        const selectedServerFile = ref('');
+        const importFileList = ref([]); // 本地上传文件列表
+
+        // 审查相关
+        const previewTableData = ref([]);
+        const selectedReviewItems = ref([]);
+        const existingKbList = ref([]); // 现有库列表
+        const targetKbName = ref('');
+        
+        // 状态
+        const isUploading = ref(false);
+        const isCommitting = ref(false);
+        const reviewTableRef = ref(null);
+
+        // 详情弹窗
+        const showDetailDialog = ref(false);
+        const currentDetailItem = ref(null);
+
+        // 1. 初始化数据（打开弹窗时调用）
+        const loadInitData = async () => {
+            importStep.value = 0;
+            importFileList.value = [];
+            previewTableData.value = [];
+            targetKbName.value = '';
+            
+            await fetchServerFiles();
+            await fetchKbList();
+        };
+        
+        // 获取服务器 testdata 文件列表
+        const fetchServerFiles = async () => {
+            try {
+                const res = await axios.get('/api/list-testdata');
+                if (res.data.status === 'success') {
+                    serverFileList.value = res.data.files;
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        // 获取现有知识库列表
+        const fetchKbList = async () => {
+            try {
+                const res = await axios.get('/api/list-kbs');
+                if (res.data.status === 'success') {
+                    existingKbList.value = res.data.kbs;
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        // 2. 本地文件选择回调
+        const handleImportFileChange = (file, fileList) => {
+            if (fileList.length > 1) fileList.splice(0, 1);
+            importFileList.value = fileList;
+        };
+
+        // 3. 开始解析
+        const startPreview = async () => {
+            const formData = new FormData();
+            formData.append('doc_type', importDocType.value);
+            
+            if (fileSourceMode.value === 'server') {
+                if (!selectedServerFile.value) {
+                    ElMessage.warning('请选择一个服务器文件');
+                    return;
+                }
+                formData.append('use_server_file', 'true');
+                formData.append('filename', selectedServerFile.value);
+            } else {
+                if (importFileList.value.length === 0) {
+                    ElMessage.warning('请先选择本地文件');
+                    return;
+                }
+                formData.append('use_server_file', 'false');
+                formData.append('file', importFileList.value[0].raw);
+            }
+            
+            isUploading.value = true;
+            try {
+                const response = await axios.post('/preview', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+
+                if (response.data.status === 'success') {
+                    previewTableData.value = response.data.data;
+                    
+                    if (previewTableData.value.length === 0) {
+                        ElMessage.warning("未解析到有效数据，请检查文档格式或选择正确的文档类型");
+                    } else {
+                        importStep.value = 1; 
+                        // 自动全选
+                        await nextTick();
+                        if (reviewTableRef.value) {
+                            reviewTableRef.value.toggleAllSelection();
+                        }
+                    }
+                } else {
+                    ElMessage.error(`解析失败: ${response.data.message}`);
+                }
+            } catch (error) {
+                console.error(error);
+                ElMessage.error('请求发生错误');
+            } finally {
+                isUploading.value = false;
+            }
+        };
+
+        // 4. 查看详情
+        const viewDetail = (row) => {
+            currentDetailItem.value = row;
+            showDetailDialog.value = true;
+        };
+
+        // 5. 提交入库
+        const handleReviewSelectionChange = (val) => {
+            selectedReviewItems.value = val;
+        };
+
+        const submitToKb = async () => {
+            if (!targetKbName.value) {
+                ElMessage.warning('请选择或输入目标知识库名称');
+                return;
+            }
+            
+            isCommitting.value = true;
+            try {
+                const response = await axios.post('/commit', {
+                    kb_name: targetKbName.value,
+                    items: selectedReviewItems.value,
+                    projectPath: projectPath.value
+                });
+
+                if (response.data.status === 'success') {
+                    ElMessage.success(response.data.message);
+                    showImportReviewDialog.value = false;
+                } else {
+                    ElMessage.error(`入库失败: ${response.data.message}`);
+                }
+            } catch (error) {
+                ElMessage.error('入库请求出错');
+            } finally {
+                isCommitting.value = false;
+            }
+        };
+        const targetKbFolderInput = ref(null); // 对应 input ref="targetKbFolderInput"
+
+        // 1. 点击按钮 -> 触发隐藏 input 点击
+        const triggerTargetKbFolderSelect = () => {
+            if (targetKbFolderInput.value) {
+                targetKbFolderInput.value.value = ''; // 清空上次选择，确保能重复选同一个
+                targetKbFolderInput.value.click();
+            }
+        };
+
+        // 2. 处理文件夹选择变化
+        const handleTargetKbFolderSelect = (event) => {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            // 获取文件夹路径结构
+            // webkitRelativePath 格式通常是: "FolderName/FileName.ext"
+            const firstFilePath = files[0].webkitRelativePath;
+            
+            if (firstFilePath) {
+                // 提取第一层文件夹名称
+                const folderName = firstFilePath.split('/')[0];
+                
+                if (folderName) {
+                    targetKbName.value = folderName; // 自动填入输入框
+                    ElMessage.success({
+                        message: `已定位到知识库: ${folderName}`,
+                        type: 'success',
+                        duration: 2000
+                    });
+                }
+            } else {
+                // 某些浏览器可能不支持 webkitRelativePath，或者选的是空文件夹
+                ElMessage.warning('无法获取文件夹名称，请手动输入');
+            }
         };
         /***********************
          * 暴露到模板
@@ -4116,12 +4346,49 @@ const app = createApp({
             refreshAlignments,
             
             // RAG 相关
-            buildKBInput,
-            switchKBInput,
-            triggerBuildKB,
-            handleBuildKBFile,
-            triggerSwitchKB,
-            handleSwitchKBFile
+            showCreateKBDialog, // 弹窗状态
+            kbCreationForm,     // 表单数据
+            isBuildingKB,       // 构建Loading
+            kbFileInput,        // ref: 新建文件 input
+            switchKBInput,      // ref: 切换文件夹 input
+            
+            triggerBuildKB,     // 方法: 打开新建弹窗
+            triggerFileSelect,  // 方法: 弹窗内选文件
+            handleKBFileSelect, // 方法: 处理选中文件
+            confirmBuildKB,     // 方法: 确认构建
+            
+            triggerSwitchKB,    // 方法: 触发切换
+            handleSwitchKBFile, // 方法: 处理切换文件夹
+            
+            // [新增] 知识库审查相关导出
+            showImportReviewDialog,
+            importStep,
+            importDocType,
+            fileSourceMode,
+            serverFileList,
+            selectedServerFile,
+            importFileList,
+            previewTableData,
+            selectedReviewItems,
+            existingKbList,
+            targetKbName,
+            isUploading,
+            isCommitting,
+            reviewTableRef,
+            showDetailDialog,
+            currentDetailItem,
+            
+            openImportReviewDialog: () => { showImportReviewDialog.value = true; }, // Simple open trigger
+            loadInitData,
+            fetchServerFiles,
+            handleImportFileChange,
+            startPreview,
+            viewDetail,
+            handleReviewSelectionChange,
+            submitToKb,
+            targetKbFolderInput,
+            triggerTargetKbFolderSelect,
+            handleTargetKbFolderSelect,
         };
     }
 });

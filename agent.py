@@ -1,7 +1,7 @@
 import os
 import re
 import json
-from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL
+from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT
 from openai import OpenAI
 from utils import chunk_list
 from rag_chroma import rag_engine
@@ -19,13 +19,11 @@ def query_llm(message, history=None):
         base_url=API_BASE_URL,
     )
 
-    # 简单把 history 展开成一个纯文本对话
     prompt_parts = []
     if history:
         for turn in history:
             role = turn.get("role", "user")
             content = turn.get("content", "")
-            # 你想精细一点可以区分 system/user/assistant
             prompt_parts.append(f"{role.upper()}: {content}")
     prompt_parts.append(f"USER: {message}\nASSISTANT:")
     prompt = "\n".join(prompt_parts)
@@ -41,7 +39,6 @@ def query_llm(message, history=None):
 
     text = resp.choices[0].text
 
-    # 为了兼容你后面用的 response.content，这里包一层假的对象
     class Resp:
         pass
     r = Resp()
@@ -437,6 +434,40 @@ def query_flow_chart(code_content):
     return mermaid_code
 
 
+def smart_parse_doc(text, type='rule'):
+    """使用 LLM 对文档进行结构化提取"""
+    prompt_template = RULE_EXTRACTION_PROMPT if type == 'rule' else ISSUE_EXTRACTION_PROMPT
+    
+    # 截断防止超长 (取前6000字符)
+    prompt = prompt_template.format(text=text[:6000]) 
+    
+    try:
+        response = query_llm(prompt)
+        parsed = parse_alignment_output(response.content)
+        
+        # 标准化输出键名
+        normalized = []
+        if isinstance(parsed, list):
+            for item in parsed:
+                if type == 'rule':
+                    normalized.append({
+                        "id": item.get('id', ''),
+                        "description": item.get('description', ''),
+                        "violation_code": item.get('violation_code', ''),
+                        "compliance_code": item.get('compliance_code', '')
+                    })
+                else:
+                    normalized.append({
+                        "id": item.get('id', ''),
+                        "desc": item.get('desc', ''),
+                        "opinion": item.get('opinion', ''),
+                        "trace_id": item.get('trace_id', '')
+                    })
+        return normalized
+    except Exception as e:
+        print(f"[Agent] Smart parse failed: {e}")
+        return []
+        
 if __name__ == '__main__':
     message = "你好，简单介绍你自己。"
     response = query_llm(message)

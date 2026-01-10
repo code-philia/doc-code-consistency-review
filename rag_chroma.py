@@ -95,6 +95,67 @@ class RAGEngine:
         )
         print(f"[RAG] 知识库 '{db_name}' 加载完成。")
 
+    def add_manual_data(self, data_items: List[Dict[str, Any]]):
+        """
+        接收人工审查后的数据列表并入库
+        :param data_items: 列表，每一项包含 {'id':..., 'content':..., 'meta':...}
+        """
+        if not self.collection:
+            return {"status": "error", "message": "知识库未初始化，请先调用 initialize"}
+        
+        if not data_items:
+            return {"status": "warning", "message": "没有数据需要入库"}
+
+        ids = []
+        documents = []  # 用于向量检索的文本 (如: 问题描述)
+        metadatas = []  # 附带信息 (如: 原始JSON、处理意见、代码等)
+
+        print(f"[RAG] 正在处理人工提交的 {len(data_items)} 条数据...")
+
+        for item in data_items:
+            # 1. ID 处理
+            doc_id = str(item.get("id"))
+            
+            # 2. 检索内容 (content)
+            # 前端传来的 'content' 是我们拼接好的用于搜索的文本
+            search_text = item.get("content", "")
+            if not search_text:
+                continue
+
+            # 3. Metadata 处理
+            # ChromaDB 的 metadata 值只能是 str, int, float, bool
+            # 我们把前端传来的完整字典 (full_data) 转成字符串存进去，方便取出
+            raw_meta = item.get("meta", {})
+            
+            # 构造符合你现有 schema 的 metadata
+            # 尽量保持和你 build_from_json 里的 metadata 结构类似，方便统一读取
+            clean_meta = {
+                "pair_id": doc_id,
+                "source_type": "manual_review", # 标记来源
+                "code_text": raw_meta.get("compliance_code") or raw_meta.get("opinion") or "", # 尝试提取代码或意见
+                "original_json": json.dumps(raw_meta, ensure_ascii=False) # 把原始结构存起来以防万一
+            }
+
+            ids.append(doc_id)
+            documents.append(search_text)
+            metadatas.append(clean_meta)
+
+        # 4. 批量写入
+        if ids:
+            try:
+                self.collection.upsert(
+                    ids=ids,
+                    documents=documents,
+                    metadatas=metadatas
+                )
+                count = len(ids)
+                total = self.collection.count()
+                return {"status": "success", "message": f"成功入库 {count} 条数据，当前库总数: {total}"}
+            except Exception as e:
+                print(f"[RAG] 写入失败: {e}")
+                return {"status": "error", "message": str(e)}
+        else:
+            return {"status": "warning", "message": "有效数据为0，未写入"}
 
     def _doc_id_to_content(self, doc_files: List[Dict[str, Any]]) -> Dict[str, str]:
         m: Dict[str, str] = {}
@@ -207,12 +268,12 @@ class RAGEngine:
                         "orig_ann_id": base_pair_id,
                         "code_index": code_idx,
                         "code_count": len(code_segments),
-                        "code_text": code_text,  # 【关键】代码存在 metadata 里
+                        "code_text": code_text,  
                         "source_type": "annotation"
                     }
 
                     ids.append(pair_id)
-                    documents.append(query_text) # 【关键】用文档描述来做向量化
+                    documents.append(query_text) 
                     metadatas.append(meta)
                     count += 1
         else:
