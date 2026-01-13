@@ -25,8 +25,6 @@
 <body>
 <div id="app">
     <!-- 顶部菜单栏 -->
-    <input type="file" ref="buildKBInput" style="display: none" accept=".json" @change="handleBuildKBFile">
-    <input type="file" ref="switchKBInput" style="display: none" webkitdirectory @change="handleSwitchKBFile">
     <div class="header">
         <div class="menu">
             <div class="menu-item">
@@ -42,12 +40,6 @@
                     <div class="dropdown-item has-submenu">
                         <i class="fas fa-database"></i> 知识库管理
                         <div class="submenu">
-                            <div class="submenu-item" @click="triggerBuildKB">
-                                <i class="fas fa-plus-circle"></i> 新建/重建知识库
-                            </div>
-                            <div class="submenu-item" @click="triggerSwitchKB">
-                                <i class="fas fa-exchange-alt"></i> 切换/加载知识库
-                            </div>
                             <div class="submenu-item" @click="openImportReviewDialog">
                                 <i class="fas fa-tasks"></i> 导入与审查入库
                             </div>
@@ -180,6 +172,8 @@
                             </el-tree>
                         </div>
                     </div>
+
+
                 </div>
                 
                 <!-- 进度显示区域 -->
@@ -956,44 +950,10 @@
             type="file" 
             ref="switchKBInput" 
             style="display: none" 
-            @change="handleSwitchKBFile" 
             webkitdirectory 
             directory 
         />
-        <el-dialog 
-            v-model="showCreateKBDialog" 
-            title="新建/重建知识库" 
-            width="500px" 
-            :close-on-click-modal="false"
-        >
-            <el-form :model="kbCreationForm" label-width="100px">
-                <el-form-item label="知识库名称">
-                    <el-input v-model="kbCreationForm.name" placeholder="请输入名称 (如: lib_v1)"></el-input>
-                </el-form-item>
-                
-                <el-form-item label="知识库类型">
-                    <el-select v-model="kbCreationForm.type" placeholder="请选择类型" style="width: 100%">
-                        <el-option label="编程规则" value="rule"></el-option>
-                        <el-option label="问题单" value="issue"></el-option>
-                        <el-option label="典型案例" value="case"></el-option>
-                        <el-option label="其他" value="other"></el-option>
-                    </el-select>
-                </el-form-item>
-                
-                <el-form-item label="源文件">
-                    <div style="display: flex; gap: 10px; width: 100%;">
-                        <el-input v-model="kbCreationForm.fileName" readonly placeholder="选择 .docx 或 .json"></el-input>
-                        <el-button type="primary" @click="triggerFileSelect">选择文件</el-button>
-                    </div>
-                    <input type="file" ref="kbFileInput" style="display: none" accept=".json,.docx" @change="handleKBFileSelect">
-                </el-form-item>
-            </el-form>
-            
-            <template #footer>
-                <el-button @click="showCreateKBDialog = false">取消</el-button>
-                <el-button type="primary" @click="confirmBuildKB" :loading="isBuildingKB">开始构建</el-button>
-            </template>
-        </el-dialog>
+
         <el-dialog 
             v-model="showImportReviewDialog" 
             title="🛡️ 知识库人工审查与入库" 
@@ -1015,6 +975,7 @@
                 <div style="margin-bottom: 20px; text-align: center;">
                     <span style="margin-right: 15px; font-weight: bold;">文档类型：</span>
                     <el-radio-group v-model="importDocType">
+                        <el-radio label="history_align" border>历史对齐 (History Align)</el-radio>
                         <el-radio label="issue" border>问题单 (Issue)</el-radio>
                         <el-radio label="rule" border>编程规则 (Rule)</el-radio>
                     </el-radio-group>
@@ -1072,42 +1033,9 @@
         
                 <div style="margin-bottom: 15px; background: #f5f7fa; padding: 15px; border-radius: 4px; border: 1px solid #e4e7ed;">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <span style="font-weight: bold; font-size: 14px; color: #606266;">
-                            <i class="fas fa-database"></i> 目标知识库：
-                        </span>
-                        
-                        <el-select 
-                            v-model="targetKbName" 
-                            filterable 
-                            allow-create 
-                            default-first-option
-                            placeholder="输入新名称 或 选择现有库..."
-                            style="flex-grow: 1;"
-                        >
-                            <el-option
-                                v-for="kb in existingKbList"
-                                :key="kb"
-                                :label="kb"
-                                :value="kb">
-                                <span style="float: left">${ kb }</span>
-                                <span style="float: right; color: #8492a6; font-size: 13px">
-                                    <i class="fas fa-hdd"></i>
-                                </span>
-                            </el-option>
-                        </el-select>
-        
-                        <el-button type="primary" plain @click="triggerTargetKbFolderSelect">
-                            <i class="fas fa-folder-open"></i> 选择本地库文件夹
-                        </el-button>
-                        
-                        <input 
-                            type="file" 
-                            ref="targetKbFolderInput" 
-                            style="display: none" 
-                            webkitdirectory 
-                            directory 
-                            @change="handleTargetKbFolderSelect"
-                        />
+                        <el-tag type="success" effect="dark" size="large" style="width: 100%; font-size: 14px; display: flex; align-items: center;">
+                            <i class="fas fa-database" style="margin-right: 8px;"></i> 目标库: ${ targetKbName }
+                        </el-tag>
                     </div>
         
                     <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #909399;">

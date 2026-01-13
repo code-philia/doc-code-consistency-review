@@ -63,45 +63,132 @@ class RAGEngine:
             self.emb_fn = LocalM3EFunction(LOCAL_MODEL_ABS_PATH)
         
         self.client = None
-        self.collection = None
+        self.collections = {} # Stores collections by name: 'align_rules', 'user_manuals', 'code'
 
-    # 【核心修改】必须传入 project_path
-    def initialize(self, project_path: str, db_name="default_rag"):
+    def initialize(self, project_path: str):
         if not project_path:
             raise ValueError("[RAG] 初始化失败：未提供 project_path")
 
-        print(f"[RAG] 正在初始化知识库: {db_name} (项目: {project_path})")
+        print(f"[RAG] 正在初始化知识库 (项目: {project_path})")
         
         # 1. 动态构建路径：放在项目根目录下的 rag_database 文件夹里
-        # 结构: /Users/.../MyProject/rag_database/default_rag
         project_kb_root = os.path.join(project_path, "rag_database")
-        current_db_path = os.path.join(project_kb_root, db_name)
         
-        abs_path = os.path.abspath(current_db_path)
-        print(f"[DEBUG] 数据库存储路径: {abs_path}")
+        # Define the 3 required KBs
+        kb_types = ['align_knowledge_base', 'issue_knowledge_base', 'rule_knowledge_base']
+        
+        for kb_name in kb_types:
+            current_db_path = os.path.join(project_kb_root, kb_name)
+            os.makedirs(current_db_path, exist_ok=True)
+            
+            # Initialize Client for each KB (since they are in different dirs, we might need different clients 
+            # OR we can use one client with different collections if they were in the same DB. 
+            # But the requirement says "Split into 3 parts", often implying separation. 
+            # ChromaDB PersistentClient binds to a directory. 
+            # If we want 3 separate dirs, we need 3 clients or just use 1 client in 'rag_database' and 3 collections?
+            # Existing code used `rag_database/{db_name}` as path. 
+            # To minimize disruption and follow "Split into 3 parts", I will use 3 subdirectories.
+            # Thus, 3 clients.
+            
+            try:
+                client = chromadb.PersistentClient(path=current_db_path)
+                collection = client.get_or_create_collection(
+                    name=COLLECTION_NAME, # Use same collection name internally, or separate? 'rag_pairs' is fine.
+                    embedding_function=self.emb_fn,
+                    metadata={"hnsw:space": "cosine"}
+                )
+                self.collections[kb_name] = {
+                    'client': client,
+                    'collection': collection
+                }
+                print(f"[RAG] 知识库 '{kb_name}' 加载完成。")
+            except Exception as e:
+                print(f"[RAG] 知识库 '{kb_name}' 加载失败: {e}")
 
-        # 2. 确保目录存在
-        if not os.path.exists(current_db_path):
-            os.makedirs(current_db_path)
-        
-        # 3. 初始化 Client
-        self.client = chromadb.PersistentClient(path=current_db_path)
-        
-        # 4. 获取 Collection
-        self.collection = self.client.get_or_create_collection(
-            name=COLLECTION_NAME,
-            embedding_function=self.emb_fn,
-            metadata={"hnsw:space": "cosine"}
-        )
-        print(f"[RAG] 知识库 '{db_name}' 加载完成。")
+    def get_collection(self, kb_type='rule_knowledge_base'):
+        if kb_type not in self.collections:
+            return None
+        return self.collections[kb_type]['collection']
 
-    def add_manual_data(self, data_items: List[Dict[str, Any]]):
+    def add_rules(self, rules: List[Any]):
+        """
+        清空并重建 'rule_knowledge_base' 知识库
+        :param rules: 规则列表，可以是字符串列表或包含 content 的字典列表
+        """
+        kb_type = 'rule_knowledge_base'
+        if kb_type not in self.collections:
+             return {"status": "error", "message": f"知识库 {kb_type} 未初始化"}
+        
+        col_info = self.collections[kb_type]
+        client = col_info['client']
+        
+        # Clear existing collection
+        try:
+            client.delete_collection(COLLECTION_NAME)
+            # Recreate
+            col_info['collection'] = client.create_collection(
+                name=COLLECTION_NAME,
+                embedding_function=self.emb_fn,
+                metadata={"hnsw:space": "cosine"}
+            )
+            collection = col_info['collection']
+        except Exception as e:
+            return {"status": "error", "message": f"重置知识库失败: {e}"}
+
+        if not rules:
+             return {"status": "success", "message": "规则列表为空，已清空知识库"}
+
+        ids = []
+        documents = []
+        metadatas = []
+
+        print(f"[RAG] 正在导入 {len(rules)} 条规则...")
+
+        for idx, item in enumerate(rules):
+            doc_content = ""
+            meta = {"source_type": "imported_rule"}
+            
+            if isinstance(item, str):
+                doc_content = item
+                meta["original_text"] = item
+            elif isinstance(item, dict):
+                doc_content = item.get("content", "") or item.get("rule", "") or json.dumps(item, ensure_ascii=False)
+                meta.update(item)
+                # Ensure metadata values are primitives
+                for k, v in meta.items():
+                    if not isinstance(v, (str, int, float, bool)):
+                        meta[k] = str(v)
+            
+            if not doc_content.strip():
+                continue
+
+            ids.append(f"rule_{idx}")
+            documents.append(doc_content)
+            metadatas.append(meta)
+
+        if ids:
+            try:
+                collection.upsert(
+                    ids=ids,
+                    documents=documents,
+                    metadatas=metadatas
+                )
+                count = len(ids)
+                return {"status": "success", "message": f"成功导入 {count} 条规则"}
+            except Exception as e:
+                print(f"[RAG] 写入失败: {e}")
+                return {"status": "error", "message": str(e)}
+        
+        return {"status": "success", "message": "无有效规则导入"}
+
+    def add_manual_data(self, data_items: List[Dict[str, Any]], kb_type='align_knowledge_base'):
         """
         接收人工审查后的数据列表并入库
         :param data_items: 列表，每一项包含 {'id':..., 'content':..., 'meta':...}
         """
-        if not self.collection:
-            return {"status": "error", "message": "知识库未初始化，请先调用 initialize"}
+        collection = self.get_collection(kb_type)
+        if not collection:
+            return {"status": "error", "message": f"知识库 {kb_type} 未初始化，请先调用 initialize"}
         
         if not data_items:
             return {"status": "warning", "message": "没有数据需要入库"}
@@ -119,6 +206,20 @@ class RAGEngine:
             # 2. 检索内容 (content)
             # 前端传来的 'content' 是我们拼接好的用于搜索的文本
             search_text = item.get("content", "")
+            
+            # [Refinement] 如果是 History Align 数据 (含有 docRanges)，
+            # 优先仅使用 docRanges 作为向量检索内容，以保持与 build_from_json 逻辑一致 (Doc -> Code)
+            raw_meta = item.get("meta", {})
+            if "docRanges" in raw_meta and isinstance(raw_meta["docRanges"], list):
+                doc_parts = []
+                for dr in raw_meta["docRanges"]:
+                    if isinstance(dr, dict) and "content" in dr:
+                        doc_parts.append(dr["content"])
+                    elif isinstance(dr, str):
+                        doc_parts.append(dr)
+                if doc_parts:
+                    search_text = "\n".join(doc_parts)
+
             if not search_text:
                 continue
 
@@ -127,12 +228,27 @@ class RAGEngine:
             # 我们把前端传来的完整字典 (full_data) 转成字符串存进去，方便取出
             raw_meta = item.get("meta", {})
             
+            # 尝试从 codeRanges 提取代码文本 (适配 History Align)
+            code_text = ""
+            if "codeRanges" in raw_meta and isinstance(raw_meta["codeRanges"], list):
+                codes = []
+                for cr in raw_meta["codeRanges"]:
+                    if isinstance(cr, dict) and "content" in cr:
+                        codes.append(cr["content"])
+                    elif isinstance(cr, str):
+                        codes.append(cr)
+                code_text = "\n".join(codes)
+            
+            # 兜底：尝试从其他字段提取
+            if not code_text:
+                code_text = raw_meta.get("compliance_code") or raw_meta.get("opinion") or ""
+
             # 构造符合你现有 schema 的 metadata
             # 尽量保持和你 build_from_json 里的 metadata 结构类似，方便统一读取
             clean_meta = {
                 "pair_id": doc_id,
                 "source_type": "manual_review", # 标记来源
-                "code_text": raw_meta.get("compliance_code") or raw_meta.get("opinion") or "", # 尝试提取代码或意见
+                "code_text": code_text,
                 "original_json": json.dumps(raw_meta, ensure_ascii=False) # 把原始结构存起来以防万一
             }
 
@@ -143,13 +259,13 @@ class RAGEngine:
         # 4. 批量写入
         if ids:
             try:
-                self.collection.upsert(
+                collection.upsert(
                     ids=ids,
                     documents=documents,
                     metadatas=metadatas
                 )
                 count = len(ids)
-                total = self.collection.count()
+                total = collection.count()
                 return {"status": "success", "message": f"成功入库 {count} 条数据，当前库总数: {total}"}
             except Exception as e:
                 print(f"[RAG] 写入失败: {e}")
@@ -306,22 +422,23 @@ class RAGEngine:
         total = len(ids)
         for i in range(0, total, batch_size):
             end = min(i + batch_size, total)
-            self.collection.upsert(
+            collection.upsert(
                 ids=ids[i:end],
                 documents=documents[i:end],
                 metadatas=metadatas[i:end]
             )
             print(f"[RAG] 已写入批次 {i} - {end}")
         
-        total_count = self.collection.count()
+        total_count = collection.count()
         return {"status": "success", "message": f"构建完成！生成了 {count} 个数据对，库内总数: {total_count}"}
 
-    def search(self, query: str, top_k: int = 1):
-        if self.collection.count() == 0:
+    def search(self, query: str, top_k: int = 1, kb_type='align_rules'):
+        collection = self.get_collection(kb_type)
+        if not collection or collection.count() == 0:
             return []
             
         # 根据 query 搜索（匹配 documents 字段，即上面的 query_text）
-        results = self.collection.query(
+        results = collection.query(
             query_texts=[query],
             n_results=top_k
         )

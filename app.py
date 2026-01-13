@@ -282,19 +282,12 @@ def init_project_db(project_path):
 
 
 def auto_load_rag_db(project_path):
-    """自动加载项目下的第一个RAG知识库"""
-    rag_db_root = os.path.join(project_path, "rag_database")
-    if os.path.exists(rag_db_root) and os.path.isdir(rag_db_root):
-        # 获取所有子目录
-        subdirs = [d for d in os.listdir(rag_db_root) if os.path.isdir(os.path.join(rag_db_root, d))]
-        if subdirs:
-            # 默认加载第一个（按字母序）
-            first_db = sorted(subdirs)[0]
-            try:
-                print(f"[AutoLoad] Found RAG DBs: {subdirs}, loading: {first_db}")
-                rag_engine.initialize(project_path, db_name=first_db)
-            except Exception as e:
-                print(f"[AutoLoad] Failed to load RAG DB '{first_db}': {e}")
+    """自动加载项目下的RAG知识库"""
+    try:
+        # Initialize standard KBs (align_rules, user_manuals, code)
+        rag_engine.initialize(project_path)
+    except Exception as e:
+        print(f"[AutoLoad] Failed to load RAG DBs: {e}")
 
 
 def import_json_to_db(project_path):
@@ -2276,6 +2269,111 @@ def preview_file():
                     "type": "问题单"
                 })
         
+        elif doc_type == 'history_align':
+            try:
+                with open(target_path, 'r', encoding='utf-8') as f:
+                    raw_data = json.load(f)
+                
+                items = []
+                
+                # Case A: Standard Annotation Format (annotations + docFiles + codeFiles)
+                if isinstance(raw_data, dict) and 'annotations' in raw_data:
+                    annotations = raw_data.get('annotations', [])
+                    doc_files = raw_data.get('docFiles', [])
+                    code_files = raw_data.get('codeFiles', [])
+                    
+                    # Build Lookup Maps
+                    doc_map = {}
+                    for d in doc_files:
+                        if isinstance(d, dict) and 'id' in d:
+                            doc_map[d['id']] = d.get('content', '')
+                            
+                    code_map = {}
+                    for c in code_files:
+                        if isinstance(c, dict) and 'id' in c:
+                            code_map[c['id']] = c.get('content', '')
+                            
+                    items = annotations
+                    
+                    # Pre-process items to resolve content if missing
+                    for item in items:
+                        if not isinstance(item, dict): continue
+                        
+                        # Resolve docRanges
+                        if 'docRanges' in item:
+                            for dr in item['docRanges']:
+                                if isinstance(dr, dict) and not dr.get('content') and dr.get('documentId') in doc_map:
+                                    full_text = doc_map[dr['documentId']]
+                                    s = dr.get('start', 0)
+                                    e = dr.get('end', len(full_text))
+                                    dr['content'] = full_text[s:e]
+                                    
+                        # Resolve codeRanges
+                        if 'codeRanges' in item:
+                            for cr in item['codeRanges']:
+                                if isinstance(cr, dict) and not cr.get('content') and cr.get('documentId') in code_map:
+                                    full_text = code_map[cr['documentId']]
+                                    s = cr.get('start', 0)
+                                    e = cr.get('end', len(full_text))
+                                    cr['content'] = full_text[s:e]
+
+                # Case B: Flat Dict of Alignments (id -> alignment)
+                elif isinstance(raw_data, dict):
+                    # Keep the key as ID if not present in value
+                    for k, v in raw_data.items():
+                        if isinstance(v, dict):
+                            if 'id' not in v: v['id'] = k
+                            items.append(v)
+                            
+                # Case C: Flat List of Alignments
+                elif isinstance(raw_data, list):
+                    items = raw_data
+                
+                for idx, item in enumerate(items):
+                    if not isinstance(item, dict): continue
+                    
+                    item_id = item.get('id', f'history_{idx}')
+                    content_parts = []
+                    
+                    if item.get('name'): content_parts.append(f"Name: {item['name']}")
+                    if item.get('description'): content_parts.append(f"Desc: {item['description']}")
+                    
+                    # Handle docRanges/codeRanges
+                    doc_ranges = item.get('docRanges', [])
+                    if doc_ranges:
+                        content_parts.append("【文档片段】")
+                        if isinstance(doc_ranges, list):
+                            for dr in doc_ranges:
+                                if isinstance(dr, dict) and 'content' in dr:
+                                    content_parts.append(dr['content'])
+                                elif isinstance(dr, str):
+                                    content_parts.append(dr)
+
+                    code_ranges = item.get('codeRanges', [])
+                    if code_ranges:
+                        content_parts.append("【代码片段】")
+                        if isinstance(code_ranges, list):
+                            for cr in code_ranges:
+                                if isinstance(cr, dict) and 'content' in cr:
+                                    content_parts.append(cr['content'])
+                                elif isinstance(cr, str):
+                                    content_parts.append(cr)
+
+                    full_content = "\n".join(content_parts)
+                    if not full_content.strip():
+                        full_content = json.dumps(item, ensure_ascii=False)
+
+                    parsed_data.append({
+                        "id": item_id,
+                        "summary": (item.get('name') or item.get('description') or full_content)[:50] + "...",
+                        "content": full_content,
+                        "full_data": item,
+                        "type": "历史对齐"
+                    })
+            except Exception as e:
+                print(f"History Parse Error: {e}")
+                return jsonify({"status": "error", "message": f"解析历史对齐文件失败: {str(e)}"})
+
         return jsonify({"status": "success", "data": parsed_data})
         
     except Exception as e:
@@ -2296,7 +2394,7 @@ def commit_knowledge():
         
     try:
         # 使用传入的 project_path 初始化
-        rag_engine.initialize(project_path=project_path, db_name=kb_name)
+        rag_engine.initialize(project_path=project_path)
         
         # 2. 转换数据格式适配 add_manual_data
         # 前端发来的 items 里的 full_data 对应后端的 meta
@@ -2309,7 +2407,7 @@ def commit_knowledge():
             })
             
         # 3. 调用我们在 rag_chroma.py 里新加的方法
-        result = rag_engine.add_manual_data(items_to_add)
+        result = rag_engine.add_manual_data(items_to_add, kb_type=kb_name)
         
         return jsonify(result)
         
