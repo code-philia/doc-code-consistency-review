@@ -1112,6 +1112,12 @@ def align_requirement_to_project():
     if not requirement_text or not project_path:
         return jsonify({"status": "error", "message": "缺少需求内容或项目路径参数"}), 400
     
+    # 尝试初始化RAG引擎，以便在agent中使用
+    try:
+        rag_engine.initialize(project_path)
+    except Exception as e:
+        print(f"[Align] RAG initialize failed: {e}")
+
     try:
         # 获取项目中所有代码文件
         code_repo_path = os.path.join(project_path, 'code_repo')
@@ -1243,6 +1249,12 @@ def review_alignment():
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
     init_project_db(project_path)
+
+    # 尝试初始化RAG引擎
+    try:
+        rag_engine.initialize(project_path)
+    except Exception as e:
+        print(f"[Review] RAG initialize failed: {e}")
 
     # 1. 调用 agent 获取审查结果
     review_process, issue = query_review_result(
@@ -2003,6 +2015,12 @@ def align_code_to_requirement():
         
         if not code_ranges or not project_path:
              return jsonify({"status": "error", "message": "缺少代码内容或项目路径参数"}), 400
+
+        # 尝试初始化RAG引擎
+        try:
+            rag_engine.initialize(project_path)
+        except Exception as e:
+            print(f"[Align] RAG initialize failed: {e}")
 
         # 获取需求块
         doc_block_base_path = os.path.join(project_path, 'doc_block_repo')

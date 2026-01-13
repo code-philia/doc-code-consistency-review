@@ -51,7 +51,7 @@ def query_vector_db(requirement_text, topk=1):
     """
     print(f"[Agent] Searching vector DB for: {requirement_text[:20]}...")
     try:
-        hits = rag_engine.search(requirement_text, top_k=topk)
+        hits = rag_engine.search(requirement_text, top_k=topk, kb_type='align_knowledge_base')
         return hits
     except Exception as e:
         print(f"[Agent] RAG Search Error: {e}")
@@ -255,15 +255,58 @@ def query_review_result(requirement, related_code):
         for block in related_code
     )
     
-    # 2. 构造提示词
+    # 2. 检索知识库上下文
+    reference_rules = "无相关编码规范"
+    reference_issues = "无相关历史问题单"
+    
+    # 提取需求文本用于检索
+    req_text_for_search = "\n".join([b.get('content', '') for b in requirement])
+    
+    if req_text_for_search:
+        try:
+            # 检索编码规范
+            rule_hits = rag_engine.search(req_text_for_search, top_k=3, kb_type='rule_knowledge_base')
+            if rule_hits:
+                rule_list = []
+                for hit in rule_hits:
+                    meta = hit.get('meta', {})
+                    rule_str = (
+                        f"规则ID: {meta.get('id', 'N/A')}\n"
+                        f"描述: {hit.get('query_text', '')}\n"
+                        f"违规示例: {meta.get('violation_code', 'N/A')}\n"
+                        f"合规示例: {meta.get('compliance_code', 'N/A')}"
+                    )
+                    rule_list.append(rule_str)
+                reference_rules = "\n\n".join(rule_list)
+                
+            # 检索历史问题单
+            issue_hits = rag_engine.search(req_text_for_search, top_k=3, kb_type='issue_knowledge_base')
+            if issue_hits:
+                issue_list = []
+                for hit in issue_hits:
+                    meta = hit.get('meta', {})
+                    issue_str = (
+                        f"问题单ID: {meta.get('id', 'N/A')}\n"
+                        f"描述: {hit.get('query_text', '')}\n"
+                        f"处理意见: {meta.get('opinion', 'N/A')}"
+                    )
+                    issue_list.append(issue_str)
+                reference_issues = "\n\n".join(issue_list)
+                
+        except Exception as e:
+            print(f"[Agent] Review RAG Search Error: {e}")
+
+    # 3. 构造提示词
     # template = REVIEW_PROMPT_TEMPLATE
     template = THINKING_PROMPT_TEMPLATE
     prompt = template.format(
         requirement=requirement_context,
-        related_code=code_context
+        related_code=code_context,
+        reference_rules=reference_rules,
+        reference_issues=reference_issues
     )
     
-    # 3. 调用LLM
+    # 4. 调用LLM
     try:
         response = query_llm(prompt)
         print("LLM response for review:", response.content)

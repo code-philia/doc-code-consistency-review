@@ -4162,8 +4162,6 @@ const app = createApp({
             showCreateKBDialog, // 弹窗状态
             kbCreationForm,     // 表单数据
             isBuildingKB,       // 构建Loading
-            kbFileInput,        // ref: 新建文件 input
-            switchKBInput,      // ref: 切换文件夹 input
             
             // 知识库审查相关导出
             showImportReviewDialog,

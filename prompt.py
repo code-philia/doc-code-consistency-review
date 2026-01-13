@@ -142,6 +142,16 @@ REVIEW_PROMPT_TEMPLATE = """
 ```
 {related_code}
 ```
+
+## 参考编码规范
+```
+{reference_rules}
+```
+
+## 参考历史问题单
+```
+{reference_issues}
+```
 /think
 """
 
@@ -205,6 +215,16 @@ THINKING_PROMPT_TEMPLATE = """
 ## 相关代码片段
 ```
 {related_code}
+```
+
+## 参考编码规范
+```
+{reference_rules}
+```
+
+## 参考历史问题单
+```
+{reference_issues}
 ```
 /think
 """
