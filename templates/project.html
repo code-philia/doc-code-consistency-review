@@ -391,25 +391,37 @@
                                             <i class="fas fa-link"></i>
                                             <span style="margin-left: 8px;">对齐与审查</span>
                                         </div>
-                                        <div style="display: flex; align-items: center;">
-                                            <el-button 
-                                                @click="cancelSelection" 
-                                                size="small" 
-                                                text
-                                                plain
-                                                type="primary"
-                                            >
-                                                 取消选中
-                                            </el-button>
-                                            <el-button 
-                                                @click="refreshAlignments" 
-                                                size="small" 
-                                                text
-                                                plain
-                                                type="primary"
-                                            >
-                                                 刷新列表
-                                            </el-button>
+                                       <div style="align-items: center;"> 
+                                        <!-- <div style="display: flex; align-items: center;"> -->
+                                        <el-button 
+                                            @click="cancelSelection" 
+                                            size="small" 
+                                            text
+                                            plain
+                                            type="primary"
+                                            style="margin-right: 2px;"  
+                                        >
+                                             取消选中
+                                        </el-button>
+                                        <el-button 
+                                            @click="refreshAlignments" 
+                                            size="small" 
+                                            text
+                                            plain
+                                            type="primary"
+                                            style="margin-right: 2px;" 
+                                        >
+                                             刷新列表
+                                        </el-button>
+                                        <el-button 
+                                            @click="exportResults" 
+                                            size="small" 
+                                            text
+                                            plain
+                                            type="primary"
+                                        >
+                                             导出结果
+                                        </el-button>
                                         </div>
                                     </div>
                                     
@@ -640,15 +652,35 @@
         >
             <template #header>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-right: 30px;">
-                    <span class="el-dialog__title">需求点：${ selectedReviewAlignment?.name || '未知' }</span>
-                    <el-button-group>
-                        <el-button size="small" @click="navigateReviewAlignment(-1)">
-                            <i class="fas fa-chevron-left"></i> 上一个
+                    <span class="el-dialog__title">
+                        <i class="fas fa-search"></i> 需求点：${ selectedReviewAlignment?.name || '未知' }
+                    </span>
+
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        
+                        <el-button type="success" size="small" @click="addAlignmentToKB">
+                            <i class="fas fa-link"></i> 入库(对齐)
                         </el-button>
-                        <el-button size="small" @click="navigateReviewAlignment(1)">
-                            下一个 <i class="fas fa-chevron-right"></i>
+                        
+                        <el-button 
+                            type="danger" 
+                            size="small" 
+                            @click="addIssueToKB"
+                        >
+                            <i class="fas fa-bug"></i> 入库(问题单)
                         </el-button>
-                    </el-button-group>
+
+                        <el-divider direction="vertical"></el-divider>
+
+                        <el-button-group>
+                            <el-button size="small" @click="navigateReviewAlignment(-1)">
+                                <i class="fas fa-chevron-left"></i> 上一个
+                            </el-button>
+                            <el-button size="small" @click="navigateReviewAlignment(1)">
+                                下一个 <i class="fas fa-chevron-right"></i>
+                            </el-button>
+                        </el-button-group>
+                    </div>
                 </div>
             </template>
             <div v-if="selectedReviewAlignment" class="review-detail-container">
@@ -936,7 +968,7 @@
                     style="margin-bottom: 20px;"
                 >
                     <template #default>
-                        <p style="margin: 0;">所有已确认的问题单将被打包成zip文件并自动下载到浏览器默认下载目录。</p>
+                        <p style="margin: 0;">所有问题单将被下载到指定存储目录。</p>
                     </template>
                 </el-alert>
             </el-form>
@@ -1115,7 +1147,7 @@
                 </div>
                 <div v-if="currentDetailItem.type === '问题单'" style="margin-top: 10px;">
                     <p><strong>原始字段：</strong></p>
-                    <pre style="background: #eee; padding: 5px; font-size: 12px;">${ JSON.stringify(currentDetailItem.full_data, null, 2) }</pre>
+                    <pre style="background: #eee; padding: 10px; font-size: 12px; white-space: pre-wrap; word-break: break-word; border-radius: 4px; max-height: 400px; overflow-y: auto;">${ JSON.stringify(currentDetailItem.full_data, null, 2) }</pre>
                 </div>
             </div>
         </el-dialog>

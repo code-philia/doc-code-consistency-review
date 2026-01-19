@@ -383,6 +383,111 @@ const app = createApp({
                 ElMessage.error('获取对齐关系出错: ' + error.message);
             }
         };
+        
+        
+        // 导出结果功能
+		// 接口已改为从SQLite读取数据
+		const exportResults = async () => {
+		  try {
+			// 1. 弹出确认框（参考 confirmExport 的确认逻辑）
+			await ElMessageBox.confirm(
+			  '确定要导出结果吗？',
+			  '导出确认',
+			  {
+				confirmButtonText: '确定',
+				cancelButtonText: '取消',
+				type: 'info'
+			  }
+			);
+
+			// 2. 调用核心导出函数（参考 exportConfirmedIssues 逻辑）
+			await exportConfirmedAlignments();
+		  } catch (error) {
+			if (error !== 'cancel') {
+			  ElMessage.error('导出取消或失败：' + error.message);
+			} else {
+			  ElMessage.info('已取消导出');
+			}
+		  }
+		};
+		
+
+		const exportConfirmedAlignments = async () => {
+		  if (!projectPath.value) {
+			ElMessage.warning('请先选择项目路径！');
+			return;
+		  }
+
+		  try {
+			// 步骤1：调用后端获取Excel文件流（不变）
+			const response = await axios({
+			  method: 'GET',
+			  url: `/project/export?path=${encodeURIComponent(projectPath.value)}`,
+			  responseType: 'blob',
+			  timeout: 30000
+			});
+
+			// ========== 核心：仅保留Electron原生文件夹选择窗口（无上传、无输入） ==========
+			let selectedFolder = '';
+			// 仅在Electron环境下弹出原生文件夹选择窗口（可视化选文件夹）
+			if (window.require) {
+			  try {
+				// 引入Electron对话框模块（核心：弹出系统原生文件夹选择窗口）
+				const electron = window.require('electron');
+				const dialog = electron.remote?.dialog || electron.dialog;
+				
+				// 弹出「选择文件夹」窗口（系统原生，可视化选择）
+				const dialogResult = await dialog.showOpenDialog({
+				  title: '选择Excel导出文件夹', // 窗口标题
+				  properties: ['openDirectory', 'createDirectory'], // 仅选文件夹 + 允许新建文件夹
+				  defaultPath: process.cwd() // 默认打开当前目录（可选）
+				});
+
+				// 处理取消选择
+				if (dialogResult.canceled || dialogResult.filePaths.length === 0) {
+				  ElMessage.info('已取消选择导出文件夹');
+				  return;
+				}
+
+				// 获取选中的文件夹路径（可视化选择的结果）
+				selectedFolder = dialogResult.filePaths[0];
+			  } catch (err) {
+				ElMessage.error('打开文件夹选择窗口失败：' + err.message);
+				return;
+			  }
+			} else {
+			  // 非Electron环境提示（无原生窗口，仅告知）
+			  //ElMessage.warning('当前环境不支持文件夹选择窗口，将自动下载文件');
+			  const link = document.createElement('a');
+			  link.href = URL.createObjectURL(response.data);
+			  link.download = `结果_${new Date().getTime()}.docx`;
+			  link.click();
+			  URL.revokeObjectURL(link.href);
+			  return;
+			}
+
+			// 步骤2：将Excel写入选中的文件夹（无上传，纯保存）
+			const fs = window.require('fs');
+			const path = window.require('path');
+			// 拼接完整保存路径：选中的文件夹 + 自定义文件名
+			const excelSavePath = path.join(selectedFolder, `导出结果_${new Date().getTime()}.docx`);
+			
+			// 把后端返回的Excel流写入选中的文件夹
+			const buffer = Buffer.from(await response.data.arrayBuffer());
+			fs.writeFile(excelSavePath, buffer, (writeErr) => {
+			  if (writeErr) {
+				ElMessage.error(`结果保存失败：${writeErr.message}`);
+			  } else {
+				ElMessage.success(`结果已成功导出至：${excelSavePath}`);
+			  }
+			});
+
+		  } catch (error) {
+			console.error('导出流程失败：', error);
+			ElMessage.error(`导出失败：${error.response?.data?.message || error.message}`);
+		  }
+		};
+        
 
         /***********************
          * Markdown渲染功能
@@ -3875,19 +3980,18 @@ const app = createApp({
             else targetKbName.value = '';
         }, { immediate: true });
 
-        // 1. 初始化数据（打开弹窗时调用）
+        // --- 修改：初始化数据时重置模式 ---
         const loadInitData = async () => {
-            importStep.value = 0;
-            importFileList.value = [];
-            previewTableData.value = [];
-            
-            // 触发一次 watch 更新
-            const currentType = importDocType.value;
-            importDocType.value = '';
-            nextTick(() => { importDocType.value = currentType; });
-            
-            await fetchServerFiles();
-        };
+            // 只有当“非直接模式”时，才清空数据
+            // 这样保证我们传进去的数据不会被清掉
+            if (!isDirectImportMode.value) {
+                importStep.value = 0;
+                importFileList.value = [];
+                previewTableData.value = [];
+            }
+            await fetchServerFiles(); // 获取文件列表备用
+            await fetchKbList();      // 获取知识库列表
+        };   
         
         // 获取服务器 testdata 文件列表
         const fetchServerFiles = async () => {
@@ -3993,8 +4097,123 @@ const app = createApp({
                 isCommitting.value = false;
             }
         };
+        // ============================================
+        // [新增] 知识库闭环更新：直接入库逻辑
+        // ============================================
+        
+        // 标记是否为“直接导入模式”（用于隐藏文件上传步骤）
+        const isDirectImportMode = ref(false);
 
+        /**
+         * 通用函数：将内存数据填入审查弹窗
+         * @param {Array} rawDataList - 待入库的数据列表
+         * @param {String} dataType - 数据类型 ('history_align' | 'issue' | 'rule')
+         */
+        const openReviewDialogWithData = (rawDataList, dataType) => {
+            if (!rawDataList || rawDataList.length === 0) {
+                ElMessage.warning('没有有效数据可供入库');
+                return;
+            }
 
+            // 1. 开启直接模式
+            isDirectImportMode.value = true;
+            importDocType.value = dataType; // 设置类型，会自动触发 targetKbName 的 watch 更新
+
+            // 2. 格式化数据（适配表格显示）
+            const formattedData = rawDataList.map(item => {
+                let id = item.id || `auto_${Date.now()}`;
+                let summary = '';
+                let content = '';
+
+                if (dataType === 'history_align') {
+                    // === 格式化：对齐结果 ===
+                    summary = item.name || '未命名对齐项';
+                    // 拼接 Doc + Code 作为检索内容
+                    const docText = (item.docRanges || []).map(r => r.content).join('\n');
+                    const codeText = (item.codeRanges || []).map(r => r.content).join('\n');
+                    content = `【需求描述】\n${docText}\n\n【实现代码】\n${codeText}`;
+                } 
+                else if (dataType === 'issue') {
+                    // === 格式化：问题单 ===
+                    id = item.id || `issue_${Date.now()}`;
+                    summary = item.summary || item.title || '审查发现的问题';
+                    // 构造标准的问题单内容格式
+                    content = item.content || item.description || '';
+                    if (!content && item.review_comments) {
+                         content = `【问题描述】\n${item.review_comments}\n\n【关联对齐项】\n${item.name || '未知'}`;
+                    }
+                }
+
+                return {
+                    id: id,
+                    summary: summary.substring(0, 80) + (summary.length > 80 ? '...' : ''),
+                    content: content,
+                    full_data: item, // 保留原始数据
+                    type: dataType === 'history_align' ? '历史对齐' : '问题单'
+                };
+            });
+
+            // 3. 填充数据并跳转
+            previewTableData.value = formattedData;
+            importStep.value = 1; // 直接进入 Step 2 (审查表格)
+            showImportReviewDialog.value = true; // 打开弹窗
+
+            // 4. 自动全选
+            nextTick(() => {
+                if (reviewTableRef.value) {
+                    reviewTableRef.value.toggleAllSelection();
+                }
+            });
+        };
+
+        // --- 按钮事件 1：对齐结果入库 ---
+        const addAlignmentToKB = () => {
+            if (!selectedReviewAlignment.value) return;
+            // 直接把当前选中的对齐对象传进去
+            openReviewDialogWithData([selectedReviewAlignment.value], 'history_align');
+        };
+
+        // --- 按钮事件 2：问题单入库 (支持多条) ---
+        const addIssueToKB = () => {
+            const item = selectedReviewAlignment.value;
+            if (!item) return;
+            
+            // 尝试获取该对齐项下所有的已生成问题单
+            const existingIssues = getIssuesByAlignmentId(item.id);
+            let targetIssuesList = [];
+
+            if (existingIssues && existingIssues.length > 0) {
+                // 【修改点】Case A: 遍历所有问题单，全部加入列表
+                targetIssuesList = existingIssues.map(issue => ({
+                    // 构造符合入库弹窗的数据结构
+                    id: issue.displayId || `issue_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                    summary: issue.summary,
+                    content: issue.description, // 使用问题单里的描述作为主要内容
+                    
+                    // 构造 full_data (用于 metadata)
+                    desc: issue.description,
+                    opinion: '待人工处理',
+                    trace_id: item.id,
+                    severity: issue.level,
+                    status: issue.status
+                }));
+            } else {
+                // Case B: 没有现成的问题单，使用审查意见构造一个默认的
+                targetIssuesList.push({
+                    id: `issue_${item.id}`,
+                    summary: `审查问题: ${item.name || '未知需求'}`,
+                    content: item.review_comments 
+                            ? `【审查意见】\n${item.review_comments}` 
+                            : `【问题描述】\n(请在此处补充详细问题描述...)\n\n【关联对齐项】\n${item.name || '未知'}`,
+                    desc: item.review_comments || '',
+                    opinion: '待处理',
+                    trace_id: item.id
+                });
+            }
+
+            // 打开入库弹窗，传入所有问题单
+            openReviewDialogWithData(targetIssuesList, 'issue');
+        };
         /***********************
          * 暴露到模板
          ***********************/
@@ -4076,6 +4295,7 @@ const app = createApp({
             showExportDialog,
             exportForm,
             confirmExport,
+            exportResults,
             // 审查结果弹窗
             showReviewDialog,
             selectedReviewAlignment,
@@ -4188,6 +4408,10 @@ const app = createApp({
             viewDetail,
             handleReviewSelectionChange,
             submitToKb,
+
+            isDirectImportMode,
+            addAlignmentToKB,
+            addIssueToKB,
         };
     }
 });

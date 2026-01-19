@@ -24,6 +24,9 @@ from code_block import get_all_code_blocks
 
 import logging
 import sys
+from io import BytesIO
+import pandas as pd
+
 from utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
 from agent import smart_parse_doc
 # 配置日志
@@ -1928,7 +1931,9 @@ def get_requirement_chunks():
                 }
 
                 chunk_id = f"auto_req_{uuid.uuid4().hex}"
-                chunk_name = _compact_title_from_text(content, 24)
+                #chunk_name = _compact_title_from_text(content, 24)
+                first_line = content.split('\n')[0]
+                chunk_name = first_line.lstrip('#')
                 chunks.append({
                     'id': chunk_id,
                     'name': chunk_name,
@@ -2482,7 +2487,215 @@ def find_available_port(start_port):
                 return port
             port += 1
 
+            
+"""导出需求-代码匹配和审查结果"""
+
+# ========== 新增：SQLite数据库操作函数 ==========
+def get_alignments_from_sqlite(db_path):
+    """从project.db的alignments表读取指定列数据"""
+    try:
+        # 连接SQLite数据库
+        conn = sqlite3.connect(db_path)
+        # 读取name、docRanges、codeRanges三列所有数据
+        query_sql = "SELECT name, docRanges, codeRanges FROM alignments"
+        # 直接用pandas读取SQL结果（简洁高效）
+        df = pd.read_sql(query_sql, conn)
+        conn.close()
+        return df
+    except sqlite3.Error as e:
+        print(f"SQLite数据库读取失败：{e}")
+        return pd.DataFrame()  # 返回空DataFrame
+    except Exception as e:
+        print(f"读取数据异常：{e}")
+        return pd.DataFrame()
+
+        
+# ========== 导出结果：从SQLite读取数据，生成word文件 ==========
+@app.route('/project/export', methods=['GET'])
+def export_project_results():
+    """导出需求-代码匹配结果（从SQLite读取数据）"""
+    # 1. 获取项目路径（用于定位project.db）
+    project_path = request.args.get('path')
+    if not project_path or not os.path.isdir(project_path):
+        return jsonify({"status": "error", "message": "无效的项目路径。"}), 400
+    
+    # 2. 定位project.db文件（默认在项目路径根目录）
+    db_file = os.path.join(project_path, 'project.db')
+    if not os.path.exists(db_file):
+        return jsonify({"status": "error", "message": f"未找到数据库文件：{db_file}"}), 400
+
+    # 3. 从SQLite读取数据
+    df = get_alignments_from_sqlite(db_file)
+    if df.empty:
+        return jsonify({"status": "warning", "message": "alignments表中暂无数据可导出"}), 200
+
+    # 4、处理数据
+    # 遍历行索引
+    total_num = 0
+    for idx in df.index:
+        doc_data = df.loc[idx, "docRanges"]
+        code_data = df.loc[idx, "codeRanges"]
+        doc_data = json.loads(doc_data) #从string转成list
+        code_data = json.loads(code_data)
+        total_num += 1
+        temp = []
+        for doc in doc_data:
+            temp.append(doc['content'])
+        df.loc[idx, "docRanges"] = temp
+
+        temp = []
+        for code in code_data:
+            temp.append(code['content'])
+        df.loc[idx, "codeRanges"] = temp
+        #sys.exit()
+        
+    try:
+        # 5. 生成并写入word文件
+        template_path = os.path.join(os.path.dirname(__file__), 'templates', '需求表格.docx')
+        # 创建临时目录存储文件
+        temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir, exist_ok=True)
+        
+        # 生成docx文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        docx_filename = f"需求表格导出_{timestamp}.docx"
+        docx_path = os.path.join(temp_dir, docx_filename)
+        
+        # 检查是否提供了DOCX模板路径
+        if template_path and os.path.exists(template_path):
+            current_date = datetime.now().strftime("%Y%m%d")
+            merged_doc = Document(template_path)
+            
+            # 处理第一个测试项表格作为基础文档
+            merged_doc = Document(template_path)
+            
+            number = 1 # 测试项编号
+            category_id = 1 #章节号
+            
+            replacements = {}
+            # 小标题名称
+            replacements["6.6.1 XXXX功能"] = "6.6." + str(number) + " " + df.loc[number, "name"] + "功能"
+            # 测试项名称
+            replacements["AAAAA功能"] = df.loc[number, "name"]
+            # 测试项标识
+            replacements["T_FUNC"] = "T_FUNC" + str(number)
+            # 追踪关系
+            replacements["BBBBB"] = "需求说明：" + str(category_id)
+            # 需求描述
+            replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
+            # 生成需求
+            replacements["DDDDD"] = ""
+            # 对齐代码
+            replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
+            # 流程图
+            replacements["GGGGG"] = ""
+            
+            number += 1
+            category_id += 1 
+            
+            # 替换第一个文档的占位符
+            replace_text_in_docx(merged_doc, replacements)
+            #logger.info(replacements)
+            # 处理剩余的表单
+            for i in range(0, total_num-2):
+                # 添加分页符
+                # merged_doc.add_page_break()
+                
+                # 为每个表单加载新的模板并填充
+                temp_doc = Document(template_path)
+                
+                replacements = {}
+                # 小标题名称
+                replacements["6.6.1 XXXX功能"] = "6.6." + str(number) + " " + df.loc[number, "name"] + "功能"
+                # 测试项名称
+                replacements["AAAAA功能"] = df.loc[number, "name"]
+                # 测试项标识
+                replacements["T_FUNC"] = "T_FUNC" + str(number)
+                # 追踪关系
+                replacements["BBBBB"] = "需求说明：" + str(category_id)
+                # 需求描述
+                replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
+                # 生成需求
+                replacements["DDDDD"] = ""
+                # 对齐代码
+                replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
+                # 流程图
+                replacements["GGGGG"] = ""
+                
+                number += 1
+                category_id += 1
+                
+                # 替换模板中的占位符
+                replace_text_in_docx(temp_doc, replacements)
+                
+                    
+                # 直接拼接填充好的页面内容到合并文档
+                for element in temp_doc.element.body:
+                    merged_doc.element.body.append(element)
+                #logger.info(i)
+                #logger.info(df.loc[number, "name"])
+                
+            # 输出文档内容，debug用
+            #for paragraph in temp_doc.paragraphs:
+            #    logger.info(paragraph.text)
+                
+            #for table in temp_doc.tables:
+            #    for row in table.rows:
+            #        for cell in row.cells:
+            #            for paragraph in cell.paragraphs:
+            #                logger.info(paragraph.text)   
+                            
+            # 保存合并后的文档
+            merged_doc.save(docx_path)
+            try:
+                merged_doc.save(docx_path)
+                logger.info(f"文档保存成功：{docx_path}")
+            except Exception as e:
+                logger.info(f"导出结果失败：{str(e)}")
+                # 打印详细错误（方便排查）
+                import traceback
+                logger.info(traceback.format_exc())
+            
+
+            return send_file(
+                docx_path,
+                as_attachment=False,  # 配合前端自定义保存路径
+                download_name=docx_filename,
+                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
+        
+        else:
+            # 使用excel格式导出（备用方案）
+            # 重命名列（可选，让Excel列名更友好）
+            df_renamed = df.rename(columns={
+                'name': '需求块名称',
+                'docRanges': '需求文档范围',
+                'codeRanges': '代码范围'
+            })
+            # 生成并写入文件
+            output = BytesIO()
+            writer = pd.ExcelWriter(output, engine='openpyxl')
+            df_renamed.to_excel(writer, sheet_name='对齐结果', index=False)
+            writer.close()
+            output.seek(0)  # 关键：重置文件指针
+
+            # 返回Excel文件流
+            return send_file(
+                output,
+                as_attachment=False,  # 配合前端自定义保存路径
+                download_name=f'对齐结果_${pd.Timestamp.now().strftime("%Y%m%d%H%M%S")}.xlsx',
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+
+
+    except Exception as e:
+        logger.info(f"导出结果失败：{e}")
+        return jsonify({"status": "error", "message": f"导出失败: {str(e)}"}), 500
+            
+            
+            
 if __name__ == '__main__':
-    start_port = 5055
+    start_port = 5056
     available_port = find_available_port(start_port)
     app.run(host='0.0.0.0', port=available_port, debug=True)
