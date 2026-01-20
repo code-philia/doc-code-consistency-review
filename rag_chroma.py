@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
 from typing import List, Dict, Any
+from chromadb.config import Settings
 
 # === 配置部分 ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -91,7 +92,10 @@ class RAGEngine:
             # Thus, 3 clients.
             
             try:
-                client = chromadb.PersistentClient(path=current_db_path)
+                client = chromadb.PersistentClient(
+                    path=current_db_path,
+                    settings=Settings(anonymized_telemetry=False)
+                )
                 collection = client.get_or_create_collection(
                     name=COLLECTION_NAME, # Use same collection name internally, or separate? 'rag_pairs' is fine.
                     embedding_function=self.emb_fn,
