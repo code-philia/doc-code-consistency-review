@@ -2,7 +2,6 @@ import os
 import markdown
 from bs4 import BeautifulSoup
 import re
-import tiktoken
 from doc2md import docToMd
 import random
 import sys
@@ -123,7 +122,8 @@ def split_code(filename, content, max_length=10000):
     lines = content.splitlines(keepends=True)
     numbered_lines = [f"{i + 1}: {line}" for i, line in enumerate(lines)]
     
-    encoder = tiktoken.get_encoding("cl100k_base")
+    # encoder = tiktoken.get_encoding("cl100k_base")
+    encoder = None # Mock encoder
     line_token_counts = [estimate_tokens(encoder, line) for line in numbered_lines]
     
     # 识别完整代码结构
@@ -224,8 +224,8 @@ def find_enclosing_block(line_num, blocks):
     return None
 
 def estimate_tokens(encoder, line):
-    # return len(re.findall(r'\b\w+\b|[\{\}\(\)\[\];,<>]|\S', line))
-    return len(encoder.encode(line))
+    # Fallback when tiktoken is not available: approx 1 token = 4 chars
+    return len(line) // 4 + 1
 
 def find_matching_brace(content, open_pos):
     """找到匹配的闭括号行号"""

@@ -7,3 +7,4 @@ markdown-bundler/
 testdata/
 
 models/
+rag_database/

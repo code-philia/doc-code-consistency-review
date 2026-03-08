@@ -22,6 +22,13 @@
     box-sizing: border-box;
 }
 
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
 body {
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     background-color: var(--bg-color);
@@ -125,6 +132,15 @@ header {
 
 .section {
     margin-bottom: 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+#kb-section, #annotation-section {
+    overflow-y: auto;
 }
 
 .section-title {
@@ -133,6 +149,7 @@ header {
     margin-bottom: 14px;
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .section-title i {
@@ -143,7 +160,9 @@ header {
 .welcome-container {
     display: flex;
     gap: 20px;
-    height: calc(100vh - 144px);
+    flex: 1;
+    height: auto;
+    overflow: hidden;
 }
 
 .history-section {
@@ -774,4 +793,166 @@ header {
     .dialog-content {
         padding: 20px 24px;
     }
+}
+
+/* 知识库卡片样式 */
+.kb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.kb-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.kb-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: var(--accent-color);
+}
+
+.kb-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.kb-icon.rule {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+}
+
+.kb-icon.issue {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+}
+
+.kb-icon.align {
+    background-color: rgba(46, 204, 113, 0.1);
+    color: #2ecc71;
+}
+
+.kb-info h3 {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.kb-info p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.action-btn.primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.action-btn.primary:hover {
+    background-color: var(--accent-hover);
+}
+
+/* KB Management Styles */
+.kb-header {
+    margin-bottom: 20px;
+}
+
+.kb-card {
+    position: relative;
+    overflow: hidden;
+    cursor: default; /* Not clickable yet */
+}
+
+.kb-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.kb-type-tag {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    background-color: #f0f2f5;
+    color: #606266;
+}
+
+.kb-type-tag.rule { background-color: #ecf5ff; color: #409eff; }
+.kb-type-tag.issue { background-color: #fef0f0; color: #f56c6c; }
+.kb-type-tag.align { background-color: #f0f9eb; color: #67c23a; }
+
+.kb-type-badge {
+    position: absolute;
+    bottom: -5px;
+    right: 5px;
+    font-size: 32px;
+    font-weight: bold;
+    opacity: 0.05;
+    pointer-events: none;
+    text-transform: uppercase;
+    transform: rotate(-15deg);
+}
+
+.kb-type-badge.rule { color: #409eff; }
+.kb-type-badge.issue { color: #f56c6c; }
+.kb-type-badge.align { color: #67c23a; }
+
+.empty-kb-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background-color: var(--bg-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    grid-column: 1 / -1;
+}
+
+.kb-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.kb-action-btn {
+    cursor: pointer;
+    color: #909399;
+    padding: 5px;
+}
+
+.kb-action-btn:hover {
+    color: #409eff;
 }

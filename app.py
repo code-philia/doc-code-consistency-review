@@ -46,7 +46,8 @@ HISTORY_FILE = 'history.json'
 MAX_HISTORY_ITEMS = 15 # 最多记录15条历史
 
 # 定义testdata目录路径
-TESTDATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'testdata')
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+TESTDATA_DIR = os.path.join(PROJECT_ROOT, 'testdata')
 
 app = Flask(__name__)
 
@@ -507,9 +508,24 @@ def open_project():
     if not project_name or not project_path:
         return jsonify({"status": "error", "message": "项目信息不完整"}), 400
     
+    # Handle relative paths
+    # PROJECT_ROOT is essentially the directory of app.py
+    PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+    
+    if not os.path.isabs(project_path):
+        # 1. Try resolving relative to PROJECT_ROOT
+        abs_path = os.path.join(PROJECT_ROOT, project_path)
+        if os.path.exists(abs_path):
+            project_path = abs_path
+        else:
+            # 2. Try resolving relative to uploads (if applicable)
+            abs_path_uploads = os.path.join(PROJECT_ROOT, 'uploads', project_path)
+            if os.path.exists(abs_path_uploads):
+                project_path = abs_path_uploads
+
     # 可以在此添加校验，确保项目路径真实存在
     if not os.path.exists(project_path):
-         return jsonify({"status": "error", "message": "项目路径不存在，可能已被移动或删除"}), 404
+         return jsonify({"status": "error", "message": f"项目路径不存在: {project_path}"}), 404
 
     update_history(project_name, project_path)
     try:
@@ -518,7 +534,7 @@ def open_project():
         auto_load_rag_db(project_path)
     except Exception:
         pass
-    return jsonify({"status": "success"})
+    return jsonify({"status": "success", "path": project_path})
 
 
 @app.route('/project/import', methods=['POST'])
@@ -571,6 +587,18 @@ def import_project():
 
     except (json.JSONDecodeError, Exception) as e:
         return jsonify({"status": "error", "message": f"读取 'metadata.json' 文件失败: {e}"}), 500
+
+@app.route('/project/recent-projects', methods=['GET'])
+def get_recent_projects():
+    """获取最近打开的项目列表"""
+    history = []
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+            try:
+                history = json.load(f)
+            except json.JSONDecodeError:
+                history = []
+    return jsonify({"status": "success", "recentProjects": history})
 
 @app.route('/project/metadata', methods=['GET'])
 def get_project_metadata():
@@ -2760,74 +2788,135 @@ def list_annotation_files():
 @app.route('/api/rag/build', methods=['POST'])
 def build_rag_db():
     data = request.json
-    project_path = data.get('projectPath')
-    annotation_file = data.get('annotationFile') 
-    db_name = data.get('dbName', 'default_rag')
-    kb_type = data.get('kbType', 'other') # [新增] 获取知识库类型
+    project_path = data.get('projectPath') or PROJECT_ROOT # Default to system root if not provided
+    annotation_file = data.get('annotationFile') # Could be filename in testdata or absolute path
+    kb_type = data.get('kbType', 'other') 
+    
+    # User provided KB Name, default to filename without extension
+    kb_name = data.get('kbName')
+    
+    if not annotation_file:
+        return jsonify({"status": "error", "message": "参数缺失: annotationFile"})
 
-    if not project_path or not annotation_file:
-        return jsonify({"status": "error", "message": "参数缺失"})
+    # Determine full path of the source file
+    # If it comes from testdata (server file)
+    if os.path.exists(os.path.join(TESTDATA_DIR, annotation_file)):
+        full_path = os.path.join(TESTDATA_DIR, annotation_file)
+    elif os.path.exists(annotation_file):
+        full_path = annotation_file
+    else:
+        # Check if it was uploaded to temp
+        temp_path = os.path.join(PROJECT_ROOT, 'temp_uploads', annotation_file)
+        if os.path.exists(temp_path):
+            full_path = temp_path
+        else:
+             return jsonify({"status": "error", "message": f"找不到文件: {annotation_file}"})
+
+    if not kb_name:
+        # Generate from filename
+        base = os.path.basename(full_path)
+        kb_name = os.path.splitext(base)[0]
+
+    # Helper to save metadata
+    def save_kb_metadata(k_type, k_name, count=0):
+        try:
+            # Fix: map 'history_align' to 'align' for folder selection
+            target_type = 'align' if k_type == 'history_align' else k_type
+            
+            # Map type to folder
+            type_map = {
+                'rule': 'rule_knowledge_base',
+                'issue': 'issue_knowledge_base',
+                'align': 'align_knowledge_base'
+            }
+            folder = type_map.get(target_type, 'other_knowledge_base')
+            kb_root = os.path.join(PROJECT_ROOT, "rag_database", folder, k_name)
+            if not os.path.exists(kb_root): os.makedirs(kb_root, exist_ok=True)
+            
+            meta = {
+                "name": k_name,
+                "type": target_type, # Save standardized type
+                "create_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "doc_count": count,
+                "source_file": os.path.basename(full_path)
+            }
+            with open(os.path.join(kb_root, "metadata.json"), 'w', encoding='utf-8') as f:
+                json.dump(meta, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[KB] 保存元数据失败: {e}")
 
     try:
-        rag_engine.initialize(project_path, db_name)
+        rag_engine.initialize() # Ensure root exists
     except Exception as e:
         return jsonify({"status": "error", "message": f"初始化失败: {str(e)}"})
-
-    full_path = os.path.join(project_path, 'annotations', annotation_file)
-    if not os.path.exists(full_path):
-        return jsonify({"status": "error", "message": f"找不到文件: {annotation_file}"})
 
     try:
         json_data = None
         
-        # === Word 文档处理逻辑 (kbType 分流) ===
-        if annotation_file.lower().endswith('.docx'):
-            print(f"[RAG] 解析文档: {annotation_file}, 类型: {kb_type}")
+        # Ensure kb_type is standardized for processing
+        if kb_type == 'history_align':
+            processing_type = 'align'
+        else:
+            processing_type = kb_type
+
+        # === Word 文档处理逻辑 ===
+        if full_path.lower().endswith('.docx'):
+            print(f"[RAG] 解析文档: {full_path}, 类型: {processing_type}")
             
             # A. 编程规则
-            if kb_type == 'rule':
-                raw_rules = parse_programming_rules(full_path) # 优先用 utils 解析
+            if processing_type == 'rule':
+                raw_rules = parse_programming_rules(full_path)
                 if not raw_rules:
-                    print("[RAG] 正则解析为空，尝试 LLM 兜底...")
                     doc_text = read_docx_text(full_path)
-                    raw_rules = smart_parse_doc(doc_text, type='rule') # 兜底
+                    raw_rules = smart_parse_doc(doc_text, type='rule')
                 if raw_rules:
                     json_data = format_rules_for_rag(raw_rules)
             
             # B. 问题单
-            elif kb_type == 'issue':
-                raw_issues = parse_issue_reports(full_path) # 优先用 utils 解析
+            elif processing_type == 'issue':
+                raw_issues = parse_issue_reports(full_path)
                 if not raw_issues:
-                    print("[RAG] 表格解析为空，尝试 LLM 兜底...")
                     doc_text = read_docx_text(full_path)
-                    raw_issues = smart_parse_doc(doc_text, type='issue') # 兜底
+                    raw_issues = smart_parse_doc(doc_text, type='issue')
                 if raw_issues:
                     json_data = format_issues_for_rag(raw_issues)
             
-            # C. 其他/典型案例 (直接 LLM)
-            elif kb_type in ['case', 'other']:
+            # C. 其他
+            elif processing_type in ['case', 'other', 'align']:
                 doc_text = read_docx_text(full_path)
-                # 简单复用 rule 提取逻辑作为通用提取
                 raw_data = smart_parse_doc(doc_text, type='rule') 
                 if raw_data:
                     json_data = format_rules_for_rag(raw_data)
 
-            # 保存解析结果并构建
             if json_data:
                 temp_json = full_path + ".parsed.json"
                 with open(temp_json, 'w', encoding='utf-8') as f:
                     json.dump(json_data, f, ensure_ascii=False)
                 
-                result = rag_engine.build_from_json(temp_json)
+                result = rag_engine.build_from_json(temp_json, kb_type=processing_type, kb_name=kb_name)
                 try: os.remove(temp_json) 
                 except: pass
+                
+                if result.get("status") == "success":
+                    # Parse count from message or result if possible, for now just 0 or parsed from result string
+                    # Or modify rag_engine to return count
+                    import re
+                    match = re.search(r'(\d+)', result.get("message", ""))
+                    count = int(match.group(1)) if match else 0
+                    save_kb_metadata(kb_type, kb_name, count) # Use original type for meta, logic inside handles mapping
+
                 return jsonify(result)
             else:
                 return jsonify({"status": "error", "message": "文档解析失败，未能提取有效数据"})
 
-        # === 原有 JSON 逻辑 ===
-        elif annotation_file.lower().endswith('.json'):
-            result = rag_engine.build_from_json(full_path)
+        # === JSON 逻辑 ===
+        elif full_path.lower().endswith('.json'):
+            result = rag_engine.build_from_json(full_path, kb_type=processing_type, kb_name=kb_name)
+            if result.get("status") == "success":
+                import re
+                match = re.search(r'(\d+)', result.get("message", ""))
+                count = int(match.group(1)) if match else 0
+                save_kb_metadata(kb_type, kb_name, count)
             return jsonify(result)
             
         else:
@@ -2838,43 +2927,193 @@ def build_rag_db():
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-TEST_DATA_DIR = os.path.join(PROJECT_ROOT, 'testdata')
-
-if not os.path.exists(TEST_DATA_DIR):
-    os.makedirs(TEST_DATA_DIR)
-
-# === 路由定义 ===
-@app.route('/review')  # 建议路径也改一下，避免冲突
-def kb_review():       # <--- 重点：把这里改成 kb_review 或其他名字
-    # 获取现有知识库列表
-    # 注意：这里需要引入 os 和 PROJECT_ROOT
-    kb_root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rag_database")
-    existing_kbs = []
-    if os.path.exists(kb_root):
-        existing_kbs = [d for d in os.listdir(kb_root) if os.path.isdir(os.path.join(kb_root, d))]
-    
-    return render_template('index.html', kbs=existing_kbs)
-
-# 在 app.py 中添加/修改以下代码
+# ========================================================
+# Knowledge Base API
+# ========================================================
 
 @app.route('/api/list-testdata', methods=['GET'])
 def list_testdata():
     """列出 testdata 目录下的所有文件"""
-    if not os.path.exists(TEST_DATA_DIR):
+    if not os.path.exists(TESTDATA_DIR):
         return jsonify({"status": "success", "files": []})
     
-    files = [f for f in os.listdir(TEST_DATA_DIR) if os.path.isfile(os.path.join(TEST_DATA_DIR, f)) and not f.startswith('.')]
+    files = [f for f in os.listdir(TESTDATA_DIR) if os.path.isfile(os.path.join(TESTDATA_DIR, f)) and not f.startswith('.')]
     return jsonify({"status": "success", "files": files})
 
 @app.route('/api/list-kbs', methods=['GET'])
 def list_kbs():
-    """列出已有的知识库"""
+    """列出已有的知识库，包含元数据"""
     kb_root = os.path.join(PROJECT_ROOT, "rag_database")
     kbs = []
+    
+    # 遍历三大类目录
+    categories = ['align_knowledge_base', 'issue_knowledge_base', 'rule_knowledge_base']
+    
     if os.path.exists(kb_root):
-        kbs = [d for d in os.listdir(kb_root) if os.path.isdir(os.path.join(kb_root, d))]
+        for cat in categories:
+            cat_path = os.path.join(kb_root, cat)
+            if not os.path.exists(cat_path): continue
+            
+            # 遍历该类别下的具体知识库文件夹
+            for kb_name in os.listdir(cat_path):
+                kb_path = os.path.join(cat_path, kb_name)
+                if not os.path.isdir(kb_path): continue
+                
+                kb_info = {
+                    "name": kb_name,
+                    "type": "other", # Default
+                    "category": cat,
+                    "create_time": "",
+                    "doc_count": 0
+                }
+                
+                # 尝试读取 metadata.json
+                meta_file = os.path.join(kb_path, "metadata.json")
+                if os.path.exists(meta_file):
+                    try:
+                        with open(meta_file, 'r', encoding='utf-8') as f:
+                            meta = json.load(f)
+                            kb_info.update(meta)
+                    except Exception as e:
+                        print(f"[KB] 读取元数据失败 {kb_name}: {e}")
+                
+                # Infer type from category if not set
+                if kb_info["type"] == "other":
+                    if cat == 'rule_knowledge_base': kb_info["type"] = "rule"
+                    elif cat == 'issue_knowledge_base': kb_info["type"] = "issue"
+                    elif cat == 'align_knowledge_base': kb_info["type"] = "align"
+
+                # Time fallback
+                if not kb_info["create_time"]:
+                    mtime = os.path.getmtime(kb_path)
+                    kb_info["create_time"] = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
+
+                kbs.append(kb_info)
+            
+    # 按时间倒序排列
+    kbs.sort(key=lambda x: x["create_time"], reverse=True)
+    
     return jsonify({"status": "success", "kbs": kbs})
+
+@app.route('/api/kb/delete', methods=['POST'])
+def delete_kb():
+    """删除知识库"""
+    data = request.json
+    kb_name = data.get('name')
+    kb_type = data.get('type')
+    
+    if not kb_name or not kb_type:
+        return jsonify({"status": "error", "message": "参数缺失"})
+        
+    # Map type to folder
+    type_map = {
+        'rule': 'rule_knowledge_base',
+        'issue': 'issue_knowledge_base',
+        'align': 'align_knowledge_base'
+    }
+    folder = type_map.get(kb_type, 'other_knowledge_base')
+    kb_path = os.path.join(PROJECT_ROOT, "rag_database", folder, kb_name)
+    
+    if os.path.exists(kb_path):
+        try:
+            shutil.rmtree(kb_path)
+            return jsonify({"status": "success", "message": "知识库已删除"})
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"删除失败: {e}"})
+    else:
+        return jsonify({"status": "error", "message": "知识库不存在"})
+
+@app.route('/api/kb/rename', methods=['POST'])
+def rename_kb():
+    """重命名知识库"""
+    data = request.json
+    old_name = data.get('oldName')
+    new_name = data.get('newName')
+    kb_type = data.get('type')
+    
+    if not old_name or not new_name or not kb_type:
+        return jsonify({"status": "error", "message": "参数缺失"})
+    
+    type_map = {
+        'rule': 'rule_knowledge_base',
+        'issue': 'issue_knowledge_base',
+        'align': 'align_knowledge_base'
+    }
+    folder = type_map.get(kb_type, 'other_knowledge_base')
+    base_path = os.path.join(PROJECT_ROOT, "rag_database", folder)
+    old_path = os.path.join(base_path, old_name)
+    new_path = os.path.join(base_path, new_name)
+    
+    if not os.path.exists(old_path):
+        return jsonify({"status": "error", "message": "原知识库不存在"})
+    
+    if os.path.exists(new_path):
+        return jsonify({"status": "error", "message": "新名称已存在"})
+        
+    try:
+        os.rename(old_path, new_path)
+        
+        # Update metadata.json
+        meta_file = os.path.join(new_path, "metadata.json")
+        if os.path.exists(meta_file):
+            with open(meta_file, 'r', encoding='utf-8') as f:
+                meta = json.load(f)
+            meta['name'] = new_name
+            with open(meta_file, 'w', encoding='utf-8') as f:
+                json.dump(meta, f, ensure_ascii=False, indent=2)
+                
+        return jsonify({"status": "success", "message": "重命名成功"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"重命名失败: {e}"})
+
+@app.route('/api/kb/items', methods=['GET'])
+def get_kb_items():
+    """获取知识库条目"""
+    kb_name = request.args.get('name')
+    kb_type = request.args.get('type')
+    limit = request.args.get('limit', 100, type=int)
+    
+    if not kb_name or not kb_type:
+        return jsonify({"status": "error", "message": "参数缺失"})
+        
+    result = rag_engine.get_all_items(kb_type, kb_name, limit)
+    return jsonify(result)
+
+@app.route('/api/kb/item/delete', methods=['POST'])
+def delete_kb_item():
+    """删除知识库条目"""
+    data = request.json
+    kb_name = data.get('kbName')
+    kb_type = data.get('kbType')
+    item_id = data.get('itemId')
+    
+    if not kb_name or not kb_type or not item_id:
+        return jsonify({"status": "error", "message": "参数缺失"})
+        
+    result = rag_engine.delete_item(kb_type, kb_name, item_id)
+    
+    if result.get('status') == 'success':
+        # Update metadata count
+        try:
+            type_map = {
+                'rule': 'rule_knowledge_base',
+                'issue': 'issue_knowledge_base',
+                'align': 'align_knowledge_base'
+            }
+            folder = type_map.get(kb_type, 'other_knowledge_base')
+            kb_path = os.path.join(PROJECT_ROOT, "rag_database", folder, kb_name)
+            meta_file = os.path.join(kb_path, "metadata.json")
+            
+            if os.path.exists(meta_file):
+                with open(meta_file, 'r', encoding='utf-8') as f:
+                    meta = json.load(f)
+                meta['doc_count'] = result.get('remaining', 0)
+                with open(meta_file, 'w', encoding='utf-8') as f:
+                    json.dump(meta, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[KB] 更新元数据失败: {e}")
+            
+    return jsonify(result)
 
 @app.route('/preview', methods=['POST'])
 def preview_file():
@@ -2887,243 +3126,68 @@ def preview_file():
         if use_server_file:
             # 模式 A: 使用服务器上的 testdata 文件
             filename = request.form.get('filename')
-            target_path = os.path.join(TEST_DATA_DIR, filename)
+            if not filename:
+                return jsonify({"status": "error", "message": "未指定文件名"})
+            
+            target_path = os.path.join(TESTDATA_DIR, filename)
             if not os.path.exists(target_path):
-                return jsonify({"status": "error", "message": "文件不存在"}), 404
+                 return jsonify({"status": "error", "message": "文件不存在"})
         else:
-            # 模式 B: 上传新文件
-            if 'file' not in request.files:
-                return jsonify({"error": "没有上传文件"}), 400
-            file = request.files['file']
-            target_path = os.path.join(TEST_DATA_DIR, file.filename)
+            # 模式 B: 上传文件
+            file = request.files.get('file')
+            if not file:
+                return jsonify({"status": "error", "message": "未上传文件"})
+            
+            # 保存到临时目录
+            temp_dir = os.path.join(PROJECT_ROOT, 'temp_uploads')
+            os.makedirs(temp_dir, exist_ok=True)
+            filename = secure_filename(file.filename)
+            target_path = os.path.join(temp_dir, filename)
             file.save(target_path)
-        
-        # --- 开始解析 ---
-        parsed_data = []
+
+        # 调用解析逻辑
+        preview_data = []
         
         if doc_type == 'rule':
-            raw_rules = parse_programming_rules(target_path, debug=False)
-            for r in raw_rules:
-                # 1. 组合用于展示和检索的完整文本
-                # 把“描述”、“违背示例”、“遵循示例”拼在一起
-                combined_content = f"【规则描述】\n{r.get('description', '')}\n"
+            if target_path.endswith('.docx'):
+                # 尝试规则解析
+                rules = parse_programming_rules(target_path)
+                if not rules:
+                    # 兜底
+                    text = read_docx_text(target_path)
+                    rules = smart_parse_doc(text, type='rule')
                 
-                if r.get('violation_code', '').strip():
-                    combined_content += f"\n【❌ 违背示例】\n{r['violation_code']}"
-                
-                if r.get('compliance_code', '').strip():
-                    combined_content += f"\n【✅ 遵循示例】\n{r['compliance_code']}"
-
-                parsed_data.append({
-                    "id": r.get('id', '未知ID'),
-                    "summary": r.get('description', '')[:50] + "...",
-                    "content": combined_content,  # <--- 现在这里包含了完整代码！
-                    "full_data": r,
-                    "type": "编程规则"
-                })
-                
-        elif doc_type == 'issue':
-            raw_issues = parse_issue_reports(target_path, debug=False)
-            for i in raw_issues:
-                # 增强：确保字段存在，防止前端显示空白
-                desc = i.get('desc', '无描述')
-                opinion = i.get('opinion', '无处理意见')
-                
-                parsed_data.append({
-                    "id": i.get('id', '未知ID'),
-                    "summary": desc[:50] + "...",
-                    # 组合详细内容用于展示
-                    "content": f"【问题描述】\n{desc}\n\n【处理意见】\n{opinion}\n\n【追踪ID】\n{i.get('trace_id','')}",
-                    "full_data": i,
-                    "type": "问题单"
-                })
+                # 格式化为前端预览
+                preview_data = rules
         
+        elif doc_type == 'issue':
+            if target_path.endswith('.docx'):
+                issues = parse_issue_reports(target_path)
+                if not issues:
+                    text = read_docx_text(target_path)
+                    issues = smart_parse_doc(text, type='issue')
+                preview_data = issues
+
         elif doc_type == 'history_align':
-            try:
-                with open(target_path, 'r', encoding='utf-8') as f:
-                    raw_data = json.load(f)
-                
-                items = []
-                
-                # Case A: Standard Annotation Format (annotations + docFiles + codeFiles)
-                if isinstance(raw_data, dict) and 'annotations' in raw_data:
-                    annotations = raw_data.get('annotations', [])
-                    doc_files = raw_data.get('docFiles', [])
-                    code_files = raw_data.get('codeFiles', [])
-                    
-                    # Build Lookup Maps
-                    doc_map = {}
-                    for d in doc_files:
-                        if isinstance(d, dict) and 'id' in d:
-                            doc_map[d['id']] = d.get('content', '')
-                            
-                    code_map = {}
-                    for c in code_files:
-                        if isinstance(c, dict) and 'id' in c:
-                            code_map[c['id']] = c.get('content', '')
-                            
-                    items = annotations
-                    
-                    # Pre-process items to resolve content if missing
-                    for item in items:
-                        if not isinstance(item, dict): continue
-                        
-                        # Resolve docRanges
-                        if 'docRanges' in item:
-                            for dr in item['docRanges']:
-                                if isinstance(dr, dict) and not dr.get('content') and dr.get('documentId') in doc_map:
-                                    full_text = doc_map[dr['documentId']]
-                                    s = dr.get('start', 0)
-                                    e = dr.get('end', len(full_text))
-                                    dr['content'] = full_text[s:e]
-                                    
-                        # Resolve codeRanges
-                        if 'codeRanges' in item:
-                            for cr in item['codeRanges']:
-                                if isinstance(cr, dict) and not cr.get('content') and cr.get('documentId') in code_map:
-                                    full_text = code_map[cr['documentId']]
-                                    s = cr.get('start', 0)
-                                    e = cr.get('end', len(full_text))
-                                    cr['content'] = full_text[s:e]
+             # 历史对齐通常是 JSON
+             if target_path.endswith('.json'):
+                 with open(target_path, 'r', encoding='utf-8') as f:
+                     data = json.load(f)
+                     # 简单提取一些预览信息
+                     if "annotations" in data:
+                         preview_data = [{"id": a.get("id"), "content": "历史对齐数据"} for a in data["annotations"][:10]]
 
-                # Case B: Flat Dict of Alignments (id -> alignment)
-                elif isinstance(raw_data, dict):
-                    # Keep the key as ID if not present in value
-                    for k, v in raw_data.items():
-                        if isinstance(v, dict):
-                            if 'id' not in v: v['id'] = k
-                            items.append(v)
-                            
-                # Case C: Flat List of Alignments
-                elif isinstance(raw_data, list):
-                    items = raw_data
-                
-                for idx, item in enumerate(items):
-                    if not isinstance(item, dict): continue
-                    
-                    item_id = item.get('id', f'history_{idx}')
-                    content_parts = []
-                    
-                    if item.get('name'): content_parts.append(f"Name: {item['name']}")
-                    if item.get('description'): content_parts.append(f"Desc: {item['description']}")
-                    
-                    # Handle docRanges/codeRanges
-                    doc_ranges = item.get('docRanges', [])
-                    if doc_ranges:
-                        content_parts.append("【文档片段】")
-                        if isinstance(doc_ranges, list):
-                            for dr in doc_ranges:
-                                if isinstance(dr, dict) and 'content' in dr:
-                                    content_parts.append(dr['content'])
-                                elif isinstance(dr, str):
-                                    content_parts.append(dr)
-
-                    code_ranges = item.get('codeRanges', [])
-                    if code_ranges:
-                        content_parts.append("【代码片段】")
-                        if isinstance(code_ranges, list):
-                            for cr in code_ranges:
-                                if isinstance(cr, dict) and 'content' in cr:
-                                    content_parts.append(cr['content'])
-                                elif isinstance(cr, str):
-                                    content_parts.append(cr)
-
-                    full_content = "\n".join(content_parts)
-                    if not full_content.strip():
-                        full_content = json.dumps(item, ensure_ascii=False)
-
-                    parsed_data.append({
-                        "id": item_id,
-                        "summary": (item.get('name') or item.get('description') or full_content)[:50] + "...",
-                        "content": full_content,
-                        "full_data": item,
-                        "type": "历史对齐"
-                    })
-            except Exception as e:
-                print(f"History Parse Error: {e}")
-                return jsonify({"status": "error", "message": f"解析历史对齐文件失败: {str(e)}"})
-
-        return jsonify({"status": "success", "data": parsed_data})
+        return jsonify({"status": "success", "data": preview_data})
         
     except Exception as e:
-        print(f"Preview Error: {e}") # 打印报错以便调试
+        import traceback
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/commit', methods=['POST'])
-def commit_knowledge():
-    """接收前端确认的数据 -> 写入 Chroma"""
-    data = request.json
-    kb_name = data.get('kb_name')     # 用户填写的库名，例如 "v2.0_issue_db"
-    selected_items = data.get('items') # 用户勾选的数据
-    # 获取前端传来的项目路径，如果没有则用默认的
-    project_path = data.get('projectPath', PROJECT_ROOT)
-    
-    if not kb_name or not selected_items:
-        return jsonify({"status": "error", "message": "参数不完整"}), 400
-        
-    try:
-        # 使用传入的 project_path 初始化
-        rag_engine.initialize(project_path=project_path)
-        
-        # 2. 转换数据格式适配 add_manual_data
-        # 前端发来的 items 里的 full_data 对应后端的 meta
-        items_to_add = []
-        for item in selected_items:
-            items_to_add.append({
-                "id": item['id'],
-                "content": item['content'], # 检索文本
-                "meta": item['full_data']   # 完整元数据
-            })
-            
-        # 3. 调用我们在 rag_chroma.py 里新加的方法
-        result = rag_engine.add_manual_data(items_to_add, kb_type=kb_name)
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        print(f"Commit Error: {e}")
-        return jsonify({"status": "error", "message": str(e)})
-
-# 3. 获取列表 (改为 POST 或者带参数的 GET)
-# 为了方便传路径，建议用 POST，或者 GET ?projectPath=...
-@app.route('/api/rag/list-dbs', methods=['POST']) 
-def list_rag_dbs():
-    data = request.json
-    project_path = data.get('projectPath')
-    
-    if not project_path:
-        return jsonify({"status": "error", "message": "未提供项目路径"})
-
-    # 这里的路径和 rag_chroma.py 里对应
-    kb_root = os.path.join(project_path, "rag_database")
-    
-    dbs = []
-    if os.path.exists(kb_root):
-        dbs = [d for d in os.listdir(kb_root) if os.path.isdir(os.path.join(kb_root, d))]
-    
-    # 如果没有建立过，返回空或者 default
-    if not dbs: 
-        dbs = [] 
-
-    return jsonify({"status": "success", "dbs": dbs})
-
-
-# 4. 切换数据库
-@app.route('/api/rag/switch', methods=['POST'])
-def switch_rag_db():
-    data = request.json
-    project_path = data.get('projectPath') # 必传
-    db_name = data.get('dbName')
-
-    if not project_path or not db_name:
-         return jsonify({"status": "error", "message": "参数缺失"})
-
-    try:
-        # 传入项目路径进行切换
-        rag_engine.initialize(project_path, db_name)
-        return jsonify({"status": "success", "message": f"已切换至 {db_name}"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+def commit_to_kb():
+    # Deprecated in favor of /api/rag/build
+    return jsonify({"status": "error", "message": "Please use /api/rag/build"})
 
 def find_available_port(start_port):
     port = start_port

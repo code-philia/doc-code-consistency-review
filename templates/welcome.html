@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -26,7 +27,7 @@
     </header>
     
     <div class="main-container">
-        <!-- 左侧导航栏（移除了"打开"栏目） -->
+        <!-- 左侧导航栏 -->
         <div class="sidebar">
             <div class="nav-item active" data-section="start">
                 <i class="fas fa-home"></i>
@@ -36,11 +37,15 @@
                 <i class="fas fa-pencil-alt"></i>
                 <span>标注</span>
             </div>
+            <div class="nav-item" data-section="kb">
+                <i class="fas fa-database"></i>
+                <span>知识库</span>
+            </div>
         </div>
         
         <!-- 内容区域 -->
         <div class="content">
-            <!-- 开始区域 - 新布局 -->
+            <!-- 开始区域 -->
             <div class="section" id="start-section">
                 <h2 class="section-title"><i class="fas fa-rocket"></i> 欢迎使用</h2>
                 
@@ -195,24 +200,96 @@
                                 </div>
                             </template>
                         </el-dialog>
+
+                        <div class="action-card" @click="window.location.href='/semi-automatic'">
+                            <div class="card-icon">
+                                <i class="fas fa-magic"></i>
+                            </div>
+                            <h3 class="card-title">半自动模式</h3>
+                            <p class="card-description">无需创建项目，快速对单个文档或代码片段进行一致性检查。</p>
+                            <button class="card-button">
+                                <i class="fas fa-arrow-right"></i> 进入模式
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- 标注区域 -->
             <div class="section" id="annotation-section" style="display: none;">
-                <h2 class="section-title"><i class="fas fa-pencil-alt"></i> 标注</h2>
-                <div class="semi-auto-card">
-                    <div class="semi-auto-title">
-                        <i class="fas fa-edit"></i> 需求代码对齐人工标注
+                <h2 class="section-title"><i class="fas fa-pencil-alt"></i> 数据标注</h2>
+                <div class="annotation-entry">
+                     <p>跳转到专业标注工具，为大模型提供高质量的微调数据。</p>
+                     <button class="action-btn primary" onclick="window.location.href='/annotation'">
+                        <i class="fas fa-external-link-alt"></i> 打开标注工具
+                     </button>
+                </div>
+            </div>
+
+            <!-- 知识库区域 -->
+            <div class="section" id="kb-section" style="display: none;">
+                <div class="kb-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 class="section-title" style="margin-bottom: 0;"><i class="fas fa-database"></i> 知识库管理</h2>
+                    <div class="kb-controls" style="display: flex; align-items: center;">
+                        <el-radio-group v-model="kbFilter" size="default" style="margin-right: 15px;">
+                            <el-radio-button label="all">全部</el-radio-button>
+                            <el-radio-button label="rule">规则</el-radio-button>
+                            <el-radio-button label="issue">问题</el-radio-button>
+                            <el-radio-button label="align">对齐</el-radio-button>
+                        </el-radio-group>
+                        
+                        <el-select v-model="kbSort" placeholder="排序" size="default" style="width: 130px; margin-right: 15px;">
+                            <el-option label="最新添加" value="time_desc"></el-option>
+                            <el-option label="最早添加" value="time_asc"></el-option>
+                            <el-option label="名称 A-Z" value="name_asc"></el-option>
+                        </el-select>
+
+                        <button class="action-btn primary" @click="openImportReviewDialog">
+                            <i class="fas fa-plus"></i> 导入与审查
+                        </button>
                     </div>
-                    <p class="semi-auto-description">
-                        在标注模式下，您可以手动标注需求和代码之间的对齐关系。系统将提供一个直观的界面，帮助您快速选择和标注对齐关系。
-                        这对于训练和优化模型非常重要，可以帮助我们改进需求和代码之间的对齐效果。
-                    </p>
-                    <button class="semi-auto-button" onclick="window.location.href='/annotation'">
-                        <i class="fas fa-play-circle"></i> 进入标注模式
-                    </button>
+                </div>
+                
+                <div class="kb-grid">
+                    <div v-for="kb in filteredKBs" :key="kb.name" class="kb-card">
+                        <div class="kb-icon" :class="kb.type">
+                            <i v-if="kb.type === 'rule'" class="fas fa-gavel"></i>
+                            <i v-else-if="kb.type === 'issue'" class="fas fa-bug"></i>
+                            <i v-else-if="kb.type === 'align'" class="fas fa-link"></i>
+                            <i v-else class="fas fa-database"></i>
+                        </div>
+                        <div class="kb-info">
+                            <h3 :title="kb.name">${ kb.name }</h3>
+                            <div class="kb-meta">
+                                <span class="kb-type-tag" :class="kb.type">
+                                    ${ getKbTypeName(kb.type) }
+                                </span>
+                                <span class="kb-time" :title="kb.create_time">
+                                    <i class="far fa-clock"></i> ${ formatRelativeTime(kb.create_time) }
+                                </span>
+                            </div>
+                        </div>
+                        <div class="kb-type-badge" :class="kb.type">
+                             ${ kb.type.toUpperCase() }
+                        </div>
+                        <div class="kb-actions">
+                            <el-dropdown trigger="click" @command="(cmd) => handleKbAction(cmd, kb)">
+                                <span class="kb-action-btn"><i class="fas fa-ellipsis-v"></i></span>
+                                <template #dropdown>
+                                    <el-dropdown-menu>
+                                        <el-dropdown-item command="view"><i class="fas fa-eye"></i> 查看内容</el-dropdown-item>
+                                        <el-dropdown-item command="rename"><i class="fas fa-edit"></i> 重命名</el-dropdown-item>
+                                        <el-dropdown-item command="delete" divided style="color: #f56c6c;"><i class="fas fa-trash-alt"></i> 删除</el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </template>
+                            </el-dropdown>
+                        </div>
+                    </div>
+                    
+                    <div v-if="filteredKBs.length === 0" class="empty-kb-state" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
+                        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
+                        <p>暂无相关知识库</p>
+                    </div>
                 </div>
             </div>
             
@@ -226,8 +303,187 @@
                 </div>
             </div>
         </div>
+        <input 
+            type="file" 
+            ref="switchKBInput" 
+            style="display: none" 
+            webkitdirectory 
+            directory 
+        />
+
+        <el-dialog 
+            v-model="showImportReviewDialog" 
+            title="🛡️ 知识库人工审查与入库" 
+            width="900px"
+            :close-on-click-modal="false"
+            @open="loadInitData" 
+        >
+            <el-steps :active="importStep" finish-status="success" simple style="margin-bottom: 20px;">
+                <el-step title="选择文件">
+                    <template #icon><i class="fas fa-file-upload"></i></template>
+                </el-step>
+                <el-step title="审查入库">
+                    <template #icon><i class="fas fa-check-double"></i></template>
+                </el-step>
+            </el-steps>
+        
+            <div v-if="importStep === 0" class="upload-section">
+                
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <span style="margin-right: 15px; font-weight: bold;">文档类型：</span>
+                    <el-radio-group v-model="importDocType">
+                        <el-radio label="history_align" border>历史对齐 (History Align)</el-radio>
+                        <el-radio label="issue" border>问题单 (Issue)</el-radio>
+                        <el-radio label="rule" border>编程规则 (Rule)</el-radio>
+                    </el-radio-group>
+                </div>
+        
+                <el-tabs type="border-card" v-model="fileSourceMode" style="min-height: 200px;">
+                    <el-tab-pane name="server" label="📂 从服务器选择 (testdata)">
+                        <div style="text-align: center; padding: 20px;">
+                            <p style="color: #666; margin-bottom: 10px;">直接选择位于 <code>/testdata</code> 目录下的文件：</p>
+                            <el-select 
+                                v-model="selectedServerFile" 
+                                placeholder="请选择文件..." 
+                                style="width: 300px" 
+                                filterable
+                            >
+                                <el-option
+                                    v-for="file in serverFileList"
+                                    :key="file"
+                                    :label="file"
+                                    :value="file">
+                                    <span style="float: left">${ file }</span>
+                                    <span style="float: right; color: #8492a6; font-size: 13px">
+                                        <i class="fas fa-file-word"></i>
+                                    </span>
+                                </el-option>
+                            </el-select>
+                        </div>
+                    </el-tab-pane>
+                    <el-tab-pane name="local" label="💻 本地上传">
+                         <el-upload
+                            class="upload-demo"
+                            drag
+                            action=""
+                            :auto-upload="false"
+                            :on-change="handleImportFileChange"
+                            :file-list="importFileList"
+                            :limit="1"
+                            accept=".docx,.json"
+                        >
+                            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                            <div class="el-upload__text">
+                                拖拽文件到此处 或 <em>点击上传</em>
+                            </div>
+                            <template #tip>
+                                <div class="el-upload__tip">
+                                    支持 .docx (文档) 或 .json (标注数据)
+                                </div>
+                            </template>
+                        </el-upload>
+                    </el-tab-pane>
+                </el-tabs>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <el-button type="primary" size="large" @click="startPreview" :loading="isUploading">
+                        开始解析与预览 <el-icon class="el-icon--right"><Arrow-Right /></el-icon>
+                    </el-button>
+                </div>
+            </div>
+
+            <!-- Step 2: 预览审查 -->
+            <div v-if="importStep === 1" class="review-section">
+                
+                <div class="review-header" style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background: #f5f7fa; padding: 10px; border-radius: 4px;">
+                     <div>
+                        <strong><i class="fas fa-info-circle"></i> 解析结果预览</strong>
+                        <span style="margin-left: 10px; color: #666; font-size: 13px;">
+                            共解析出 ${ previewTableData.length } 条数据
+                        </span>
+                     </div>
+                     <div style="display: flex; gap: 10px; align-items: center;">
+                         <!-- Knowledge Base Name Input -->
+                         <el-input v-model="targetKbName" placeholder="知识库名称" style="width: 200px">
+                             <template #prefix>名称</template>
+                         </el-input>
+                         
+                         <el-button type="success" @click="submitToKb" :loading="isCommitting">
+                            <i class="fas fa-check"></i> 确认入库 (${ selectedReviewItems.length })
+                         </el-button>
+                     </div>
+                </div>
+
+                <el-table 
+                    ref="reviewTableRef"
+                    :data="previewTableData" 
+                    style="width: 100%; height: 400px; overflow-y: auto;" 
+                    border 
+                    stripe
+                    @selection-change="handleReviewSelectionChange"
+                >
+                    <el-table-column type="selection" width="55"></el-table-column>
+                    <el-table-column prop="id" label="ID" width="100" show-overflow-tooltip></el-table-column>
+                    <el-table-column label="内容摘要" show-overflow-tooltip>
+                        <template #default="scope">
+                            <div style="white-space: pre-wrap; max-height: 60px; overflow: hidden;">
+                                ${ scope.row.content || scope.row.description || scope.row.desc || 'No content' }
+                            </div>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="100" fixed="right">
+                        <template #default="scope">
+                            <el-button link type="primary" size="small" @click="viewDetail(scope.row)">详情</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </el-dialog>
+
+        <!-- 详情弹窗 -->
+        <el-dialog v-model="showDetailDialog" title="条目详情" width="600px" append-to-body>
+            <div v-if="currentDetailItem" style="white-space: pre-wrap; line-height: 1.6;">
+                <div v-for="(val, key) in currentDetailItem" :key="key" style="margin-bottom: 10px;">
+                    <strong style="color: #409eff;">${ key }:</strong>
+                    <div style="background: #f9f9f9; padding: 8px; border-radius: 4px; margin-top: 4px;">
+                        ${ val }
+                    </div>
+                </div>
+            </div>
+        </el-dialog>
+
+        <!-- 知识库查看弹窗 -->
+        <el-dialog v-model="showKbViewDialog" :title="'📚 知识库内容: ' + (currentKb ? currentKb.name : '')" width="900px">
+            <div style="margin-bottom: 15px;">
+                 <el-alert type="info" :closable="false" show-icon>
+                    共 ${ kbItems.length } 条数据。仅展示前 100 条。
+                 </el-alert>
+            </div>
+            <el-table :data="kbItems" border stripe style="width: 100%; height: 500px; overflow-y: auto;">
+                <el-table-column prop="id" label="ID" width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column label="内容">
+                    <template #default="scope">
+                        <div style="white-space: pre-wrap; max-height: 60px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+                            ${ scope.row.content }
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="120" fixed="right">
+                    <template #default="scope">
+                        <el-button link type="primary" size="small" @click="viewDetail(scope.row)">详情</el-button>
+                        <el-popconfirm title="确定删除此条目吗？" @confirm="deleteKbItem(scope.row)">
+                            <template #reference>
+                                <el-button link type="danger" size="small">删除</el-button>
+                            </template>
+                        </el-popconfirm>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-dialog>
+
     </div>
 </div>
+
 <script src="/static/js/welcome.js"></script>
 </body>
 </html>
