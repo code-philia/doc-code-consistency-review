@@ -209,7 +209,7 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                             "file":filename,
                             "range": [comment_dict['range'][0], end_idx + 1],
                             "type": block_type,
-                            "code": comment_dict['code'] + code 
+                            "code": comment_dict['code'] + '\n' + code 
                         })
                         #print(chunks)
                         comment_dict= {}
@@ -692,6 +692,45 @@ def chunk_codes(name, cpp_file, output_json_path): #读入存放代码的工程�
     return code_data # output_file
 
 
+def get_codefile_blocks(code_base_path, file_name, code_block_base_path):
+    
+    #file_name = os.path.basename(codefile_path)
+    code_block_file_path = os.path.join(code_block_base_path, file_name + '_code_blocks.jsonl')
+    #print(code_block_file_path)
+    all_code_blocks = []
+    # 已经有分块结果
+    if os.path.exists(code_block_file_path):
+        with open(code_block_file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            all_code_blocks = [json.loads(line.strip()) for line in lines]
+            return all_code_blocks
+
+
+    # 获取原始块
+    code_blocks = chunk_cpp_code(file_name, os.path.join(code_base_path, file_name))
+    global index
+    for item in code_blocks:
+        item['id'] = index
+        item['related_id'] = []
+        item['related_range'] = {}
+        index = 1+index
+
+
+    # 关联块
+    processor = BlockProcessor()
+    processor.load_blocks(code_blocks)
+    processor.extract_carrier_ranges()
+    all_code_blocks = processor.extract_func_relations()
+
+    # 保存最终结果
+    os.makedirs(code_block_base_path, exist_ok=True)
+    with open(code_block_file_path, "a", encoding="utf-8") as f:
+        for block in all_code_blocks:
+            f.write(json.dumps(block, ensure_ascii=False) + "\n")
+
+    return all_code_blocks
+    
+    
 def get_all_code_blocks(code_base_path, all_rel_code_paths, code_block_base_path):
     all_code_blocks = []
     code_block_file_path = os.path.join(code_block_base_path, f'code_blocks.jsonl')

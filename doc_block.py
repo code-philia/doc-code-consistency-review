@@ -1,6 +1,15 @@
 import re
 import os
 from typing import List, Dict
+import logging
+
+logging.basicConfig(
+    level = logging.INFO,
+    format='%(message)s'
+    )
+
+logger = logging.getLogger(__name__)
+target_flag = '# <div class="page"></div>'
 
 def chunk_markdown(filename: str, content: str) -> List[Dict]:
     """
@@ -14,6 +23,7 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
     4. Consecutive text elements are merged to avoid over-fragmentation.
     """
     blocks = []
+    
     lines = content.splitlines(keepends=True)
     
     current_offset = 0
@@ -35,6 +45,7 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
         line = lines[i]
         line_len = len(line)
         stripped_line = line.strip()
+        
         
         # --- STATE: CODE BLOCK ---
         if state == STATE_CODE_BLOCK:
@@ -70,8 +81,9 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
             i += 1
             continue
             
-        # 2. Check for Header
-        if re.match(r'^#{1,6}\s', line):
+        # 2. 定位到标题的#标记 或者 无#的数字开头的标题 或者 附录中大写字母开头的标题
+        if re.match(r'^#{1,6}\s', line) or re.match(r'^\s*\d+(\.\d+)*\s*.+$', line) or re.match(r'^\s*[A-Z](?:\.\d+)*\s+.*$', line):
+        
             # Flush previous text buffer
             if buffer_lines:
                 _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename, "text")
@@ -96,19 +108,32 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
     if buffer_lines:
         block_type = "code_block" if state == STATE_CODE_BLOCK else "text"
         _flush_buffer(blocks, buffer_lines, buffer_start_offset, filename, block_type)
-
+    #for i in range(0,3):
+    #    logger.info(blocks[i])
+    
     return blocks
-
+    
+    
 def _flush_buffer(blocks, lines, start_offset, filename, block_type):
     content = "".join(lines)
-    
+    # 过滤markdown内容
     # Ignore purely empty blocks (whitespace only) unless it's a code block (which might be empty)
     if not content.strip() and block_type != "code_block":
         return
-
+    # 过滤特定格式的无关内容
+    if "# 引用文件" in content or target_flag in content:
+        return
+    # 过滤封皮、扉页、签署页等内容
+    if "质量会签" in content or "定密批准" in content:
+        return
+    # 过滤单行标题（无具体内容的），最后一个\n后无内容都算
+    if not content.strip('\n').count('\n'):
+        return
+    
     # For text blocks, if it's extremely short (e.g. just a newline), skip or merge?
     # Here we just skip purely empty ones.
-    
+    if "# 引用文件" in content:
+        return
     blocks.append({
         "type": block_type,
         "content": content,
@@ -121,13 +146,24 @@ def get_all_doc_blocks(doc_base_path: str, all_rel_doc_paths: List[str]) -> List
     all_blocks = []
     for rel_path in all_rel_doc_paths:
         abs_path = os.path.join(doc_base_path, rel_path)
+
         if not os.path.exists(abs_path):
             continue
             
         with open(abs_path, 'r', encoding='utf-8') as f:
             content = f.read()
-            
+
+        if target_flag in content:
+            content = content.split(target_flag, 1)[1]
+        else:
+            logger.info("The flag {target_flag}is not exist.")  
         file_blocks = chunk_markdown(rel_path, content)
         all_blocks.extend(file_blocks)
         
     return all_blocks
+
+if __name__ == '__main__':
+    md_path= r'.\doc_repo'
+    all_rel_doc_paths = ["..md"]
+    output_path = r'.'
+    all_json_file = get_all_doc_blocks(md_path, all_rel_doc_paths)

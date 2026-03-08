@@ -1,4 +1,7 @@
 import os
+os.environ["OPENBLAS_NUM_THREADS"] = "128"
+os.environ["OMP_NUM_THREADS"]="128"
+
 import time
 from flask import Flask, json, render_template, request, jsonify, send_file
 import sqlite3
@@ -6,7 +9,7 @@ import json as pyjson
 import socket
 from utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension,\
     replace_text_in_docx, generate_issue_content, include_related_blocks
-from agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart, query_related_requirement
+from agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart, query_related_requirement, query_code_abstract, query_codefile_abstract, query_codefile_from_abstract
 from rag_chroma import rag_engine
 from doc_block import chunk_markdown
 import random
@@ -20,12 +23,13 @@ import shutil
 import re
 import zipfile
 
-from code_block import get_all_code_blocks
+from code_block import get_all_code_blocks, chunk_cpp_code, get_codefile_blocks
 
 import logging
 import sys
 from io import BytesIO
 import pandas as pd
+from collections import defaultdict
 
 from utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
 from agent import smart_parse_doc
@@ -248,9 +252,20 @@ def init_project_db(project_path):
     db_path = get_db_path(project_path)
     os.makedirs(project_path, exist_ok=True)
     conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row  # Ensure we can access columns by name
     try:
         conn.execute('PRAGMA foreign_keys=ON')
         conn.execute('PRAGMA journal_mode=WAL')
+
+        # 代码摘要
+        conn.execute(
+            'CREATE TABLE IF NOT EXISTS abstracts ('
+            'filename TEXT PRIMARY KEY,'
+            'abstract TEXT NOT NULL DEFAULT "[]",'
+            'createdAt TEXT DEFAULT CURRENT_TIMESTAMP,'
+            'updatedAt TEXT)'
+        )
+
         conn.execute(
             'CREATE TABLE IF NOT EXISTS alignments ('
             'id TEXT PRIMARY KEY,'
@@ -259,9 +274,25 @@ def init_project_db(project_path):
             'reviewThoughts TEXT,'
             'docRanges TEXT NOT NULL DEFAULT "[]",'
             'codeRanges TEXT NOT NULL DEFAULT "[]",'
+            'GenReq TEXT,'
+            'GenMermaid TEXT,'
             'createdAt TEXT DEFAULT CURRENT_TIMESTAMP,'
             'updatedAt TEXT)'
         )
+        
+        # --- Migration: Check and add missing columns ---
+        cur = conn.cursor()
+        cur.execute("PRAGMA table_info(alignments)")
+        existing_columns = {row['name'] for row in cur.fetchall()}
+        
+        if 'GenReq' not in existing_columns:
+            print(f"[DB Migration] Adding GenReq column to {db_path}")
+            conn.execute("ALTER TABLE alignments ADD COLUMN GenReq TEXT")
+            
+        if 'GenMermaid' not in existing_columns:
+            print(f"[DB Migration] Adding GenMermaid column to {db_path}")
+            conn.execute("ALTER TABLE alignments ADD COLUMN GenMermaid TEXT")
+        
         conn.execute(
             'CREATE TABLE IF NOT EXISTS issues ('
             'id INTEGER PRIMARY KEY AUTOINCREMENT,'
@@ -524,9 +555,10 @@ def import_project():
         # 如为原始版本（不存在 project.db），初始化数据库并迁移旧数据
         try:
             db_path = get_db_path(project_path)
-            if not os.path.exists(db_path):
-                init_project_db(project_path)
-                import_json_to_db(project_path)
+            # 总是调用 init_project_db 以确保表结构最新（自动迁移）
+            init_project_db(project_path)
+            # import_json_to_db 内部会检查表是否为空，所以安全调用
+            import_json_to_db(project_path)
         except Exception:
             pass
 
@@ -790,13 +822,12 @@ def requirement_decomposition():
         
         req_blocks = []
         
+        
         for annotation in annotations:
             doc_ranges = annotation.get('docRanges', [])
+            req_id = annotation.get('id')
+            category = annotation.get('category')
             
-            if not doc_ranges:
-                doc_ranges = annotation.get('documentRanges', [])
-                if not doc_ranges:
-                    continue
                 
             # 获取文档ID
             document_id = doc_ranges[0].get('documentId')
@@ -808,6 +839,7 @@ def requirement_decomposition():
             # 构建需求块对象 (扁平化，每个docRange作为一个独立的块)
             for doc_range in doc_ranges:
                 req_block = {
+                    'name':category,
                     'filename': doc_name,
                     'documentId': doc_name,
                     'content': doc_range.get('content'),
@@ -880,9 +912,18 @@ def auto_markdown_split():
             if not blocks:
                 continue
             
+                        
             # 构建需求块
             for block_info in blocks:
+                content = block_info['content']
+                if  '#' in content:
+                    first_line = content.split('\n')[0]
+                    chunk_name = first_line.lstrip('#')
+                else:
+                    chunk_name = _compact_title_from_text(content, 24)
+                
                 req_block = {
+                    'name': chunk_name,
                     'filename': doc_name,
                     'documentId': doc_name,
                     'content': block_info['content'],
@@ -1091,29 +1132,184 @@ def download_file(filename):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-#####################################
-# 核心流程函数
-#####################################
+#------------------------#
+#     核心流程函数
+#------------------------#
+def get_abstracts_from_sqlite(db_path):
+    """从project.db的abstracts表读取指定列数据"""
+    try:
+        # 连接SQLite数据库
+        conn = sqlite3.connect(db_path)
+        #conn.execute('PRAGMA encoding = UTF-8')
+        # 读取name、docRanges、codeRanges、GenReq、 GenMermaid 列所有数据
+        query_sql = "SELECT filename, abstract FROM abstracts"
+        # 直接用pandas读取SQL结果（简洁高效）
+        df = pd.read_sql(query_sql, conn)
+        conn.close()
+        return df
+    except sqlite3.Error as e:
+        print(f"SQLite数据库读取失败：{e}")
+        return pd.DataFrame()  # 返回空DataFrame
+    except Exception as e:
+        print(f"读取数据异常：{e}")
+        return pd.DataFrame()
+
+        
+def generate_abstract(file_path):
+    # 读取文件内容，保留原始行（包括空行）
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        #lines = [line for line in f.readlines()] # 保留原始代码
+        lines = []
+        for line in f:
+            # 必须过滤被注释掉的代码，不然影响大模型理解和分析
+            l_line = line.lstrip()
+            is_code_comment = l_line.startswith('//') and not any (c in l_line[2:] for c in ('，','。','；'))
+            if not is_code_comment:
+                lines.append(l_line)
+    # 调用llm的代码文件摘要函数
+        codefile_abstract = query_codefile_abstract(lines)       
+    # code_abstracts = []
+    # # 获取原始块
+    # code_blocks = chunk_cpp_code(file_path, os.path.join(code_file_path, file_path))
+    # for code_block in code_blocks:
+        # # 调用llm的代码块摘要函数
+        # code_abstract = query_code_abstract(code_block["code"])    
+        # code_abstracts.append(code_abstract)
+    return codefile_abstract
+     
+
+def save_abstract_to_db(project_path, file, codefile_abstract):
+    # 代码摘要写入数据库
+    try:
+        conn = get_db_conn(project_path)
+        cur = conn.cursor()
+        cur.execute(
+            'INSERT INTO abstracts(filename,abstract,createdAt,updatedAt) '
+            'VALUES (?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
+            'ON CONFLICT(filename) DO UPDATE SET filename=excluded.filename,abstract=excluded.abstract,updatedAt=CURRENT_TIMESTAMP',
+            (
+                file,
+                codefile_abstract,
+            )
+        )
+    except Exception as e:
+        logger.info("写入代码摘要数据失败")
+        logger.info(e)
+        return jsonify({"status": "error", "message": f"写入代码摘要数据失败: {e}"}), 500
+
+    conn.commit()
+    conn.close()        
+        
+@app.route('/api/get-code-abstract', methods=['GET'])
+def abstract_code_from_project():
+    """
+    代码摘要：摘要每个代码文件，存入数据库
+    """
+
+    try:
+        project_path = request.args.get('projectPath')
+        
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
+        
+        code_file_path = os.path.join(project_path, 'code_repo')
+        if not os.path.exists(code_file_path):
+            return jsonify({'status': 'success', 'data': []})
+        
+        # 读取数据库里的代码摘要
+        db_file = os.path.join(project_path, 'project.db')
+        if not os.path.exists(db_file):
+            logger.info('未找到数据库文件')
+            df = pd.DataFrame()
+        else:    
+            # 从SQLite读取数据
+            df = get_abstracts_from_sqlite(db_file)
+        
+        # 排除无关文件夹/目录
+        exclude_folders = ['.git', '.idea']
+        # 基于文件名后缀，指定文件类型
+        include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html']       
+        # 遍历文件夹
+        file_abstract = {}
+        for root, dirs, files in os.walk(code_file_path):
+            dirs[:] = [d for d in dirs if d not in exclude_folders]
+            for file in files:
+                if os.path.splitext(file)[1] in include_files:
+                    if not df.empty:
+                        # 先看数据库里有没有已经生成好的代码摘要
+                        row_data = df[df['filename'] == file]
+                        # 数据库有该代码文件的摘要
+                        if not row_data.empty:
+                            logger.info('数据库有该代码文件的摘要')
+                            abstract_data = row_data['abstract'].values[0]
+                            file_abstract[file] = abstract_data
+                        # 数据库没有该代码文件的摘要
+                        else:
+                            file_path = os.path.join(root, file)
+                            codefile_abstract = generate_abstract(file_path)
+                            file_abstract[file] = codefile_abstract
+                            save_abstract_to_db(project_path, file, codefile_abstract)
+                        
+                    # 数据库里代码摘要这张表是空的，需要新生成
+                    else:
+                        file_path = os.path.join(root, file)
+                        codefile_abstract = generate_abstract(file_path)
+                        file_abstract[file] = codefile_abstract
+                        save_abstract_to_db(project_path, file, codefile_abstract)
+                        
+        
+        #logger.info(file_abstract)
+        #sys.exit()
+        
+        return jsonify({
+            "status": "success",
+            "data": file_abstract
+        })
+    except Exception as e:
+        print(f"生成代码摘要失败: {str(e)}")
+        logger.info(f"生成代码摘要失败: {str(e)}")
+        return jsonify({
+            "status": "error", 
+            "message": f"生成代码摘要过程中出错: {str(e)}"
+        }), 500
+
+        
 @app.route('/api/align-requirement-to-project', methods=['POST'])
 def align_requirement_to_project():
     """
-    为单个需求点在项目中查找相关代码并返回codeRanges格式的结果
+    对齐功能：为单个doc需求点在项目中查找相关代码并返回codeRanges格式的结果
+    2026-01-21更新：为单个doc需求点在数据库中根据代码摘要检索相关代码文件，然后查找相关代码，返回codeRanges格式的结果
     """
     data = request.json
     doc_ranges = data.get('docRanges', [])
+    file_abstract = data.get('codeFileAbstract', {})
     project_path = data.get('projectPath', '')
     
     doc_name = doc_ranges[0]['filename']
     random_flag = False
-
-    if '协议' in doc_name:
-        random_flag = True
-
     
+    # 用于特殊处理“协议”类型的项目，后期调试好了就把这个删掉
+    # if '协议' in doc_name:
+    #    random_flag = True
+    
+    # 获取项目中所有代码文件
+    code_repo_path = os.path.join(project_path, 'code_repo')
+    code_block_base_path = os.path.join(project_path, 'code_block_repo')
+    all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
+   
     # 拼接所有docRanges的content作为requirement_text
     requirement_text = '\n\n'.join([doc_range.get('content', '') for doc_range in doc_ranges if doc_range.get('content')])
     if not requirement_text or not project_path:
         return jsonify({"status": "error", "message": "缺少需求内容或项目路径参数"}), 400
+   
+    # 如果有多个代码文件，执行检索代码摘要
+    if len(all_files) > 1:
+        # 基于需求，利用大模型检索代码摘要，先定位代码文件
+        # 调用llm
+        file_name_list = query_codefile_from_abstract(requirement_text, file_abstract)
+    # 如果只有一个代码文件，就不检索代码摘要
+    else:
+        file_name_list = all_files
     
     # 尝试初始化RAG引擎，以便在agent中使用
     try:
@@ -1122,50 +1318,52 @@ def align_requirement_to_project():
         print(f"[Align] RAG initialize failed: {e}")
 
     try:
-        # 获取项目中所有代码文件
-        code_repo_path = os.path.join(project_path, 'code_repo')
-        code_block_base_path = os.path.join(project_path, 'code_block_repo')
-        all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
-
-        # 为代码进行分块或读取分块结果
-        all_code_blocks = get_all_code_blocks(code_repo_path, all_files, code_block_base_path)
-        # 调用对齐函数获取相关代码
-        related_code = query_related_code(requirement_text, all_code_blocks, random_flag, block_limit=50)
-
-        # 检查并添加 related_id 对应的代码块
-        related_code = include_related_blocks(related_code, all_code_blocks)
-        
-        # 转换为codeRanges格式
         code_ranges = []
-        for code_block in related_code:
-            # 获取原始代码内容（不带行号）
-            file_path = os.path.join(code_repo_path, code_block['file'])
-            if os.path.exists(file_path):
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    original_content = f.read()
-                    lines = original_content.splitlines(keepends=True)  # 保留换行符
-                    
-                    # 提取指定行范围的内容
-                    start_line = max(1, code_block['range'][0])
-                    end_line = min(len(lines), code_block['range'][1])
-                    
-                    if start_line <= end_line:
-                        # 计算字符偏移量
-                        char_start = sum(len(line) for line in lines[:start_line-1])
-                        char_end = sum(len(line) for line in lines[:end_line])
+        # 遍历经过代码摘要筛选的代码文件
+        for file_name in file_name_list: 
+            # 为代码进行分块或读取分块结果
+            all_code_blocks = get_codefile_blocks(code_repo_path, file_name, code_block_base_path)
+
+            # 调用对齐函数获取相关代码
+            related_code = query_related_code(requirement_text, all_code_blocks, random_flag, block_limit=50)
+
+            # 检查并添加 related_id 对应的代码块
+            related_code = include_related_blocks(related_code, all_code_blocks)
+            
+            # 转换为codeRanges格式
+            for code_block in related_code:
+                # 获取原始代码内容（不带行号）
+                file_path = os.path.join(code_repo_path, code_block['file'])
+                if os.path.exists(file_path):
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        original_content = f.read()
+                        lines = original_content.splitlines(keepends=True)  # 保留换行符
                         
-                        # 提取内容（不保留换行符用于显示）
-                        range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
+                        # 提取指定行范围的内容
+                        start_line = max(1, code_block['range'][0])
+                        end_line = min(len(lines), code_block['range'][1])
                         
-                        code_ranges.append({
-                            'filename': code_block['file'],
-                            'start': char_start,  # 字符偏移量
-                            'end': char_end,      # 字符偏移量
-                            'content': range_content,
-                            'documentId': code_block['file'],
-                            'startLine': start_line,
-                            'endLine': end_line
-                        })
+                        if start_line <= end_line:
+                            # 计算字符偏移量
+                            char_start = sum(len(line) for line in lines[:start_line-1])
+                            char_end = sum(len(line) for line in lines[:end_line])
+                            
+                            # 提取内容（不保留换行符用于显示）
+                            range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
+                            
+                            code_ranges.append({
+                                'filename': code_block['file'],
+                                'start': char_start,  # 字符偏移量
+                                'end': char_end,      # 字符偏移量
+                                'content': range_content,
+                                'documentId': code_block['file'],
+                                'startLine': start_line,
+                                'endLine': end_line
+                            })
+        
+        #logger.info("对齐结果...................")
+        #logger.info(code_ranges)
+        #sys.exit()
         
         return jsonify({
             "status": "success",
@@ -1408,33 +1606,178 @@ def get_alignments():
 
 @app.route('/project/alignments', methods=['POST'])
 def add_alignment():
-    """添加或更新对齐关系到数据库"""
+    """添加或更新对齐关系到数据库，并自动创建相关的块"""
     project_path = request.args.get('path')
     new_alignment = request.json
     if not project_path or not new_alignment or 'id' not in new_alignment:
         return jsonify({"status": "error", "message": "缺少项目路径或无效的对齐数据。"}), 400
+    
+    # --- 自动创建块的逻辑 ---
+    try:
+        # 1. 处理需求块
+        doc_ranges = new_alignment.get('docRanges', [])
+        if doc_ranges:
+            doc_block_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
+            os.makedirs(os.path.dirname(doc_block_path), exist_ok=True)
+            
+            # 读取现有块以避免重复
+            existing_doc_blocks = set()
+            if os.path.exists(doc_block_path):
+                with open(doc_block_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if not line.strip(): continue
+                        try:
+                            b = json.loads(line.strip())
+                            # 使用 tuple 作为 key
+                            key = (b.get('filename'), b.get('start'), b.get('end'))
+                            existing_doc_blocks.add(key)
+                        except: pass
+            
+            blocks_to_add = []
+            for dr in doc_ranges:
+                # docRange结构通常包含 filename, start, end, content
+                key = (dr.get('filename'), dr.get('start'), dr.get('end'))
+                if key not in existing_doc_blocks:
+                    # 构造标准块数据
+                    block_data = {
+                        "filename": dr.get('filename'),
+                        "start": dr.get('start'),
+                        "end": dr.get('end'),
+                        "content": dr.get('content', '')
+                    }
+                    blocks_to_add.append(block_data)
+                    existing_doc_blocks.add(key) # 防止同一次请求中有重复
+            
+            '''if blocks_to_add:
+                with open(doc_block_path, 'a', encoding='utf-8') as f:
+                    for b in blocks_to_add:
+                        f.write(json.dumps(b, ensure_ascii=False) + '\n')'''
 
+        # 2. 处理代码块
+        code_ranges = new_alignment.get('codeRanges', [])
+        if code_ranges:
+            code_block_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
+            os.makedirs(os.path.dirname(code_block_path), exist_ok=True)
+            
+            # 读取现有块并获取最大ID
+            existing_code_blocks = set()
+            max_id = 0
+            if os.path.exists(code_block_path):
+                with open(code_block_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if not line.strip(): continue
+                        try:
+                            b = json.loads(line.strip())
+                            # 匹配逻辑：file + range
+                            b_range = b.get('range', [])
+                            if len(b_range) == 2:
+                                key = (b.get('file'), b_range[0], b_range[1])
+                                existing_code_blocks.add(key)
+                            
+                            bid = int(b.get('id', 0))
+                            if bid > max_id: max_id = bid
+                        except: pass
+            
+            blocks_to_add = []
+            for cr in code_ranges:
+                # codeRange结构通常包含 filename(or documentId), start, end, startLine, endLine, content
+                # code_block需要: id, file, range[startLine, endLine], content
+                # 注意：这里我们假设 codeRange 中的 startLine/endLine 是可靠的。
+                # 如果 codeRange 中只有 start/end (offset)，我们需要转换吗？
+                # 前端通常会发送 startLine/endLine。如果缺失，这里可能无法准确创建行级块。
+                # 假设前端传了 startLine/endLine
+                
+                c_file = cr.get('filename') or cr.get('documentId')
+                c_start_line = cr.get('startLine')
+                c_end_line = cr.get('endLine')
+                
+                if c_file and c_start_line is not None and c_end_line is not None:
+                    key = (c_file, c_start_line, c_end_line)
+                    if key not in existing_code_blocks:
+                        max_id += 1
+                        block_data = {
+                            "id": max_id,
+                            "file": c_file,
+                            "range": [c_start_line, c_end_line],
+                            "content": cr.get('content', '')
+                        }
+                        blocks_to_add.append(block_data)
+                        existing_code_blocks.add(key)
+            
+            if blocks_to_add:
+                with open(code_block_path, 'a', encoding='utf-8') as f:
+                    for b in blocks_to_add:
+                        f.write(json.dumps(b, ensure_ascii=False) + '\n')
+
+    except Exception as e:
+        print(f"Error auto-creating blocks: {e}")
+        # 即使块创建失败，也不应该阻止对齐关系的保存，但最好记录日志
+        pass
+
+    generated_requirement = ''
+    mermaid_code = ''
+
+    # 反生成需求+流程图
+    try:
+        requirement_content = new_alignment.get('docRanges')
+        code_content = new_alignment.get('codeRanges')
+        
+        # if not code_content:
+        #     return jsonify({"status": "error", "message": "Missing code content"}), 400
+        
+        # 构建代码块列表，格式与现有函数兼容
+        code_blocks = []
+        if isinstance(code_content, list):
+            for code_block in code_content:
+                code_blocks.append({
+                    'filename': code_block.get('filename', 'unknown'),
+                    'content': code_block.get('content', '')
+                })
+        else:
+            # 如果是字符串，创建单个代码块
+            code_blocks.append({
+                'filename': 'code',
+                'content': code_content
+            })
+        
+        # 调用LLM生成需求，传入参考需求内容
+        generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
+        
+        # 调用LLM生成流程图
+        mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else 
+                                       '\n\n'.join([block.get('content', '') for block in code_content]))
+        
+        
+    except Exception as e:
+        print(f"Error generating reverse requirement: {str(e)}")
+        logger.info(f"Error generating reverse requirement: {str(e)}")
+        #return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
+    
     try:
         conn = get_db_conn(project_path)
         cur = conn.cursor()
         cur.execute(
-            'INSERT INTO alignments(id,name,isReviewed,reviewThoughts,docRanges,codeRanges,createdAt,updatedAt) '
-            'VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
-            'ON CONFLICT(id) DO UPDATE SET name=excluded.name,isReviewed=excluded.isReviewed,reviewThoughts=excluded.reviewThoughts,docRanges=excluded.docRanges,codeRanges=excluded.codeRanges,updatedAt=CURRENT_TIMESTAMP',
+            'INSERT INTO alignments(id,name,isReviewed,reviewThoughts,docRanges,codeRanges,GenReq,GenMermaid,createdAt,updatedAt) '
+            'VALUES (?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
+            'ON CONFLICT(id) DO UPDATE SET name=excluded.name,isReviewed=excluded.isReviewed,reviewThoughts=excluded.reviewThoughts,docRanges=excluded.docRanges,codeRanges=excluded.codeRanges,GenReq=excluded.GenReq,GenMermaid=excluded.GenMermaid,updatedAt=CURRENT_TIMESTAMP',
             (
                 new_alignment.get('id'),
                 new_alignment.get('name'),
                 1 if new_alignment.get('isReviewed') else 0,
                 new_alignment.get('reviewThoughts') or '',
                 pyjson.dumps(new_alignment.get('docRanges') or []),
-                pyjson.dumps(new_alignment.get('codeRanges') or [])
+                pyjson.dumps(new_alignment.get('codeRanges') or []),
+                generated_requirement or '',
+                mermaid_code or ''
             )
         )
         conn.commit()
         conn.close()
         return jsonify({"status": "success"}), 200
     except Exception as e:
+        logger.info("写入对齐数据失败")
         return jsonify({"status": "error", "message": f"写入对齐数据失败: {e}"}), 500
+
 
 
 @app.route('/project/alignment', methods=['DELETE'])
@@ -1895,9 +2238,11 @@ def _compact_title_from_text(text: str, max_len: int = 24):
 def get_requirement_chunks():
     try:
         project_path = request.args.get('projectPath')
+        
+        
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
-
+        
         doc_block_file_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
         if not os.path.exists(doc_block_file_path):
             return jsonify({'status': 'success', 'data': []})
@@ -1911,7 +2256,7 @@ def get_requirement_chunks():
                     block = pyjson.loads(line.strip())
                 except Exception:
                     continue
-
+                
                 filename = block.get('filename') or block.get('documentId') or ''
                 content = block.get('content') or ''
                 start = block.get('start') if block.get('start') is not None else 0
@@ -1931,9 +2276,16 @@ def get_requirement_chunks():
                 }
 
                 chunk_id = f"auto_req_{uuid.uuid4().hex}"
-                #chunk_name = _compact_title_from_text(content, 24)
-                first_line = content.split('\n')[0]
-                chunk_name = first_line.lstrip('#')
+                
+                if 'name' in block:
+                    chunk_name = block.get('name')
+                else:
+                    if  '#' in content:
+                        first_line = content.split('\n')[0]
+                        chunk_name = first_line.lstrip('#')
+                    else:
+                        chunk_name = _compact_title_from_text(content, 24)
+                
                 chunks.append({
                     'id': chunk_id,
                     'name': chunk_name,
@@ -1945,8 +2297,255 @@ def get_requirement_chunks():
 
         chunks.sort(key=lambda x: ((x.get('docRanges') or [{}])[0].get('filename') or '', (x.get('docRanges') or [{}])[0].get('start') or 0))
         return jsonify({'status': 'success', 'data': chunks})
+
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'status': 'error', 'message': str(e)})    
+
+
+@app.route('/api/add-block', methods=['POST'])
+def add_block():
+    """添加新的需求块或代码块"""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        block_type = data.get('blockType')  # 'doc' or 'code'
+        block_data = data.get('blockData')
+        
+        if not project_path or not block_type or not block_data:
+            return jsonify({'status': 'error', 'message': '缺少必要参数'})
+
+        if block_type == 'doc':
+            doc_block_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
+            # 确保目录存在
+            os.makedirs(os.path.dirname(doc_block_path), exist_ok=True)
+            
+            # 检查是否已存在
+            exists = False
+            if os.path.exists(doc_block_path):
+                with open(doc_block_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if not line.strip(): continue
+                        b = json.loads(line.strip())
+                        if (b.get('filename') == block_data.get('filename') and 
+                            b.get('start') == block_data.get('start') and 
+                            b.get('end') == block_data.get('end')):
+                            exists = True
+                            break
+            
+            if not exists:
+                with open(doc_block_path, 'a', encoding='utf-8') as f:
+                    f.write(json.dumps(block_data, ensure_ascii=False) + '\n')
+                return jsonify({'status': 'success', 'message': '需求块添加成功'})
+            else:
+                return jsonify({'status': 'warning', 'message': '该需求块已存在'})
+
+        elif block_type == 'code':
+            code_block_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
+            os.makedirs(os.path.dirname(code_block_path), exist_ok=True)
+            
+            # 生成新ID (如果前端没传)
+            if 'id' not in block_data:
+                max_id = 0
+                if os.path.exists(code_block_path):
+                    with open(code_block_path, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            if not line.strip(): continue
+                            b = json.loads(line.strip())
+                            try:
+                                bid = int(b.get('id', 0))
+                                if bid > max_id: max_id = bid
+                            except:
+                                pass
+                block_data['id'] = max_id + 1
+            
+            # 检查重复 (基于文件和范围)
+            exists = False
+            if os.path.exists(code_block_path):
+                with open(code_block_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if not line.strip(): continue
+                        b = json.loads(line.strip())
+                        
+                        b_range = b.get('range', [])
+                        t_range = block_data.get('range', [])
+                        if (b.get('file') == block_data.get('file') and 
+                            len(b_range) == 2 and len(t_range) == 2 and
+                            b_range[0] == t_range[0] and b_range[1] == t_range[1]):
+                            exists = True
+                            break
+            
+            if not exists:
+                with open(code_block_path, 'a', encoding='utf-8') as f:
+                    f.write(json.dumps(block_data, ensure_ascii=False) + '\n')
+                return jsonify({'status': 'success', 'message': '代码块添加成功'})
+            else:
+                return jsonify({'status': 'warning', 'message': '该代码块已存在'})
+
+        return jsonify({'status': 'error', 'message': '无效的块类型'})
+
+    except Exception as e:
+        print(f"Error adding block: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+@app.route('/api/delete-block', methods=['POST'])
+def delete_block():
+    """删除指定的需求块或代码块，并清理相关对齐关系"""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        block_type = data.get('blockType')  # 'doc' or 'code'
+        block_data = data.get('blockData')
+        
+        if not project_path or not block_type or not block_data:
+            return jsonify({'status': 'error', 'message': '缺少必要参数'})
+
+        # 1. 从对应的JSONL文件中删除块
+        deleted = False
+        if block_type == 'doc':
+            doc_block_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
+            if os.path.exists(doc_block_path):
+                new_blocks = []
+                with open(doc_block_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if not line.strip(): continue
+                        b = json.loads(line.strip())
+                        # 匹配逻辑：根据 filename, start, end 匹配
+                        if (b.get('filename') == block_data.get('filename') and 
+                            b.get('start') == block_data.get('start') and 
+                            b.get('end') == block_data.get('end')):
+                            deleted = True
+                            continue # 跳过（删除）
+                        new_blocks.append(b)
+                
+                if deleted:
+                    with open(doc_block_path, 'w', encoding='utf-8') as f:
+                        for b in new_blocks:
+                            f.write(json.dumps(b, ensure_ascii=False) + '\n')
+
+        elif block_type == 'code':
+            code_block_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
+            if os.path.exists(code_block_path):
+                new_blocks = []
+                with open(code_block_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if not line.strip(): continue
+                        b = json.loads(line.strip())
+                        # 匹配逻辑：优先使用 id，或者 file + range
+                        is_match = False
+                        if 'id' in block_data and 'id' in b:
+                            if str(b['id']) == str(block_data['id']):
+                                is_match = True
+                        else:
+                            # 降级匹配
+                            b_range = b.get('range', [])
+                            t_range = block_data.get('range', [])
+                            if (b.get('file') == block_data.get('file') and 
+                                len(b_range) == 2 and len(t_range) == 2 and
+                                b_range[0] == t_range[0] and b_range[1] == t_range[1]):
+                                is_match = True
+                        
+                        if is_match:
+                            deleted = True
+                            continue
+                        new_blocks.append(b)
+                
+                if deleted:
+                    with open(code_block_path, 'w', encoding='utf-8') as f:
+                        for b in new_blocks:
+                            f.write(json.dumps(b, ensure_ascii=False) + '\n')
+
+        if not deleted:
+            return jsonify({'status': 'warning', 'message': '未找到要删除的块'})
+
+        # 2. 清理对齐关系
+        db_path = os.path.join(project_path, 'project.db')
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM alignments")
+        alignments = cur.fetchall()
+        
+        updates = []
+        deletions = []
+        
+        for row in alignments:
+            align_id = row['id']
+            doc_ranges = json.loads(row['docRanges']) if row['docRanges'] else []
+            code_ranges = json.loads(row['codeRanges']) if row['codeRanges'] else []
+            
+            modified = False
+            
+            if block_type == 'doc':
+                # 过滤掉匹配的 docRange
+                original_len = len(doc_ranges)
+                doc_ranges = [
+                    dr for dr in doc_ranges 
+                    if not (dr.get('filename') == block_data.get('filename') and 
+                            dr.get('start') == block_data.get('start') and 
+                            dr.get('end') == block_data.get('end'))
+                ]
+                if len(doc_ranges) < original_len:
+                    modified = True
+                    
+            elif block_type == 'code':
+                # 过滤掉匹配的 codeRange
+                original_len = len(code_ranges)
+                # code_ranges 里的结构可能和 code_blocks.jsonl 不完全一样
+                # codeRanges 通常包含 startLine, endLine, filename/documentId
+                # block_data (来自 code_blocks.jsonl) 包含 range [start, end], file
+                
+                target_file = block_data.get('file')
+                target_start = block_data.get('range', [0,0])[0]
+                target_end = block_data.get('range', [0,0])[1]
+                
+                new_code_ranges = []
+                for cr in code_ranges:
+                    cr_file = cr.get('filename') or cr.get('documentId')
+                    cr_start = cr.get('startLine')
+                    cr_end = cr.get('endLine')
+                    
+                    if (cr_file == target_file and 
+                        cr_start == target_start and 
+                        cr_end == target_end):
+                        # Match found, remove it
+                        pass
+                    else:
+                        new_code_ranges.append(cr)
+                
+                if len(new_code_ranges) < original_len:
+                    code_ranges = new_code_ranges
+                    modified = True
+
+            if modified:
+                # 检查是否为空
+                if len(doc_ranges) == 0 or len(code_ranges) == 0:
+                    deletions.append(align_id)
+                else:
+                    updates.append((json.dumps(doc_ranges, ensure_ascii=False), 
+                                    json.dumps(code_ranges, ensure_ascii=False), 
+                                    align_id))
+        
+        # 执行数据库更新
+        for align_id in deletions:
+            cur.execute("DELETE FROM alignments WHERE id = ?", (align_id,))
+            
+        for doc_r, code_r, align_id in updates:
+            cur.execute("UPDATE alignments SET docRanges = ?, codeRanges = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?", 
+                        (doc_r, code_r, align_id))
+            
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'status': 'success', 
+            'message': f'已删除块并更新了 {len(updates)} 个对齐关系，删除了 {len(deletions)} 个空对齐关系'
+        })
+
+    except Exception as e:
+        print(f"Error deleting block: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
 
 
 @app.route('/api/get-code-chunks', methods=['GET'])
@@ -1983,7 +2582,18 @@ def get_code_chunks():
                 raw_code = _read_text_file(abs_code_path)
                 char_start, char_end = _line_range_to_char_offsets(raw_code, start_line, end_line)
 
+                # 改成按照函数名命名
+                code_lines = [line.lstrip() for line in content.splitlines(True)]
+                # 先找到函数第一行，再匹配需要的函数名
+                for line in code_lines: # 跳过注释行
+                    if line[0] == '/' or line[0] == '*':
+                        continue
+                    else:
+                        chunk_name = line
+                        break
+                
                 code_range = {
+                    'name': chunk_name,
                     'documentId': file_rel,
                     'filename': file_rel,
                     'start': char_start,
@@ -1994,7 +2604,9 @@ def get_code_chunks():
                 }
 
                 chunk_id = f"auto_code_{uuid.uuid4().hex}"
-                chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
+                
+                #chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
+                
                 chunks.append({
                     'id': chunk_id,
                     'name': chunk_name,
@@ -2034,52 +2646,86 @@ def align_code_to_requirement():
         if not os.path.exists(doc_block_file_path):
              return jsonify({"status": "success", "docRanges": []}) # 没有需求文件，无法对齐
              
-        requirements = []
+        # requirements = []
+        # with open(doc_block_file_path, 'r', encoding='utf-8') as f:
+        #     for line in f:
+        #         if line.strip():
+        #             # 提取简化的需求信息用于匹配
+        #             block = json.loads(line.strip())
+        #             requirements.append({
+        #                 "filename": block.get('filename'),
+        #                 "content": block.get('content')
+        #             })
+
+        # 和需求->代码一样，输入所有的需求块（分批次输入LLM），返回块号而不是内容，防止匹配失败
+        all_doc_blocks = []
+        all_original_doc_blocks = []
         with open(doc_block_file_path, 'r', encoding='utf-8') as f:
             for line in f:
                 if line.strip():
-                    # 提取简化的需求信息用于匹配
-                    block = json.loads(line.strip())
-                    requirements.append({
-                        "filename": block.get('filename'),
-                        "content": block.get('content')
+                    original_doc_block = json.loads(line.strip())
+                    all_doc_blocks.append({
+                        "file":original_doc_block.get("filename",''),
+                        "range":[original_doc_block.get("start",0),original_doc_block.get("end",0)],
+                        "content":original_doc_block.get("content",'')
                     })
+                    all_original_doc_blocks.append(original_doc_block)
         
-        code_content = code_ranges[0].get('content', '')
+        code_content = '\n\n'.join([code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
         
         # 调用LLM
-        related_reqs = query_related_requirement(code_content, requirements, random_flag=False, block_limit=50)
+        related_reqs = query_related_requirement(code_content, all_doc_blocks, random_flag=False, block_limit=50)
         
         # 转换结果为docRanges
         doc_ranges = []
-        
-        # 加载完整需求信息以获取位置信息
-        full_requirements_map = {} # (filename, content_hash) -> full_req
-        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-             for line in f:
-                if line.strip():
-                    block = json.loads(line.strip())
-                    # 简单使用 content 前50个字符作为key的一部分，实际应更严谨
-                    key = f"{block.get('filename')}_{block.get('content')[:50]}" 
-                    full_requirements_map[key] = block
 
-        for item in related_reqs:
-            # item: {'filename': ..., 'content': ..., 'similarity': ...}
-            # 尝试找回原始位置信息
-            key = f"{item.get('filename')}_{item.get('content')[:50]}"
-            original_doc_range = full_requirements_map.get(key)
+        # 通过文件名和起止范围匹配
+        blocks_by_file = defaultdict(list)
+        for block in all_original_doc_blocks:
+            blocks_by_file[block.get("filename","default")].append(block)
+        
+        for req in related_reqs:
+            req_start, req_end = req.get("range",[0,0])
+            target_file = req.get("file","default")
+            candidates = blocks_by_file.get(target_file,[])
+            for block in candidates:
+                if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
+                    doc_ranges.append(block)
+        
+        # # 加载完整需求信息以获取位置信息
+        # full_requirements_map = {} # (filename, content_hash) -> full_req
+        # for original_doc_block in all_original_doc_blocks:
+        #     key = original_doc_block.get("filename")
+
+        # with open(doc_block_file_path, 'r', encoding='utf-8') as f:
+        #      for line in f:
+        #         if line.strip():
+        #             # block = json.loads(line.strip())
+        #             # 简单使用 content 前50个字符作为key的一部分，实际应更严谨
+        #             # 注意\n!!! 在需求匹配时是这个符号还是使用line.strip()真的分隔后换行了
+        #             block = json.loads(line)
+        #             key = f"{block.get('filename')}_{block.get('content')[:50]}" 
+        #             full_requirements_map[key] = block
+
+        # for item in related_reqs:
+        #     # item: {'filename': ..., 'content': ..., 'similarity': ...}
+        #     # 尝试找回原始位置信息
+        #     key = f"{item.get('filename')}_{item.get('content')[:50]}"
+        #     original_doc_range = full_requirements_map.get(key)
             
-            if original_doc_range:
-                doc_ranges.append(original_doc_range)
-            else:
-                # 如果找不到原始信息（不太可能，除非LLM修改了内容），则构造一个基本的
-                doc_ranges.append({
-                    'filename': item.get('filename'),
-                    'documentId': item.get('filename'),
-                    'content': item.get('content'),
-                    'start': 0, # 未知
-                    'end': 0    # 未知
-                })
+        #     if original_doc_range:
+        #         doc_ranges.append(original_doc_range)
+        #     else:
+        #         logger.info(key)
+        #         logger.info("没找到原始信息")
+        #         # 如果找不到原始信息（不太可能，除非LLM修改了内容），则构造一个基本的
+        #         doc_ranges.append({
+        #             'filename': item.get('filename'),
+        #             'documentId': item.get('filename'),
+        #             'content': item.get('content'),
+        #             'start': 0, # 未知
+        #             'end': 0    # 未知
+        #         })
 
         return jsonify({
             "status": "success",
@@ -2526,6 +3172,10 @@ def export_project_results():
 
     # 3. 从SQLite读取数据
     df = get_alignments_from_sqlite(db_file)
+    
+    #logger.info(df.loc[2, "GenMermaid"])
+    #sys.exit()
+    
     if df.empty:
         return jsonify({"status": "warning", "message": "alignments表中暂无数据可导出"}), 200
 
@@ -2547,7 +3197,7 @@ def export_project_results():
         for code in code_data:
             temp.append(code['content'])
         df.loc[idx, "codeRanges"] = temp
-        #sys.exit()
+        
         
     try:
         # 5. 生成并写入word文件
@@ -2585,11 +3235,11 @@ def export_project_results():
             # 需求描述
             replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
             # 生成需求
-            replacements["DDDDD"] = ""
+            replacements["DDDDD"] = df.loc[number, "GenReq"]
             # 对齐代码
             replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
             # 流程图
-            replacements["GGGGG"] = ""
+            replacements["FFFFF"] = df.loc[number, "GenMermaid"]
             
             number += 1
             category_id += 1 
@@ -2617,11 +3267,11 @@ def export_project_results():
                 # 需求描述
                 replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
                 # 生成需求
-                replacements["DDDDD"] = ""
+                replacements["DDDDD"] = df.loc[number, "GenReq"]
                 # 对齐代码
                 replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
                 # 流程图
-                replacements["GGGGG"] = ""
+                replacements["FFFFF"] = df.loc[number, "GenMermaid"]
                 
                 number += 1
                 category_id += 1
@@ -2692,6 +3342,7 @@ def export_project_results():
     except Exception as e:
         logger.info(f"导出结果失败：{e}")
         return jsonify({"status": "error", "message": f"导出失败: {str(e)}"}), 500
+            
             
             
             

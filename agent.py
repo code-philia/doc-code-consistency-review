@@ -1,7 +1,7 @@
 import os
 import re
 import json
-from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT
+from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
 from openai import OpenAI
 from utils import chunk_list
 from rag_chroma import rag_engine
@@ -57,6 +57,141 @@ def query_vector_db(requirement_text, topk=1):
         print(f"[Agent] RAG Search Error: {e}")
         return []
 
+
+def parse_abstract_output(response):
+    """
+    解析输出的JSON
+    
+    参数:
+        response: LLM的完整响应文本
+        
+    """
+    try:
+        json_match = re.search(r'```(?:json)?\s*([\[\{].*?[\]\}])\s*```', response, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            json_match = re.search(r'([\[\{].*[\]\}])', response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                json_str = response.strip()
+
+        data = _safe_json_loads(json_str)
+        if isinstance(data, dict):
+            return [data]
+        elif isinstance(data, list):
+            return data
+        else:
+            return []
+    except (json.JSONDecodeError, AttributeError) as e:
+        print(f"解析llm输出失败: {e}")
+        return []
+
+def query_codefile_from_abstract(requirement, file_abstract):
+    # 构造提示词
+    template = CODEFILE_PROMPT_TEMPLATE
+    prompt = template.format(
+        req_content=requirement,
+        file_abstract=file_abstract,
+    )
+
+    # 解析回复
+    response = query_llm(prompt)
+    llm_output = response.content
+    #print("original llm output: ", llm_output)
+    parsed_output = parse_abstract_output(llm_output)
+    #print("requirement: ", requirement)
+    print("parse output: ", parsed_output)
+    
+    file_list = []
+    similarity_results = []
+    if (len(parsed_output) == 1):
+        similarity_results = parsed_output
+        file_list.append(parsed_output[0]['file'])
+    elif (len(parsed_output) > 1):
+        max_sim_results = []
+        max_sim = -1.0
+        for item in parsed_output:
+            if item['similarity'] >= max_sim:
+                max_sim = item['similarity']
+                if item['similarity'] == max_sim:
+                    max_sim_results.append(item)
+                elif item['similarity'] > max_sim:
+                    max_sim_results = []
+                    max_sim_results = [item]
+            if item['similarity'] >= 0.85:
+                similarity_results.append(item)
+                file_list.append(item['file'])
+        if len(similarity_results) == 0:
+           similarity_results = max_sim_results  
+           file_list.append(max_sim_results['file'])
+    
+    
+    print("************")   
+    print(similarity_results)   
+    #print(file_list)
+    
+    return file_list        
+        
+        
+def query_code_abstract(code_blocks):
+    """
+    基于大模型，实现代码块的摘要
+    
+    参数:
+        code_blocks: 已经划分好的代码块
+        
+    返回:
+        摘要信息
+    """
+    
+    # 构造提示词
+    template = ABSTRACT_PROMPT_TEMPLATE
+    prompt = template.format(
+        code_content=code_blocks
+    )
+
+    # 解析回复
+    response = query_llm(prompt)
+    llm_output = response.content
+    #print("original llm output: ", llm_output)
+    #parsed_output = parse_abstract_output(llm_output)
+    #print("llm code abstract: ", parsed_output)
+    
+    return llm_output        
+        
+
+def query_codefile_abstract(code_abstracts):
+    """
+    基于大模型，实现代码文件的摘要
+    
+    参数:
+        code_abstracts: 代码块摘要
+        
+    返回:
+        摘要信息
+    """
+    # 拼接代码块功能描述
+    abstracts = ""
+    for item in code_abstracts:
+        abstracts += item
+
+    # 构造提示词
+    template = ABSTRACT_PROMPT_TEMPLATE
+    prompt = template.format(
+        code_content=abstracts
+    )
+
+    # 解析回复
+    response = query_llm(prompt)
+    llm_output = response.content
+    #print("original llm output: ", llm_output)
+    
+    return llm_output   
+            
+        
+# ================= 对齐 查找相关代码块 =================
 def query_related_code_block(requirement, code_blocks):
     """
     查询与需求点最相关的代码行号
@@ -94,15 +229,13 @@ def query_related_code_block(requirement, code_blocks):
     # 解析回复
     response = query_llm(prompt)
     llm_output = response.content
-    print("original llm output: ", llm_output)
+    # print("original llm output: ", llm_output)
     parsed_output = parse_alignment_output(llm_output)
-    print("parsed llm output: ", parsed_output)
+    # print("parsed llm output: ", parsed_output)
     
     return parsed_output
 
-# ================= 对齐 相关代码 =================
 def query_related_code(requirement, code_blocks, random_flag, block_limit=None):
-
     if block_limit:
         chunked_code_blocks = chunk_list(code_blocks, block_limit, random_flag)
         
@@ -138,6 +271,8 @@ def query_related_code(requirement, code_blocks, random_flag, block_limit=None):
     else:
         return query_related_code_block(requirement, code_blocks)
 
+
+# ================= 对齐 查找相关需求块 =================
 def query_related_requirement_block(code, req_blocks):
     """
     查询与代码最相关的需求块
@@ -174,7 +309,7 @@ def query_related_requirement(code, req_blocks, random_flag, block_limit=None):
             res = query_related_requirement_block(code, c)
             related_req_blocks.extend(res)
         
-        print(related_req_blocks)
+        #print(related_req_blocks)
         similarity_results = []
         if (len(related_req_blocks) == 1):
             similarity_results = related_req_blocks
@@ -230,7 +365,7 @@ def parse_alignment_output(response):
         print(f"解析对齐输出失败: {e}")
         return []
 
-
+ 
 # ================= 审查 相关代码 =================
 def query_review_result(requirement, related_code):
     """
