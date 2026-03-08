@@ -615,10 +615,73 @@ def get_project_metadata():
         with open(metadata_file, 'r', encoding='utf-8') as f:
             metadata = json.load(f)
 
+        # 校验 selected_kbs 是否有效
+        if 'selected_kbs' in metadata and metadata['selected_kbs']:
+            kb_root = os.path.join(PROJECT_ROOT, "rag_database")
+            valid_kbs = []
+            
+            # Map types to folders to check existence
+            type_map = {
+                'rule': 'rule_knowledge_base',
+                'issue': 'issue_knowledge_base',
+                'align': 'align_knowledge_base'
+            }
+            
+            has_changes = False
+            for kb in metadata['selected_kbs']:
+                # kb should be {name, type}
+                kb_name = kb.get('name')
+                kb_type = kb.get('type')
+                
+                if not kb_name or not kb_type: 
+                    has_changes = True
+                    continue
+                
+                folder = type_map.get(kb_type, 'other_knowledge_base')
+                kb_path = os.path.join(kb_root, folder, kb_name)
+                
+                if os.path.exists(kb_path):
+                    valid_kbs.append(kb)
+                else:
+                    has_changes = True
+            
+            if has_changes:
+                metadata['selected_kbs'] = valid_kbs
+                # Write back changes
+                with open(metadata_file, 'w', encoding='utf-8') as f:
+                    json.dump(metadata, f, indent=4, ensure_ascii=False)
+
         return jsonify({"status": "success", "metadata": metadata}), 200
 
     except (json.JSONDecodeError, Exception) as e:
         return jsonify({"status": "error", "message": f"读取元数据文件失败: {e}"}), 500
+
+@app.route('/project/save-kbs', methods=['POST'])
+def save_project_kbs():
+    """保存项目选用的知识库"""
+    data = request.json
+    project_path = data.get('projectPath')
+    selected_kbs = data.get('selectedKbs') # List of {name, type}
+
+    if not project_path or not os.path.isdir(project_path):
+        return jsonify({"status": "error", "message": "无效的项目路径"}), 400
+    
+    metadata_file = os.path.join(project_path, 'metadata.json')
+    if not os.path.isfile(metadata_file):
+        return jsonify({"status": "error", "message": "metadata.json 不存在"}), 404
+
+    try:
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+        
+        metadata['selected_kbs'] = selected_kbs
+        
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=4, ensure_ascii=False)
+            
+        return jsonify({"status": "success", "message": "知识库配置已保存"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/project/upload-files', methods=['POST'])
 def upload_files():

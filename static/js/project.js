@@ -98,6 +98,125 @@ const app = createApp({
         const docBlocks = ref([]);
         const codeBlocks = ref([]);
         
+        // KB Application State
+        const showKbAppDialog = ref(false);
+        const kbAppList = ref([]);
+        const kbAppSearch = ref('');
+        const kbAppFilterType = ref('all');
+        const selectedKbAppItems = ref([]);
+        const isSavingKbApp = ref(false);
+
+        /***********************
+         * 知识库应用逻辑
+         ***********************/
+        const openKbAppDialog = () => {
+            showKbAppDialog.value = true;
+        };
+
+        const fetchKbAppData = async () => {
+            try {
+                // 1. 获取所有知识库
+                const res = await axios.get('/api/list-kbs');
+                if (res.data.status === 'success') {
+                    kbAppList.value = res.data.kbs;
+                }
+                
+                // 2. 获取当前项目元数据中的 selected_kbs
+                const metaRes = await axios.get('/project/metadata', {
+                    params: { path: projectPath.value }
+                });
+                if (metaRes.data.status === 'success') {
+                    selectedKbAppItems.value = metaRes.data.metadata.selected_kbs || [];
+                }
+            } catch (e) {
+                console.error("Fetch KB App Data Error:", e);
+                ElMessage.error("获取知识库数据失败");
+            }
+        };
+
+        const filteredKbAppList = computed(() => {
+            let list = kbAppList.value;
+            
+            // Search filter
+            if (kbAppSearch.value) {
+                const q = kbAppSearch.value.toLowerCase();
+                list = list.filter(kb => kb.name.toLowerCase().includes(q));
+            }
+            
+            // Type filter
+            if (kbAppFilterType.value !== 'all') {
+                list = list.filter(kb => kb.type === kbAppFilterType.value);
+            }
+            
+            return list;
+        });
+
+        const isKbSelected = (kb) => {
+            return selectedKbAppItems.value.some(item => item.name === kb.name && item.type === kb.type);
+        };
+
+        const toggleKbSelection = (kb) => {
+            const index = selectedKbAppItems.value.findIndex(item => item.name === kb.name && item.type === kb.type);
+            if (index > -1) {
+                selectedKbAppItems.value.splice(index, 1);
+            } else {
+                selectedKbAppItems.value.push({ name: kb.name, type: kb.type });
+            }
+        };
+
+        const saveKbAppSelection = async () => {
+            isSavingKbApp.value = true;
+            try {
+                const res = await axios.post('/project/save-kbs', {
+                    projectPath: projectPath.value,
+                    selectedKbs: selectedKbAppItems.value
+                });
+                
+                if (res.data.status === 'success') {
+                    ElMessage.success("知识库配置已保存");
+                    showKbAppDialog.value = false;
+                } else {
+                    ElMessage.error(res.data.message);
+                }
+            } catch (e) {
+                console.error(e);
+                ElMessage.error("保存失败");
+            } finally {
+                isSavingKbApp.value = false;
+            }
+        };
+
+        // Helper for UI
+        const getKbColor = (type) => {
+            const map = {
+                'rule': '#409EFF',
+                'issue': '#E6A23C',
+                'align': '#67C23A',
+                'other': '#909399'
+            };
+            return map[type] || '#909399';
+        };
+        
+        const getKbTypeName = (type) => {
+            const map = { 'rule': '编程规则', 'issue': '问题单', 'align': '历史对齐', 'other': '其他' };
+            return map[type] || type || '未知';
+        };
+        
+        // Format time helper (duplicate from welcome.js but needed here)
+        const formatRelativeTime = (isoString) => {
+            if (!isoString) return '未知时间';
+            const now = new Date();
+            const past = new Date(isoString);
+            const diffInSeconds = Math.floor((now - past) / 1000);
+            if (diffInSeconds < 60) return '刚刚';
+            const diffInMinutes = Math.floor(diffInSeconds / 60);
+            if (diffInMinutes < 60) return `${diffInMinutes}分钟前`;
+            const diffInHours = Math.floor(diffInMinutes / 60);
+            if (diffInHours < 24) return `${diffInHours}小时前`;
+            const diffInDays = Math.floor(diffInHours / 24);
+            return `${diffInDays}天前`;
+        };
+        
         // 右侧侧边栏视图模式
         const rightSidebarMode = ref('alignment'); // 'alignment' | 'block'
         const blockType = ref('doc'); // 'doc' | 'code'
@@ -4721,6 +4840,23 @@ const app = createApp({
             viewDetail,
             handleReviewSelectionChange,
             submitToKb,
+
+            // KB App State
+            showKbAppDialog,
+            kbAppList,
+            kbAppSearch,
+            kbAppFilterType,
+            selectedKbAppItems,
+            isSavingKbApp,
+            filteredKbAppList,
+            openKbAppDialog,
+            fetchKbAppData,
+            isKbSelected,
+            toggleKbSelection,
+            saveKbAppSelection,
+            getKbColor,
+            getKbTypeName,
+            formatRelativeTime,
 
             isDirectImportMode,
             addAlignmentToKB,
