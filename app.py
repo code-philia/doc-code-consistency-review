@@ -1544,14 +1544,62 @@ def review_alignment():
 
     # 尝试初始化RAG引擎
     try:
-        rag_engine.initialize(project_path)
+        rag_engine.initialize()
     except Exception as e:
         print(f"[Review] RAG initialize failed: {e}")
 
+    # 获取选定的 knowledge base
+    selected_rule_kbs = []
+    selected_issue_kbs = []
+    try:
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        if os.path.exists(metadata_file):
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+                selected_kbs = metadata.get('selected_kbs', [])
+                selected_rule_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'rule']
+                selected_issue_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'issue']
+    except Exception:
+        pass
+
+    # 检索上下文
+    retrieved_rules = []
+    retrieved_issues = []
+    
+    doc_ranges = alignment.get('docRanges', [])
+    code_ranges = alignment.get('codeRanges', [])
+    
+    # 构造查询文本
+    query_text = ""
+    if doc_ranges:
+        query_text += doc_ranges[0].get('content', '') + "\n"
+    if code_ranges:
+        query_text += code_ranges[0].get('content', '')
+
+    # 检索规则
+    for kb_name in selected_rule_kbs:
+        collection = rag_engine.get_collection('rule', kb_name)
+        if collection:
+            results = collection.query(query_texts=[query_text], n_results=3)
+            if results and results['documents']:
+                for doc in results['documents'][0]:
+                    retrieved_rules.append(doc)
+
+    # 检索问题单
+    for kb_name in selected_issue_kbs:
+        collection = rag_engine.get_collection('issue', kb_name)
+        if collection:
+            results = collection.query(query_texts=[query_text], n_results=3)
+            if results and results['documents']:
+                for doc in results['documents'][0]:
+                    retrieved_issues.append(doc)
+
     # 1. 调用 agent 获取审查结果
     review_process, issue = query_review_result(
-        alignment.get('docRanges', []),
-        alignment.get('codeRanges', [])
+        doc_ranges,
+        code_ranges,
+        rules=retrieved_rules,
+        issues=retrieved_issues
     )
 
     # 2. 更新对齐关系
@@ -2724,31 +2772,126 @@ def align_code_to_requirement():
         if not code_ranges or not project_path:
              return jsonify({"status": "error", "message": "缺少代码内容或项目路径参数"}), 400
 
-        # 尝试初始化RAG引擎
+        # 获取选定的 align 类型知识库
+        selected_align_kbs = []
         try:
-            rag_engine.initialize(project_path)
+            metadata_file = os.path.join(project_path, 'metadata.json')
+            if os.path.exists(metadata_file):
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+                    selected_kbs = metadata.get('selected_kbs', [])
+                    selected_align_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'align']
+        except Exception:
+            pass
+
+        # 如果没有选择任何 align 知识库，使用原来的 LLM 逻辑
+        if not selected_align_kbs:
+            # 原有的 LLM 逻辑
+            # 获取需求块
+            doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
+            doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
+            
+            if not os.path.exists(doc_block_file_path):
+                return jsonify({"status": "success", "docRanges": []}) # 没有需求文件，无法对齐
+
+            all_doc_blocks = []
+            all_original_doc_blocks = []
+            with open(doc_block_file_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        original_doc_block = json.loads(line.strip())
+                        all_doc_blocks.append({
+                            "file":original_doc_block.get("filename",''),
+                            "range":[original_doc_block.get("start",0),original_doc_block.get("end",0)],
+                            "content":original_doc_block.get("content",'')
+                        })
+                        all_original_doc_blocks.append(original_doc_block)
+            
+            code_content = '\n\n'.join([code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
+            
+            # 调用LLM
+            related_reqs = query_related_requirement(code_content, all_doc_blocks, random_flag=False, block_limit=50)
+            
+            # 转换结果为docRanges
+            doc_ranges = []
+
+            # 通过文件名和起止范围匹配
+            blocks_by_file = defaultdict(list)
+            for block in all_original_doc_blocks:
+                blocks_by_file[block.get("filename","default")].append(block)
+            
+            for req in related_reqs:
+                req_start, req_end = req.get("range",[0,0])
+                target_file = req.get("file","default")
+                candidates = blocks_by_file.get(target_file,[])
+                for block in candidates:
+                    if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
+                        doc_ranges.append(block)
+                        
+            return jsonify({
+                "status": "success",
+                "docRanges": doc_ranges
+            })
+
+        # 如果选择了 align 知识库，使用 RAG 进行检索
+        try:
+            rag_engine.initialize() # 确保初始化
         except Exception as e:
             print(f"[Align] RAG initialize failed: {e}")
+        
+        code_content = '\n\n'.join([code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
+        
+        all_retrieved_items = []
+        for kb_name in selected_align_kbs:
+            # 检索 'align' 类型的知识库
+            # 注意：align 知识库里存储的是历史对齐数据
+            # 这里的检索策略可以是：用代码去搜相关的历史对齐，然后把历史对齐中的文档部分作为推荐
+            
+            # 暂时假设 rag_chroma 提供了 query 接口，如果没有需要添加
+            # 这里先模拟直接调用 collection.query
+            collection = rag_engine.get_collection('align', kb_name)
+            if collection:
+                results = collection.query(
+                    query_texts=[code_content],
+                    n_results=5 # Top 5 per KB
+                )
+                
+                if results and results['documents']:
+                    for i, doc in enumerate(results['documents'][0]):
+                        meta = results['metadatas'][0][i]
+                        # 历史对齐数据通常包含 code_text 和 doc_text (query_text)
+                        # 我们需要提取其中的 doc 部分
+                        # 在 build_from_json 中，document 是 doc_text, meta 中有 code_text
+                        # 但我们现在是用 code 去搜 doc，所以 doc 正好是 document
+                        all_retrieved_items.append({
+                            'content': doc,
+                            'score': results['distances'][0][i] if results['distances'] else 0,
+                            'meta': meta
+                        })
 
-        # 获取需求块
+        # 对所有结果排序
+        all_retrieved_items.sort(key=lambda x: x['score']) # distance 越小越好
+        top_items = all_retrieved_items[:5]
+        
+        # 构造返回结果
+        # 注意：这里返回的是参考的历史对齐文档内容，而不是当前项目中的具体需求块
+        # 前端可能需要展示这些参考内容供用户选择，或者作为提示
+        # 但目前的接口契约是返回 docRanges (当前项目的需求块)
+        # 这是一个逻辑断层：历史对齐是"参考"，而不是"直接结果"
+        # 如果要用历史对齐来辅助定位当前项目的需求，需要两步：
+        # 1. 检索历史对齐 -> 得到相关的历史需求描述
+        # 2. 用历史需求描述去匹配当前项目的需求块 (类似 query_related_requirement)
+        
+        history_doc_contents = [item['content'] for item in top_items]
+        combined_history_content = "\n".join(history_doc_contents)
+        
+        # 再次读取当前项目的需求块
         doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
         doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
         
         if not os.path.exists(doc_block_file_path):
-             return jsonify({"status": "success", "docRanges": []}) # 没有需求文件，无法对齐
-             
-        # requirements = []
-        # with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-        #     for line in f:
-        #         if line.strip():
-        #             # 提取简化的需求信息用于匹配
-        #             block = json.loads(line.strip())
-        #             requirements.append({
-        #                 "filename": block.get('filename'),
-        #                 "content": block.get('content')
-        #             })
+             return jsonify({"status": "success", "docRanges": []})
 
-        # 和需求->代码一样，输入所有的需求块（分批次输入LLM），返回块号而不是内容，防止匹配失败
         all_doc_blocks = []
         all_original_doc_blocks = []
         with open(doc_block_file_path, 'r', encoding='utf-8') as f:
@@ -2761,16 +2904,14 @@ def align_code_to_requirement():
                         "content":original_doc_block.get("content",'')
                     })
                     all_original_doc_blocks.append(original_doc_block)
-        
-        code_content = '\n\n'.join([code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
-        
-        # 调用LLM
-        related_reqs = query_related_requirement(code_content, all_doc_blocks, random_flag=False, block_limit=50)
-        
-        # 转换结果为docRanges
-        doc_ranges = []
 
-        # 通过文件名和起止范围匹配
+        # 使用历史需求内容 + 代码内容 共同作为 Query 去查询当前项目需求
+        enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
+        
+        # 调用LLM (使用增强后的 Query)
+        related_reqs = query_related_requirement(enhanced_query, all_doc_blocks, random_flag=False, block_limit=50)
+        
+        doc_ranges = []
         blocks_by_file = defaultdict(list)
         for block in all_original_doc_blocks:
             blocks_by_file[block.get("filename","default")].append(block)
@@ -2782,48 +2923,16 @@ def align_code_to_requirement():
             for block in candidates:
                 if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
                     doc_ranges.append(block)
-        
-        # # 加载完整需求信息以获取位置信息
-        # full_requirements_map = {} # (filename, content_hash) -> full_req
-        # for original_doc_block in all_original_doc_blocks:
-        #     key = original_doc_block.get("filename")
-
-        # with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-        #      for line in f:
-        #         if line.strip():
-        #             # block = json.loads(line.strip())
-        #             # 简单使用 content 前50个字符作为key的一部分，实际应更严谨
-        #             # 注意\n!!! 在需求匹配时是这个符号还是使用line.strip()真的分隔后换行了
-        #             block = json.loads(line)
-        #             key = f"{block.get('filename')}_{block.get('content')[:50]}" 
-        #             full_requirements_map[key] = block
-
-        # for item in related_reqs:
-        #     # item: {'filename': ..., 'content': ..., 'similarity': ...}
-        #     # 尝试找回原始位置信息
-        #     key = f"{item.get('filename')}_{item.get('content')[:50]}"
-        #     original_doc_range = full_requirements_map.get(key)
-            
-        #     if original_doc_range:
-        #         doc_ranges.append(original_doc_range)
-        #     else:
-        #         logger.info(key)
-        #         logger.info("没找到原始信息")
-        #         # 如果找不到原始信息（不太可能，除非LLM修改了内容），则构造一个基本的
-        #         doc_ranges.append({
-        #             'filename': item.get('filename'),
-        #             'documentId': item.get('filename'),
-        #             'content': item.get('content'),
-        #             'start': 0, # 未知
-        #             'end': 0    # 未知
-        #         })
 
         return jsonify({
             "status": "success",
-            "docRanges": doc_ranges
+            "docRanges": doc_ranges,
+            "debug_info": "Used history alignment for enhancement"
         })
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"status": "error", "message": f"对齐过程中出错: {str(e)}"}), 500
 
 # 1. 获取标注文件列表

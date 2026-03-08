@@ -124,8 +124,9 @@ def query_codefile_from_abstract(requirement, file_abstract):
                 similarity_results.append(item)
                 file_list.append(item['file'])
         if len(similarity_results) == 0:
-           similarity_results = max_sim_results  
-           file_list.append(max_sim_results['file'])
+           similarity_results = max_sim_results
+           if max_sim_results:
+               file_list.append(max_sim_results[0]['file'])
     
     
     print("************")   
