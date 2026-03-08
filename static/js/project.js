@@ -97,6 +97,32 @@ const app = createApp({
         // 分解块数据
         const docBlocks = ref([]);
         const codeBlocks = ref([]);
+        
+        // 右侧侧边栏视图模式
+        const rightSidebarMode = ref('alignment'); // 'alignment' | 'block'
+        const blockType = ref('doc'); // 'doc' | 'code'
+
+        // 计算属性：当前显示的块列表
+        const displayedBlocks = computed(() => {
+            let blocks = [];
+            if (blockType.value === 'doc') {
+                blocks = docBlocks.value || [];
+                // 过滤掉无效数据
+                blocks = blocks.filter(b => b);
+                
+                if (viewMode.value === 'current' && selectedDocFile.value) {
+                    blocks = blocks.filter(b => b.filename === selectedDocFile.value);
+                }
+            } else {
+                blocks = codeBlocks.value || [];
+                blocks = blocks.filter(b => b);
+                
+                if (viewMode.value === 'current' && selectedCodeFile.value) {
+                    blocks = blocks.filter(b => b.file === selectedCodeFile.value);
+                }
+            }
+            return blocks;
+        });
 
         const codeFileLines = ref({});
         const codeScale = ref(0);
@@ -313,6 +339,42 @@ const app = createApp({
                 }
             } catch (error) {
                 console.error("加载代码分解块失败:", error);
+            }
+        };
+
+        const refreshBlocks = async () => {
+             // 强制重新加载并渲染
+             await loadAndRenderDocBlocks(true);
+             await loadAndRenderCodeBlocks(true);
+             ElMessage.success('块列表已刷新');
+        };
+
+        const handleDeleteBlock = async (block) => {
+            if (!projectPath.value) return;
+            
+            try {
+                const response = await axios.post('/api/delete-block', {
+                    projectPath: projectPath.value,
+                    blockType: blockType.value,
+                    blockData: block
+                });
+                
+                if (response.data.status === 'success') {
+                    ElMessage.success(response.data.message);
+                    // Refresh blocks
+                    if (blockType.value === 'doc') {
+                        await loadAndRenderDocBlocks(true);
+                    } else {
+                        await loadAndRenderCodeBlocks(true);
+                    }
+                    // Refresh alignments
+                    await fetchAlignments();
+                } else {
+                    ElMessage.warning(response.data.message);
+                }
+            } catch (error) {
+                console.error("删除块失败:", error);
+                ElMessage.error("删除失败: " + error.message);
             }
         };
 
@@ -1363,7 +1425,14 @@ const app = createApp({
                     stopProgress();
                     return;
                 }
-
+                // 0. 代码摘要，先存入数据库
+                ElMessage.warning('正在进行代码摘要...');
+                const abstractResponse = await axios.get('/api/get-code-abstract', {
+                    params: { projectPath: projectPath.value }
+                });
+                const codeFileAbstract = abstractResponse.data.status === 'success' ? abstractResponse.data.data : {};
+                
+                
                 // 1. 获取需求分块
                 const chunksResponse = await axios.get('/api/get-requirement-chunks', {
                     params: { projectPath: projectPath.value }
@@ -1393,6 +1462,7 @@ const app = createApp({
                         // 调用对齐API
                         const alignResponse = await axios.post('/api/align-requirement-to-project', {
                             docRanges: req.docRanges,
+                            codeFileAbstract: codeFileAbstract,
                             projectPath: projectPath.value
                         });
 
@@ -1594,66 +1664,146 @@ const app = createApp({
             }
         };
 
+        const createBlockOnly = async (type) => {
+            if (!currentSelection.value) {
+                ElMessage.warning('请先选择文本。');
+                return;
+            }
+
+            let blockData = {};
+            if (type === 'doc') {
+                blockData = {
+                    filename: currentSelection.value.documentId,
+                    start: currentSelection.value.start,
+                    end: currentSelection.value.end,
+                    content: currentSelection.value.content
+                };
+            } else if (type === 'code') {
+                const codeFileContent = selectedCodeRawContent.value;
+                const { startLine, endLine } = convertOffsetToLineNumbers(codeFileContent, currentSelection.value.start, currentSelection.value.end);
+                blockData = {
+                    file: currentSelection.value.documentId,
+                    range: [startLine, endLine],
+                    content: currentSelection.value.content
+                };
+            }
+
+            try {
+                const response = await axios.post('/api/add-block', {
+                    projectPath: projectPath.value,
+                    blockType: type,
+                    blockData: blockData
+                });
+
+                if (response.data.status === 'success') {
+                    ElMessage.success(response.data.message);
+                    showAlignmentDialog.value = false;
+                    showCodeSelectionDialog.value = false;
+                    // 刷新块列表 (如果需要)
+                    // 暂时没有刷新块列表的API调用，因为块通常是在加载时获取的。
+                    // 但为了即时反馈，我们可以在前端手动更新列表，或者重新加载页面
+                    // 这里选择简单的提示成功，因为块视图可能需要刷新才能看到。
+                } else if (response.data.status === 'warning') {
+                    ElMessage.warning(response.data.message);
+                } else {
+                    ElMessage.error('添加块失败: ' + response.data.message);
+                }
+            } catch (error) {
+                console.error('Error adding block:', error);
+                ElMessage.error('添加块失败: ' + (error.response?.data?.message || error.message));
+            }
+        };
+
         const createAlignment = async () => {
             const id = generateUUIDLike();
 
             if (!currentSelection.value) {
-                ElMessage.warning('请先选择需求文本。');
+                ElMessage.warning('请先选择文本。');
                 return;
             }
             if (!newAlignmentName.value.trim()) {
-                // 从实际选中的完整parse元素中提取纯文本作为名称
-                const docElement = document.getElementById('doc-content');
-                if (docElement) {
-                    const selection = window.getSelection();
-                    if (selection.rangeCount > 0) {
-                        const range = selection.getRangeAt(0);
-                        const [startOffset, endOffset] = getSourceDocumentRange(docElement, range);
-                        
-                        // 从原始文档内容中提取对应范围的文本
-                        const docFileContent = selectedDocRawContent.value;
-                        const selectedText = docFileContent.substring(startOffset, endOffset);
-                        const extractedName = extractPlainTextFromMarkdown(selectedText, 20);
-                        newAlignmentName.value = extractedName;
+                if (currentSelection.value.type === 'code') {
+                    // 代码块：直接使用内容的前20个字符
+                    newAlignmentName.value = currentSelection.value.content.substring(0, 20).trim();
+                    //newAlignmentName.value = currentSelection.value.content.trim();
+                } else {
+                    // 需求块：从实际选中的完整parse元素中提取纯文本作为名称
+                    const docElement = document.getElementById('doc-content');
+                    if (docElement) {
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            const [startOffset, endOffset] = getSourceDocumentRange(docElement, range);
+                            
+                            // 从原始文档内容中提取对应范围的文本
+                            const docFileContent = selectedDocRawContent.value;
+                            const selectedText = docFileContent.substring(startOffset, endOffset);
+                            const extractedName = extractPlainTextFromMarkdown(selectedText, 20);
+                            newAlignmentName.value = extractedName;
+                        } else {
+                            // 如果没有选择范围，使用原来的逻辑作为后备
+                            const extractedName = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
+                            newAlignmentName.value = extractedName;
+                        }
                     } else {
-                        // 如果没有选择范围，使用原来的逻辑作为后备
+                        // 如果找不到文档元素，使用原来的逻辑作为后备
                         const extractedName = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
                         newAlignmentName.value = extractedName;
                     }
-                } else {
-                    // 如果找不到文档元素，使用原来的逻辑作为后备
-                    const extractedName = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
-                    newAlignmentName.value = extractedName;
                 }
             }
-
-            // 为文档范围添加filename和行号信息
-            const docFileContent = selectedDocRawContent.value;
-            const { startLine, endLine } = convertOffsetToLineNumbers(
-                docFileContent,
-                currentSelection.value.start,
-                currentSelection.value.end
-            );
-
-            const docRange = {
-                ...currentSelection.value,
-                filename: currentSelection.value.documentId, // 添加文件名
-                startLine: startLine, // 添加起始行号
-                endLine: endLine // 添加结束行号
-            };
 
             const newAlignment = {
                 id: id,
                 name: newAlignmentName.value.trim(),
                 isReviewed: false,
                 reviewThoughts: '',
-                docRanges: [docRange],
-                codeRanges: [] // 初始代码范围为空
+                docRanges: [],
+                codeRanges: []
             };
+
+            if (currentSelection.value.type === 'code') {
+                // 代码块处理
+                const codeFileContent = selectedCodeRawContent.value;
+                const { startLine, endLine } = convertOffsetToLineNumbers(
+                    codeFileContent,
+                    currentSelection.value.start,
+                    currentSelection.value.end
+                );
+
+                newAlignment.codeRanges.push({
+                    documentId: currentSelection.value.documentId,
+                    filename: currentSelection.value.documentId,
+                    start: currentSelection.value.start,
+                    end: currentSelection.value.end,
+                    startLine: startLine,
+                    endLine: endLine,
+                    content: currentSelection.value.content
+                });
+            } else {
+                // 需求块处理
+                // 为文档范围添加filename和行号信息
+                const docFileContent = selectedDocRawContent.value;
+                const { startLine, endLine } = convertOffsetToLineNumbers(
+                    docFileContent,
+                    currentSelection.value.start,
+                    currentSelection.value.end
+                );
+
+                newAlignment.docRanges.push({
+                    ...currentSelection.value,
+                    filename: currentSelection.value.documentId, // 添加文件名
+                    startLine: startLine, // 添加起始行号
+                    endLine: endLine // 添加结束行号
+                });
+            }
 
             // 更新前端UI
             alignmentResults.value.push(newAlignment);
             showAlignmentDialog.value = false;
+            showCodeSelectionDialog.value = false;
+
+            // 发送到后端保存
 
             // 发送到后端保存
             try {
@@ -1825,14 +1975,142 @@ const app = createApp({
             }
         };
 
+        const currentSelectedBlockIndex = ref(-1);
+
+        // 滚动侧边栏到指定块
+        const scrollToBlockInSidebar = (index) => {
+            currentSelectedBlockIndex.value = index;
+            nextTick(() => {
+                const el = document.getElementById(`block-item-${index}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        };
+
+        // 处理块列表点击
+        const handleBlockItemClick = async (block, index) => {
+            currentSelectedBlockIndex.value = index;
+            
+            if (blockType.value === 'doc') {
+                if (selectedDocFile.value !== block.filename) {
+                     await fetchFileContent(block.filename, 'doc');
+                }
+                await nextTick();
+                
+                const range = {
+                    documentId: block.filename,
+                    start: block.start,
+                    end: block.end
+                };
+                
+                clearLinkedAll(); 
+                await applyDocYellowRange(range);
+                
+            } else {
+                if (selectedCodeFile.value !== block.file) {
+                    await fetchFileContent(block.file, 'code');
+                }
+                await nextTick();
+                
+                const content = selectedCodeRawContent.value;
+                if (!content) return;
+                
+                const offsets = getOffsetsFromLineRange(content, block.range[0], block.range[1]);
+                
+                const range = {
+                    documentId: block.file,
+                    start: offsets.start,
+                    end: offsets.end
+                };
+                
+                clearLinkedAll();
+                await applyCodeYellowRange(range);
+            }
+        };
+
+        // 根据事件坐标获取高亮块
+        const getHighlightBlockAtEvent = (event) => {
+            const x = event.clientX;
+            const y = event.clientY;
+            
+            let container = null;
+            if (event.target.closest('.content-text-doc')) {
+                container = document.querySelector('.content-text-doc');
+            } else if (event.target.closest('.content-text-code')) {
+                container = document.querySelector('.content-text-code');
+            }
+            
+            if (!container) return null;
+
+            const highlights = container.querySelectorAll('.highlight-block');
+            for (const highlight of highlights) {
+                const rect = highlight.getBoundingClientRect();
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    return highlight;
+                }
+            }
+            return null;
+        };
+
+        const expandedAlignmentIds = ref([]);
+
+        const toggleAlignmentExpansion = (id) => {
+            const idx = expandedAlignmentIds.value.indexOf(id);
+            if (idx !== -1) {
+                expandedAlignmentIds.value.splice(idx, 1);
+            } else {
+                expandedAlignmentIds.value.push(id);
+            }
+        };
+
         // 处理新高亮块的点击事件
         const handleHighlightBlockClick = async (event) => {
-            const target = event.target.closest('.highlight-block');
+            const target = getHighlightBlockAtEvent(event);
             if (!target) return;
 
             const type = target.getAttribute('data-type');
             const rangeStart = parseInt(target.getAttribute('data-range-start'));
             const rangeEnd = parseInt(target.getAttribute('data-range-end'));
+
+            // 块视图联动逻辑
+            if (rightSidebarMode.value === 'block') {
+                 // 自动切换块类型以匹配点击的块
+                 if (blockType.value !== type) {
+                     blockType.value = type;
+                     await nextTick();
+                 }
+                 
+                 const blocks = displayedBlocks.value;
+                 let index = -1;
+                 
+                 if (type === 'doc') {
+                     index = blocks.findIndex(b => 
+                         b.filename === selectedDocFile.value && 
+                         Math.abs(b.start - rangeStart) < 2 && 
+                         Math.abs(b.end - rangeEnd) < 2
+                     );
+                 } else {
+                     // 代码块匹配：将偏移量转换为行号进行比较
+                     const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, rangeStart, rangeEnd);
+                     
+                     index = blocks.findIndex(b => {
+                         if (b.file !== selectedCodeFile.value) return false;
+                         if (b.range && b.range.length === 2) {
+                             // 检查行号范围是否有交集
+                             const bStart = b.range[0];
+                             const bEnd = b.range[1];
+                             return Math.max(bStart, startLine) <= Math.min(bEnd, endLine);
+                         }
+                         return false;
+                     });
+                 }
+                 
+                 if (index !== -1) {
+                     scrollToBlockInSidebar(index);
+                     return; // 在块视图模式下，优先处理块联动，不进行对齐跳转
+                 }
+            }
 
             const alignmentIdAttr = target.getAttribute('data-alignment-id') || '';
             const alignmentIds = alignmentIdAttr.split(',').filter(id => id);
@@ -1985,6 +2263,37 @@ const app = createApp({
             }
         };
 
+        const navigateToSpecificBlock = async (alignment, type, index) => {
+            // Ensure alignment is selected
+            if (currentSelectedAlignmentId.value !== alignment.id) {
+                selectAlignment(alignment);
+            }
+
+            if (type === 'doc') {
+                if (alignment.docRanges && index >= 0 && index < alignment.docRanges.length) {
+                    currentDocBlockIndex.value = index;
+                    const docRange = alignment.docRanges[index];
+                    if (selectedDocFile.value !== docRange.documentId) {
+                        await fetchFileContent(docRange.documentId, 'doc');
+                    }
+                    await nextTick();
+                    clearDocYellow();
+                    await applyDocYellowRange(docRange);
+                }
+            } else if (type === 'code') {
+                if (alignment.codeRanges && index >= 0 && index < alignment.codeRanges.length) {
+                    currentCodeBlockIndex.value = index;
+                    const codeRange = alignment.codeRanges[index];
+                    if (selectedCodeFile.value !== codeRange.documentId) {
+                        await fetchFileContent(codeRange.documentId, 'code');
+                    }
+                    await nextTick();
+                    clearCodeYellow();
+                    await applyCodeYellowRange(codeRange);
+                }
+            }
+        };
+
         const clearDocYellow = () => {
             if (linkedDocElement) {
                 linkedDocElement.classList.remove('linked-yellow');
@@ -2017,6 +2326,7 @@ const app = createApp({
             currentSelectedAlignmentId.value = null;
             currentDocBlockIndex.value = 0;
             currentCodeBlockIndex.value = 0;
+            currentSelectedBlockIndex.value = -1;
             clearLinkedAll();
         };
 
@@ -2069,8 +2379,8 @@ const app = createApp({
         const handleHighlightBlockRightClick = (event) => {
             event.preventDefault(); // 阻止默认右键菜单
             
-            const target = event.target;
-            if (!target.classList.contains('highlight-block')) return;
+            const target = getHighlightBlockAtEvent(event);
+            if (!target) return;
 
             const type = target.getAttribute('data-type');
             // 只处理文档类型的高亮块
@@ -3100,47 +3410,32 @@ const app = createApp({
             if (!contextMenu.value.selectedAlignment) return;
             const alignment = contextMenu.value.selectedAlignment;
 
-            // 检查是否已有代码对齐
-            if (alignment.codeRanges && alignment.codeRanges.length > 0) {
-                ElMessageBox.confirm(
-                    `对齐关系 "${alignment.name}" 已有代码对齐，是否删除现有对齐并重新对齐？`,
-                    '确认重新对齐',
-                    {
-                        confirmButtonText: '重新对齐',
-                        cancelButtonText: '取消',
-                        type: 'warning'
-                    }
-                ).then(async () => {
-                    await performSingleAlignment(alignment);
-                }).catch(() => {});
-            } else {
-                await performSingleAlignment(alignment);
-            }
+            ElMessageBox({
+                title:'选择对齐方向',
+                message: `对齐操作将清除"${alignment.name}" 当前已有的对齐和审查结果。\n\n请选择以哪一方为基准进行对齐：`,
+                showCancelButton: true,
+                confirmButtonText: '需求 -> 代码',
+                cancelButtonText: '代码 -> 需求',
+                distinguishCancelAndClose: true,
+                type: 'warning',
+                closeOnClickModal: true,
+                closeOnPressEscape: true
+            })
+            .then(async ()=>{
+                await performSingleAlignment(alignment, 'doc-to-code');
+            })
+            .catch(async (action) =>{
+                if(action === 'cancel'){
+                    await performSingleAlignment(alignment, 'code-to-doc');
+                }
+            });
         };
 
         // 执行单独对齐
-        const performSingleAlignment = async (alignment) => {
+        const performSingleAlignment = async (alignment, direction) => {
             try {
                 const ready = await ensureDecompositionReady();
                 if (!ready) return;
-
-                ElMessage.info(`开始为 "${alignment.name}" 进行对齐...`);
-                
-                const hasDocRanges = Array.isArray(alignment.docRanges) && alignment.docRanges.length > 0;
-                const hasCodeRanges = Array.isArray(alignment.codeRanges) && alignment.codeRanges.length > 0;
-
-                let sourceType = null;
-                if (hasDocRanges && !hasCodeRanges) {
-                    sourceType = 'doc';
-                } else if (hasCodeRanges && !hasDocRanges) {
-                    sourceType = 'code';
-                } else if (!hasDocRanges && !hasCodeRanges) {
-                    throw new Error('该对齐关系既没有需求范围也没有代码范围，无法对齐');
-                } else {
-                    const matchesCurrentDoc = selectedDocFile.value && alignment.docRanges.some(r => r.documentId === selectedDocFile.value);
-                    const matchesCurrentCode = selectedCodeFile.value && alignment.codeRanges.some(r => r.documentId === selectedCodeFile.value);
-                    sourceType = matchesCurrentCode && !matchesCurrentDoc ? 'code' : 'doc';
-                }
 
                 if (alignment.isReviewed) {
                     await axios.post('/api/clear-alignment-review', {
@@ -3155,10 +3450,9 @@ const app = createApp({
                     reviewThoughts: ''
                 };
 
-                if (sourceType === 'doc') {
-                    ElMessage.info('当前为未对齐的需求块，将匹配代码块...');
+                if (direction === 'doc-to-code') {
                     const alignResponse = await axios.post('/api/align-requirement-to-project', {
-                        docRanges: updatedAlignment.docRanges,
+                        docRanges: updatedAlignment.docRanges || [],
                         projectPath: projectPath.value
                     });
                     if (!alignResponse.data || alignResponse.data.status !== 'success') {
@@ -3166,9 +3460,8 @@ const app = createApp({
                     }
                     updatedAlignment.codeRanges = alignResponse.data.codeRanges || [];
                 } else {
-                    ElMessage.info('当前为未对齐的代码块，将匹配需求块...');
                     const alignResponse = await axios.post('/api/align-code-to-requirement', {
-                        codeRanges: updatedAlignment.codeRanges,
+                        codeRanges: updatedAlignment.codeRanges || [],
                         projectPath: projectPath.value
                     });
                     if (!alignResponse.data || alignResponse.data.status !== 'success') {
@@ -3299,7 +3592,7 @@ const app = createApp({
                     try {
                         await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignment.id}`);
                         alignmentResults.value.splice(idx, 1);
-                        await fetchAllAlignments();
+                        await fetchAlignments(); // Fetch alignments again to sync state
                     } catch (err) {
                         console.error("Error deleting alignment:", err);
                         ElMessage.error(`删除失败: ${err.message}`);
@@ -3311,14 +3604,23 @@ const app = createApp({
                         `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
                         alignment
                     );
+                    // 重新获取对齐关系以更新状态
+                    await fetchAlignments();
                 } catch (err) {
                     console.error("Error updating alignment:", err);
                     ElMessage.error(`更新失败: ${err.message}`);
                 }
             }
-
+            
+            // 重新渲染块，以更新颜色（从对齐色变回分解色）
+            if (type === 'doc') {
+                await loadAndRenderDocBlocks(true); // Force reload to refresh highlights
+            } else {
+                await loadAndRenderCodeBlocks(true); // Force reload to refresh highlights
+            }
+            
             // 刷新筛选状态下的对齐列表
-            refreshFilteredAlignments();
+            // refreshFilteredAlignments();
         };
 
         const showReviewResult = () => {
@@ -3517,14 +3819,14 @@ const app = createApp({
             // 添加点击高亮需求片段的事件监听器
             const docPanel = document.querySelector('.content-text-doc');
             if (docPanel) {
-                docPanel.addEventListener('click', handleHighlightBlockClick);
+                docPanel.addEventListener('dblclick', handleHighlightBlockClick);
                 docPanel.addEventListener('contextmenu', handleHighlightBlockRightClick);
             }
             
             // 添加点击高亮代码片段的事件监听器
             const codePanel = document.querySelector('.content-text-code');
             if (codePanel) {
-                codePanel.addEventListener('click', handleHighlightBlockClick);
+                codePanel.addEventListener('dblclick', handleHighlightBlockClick);
                 codePanel.addEventListener('contextmenu', handleCodeHighlightBlockRightClick);
             }
 
@@ -4231,6 +4533,7 @@ const app = createApp({
             currentSelection,
             newAlignmentName,
             createAlignment,
+            createBlockOnly,
             alignmentResults,
             fetchFileContent,
             addFile,
@@ -4328,8 +4631,18 @@ const app = createApp({
             isFiltered,
             showAllAlignments,
             viewMode,
+            rightSidebarMode,
+            blockType,
+            displayedBlocks,
+            refreshBlocks,
+            currentSelectedBlockIndex,
+            handleBlockItemClick,
             statusFilters,
             sidebarAlignments,
+            expandedAlignmentIds,
+            toggleAlignmentExpansion,
+            removeRange,
+            navigateToSpecificBlock,
             
             // 反向映射功能
             handleAlignmentDocRangeClick,
@@ -4412,6 +4725,7 @@ const app = createApp({
             isDirectImportMode,
             addAlignmentToKB,
             addIssueToKB,
+            handleDeleteBlock,
         };
     }
 });

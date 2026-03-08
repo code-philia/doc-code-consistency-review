@@ -1010,9 +1010,9 @@
 
 .alignment-title {
     flex: 1;
-    white-space: nowrap;
+    /*white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: ellipsis;*/
     min-width: 0;
     max-width: 30%;
 }
@@ -1596,9 +1596,9 @@
 .alignment-title {
     flex: 1;
     max-width: 150px;
-    overflow: hidden;
+    /*overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: nowrap;*/
     margin-right: 12px;
     font-size: 12px;
     font-weight: 500;
@@ -1623,10 +1623,10 @@
 }
 
 .highlight-block {
-    pointer-events: auto;
     z-index: 1;
     mix-blend-mode: multiply;
-    cursor: pointer;
+    cursor: text;
+    pointer-events: none;
     background-color: rgba(64, 158, 255, 0.2);
     transition: background-color 0.3s;
 }
@@ -1654,7 +1654,8 @@
 
 .highlight-block-gray {
     background-color: rgba(200, 200, 200, 0.3) !important;
-    cursor: pointer;
+    cursor: text;
+    pointer-events: none;
     transition: background-color 0.3s;
 }
 
@@ -1672,14 +1673,16 @@
 
 .code-highlight {
     background-color: rgba(64, 158, 255, 0.2);
-    cursor: pointer;
+    cursor: text;
+    pointer-events: none;
     display: block;
     width: 100%;
 }
 
 .code-highlight-gray {
     background-color: rgba(200, 200, 200, 0.3) !important;
-    cursor: pointer;
+    cursor: text;
+    pointer-events: none;
     display: block;
     width: 100%;
 }
@@ -1693,7 +1696,8 @@
     transition: background-color 0.2s ease;
 }
 
-.alignment-list-item.linked-yellow {
+.alignment-list-item.linked-yellow,
+.alignment-list-item.selected {
     background-color: rgba(255, 255, 183, 0.8) !important;
 }
 
@@ -2240,41 +2244,49 @@
     margin-bottom: 0;
 }
 
-/* Full Width Radio Group */
-.full-width-radio {
+/* Custom Segmented Control Style - Replaces full-width-radio */
+.custom-segmented-control {
     display: flex !important;
     width: 100%;
+    background-color: #f2f3f5;
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid transparent; /* Optional */
 }
 
-.full-width-radio .el-radio-button {
+.custom-segmented-control .el-radio-button {
     flex: 1;
     display: flex;
     margin: 0 !important;
 }
 
-.full-width-radio .el-radio-button__inner {
+.custom-segmented-control .el-radio-button__inner {
     width: 100%;
-    padding: 8px 0 !important;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-weight: 500;
-    border-radius: 0 !important;
-    border-left: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 4px !important;
     box-shadow: none !important;
+    color: #606266;
+    padding: 5px 0 !important;
+    height: 28px; /* Fixed height for consistency */
+    line-height: 1;
+    font-size: 12px;
+    transition: all 0.2s ease;
 }
 
-.full-width-radio .el-radio-button:first-child .el-radio-button__inner {
-    border-left: 1px solid #dcdfe6 !important;
-    border-radius: 4px 0 0 4px !important;
+.custom-segmented-control .el-radio-button__inner:hover {
+    color: var(--primary-color);
+    background-color: rgba(255,255,255,0.5) !important;
 }
 
-.full-width-radio .el-radio-button:last-child .el-radio-button__inner {
-    border-radius: 0 4px 4px 0 !important;
-}
-
-.full-width-radio .el-radio-button.is-active .el-radio-button__inner {
-    border-left: 1px solid #409eff !important;
+.custom-segmented-control .el-radio-button.is-active .el-radio-button__inner {
+    background-color: white !important;
+    color: var(--primary-color) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+    font-weight: 600;
 }
 
 /* Status Checkbox Group */
@@ -2300,24 +2312,104 @@
 }
 
 /* Ensure alignment items match padding */
-.alignment-list-item {
-    padding: 10px 15px !important;
-    border-bottom: 1px solid #ebeef5;
-    cursor: pointer;
+.alignment-list-item-container {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    margin-bottom: 8px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.alignment-list-item {
+    display: flex;
     align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: white;
+    cursor: pointer;
     transition: background-color 0.2s;
+    border-bottom: 1px solid transparent;
 }
 
 .alignment-list-item:hover {
-    background-color: #f5f7fa;
+    background-color: var(--bg-secondary);
+}
+
+.alignment-list-item.selected {
+    background-color: #e6f7ff;
+    border-color: #91d5ff;
+}
+
+.alignment-details {
+    padding: 8px 12px;
+    background-color: #fafafa;
+    border-top: 1px solid var(--border-color);
+}
+
+.detail-section {
+    margin-bottom: 8px;
+}
+
+.detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.detail-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px;
+    font-size: 12px;
+    color: var(--text-primary);
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.detail-item:hover {
+    background-color: var(--hover-color);
+    border-color: var(--primary-color);
+}
+
+.detail-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 8px;
+}
+
+.delete-btn {
+    font-size: 12px;
+    color: #999;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.delete-btn:hover {
+    color: var(--error-color);
+    background-color: rgba(245, 108, 108, 0.1);
 }
 
 .alignment-title {
-    white-space: nowrap;
+    /*white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: ellipsis;*/
     max-width: 140px;
     font-size: 14px;
     color: #606266;

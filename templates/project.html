@@ -387,11 +387,13 @@
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel right-sidebar" collapsible>
                                     <div class="panel-title">
-                                        <div style="display: flex; align-items: center;">
-                                            <i class="fas fa-link"></i>
-                                            <span style="margin-left: 8px;">对齐与审查</span>
+                                        <div class="view-mode-toggle" style="display: flex; gap: 5px; flex: 1;">
+                                            <el-radio-group v-model="rightSidebarMode" size="small" class="custom-segmented-control">
+                                                <el-radio-button label="alignment">对齐视图</el-radio-button>
+                                                <el-radio-button label="block">块视图</el-radio-button>
+                                            </el-radio-group>
                                         </div>
-                                       <div style="align-items: center;"> 
+                                       <div style="align-items: center;" v-if="rightSidebarMode === 'alignment'"> 
                                         <!-- <div style="display: flex; align-items: center;"> -->
                                         <el-button 
                                             @click="cancelSelection" 
@@ -423,12 +425,33 @@
                                              导出结果
                                         </el-button>
                                         </div>
+                                       <div style="align-items: center;" v-if="rightSidebarMode === 'block'"> 
+                                        <el-button 
+                                            @click="cancelSelection" 
+                                            size="small" 
+                                            text
+                                            plain
+                                            type="primary"
+                                            style="margin-right: 2px;"  
+                                        >
+                                             取消选中
+                                        </el-button>
+                                        <el-button 
+                                            @click="refreshBlocks" 
+                                            size="small" 
+                                            text
+                                            plain
+                                            type="primary"
+                                        >
+                                             刷新列表
+                                        </el-button>
+                                        </div>
                                     </div>
                                     
-                                    <div class="content-card sidebar-list-container">
+                                    <div class="content-card sidebar-list-container" v-if="rightSidebarMode === 'alignment'">
                                         <div class="sidebar-controls">
                                             <div class="filter-row">
-                                                 <el-radio-group v-model="viewMode" size="small" class="full-width-radio">
+                                                 <el-radio-group v-model="viewMode" size="small" class="custom-segmented-control">
                                                     <el-radio-button label="all">全部数据</el-radio-button>
                                                     <el-radio-button label="current">当前文件</el-radio-button>
                                                 </el-radio-group>
@@ -442,30 +465,128 @@
                                             </div>
                                         </div>
                                         <div class="alignment-list">
-                                            <div v-if="sidebarAlignments.length > 0">
+                                            <div v-if="sidebarAlignments && sidebarAlignments.length > 0">
                                                  <div 
                                                     v-for="alignment in sidebarAlignments" 
                                                     :key="alignment.id"
                                                     :id="'alignment-item-' + alignment.id"
-                                                    class="alignment-list-item"
-                                                    @click="handleAlignmentItemClick(alignment)"
-                                                    @contextmenu.prevent="showContextMenu($event, alignment)"
+                                                    class="alignment-list-item-container"
                                                  >
-                                                    <el-tooltip effect="light" :content="alignment.name" placement="left">
-                                                        <span class="alignment-title">${ alignment.name }</span>
-                                                    </el-tooltip>
-                                                    <el-tag 
-                                                        :type="getAlignmentStatus(alignment).type" 
-                                                        size="small" 
-                                                        class="review-tag"
-                                                        effect="plain"
+                                                    <div 
+                                                        class="alignment-list-item"
+                                                        @click="handleAlignmentItemClick(alignment); toggleAlignmentExpansion(alignment.id)"
+                                                        @contextmenu.prevent="showContextMenu($event, alignment)"
                                                     >
-                                                        ${ getAlignmentStatus(alignment).text }
-                                                    </el-tag>
+                                                        <el-tooltip effect="light" :content="alignment.name" placement="left">
+                                                            <span class="alignment-title">${ alignment.name }</span>
+                                                        </el-tooltip>
+                                                        <div style="display: flex; align-items: center; gap: 4px;">
+                                                            <el-tag 
+                                                                :type="getAlignmentStatus(alignment).type" 
+                                                                size="small" 
+                                                                class="review-tag"
+                                                                effect="plain"
+                                                            >
+                                                                ${ getAlignmentStatus(alignment).text }
+                                                            </el-tag>
+                                                            <i :class="expandedAlignmentIds.includes(alignment.id) ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" style="font-size: 10px; color: #909399;"></i>
+                                                        </div>
+                                                    </div>
+                                                    <!-- 展开的详细列表 -->
+                                                    <div v-if="expandedAlignmentIds.includes(alignment.id)" class="alignment-details">
+                                                        <!-- 需求块列表 -->
+                                                        <div v-if="alignment.docRanges && alignment.docRanges.length > 0" class="detail-section">
+                                                            <div class="detail-title">需求块</div>
+                                                            <div 
+                                                                v-for="(doc, idx) in alignment.docRanges" 
+                                                                :key="'doc-'+idx" 
+                                                                class="detail-item"
+                                                                @click="navigateToSpecificBlock(alignment, 'doc', idx)"
+                                                            >
+                                                                <span class="detail-text">${ doc.filename } (${ doc.start }-${ doc.end })</span>
+                                                                <i class="fas fa-times delete-btn" @click.stop="removeRange(alignment, 'doc', idx)" title="移除此块"></i>
+                                                            </div>
+                                                        </div>
+                                                        <!-- 代码块列表 -->
+                                                        <div v-if="alignment.codeRanges && alignment.codeRanges.length > 0" class="detail-section">
+                                                            <div class="detail-title">代码块</div>
+                                                            <div 
+                                                                v-for="(code, idx) in alignment.codeRanges" 
+                                                                :key="'code-'+idx" 
+                                                                class="detail-item"
+                                                                @click="navigateToSpecificBlock(alignment, 'code', idx)"
+                                                            >
+                                                                <span class="detail-text">${ code.filename || code.documentId } (${ code.startLine }-${ code.endLine })</span>
+                                                                <i class="fas fa-times delete-btn" @click.stop="removeRange(alignment, 'code', idx)" title="移除此块"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                  </div>
                                             </div>
                                             <div v-else class="sidebar-empty-message">
                                                 暂无对齐结果
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 块视图 -->
+                                    <div class="content-card sidebar-list-container" v-if="rightSidebarMode === 'block'">
+                                        <div class="sidebar-controls">
+                                            <div class="filter-row">
+                                                 <el-radio-group v-model="viewMode" size="small" class="custom-segmented-control">
+                                                    <el-radio-button label="all">全部数据</el-radio-button>
+                                                    <el-radio-button label="current">当前文件</el-radio-button>
+                                                </el-radio-group>
+                                            </div>
+                                            <div class="filter-row">
+                                                <el-radio-group v-model="blockType" size="small" class="custom-segmented-control">
+                                                    <el-radio-button label="doc">需求块</el-radio-button>
+                                                    <el-radio-button label="code">代码块</el-radio-button>
+                                                </el-radio-group>
+                                            </div>
+                                        </div>
+                                        <div class="alignment-list">
+                                            <div v-if="displayedBlocks && displayedBlocks.length > 0">
+                                                 <div 
+                                                   v-for="(block, index) in displayedBlocks" 
+                                                   :key="index"
+                                                   class="alignment-list-item"
+                                                   :class="{ 'selected': currentSelectedBlockIndex === index }"
+                                                   :id="'block-item-' + index"
+                                                   style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; position: relative; padding-right: 35px;"
+                                                   @click="handleBlockItemClick(block, index)"
+                                                >
+                                                   <div style="font-weight: 500; font-size: 12px; color: var(--text-primary); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                       ${ blockType === 'doc' ? (block.filename || '未知文件') : (block.file || '未知文件') }
+                                                   </div>
+                                                   <div style="font-size: 11px; color: var(--text-secondary);">
+                                                       ${ blockType === 'doc' ? 'Offset: ' + block.start + ' - ' + block.end : 'Line: ' + (block.range ? block.range[0] : '?') + ' - ' + (block.range ? block.range[1] : '?') }
+                                                   </div>
+                                                   <div style="font-size: 11px; color: var(--text-secondary); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                       ${ (block.content && typeof block.content === 'string' && block.content.length > 50) ? block.content.substring(0, 50) + '...' : (block.content || '无内容') }
+                                                   </div>
+
+                                                   <!-- Delete Button -->
+                                                   <div class="block-delete-btn" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%);" @click.stop>
+                                                       <el-popconfirm
+                                                           :title="'确认删除' + (blockType === 'doc' ? '需求' : '代码') + '块？\n内容：' + (block.content ? (block.content.length > 50 ? block.content.substring(0, 50) + '...' : block.content) : '无内容')"
+                                                           confirm-button-text="删除"
+                                                           cancel-button-text="取消"
+                                                           icon="el-icon-warning"
+                                                           icon-color="red"
+                                                           @confirm="handleDeleteBlock(block)"
+                                                       >
+                                                           <template #reference>
+                                                               <el-button type="text" size="mini" class="delete-icon-btn" style="padding: 5px;">
+                                                                   <i class="fas fa-trash" style="color: #c0c4cc; font-size: 14px;"></i>
+                                                               </el-button>
+                                                           </template>
+                                                       </el-popconfirm>
+                                                   </div>
+                                                </div>
+                                            </div>
+                                            <div v-else class="sidebar-empty-message">
+                                                暂无${ blockType === 'doc' ? '需求' : '代码' }块数据
                                             </div>
                                         </div>
                                     </div>
@@ -477,7 +598,7 @@
                             <div class="bottom-bar-content">
                                 <div class="issue-header-bar">
                                     <div class="issue-title-bar">
-                                        <h3><i class="fas fa-exclamation-triangle"></i> 问题单列表 (${issues.length})</h3>
+                                        <h3><i class="fas fa-exclamation-triangle"></i> 问题单列表 (${issues ? issues.length : 0})</h3>
                                         <button class="export-btn" @click="exportConfirmedIssues" title="导出已确认的问题单">
                                             <i class="fas fa-download"></i> 导出问题单
                                         </button>
@@ -622,8 +743,13 @@
                 </div>
             </div>
             <template #footer>
-                <el-button @click="showAlignmentDialog = false">取消</el-button>
-                <el-button type="primary" @click="createAlignment">创建新对齐关系</el-button>
+                <div style="display: flex; justify-content: space-between; width: 100%;">
+                    <el-button @click="createBlockOnly('doc')">新建块</el-button>
+                    <div>
+                        <el-button @click="showAlignmentDialog = false">取消</el-button>
+                        <el-button type="primary" @click="createAlignment">创建新对齐关系</el-button>
+                    </div>
+                </div>
             </template>
         </el-dialog>
 
@@ -889,14 +1015,26 @@
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
+                        <el-divider>或</el-divider>
                     </div>
-                    <div v-else>
-                        <p style="margin: 10px 0; font-size: 14px; color: #999;">暂无可用的对齐关系</p>
+                    
+                    <div>
+                        <p style="margin: 10px 0 15px; font-size: 14px;">创建新的对齐关系:</p>
+                        <el-input
+                            v-model="newAlignmentName"
+                            placeholder="为该代码块命名"
+                        ></el-input>
                     </div>
                 </div>
             </div>
             <template #footer>
-                <el-button @click="showCodeSelectionDialog = false">取消</el-button>
+                <div style="display: flex; justify-content: space-between; width: 100%;">
+                    <el-button @click="createBlockOnly('code')">新建块</el-button>
+                    <div>
+                        <el-button @click="showCodeSelectionDialog = false">取消</el-button>
+                        <el-button type="primary" @click="createAlignment">创建新对齐关系</el-button>
+                    </div>
+                </div>
             </template>
         </el-dialog>
 
