@@ -3104,6 +3104,116 @@ def build_rag_db():
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+@app.route('/api/rag/add_items', methods=['POST'])
+def add_items_to_kb():
+    """专用于接收前端内存中的 items 数组，直接新建或追加到知识库"""
+    data = request.json
+    kb_name = data.get('kbName')
+    kb_type = data.get('kbType', 'other')
+    append_mode = data.get('append', False)
+    items = data.get('items', [])
+
+    if not kb_name or ' ' in kb_name:
+        return jsonify({"status": "error", "message": "知识库名称不能为空，且不能包含空格"})
+    if not items:
+        return jsonify({"status": "warning", "message": "没有要入库的数据"})
+
+    try:
+        rag_engine.initialize()
+        col_info = rag_engine._get_or_create_collection(kb_type, kb_name)
+        if not col_info:
+            return jsonify({"status": "error", "message": f"知识库 {kb_name} 初始化失败"})
+        
+        client = col_info['client']
+        
+        # 1. 新建模式下，清空原有集合
+        if not append_mode:
+            try:
+                client.delete_collection(COLLECTION_NAME)
+            except:
+                pass
+            try:
+                col_info['collection'] = client.create_collection(
+                    name=COLLECTION_NAME,
+                    embedding_function=rag_engine.emb_fn,
+                    metadata={"hnsw:space": "cosine"}
+                )
+            except Exception as e:
+                print(f"[KB] 重置集合时发生警告(可忽略): {e}")
+                
+        collection = col_info['collection']
+        
+        # 2. 组装数据
+        ids = []
+        documents = []
+        metadatas = []
+        
+        import uuid
+        run_id = uuid.uuid4().hex[:6]
+        
+        for idx, item in enumerate(items):
+            # 获取前端传来的ID，若无则自动生成
+            doc_id = item.get('id') or f"direct_{run_id}_{idx}"
+            content = item.get('content', '')
+            if not content: 
+                continue
+            
+            # 元数据处理，确保全为基础类型以适应 ChromaDB 限制
+            meta = {"source_type": "direct_import"}
+            if 'full_data' in item and isinstance(item['full_data'], dict):
+                for k, v in item['full_data'].items():
+                    if isinstance(v, (str, int, float, bool)):
+                        meta[k] = v
+                    else:
+                        # 复杂对象转为 JSON 字符串
+                        meta[k] = pyjson.dumps(v, ensure_ascii=False)
+            
+            ids.append(doc_id)
+            documents.append(content)
+            metadatas.append(meta)
+        
+        # 3. 写入 ChromaDB
+        if ids:
+            collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
+            
+        total_count = collection.count()
+        
+        # 4. 更新元数据 metadata.json (使用展平结构)
+        target_type = 'align' if kb_type == 'history_align' else kb_type
+        kb_root = os.path.join(PROJECT_ROOT, "rag_database", kb_name)
+        os.makedirs(kb_root, exist_ok=True)
+        meta_file = os.path.join(kb_root, "metadata.json")
+        
+        if append_mode and os.path.exists(meta_file):
+            with open(meta_file, 'r', encoding='utf-8') as f:
+                meta = pyjson.load(f)
+            meta['doc_count'] = total_count
+            meta['update_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            meta = {
+                "name": kb_name,
+                "type": target_type, 
+                "create_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "update_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "doc_count": total_count,
+                "source_file": "direct_import"
+            }
+            
+        with open(meta_file, 'w', encoding='utf-8') as f:
+            pyjson.dump(meta, f, ensure_ascii=False, indent=2)
+            
+        return jsonify({
+            "status": "success", 
+            "message": f"入库完成！本次新增 {len(ids)} 条数据，当前库内总数: {total_count}", 
+            "total_count": total_count
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"入库失败: {str(e)}"}), 500
+
 # ========================================================
 # Knowledge Base API
 # ========================================================

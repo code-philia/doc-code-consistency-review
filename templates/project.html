@@ -1275,17 +1275,42 @@
             </div>
         
             <div v-if="importStep === 1" class="review-section">
-        
                 <div style="margin-bottom: 15px; background: #f5f7fa; padding: 15px; border-radius: 4px; border: 1px solid #e4e7ed;">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <el-tag type="success" effect="dark" size="large" style="width: 100%; font-size: 14px; display: flex; align-items: center;">
-                            <i class="fas fa-database" style="margin-right: 8px;"></i> 目标库: ${ targetKbName }
-                        </el-tag>
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                        <span style="font-weight: bold; color: #606266;"><i class="fas fa-database"></i> 目标知识库:</span>
+                        <el-radio-group v-model="importMode" size="small">
+                            <el-radio-button label="new">新建</el-radio-button>
+                            <el-radio-button label="append">追加</el-radio-button>
+                        </el-radio-group>
+                        
+                        <el-input 
+                            v-if="importMode === 'new'" 
+                            v-model="targetKbName" 
+                            placeholder="名称不能含空格" 
+                            style="width: 250px"
+                            @input="targetKbName = targetKbName.replace(/\s+/g, '')"
+                        >
+                            <template #prefix>名称</template>
+                        </el-input>
+                        
+                        <el-select 
+                            v-if="importMode === 'append'" 
+                            v-model="selectedExistingKb" 
+                            placeholder="请选择目标知识库" 
+                            style="width: 250px"
+                        >
+                            <el-option 
+                                v-for="kb in existingKbsForAppend" 
+                                :key="kb.name" 
+                                :label="kb.name + ' (' + (kb.doc_count || 0) + '条)'" 
+                                :value="kb.name"
+                            ></el-option>
+                        </el-select>
                     </div>
-        
+
                     <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #909399;">
                         <span>
-                            <i class="fas fa-info-circle"></i> 提示：选择文件夹后，文件夹名称将自动作为库名。
+                            <i class="fas fa-info-circle"></i> 提示：选择“新建”将创建一个新的知识库；选择“追加”将合并到已有库中。
                         </span>
                         <div style="display: flex; gap: 10px;">
                             <el-tag type="info" effect="plain">共解析: ${ previewTableData.length }</el-tag>

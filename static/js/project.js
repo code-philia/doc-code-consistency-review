@@ -4383,6 +4383,22 @@ const app = createApp({
         const previewTableData = ref([]);
         const selectedReviewItems = ref([]);
         const targetKbName = ref('');
+
+        const importMode = ref('new');
+        const selectedExistingKb = ref('');
+
+        // 计算属性：当前类型可用于追加的知识库
+        const existingKbsForAppend = computed(() => {
+            let targetType = importDocType.value === 'history_align' ? 'align' : importDocType.value;
+            return kbAppList.value.filter(kb => kb.type === targetType);
+        });
+
+        // 去除空格
+        watch(targetKbName, (newVal) => {
+            if (newVal && newVal.indexOf(' ') !== -1) {
+                targetKbName.value = newVal.replace(/\s+/g, '');
+            }
+        });
         
         // 状态
         const isUploading = ref(false);
@@ -4393,26 +4409,21 @@ const app = createApp({
         const showDetailDialog = ref(false);
         const currentDetailItem = ref(null);
         
-        // 监听文档类型变化，自动设置目标知识库
+        // 监听文档类型变化，不再赋予默认硬编码名字，只清空当前输入
         watch(importDocType, (newVal) => {
-            if (newVal === 'rule') targetKbName.value = 'rule_knowledge_base';
-            else if (newVal === 'issue') targetKbName.value = 'issue_knowledge_base';
-            else if (newVal === 'history_align') targetKbName.value = 'align_knowledge_base';
-            else targetKbName.value = '';
+            targetKbName.value = '';
+            selectedExistingKb.value = '';
         }, { immediate: true });
 
-        // --- 修改：初始化数据时重置模式 ---
         const loadInitData = async () => {
-            // 只有当“非直接模式”时，才清空数据
-            // 这样保证我们传进去的数据不会被清掉
             if (!isDirectImportMode.value) {
                 importStep.value = 0;
                 importFileList.value = [];
                 previewTableData.value = [];
             }
-            await fetchServerFiles(); // 获取文件列表备用
-            await fetchKbList();      // 获取知识库列表
-        };   
+            await fetchServerFiles(); 
+            await fetchKbAppData();
+        };
         
         // 获取服务器 testdata 文件列表
         const fetchServerFiles = async () => {
@@ -4493,34 +4504,48 @@ const app = createApp({
         };
 
         const submitToKb = async () => {
-            if (!targetKbName.value) {
-                 ElMessage.warning('无法确定目标知识库，请检查文档类型');
-                 return;
+            let finalKbName = '';
+            
+            if (importMode.value === 'new') {
+                if (!targetKbName.value) {
+                    ElMessage.warning('请输入新知识库名称');
+                    return;
+                }
+                finalKbName = targetKbName.value;
+            } else {
+                if (!selectedExistingKb.value) {
+                    ElMessage.warning('请选择要追加的知识库');
+                    return;
+                }
+                finalKbName = selectedExistingKb.value;
             }
 
             isCommitting.value = true;
             try {
-                const response = await axios.post('/commit', {
-                    kb_name: targetKbName.value,
-                    items: selectedReviewItems.value,
+                // 调用新增加的独立 API，专门处理项目视图下的内存条目入库
+                const response = await axios.post('/api/rag/add_items', {
+                    kbName: finalKbName,
+                    kbType: importDocType.value,
+                    append: importMode.value === 'append',
+                    items: selectedReviewItems.value, // 前端选中的条目数组
                     projectPath: projectPath.value
                 });
 
                 if (response.data.status === 'success') {
-                    ElMessage.success(response.data.message);
+                    ElMessage.success(response.data.message || '入库成功！');
                     showImportReviewDialog.value = false;
+                    // 刷新左侧边栏弹窗中的知识库列表
+                    await fetchKbAppData(); 
                 } else {
                     ElMessage.error(`入库失败: ${response.data.message}`);
                 }
             } catch (error) {
                 ElMessage.error('入库请求出错');
+                console.error(error);
             } finally {
                 isCommitting.value = false;
             }
         };
-        // ============================================
-        // [新增] 知识库闭环更新：直接入库逻辑
-        // ============================================
         
         // 标记是否为“直接导入模式”（用于隐藏文件上传步骤）
         const isDirectImportMode = ref(false);
@@ -4530,11 +4555,13 @@ const app = createApp({
          * @param {Array} rawDataList - 待入库的数据列表
          * @param {String} dataType - 数据类型 ('history_align' | 'issue' | 'rule')
          */
-        const openReviewDialogWithData = (rawDataList, dataType) => {
+        const openReviewDialogWithData = async (rawDataList, dataType) => {
             if (!rawDataList || rawDataList.length === 0) {
                 ElMessage.warning('没有有效数据可供入库');
                 return;
             }
+
+            await fetchKbAppData();
 
             // 1. 开启直接模式
             isDirectImportMode.value = true;
@@ -4576,10 +4603,9 @@ const app = createApp({
 
             // 3. 填充数据并跳转
             previewTableData.value = formattedData;
-            importStep.value = 1; // 直接进入 Step 2 (审查表格)
-            showImportReviewDialog.value = true; // 打开弹窗
+            importStep.value = 1;
+            showImportReviewDialog.value = true;
 
-            // 4. 自动全选
             nextTick(() => {
                 if (reviewTableRef.value) {
                     reviewTableRef.value.toggleAllSelection();
@@ -4588,14 +4614,13 @@ const app = createApp({
         };
 
         // --- 按钮事件 1：对齐结果入库 ---
-        const addAlignmentToKB = () => {
+        const addAlignmentToKB = async () => {
             if (!selectedReviewAlignment.value) return;
-            // 直接把当前选中的对齐对象传进去
-            openReviewDialogWithData([selectedReviewAlignment.value], 'history_align');
+            await openReviewDialogWithData([selectedReviewAlignment.value], 'history_align');
         };
 
         // --- 按钮事件 2：问题单入库 (支持多条) ---
-        const addIssueToKB = () => {
+        const addIssueToKB = async () => {
             const item = selectedReviewAlignment.value;
             if (!item) return;
             
@@ -4633,7 +4658,7 @@ const app = createApp({
             }
 
             // 打开入库弹窗，传入所有问题单
-            openReviewDialogWithData(targetIssuesList, 'issue');
+            await openReviewDialogWithData(targetIssuesList, 'issue');
         };
         /***********************
          * 暴露到模板
@@ -4826,6 +4851,9 @@ const app = createApp({
             previewTableData,
             selectedReviewItems,
             targetKbName,
+            importMode,
+            selectedExistingKb,
+            existingKbsForAppend,
             isUploading,
             isCommitting,
             reviewTableRef,
