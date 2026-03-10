@@ -3356,10 +3356,6 @@ def preview_file():
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)})
 
-@app.route('/commit', methods=['POST'])
-def commit_to_kb():
-    # Deprecated in favor of /api/rag/build
-    return jsonify({"status": "error", "message": "Please use /api/rag/build"})
 
 def find_available_port(start_port):
     port = start_port
