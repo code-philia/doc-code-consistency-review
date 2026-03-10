@@ -45,18 +45,6 @@ def query_llm(message, history=None):
     r.content = text.strip()
     return r
 
-def query_vector_db(requirement_text, topk=1):
-    """
-    直接调用内存中的 RAG 引擎进行检索
-    """
-    print(f"[Agent] Searching vector DB for: {requirement_text[:20]}...")
-    try:
-        hits = rag_engine.search(requirement_text, top_k=topk, kb_type='align_knowledge_base')
-        return hits
-    except Exception as e:
-        print(f"[Agent] RAG Search Error: {e}")
-        return []
-
 
 def parse_abstract_output(response):
     """
@@ -193,23 +181,22 @@ def query_codefile_abstract(code_abstracts):
             
         
 # ================= 对齐 查找相关代码块 =================
-def query_related_code_block(requirement, code_blocks):
+def query_related_code_block(requirement, code_blocks, icl_examples=None):
     """
     查询与需求点最相关的代码行号
     
     参数:
         requirement: 需求文本
         code_blocks: 已经划分好的代码块
+        icl_examples: 检索到的上下文示例 (query_text, code_text)
         
     返回:
         相关行号列表
     """
-    # related_code_blocks = []
-    results = query_vector_db(requirement, topk=1)
-
-    # 你也可以直接访问字段
-    if results:
-        top = results[0]
+    
+    if icl_examples:
+        # 使用检索到的第一个示例
+        top = icl_examples[0]
         query_text = top.get("query_text")
         code_text = top.get("code_text")
         template = ALIGN_PROMPT_TEMPLATE_ICL
@@ -236,13 +223,13 @@ def query_related_code_block(requirement, code_blocks):
     
     return parsed_output
 
-def query_related_code(requirement, code_blocks, random_flag, block_limit=None):
+def query_related_code(requirement, code_blocks, random_flag, block_limit=None, icl_examples=None):
     if block_limit:
         chunked_code_blocks = chunk_list(code_blocks, block_limit, random_flag)
         
         related_code_blocks = []
         for c in chunked_code_blocks:
-            res = query_related_code_block(requirement, c)
+            res = query_related_code_block(requirement, c, icl_examples)
             related_code_blocks.extend(res)
         
         print(related_code_blocks)
@@ -368,7 +355,7 @@ def parse_alignment_output(response):
 
  
 # ================= 审查 相关代码 =================
-def query_review_result(requirement, related_code):
+def query_review_result(requirement, related_code, rules=None, issues=None):
     """
     执行代码一致性审查
     
@@ -382,55 +369,38 @@ def query_review_result(requirement, related_code):
     """
     # 1. 拼接需求和代码上下文
     requirement_context = "\n".join(
-        f"需求片段来源: {block['filename']} ，内容:\n{block['content']}"
+        f"需求片段来源: {block.get('filename', 'unknown')} ，内容:\n{block.get('content', '')}"
         for block in requirement
     )
     
     code_context = "\n\n".join(
-        f"代码片段来源: {block['filename']}，内容:\n{block['content']}"
+        f"代码片段来源: {block.get('filename', 'unknown')}，内容:\n{block.get('content', '')}"
         for block in related_code
     )
     
-    # 2. 检索知识库上下文
+    # 2. 知识库上下文
     reference_rules = "无相关编码规范"
+    if rules:
+        rule_list = []
+        for idx, rule in enumerate(rules, 1):
+            # 支持字符串或字典格式
+            if isinstance(rule, str):
+                rule_str = f"参考规则 {idx}: {rule}"
+            else:
+                rule_str = f"参考规则 {idx}: {json.dumps(rule, ensure_ascii=False)}"
+            rule_list.append(rule_str)
+        reference_rules = "\n\n".join(rule_list)
+        
     reference_issues = "无相关历史问题单"
-    
-    # 提取需求文本用于检索
-    req_text_for_search = "\n".join([b.get('content', '') for b in requirement])
-    
-    if req_text_for_search:
-        try:
-            # 检索编码规范
-            rule_hits = rag_engine.search(req_text_for_search, top_k=3, kb_type='rule_knowledge_base')
-            if rule_hits:
-                rule_list = []
-                for hit in rule_hits:
-                    meta = hit.get('meta', {})
-                    rule_str = (
-                        f"规则ID: {meta.get('id', 'N/A')}\n"
-                        f"描述: {hit.get('query_text', '')}\n"
-                        f"违规示例: {meta.get('violation_code', 'N/A')}\n"
-                        f"合规示例: {meta.get('compliance_code', 'N/A')}"
-                    )
-                    rule_list.append(rule_str)
-                reference_rules = "\n\n".join(rule_list)
-                
-            # 检索历史问题单
-            issue_hits = rag_engine.search(req_text_for_search, top_k=3, kb_type='issue_knowledge_base')
-            if issue_hits:
-                issue_list = []
-                for hit in issue_hits:
-                    meta = hit.get('meta', {})
-                    issue_str = (
-                        f"问题单ID: {meta.get('id', 'N/A')}\n"
-                        f"描述: {hit.get('query_text', '')}\n"
-                        f"处理意见: {meta.get('opinion', 'N/A')}"
-                    )
-                    issue_list.append(issue_str)
-                reference_issues = "\n\n".join(issue_list)
-                
-        except Exception as e:
-            print(f"[Agent] Review RAG Search Error: {e}")
+    if issues:
+        issue_list = []
+        for idx, issue in enumerate(issues, 1):
+            if isinstance(issue, str):
+                issue_str = f"参考问题单 {idx}: {issue}"
+            else:
+                issue_str = f"参考问题单 {idx}: {json.dumps(issue, ensure_ascii=False)}"
+            issue_list.append(issue_str)
+        reference_issues = "\n\n".join(issue_list)
 
     # 3. 构造提示词
     # template = REVIEW_PROMPT_TEMPLATE

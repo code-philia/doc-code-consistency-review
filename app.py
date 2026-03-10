@@ -2909,7 +2909,7 @@ def align_code_to_requirement():
         enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
         
         # 调用LLM (使用增强后的 Query)
-        related_reqs = query_related_requirement(enhanced_query, all_doc_blocks, random_flag=False, block_limit=50)
+        related_reqs = query_related_requirement(enhanced_query, all_doc_blocks, random_flag=False, block_limit=50, icl_examples=top_items)
         
         doc_ranges = []
         blocks_by_file = defaultdict(list)
