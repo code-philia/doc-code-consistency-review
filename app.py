@@ -26,6 +26,7 @@ import zipfile
 from code_block import get_all_code_blocks, chunk_cpp_code, get_codefile_blocks
 
 import logging
+import chromadb
 import sys
 from io import BytesIO
 import pandas as pd
@@ -3177,7 +3178,19 @@ def delete_kb():
     if not kb_name or not kb_type:
         return jsonify({"status": "error", "message": "参数缺失"})
         
-    # Map type to folder
+    cache_key = f"{kb_type}|{kb_name}"
+    if hasattr(rag_engine, 'collections') and cache_key in rag_engine.collections:
+        del rag_engine.collections[cache_key]
+        print(f"[KB] 已清理 RAGEngine 内存缓存: {cache_key}")
+
+    try:
+        import chromadb.api.client
+        if hasattr(chromadb.api.client, 'SharedSystemClient'):
+            chromadb.api.client.SharedSystemClient.clear_system_cache()
+            print("[KB] 已释放 ChromaDB 底层 SQLite 文件句柄")
+    except Exception as e:
+        print(f"[KB] 释放 ChromaDB 缓存时出现警告 (可忽略): {e}")
+
     type_map = {
         'rule': 'rule_knowledge_base',
         'issue': 'issue_knowledge_base',
@@ -3188,10 +3201,10 @@ def delete_kb():
     
     if os.path.exists(kb_path):
         try:
-            shutil.rmtree(kb_path)
-            return jsonify({"status": "success", "message": "知识库已删除"})
+            shutil.rmtree(kb_path, ignore_errors=True)
+            return jsonify({"status": "success", "message": "知识库已彻底删除"})
         except Exception as e:
-            return jsonify({"status": "error", "message": f"删除失败: {e}"})
+            return jsonify({"status": "error", "message": f"删除文件夹失败: {e}"})
     else:
         return jsonify({"status": "error", "message": "知识库不存在"})
 
