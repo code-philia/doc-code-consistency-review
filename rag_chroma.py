@@ -75,26 +75,13 @@ class RAGEngine:
         self.project_kb_root = os.path.join(BASE_DIR, "rag_database")
 
     def initialize(self, project_path: str = None, *args, **kwargs):
-        # 强制使用系统全局路径
         self.project_kb_root = os.path.join(BASE_DIR, "rag_database")
         os.makedirs(self.project_kb_root, exist_ok=True)
-        # Ensure category folders exist
-        for cat in ['align_knowledge_base', 'issue_knowledge_base', 'rule_knowledge_base']:
-            os.makedirs(os.path.join(self.project_kb_root, cat), exist_ok=True)
         print(f"[RAG] 知识库根目录: {self.project_kb_root}")
 
     def _get_kb_path(self, kb_type: str, kb_name: str):
-        # Map simple type to folder name if needed
-        type_map = {
-            'rule': 'rule_knowledge_base',
-            'issue': 'issue_knowledge_base',
-            'align': 'align_knowledge_base',
-            'align_knowledge_base': 'align_knowledge_base',
-            'issue_knowledge_base': 'issue_knowledge_base',
-            'rule_knowledge_base': 'rule_knowledge_base'
-        }
-        folder_name = type_map.get(kb_type, 'other_knowledge_base')
-        return os.path.join(self.project_kb_root, folder_name, kb_name)
+        # 展平结构：直接存放在 rag_database 下的同名目录
+        return os.path.join(self.project_kb_root, kb_name)
 
     def _get_or_create_collection(self, kb_type: str, kb_name: str):
         cache_key = f"{kb_type}|{kb_name}"
@@ -244,8 +231,8 @@ class RAGEngine:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def build_from_json(self, json_path: str, kb_type: str, kb_name: str):
-        print(f"[RAG] 正在解析并构建索引: {json_path}")
+    def build_from_json(self, json_path: str, kb_type: str, kb_name: str, append: bool = False):
+        print(f"[RAG] 正在解析并构建索引: {json_path} (追加模式: {append})")        
         try:
             with open(json_path, "r", encoding="utf-8") as f:
                 js = json.load(f)
@@ -257,25 +244,36 @@ class RAGEngine:
             return {"status": "error", "message": f"知识库 {kb_name} 初始化失败"}
         
         client = col_info['client']
-        # Clear existing collection for rebuild
-        try:
-            client.delete_collection(COLLECTION_NAME)
-            col_info['collection'] = client.create_collection(
-                name=COLLECTION_NAME,
-                embedding_function=self.emb_fn,
-                metadata={"hnsw:space": "cosine"}
-            )
+        
+        if not append:
+            try:
+                try:
+                    client.delete_collection(COLLECTION_NAME)
+                except:
+                    pass
+                col_info['collection'] = client.create_collection(
+                    name=COLLECTION_NAME,
+                    embedding_function=self.emb_fn,
+                    metadata={"hnsw:space": "cosine"}
+                )
+                collection = col_info['collection']
+            except Exception as e:
+                # 这里可以放入上次我们讨论过的 readonly 修复逻辑
+                return {"status": "error", "message": f"重置知识库失败: {e}"}
+        else:
             collection = col_info['collection']
-        except Exception as e:
-            return {"status": "error", "message": f"重置知识库失败: {e}"}
+            print(f"[RAG] 正在向知识库 {kb_name} 最佳新条目...")
 
         ids = []
         documents = [] 
-        metadatas = [] 
+        metadatas = []
 
         annotations = js.get("annotations", [])
         doc_files = js.get("docFiles", [])
         code_files = js.get("codeFiles", [])
+
+        import uuid
+        run_id = uuid.uuid4().hex[:6]
 
         doc_map = self._doc_id_to_content(doc_files)
         code_map = self._code_id_to_content(code_files)
@@ -288,8 +286,8 @@ class RAGEngine:
 
                 raw_id = ann.get("id") or ""
                 raw_id = raw_id.strip() if isinstance(raw_id, str) else str(raw_id)
-                base_pair_id = raw_id if raw_id else f"ann_{ann_idx}"
-
+                base_pair_id = raw_id if raw_id else f"ann_{run_id}_{ann_idx}"
+                
                 doc_text_parts: List[str] = []
                 for dr in ann.get("docRanges", []) or []:
                     if not isinstance(dr, dict): continue
@@ -354,7 +352,7 @@ class RAGEngine:
         else:
             print("[RAG] 未发现 annotations，启用兜底模式 (Doc only)")
             for i, d in enumerate(doc_files):
-                pair_id = f"doc_{i}"
+                pair_id = f"doc_{run_id}_{i}"
                 query_text = d.get("content", "") or ""
                 if not query_text.strip(): continue
                 
@@ -385,6 +383,6 @@ class RAGEngine:
             print(f"[RAG] 已写入批次 {i} - {end}")
         
         total_count = collection.count()
-        return {"status": "success", "message": f"构建完成！生成了 {count} 个数据对，库内总数: {total_count}"}
+        return {"status": "success", "message": f"构建完成！新增了 {count} 个数据对，库内总数: {total_count}", "total_count": total_count}
 
 rag_engine = RAGEngine()

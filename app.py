@@ -2967,6 +2967,9 @@ def build_rag_db():
     
     # User provided KB Name, default to filename without extension
     kb_name = data.get('kbName')
+    append_mode = data.get('append', False)
+    if not kb_name or ' ' in kb_name:
+        return jsonify({"status": "error", "message": "知识库名称不能为空，且不能包含空格"})
     
     if not annotation_file:
         return jsonify({"status": "error", "message": "参数缺失: annotationFile"})
@@ -2990,30 +2993,31 @@ def build_rag_db():
         base = os.path.basename(full_path)
         kb_name = os.path.splitext(base)[0]
 
-    # Helper to save metadata
-    def save_kb_metadata(k_type, k_name, count=0):
+    def save_kb_metadata(k_type, k_name, total_count=0):
         try:
-            # Fix: map 'history_align' to 'align' for folder selection
             target_type = 'align' if k_type == 'history_align' else k_type
+            # 展平结构，直接存在根目录下
+            kb_root = os.path.join(PROJECT_ROOT, "rag_database", k_name)
+            os.makedirs(kb_root, exist_ok=True)
             
-            # Map type to folder
-            type_map = {
-                'rule': 'rule_knowledge_base',
-                'issue': 'issue_knowledge_base',
-                'align': 'align_knowledge_base'
-            }
-            folder = type_map.get(target_type, 'other_knowledge_base')
-            kb_root = os.path.join(PROJECT_ROOT, "rag_database", folder, k_name)
-            if not os.path.exists(kb_root): os.makedirs(kb_root, exist_ok=True)
-            
-            meta = {
-                "name": k_name,
-                "type": target_type, # Save standardized type
-                "create_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                "doc_count": count,
-                "source_file": os.path.basename(full_path)
-            }
-            with open(os.path.join(kb_root, "metadata.json"), 'w', encoding='utf-8') as f:
+            meta_file = os.path.join(kb_root, "metadata.json")
+            if append_mode and os.path.exists(meta_file):
+                # 追加模式：保留原有 create_time
+                with open(meta_file, 'r', encoding='utf-8') as f:
+                    meta = json.load(f)
+                meta['doc_count'] = total_count
+                meta['update_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                # 新建模式
+                meta = {
+                    "name": k_name,
+                    "type": target_type, 
+                    "create_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "update_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "doc_count": total_count,
+                    "source_file": os.path.basename(full_path)
+                }
+            with open(meta_file, 'w', encoding='utf-8') as f:
                 json.dump(meta, f, ensure_ascii=False, indent=2)
         except Exception as e:
             print(f"[KB] 保存元数据失败: {e}")
@@ -3066,7 +3070,7 @@ def build_rag_db():
                 with open(temp_json, 'w', encoding='utf-8') as f:
                     json.dump(json_data, f, ensure_ascii=False)
                 
-                result = rag_engine.build_from_json(temp_json, kb_type=processing_type, kb_name=kb_name)
+                result = rag_engine.build_from_json(temp_json, kb_type=processing_type, kb_name=kb_name, append=append_mode)
                 try: os.remove(temp_json) 
                 except: pass
                 
@@ -3084,7 +3088,7 @@ def build_rag_db():
 
         # === JSON 逻辑 ===
         elif full_path.lower().endswith('.json'):
-            result = rag_engine.build_from_json(full_path, kb_type=processing_type, kb_name=kb_name)
+            result = rag_engine.build_from_json(full_path, kb_type=processing_type, kb_name=kb_name, append=append_mode)
             if result.get("status") == "success":
                 import re
                 match = re.search(r'(\d+)', result.get("message", ""))
@@ -3115,57 +3119,37 @@ def list_testdata():
 
 @app.route('/api/list-kbs', methods=['GET'])
 def list_kbs():
-    """列出已有的知识库，包含元数据"""
     kb_root = os.path.join(PROJECT_ROOT, "rag_database")
     kbs = []
     
-    # 遍历三大类目录
-    categories = ['align_knowledge_base', 'issue_knowledge_base', 'rule_knowledge_base']
-    
     if os.path.exists(kb_root):
-        for cat in categories:
-            cat_path = os.path.join(kb_root, cat)
-            if not os.path.exists(cat_path): continue
+        for kb_name in os.listdir(kb_root):
+            kb_path = os.path.join(kb_root, kb_name)
+            if not os.path.isdir(kb_path): continue
             
-            # 遍历该类别下的具体知识库文件夹
-            for kb_name in os.listdir(cat_path):
-                kb_path = os.path.join(cat_path, kb_name)
-                if not os.path.isdir(kb_path): continue
-                
-                kb_info = {
-                    "name": kb_name,
-                    "type": "other", # Default
-                    "category": cat,
-                    "create_time": "",
-                    "doc_count": 0
-                }
-                
-                # 尝试读取 metadata.json
-                meta_file = os.path.join(kb_path, "metadata.json")
-                if os.path.exists(meta_file):
-                    try:
-                        with open(meta_file, 'r', encoding='utf-8') as f:
-                            meta = json.load(f)
-                            kb_info.update(meta)
-                    except Exception as e:
-                        print(f"[KB] 读取元数据失败 {kb_name}: {e}")
-                
-                # Infer type from category if not set
-                if kb_info["type"] == "other":
-                    if cat == 'rule_knowledge_base': kb_info["type"] = "rule"
-                    elif cat == 'issue_knowledge_base': kb_info["type"] = "issue"
-                    elif cat == 'align_knowledge_base': kb_info["type"] = "align"
+            kb_info = {
+                "name": kb_name,
+                "type": "other",
+                "create_time": "",
+                "doc_count": 0
+            }
+            # 读取 metadata 决定类型
+            meta_file = os.path.join(kb_path, "metadata.json")
+            if os.path.exists(meta_file):
+                try:
+                    with open(meta_file, 'r', encoding='utf-8') as f:
+                        meta = json.load(f)
+                        kb_info.update(meta)
+                except Exception as e:
+                    print(f"[KB] 读取元数据失败 {kb_name}: {e}")
 
-                # Time fallback
-                if not kb_info["create_time"]:
-                    mtime = os.path.getmtime(kb_path)
-                    kb_info["create_time"] = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
+            if not kb_info["create_time"]:
+                mtime = os.path.getmtime(kb_path)
+                kb_info["create_time"] = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
 
-                kbs.append(kb_info)
+            kbs.append(kb_info)
             
-    # 按时间倒序排列
     kbs.sort(key=lambda x: x["create_time"], reverse=True)
-    
     return jsonify({"status": "success", "kbs": kbs})
 
 @app.route('/api/kb/delete', methods=['POST'])
@@ -3191,13 +3175,7 @@ def delete_kb():
     except Exception as e:
         print(f"[KB] 释放 ChromaDB 缓存时出现警告 (可忽略): {e}")
 
-    type_map = {
-        'rule': 'rule_knowledge_base',
-        'issue': 'issue_knowledge_base',
-        'align': 'align_knowledge_base'
-    }
-    folder = type_map.get(kb_type, 'other_knowledge_base')
-    kb_path = os.path.join(PROJECT_ROOT, "rag_database", folder, kb_name)
+    kb_path = os.path.join(PROJECT_ROOT, "rag_database", kb_name)
     
     if os.path.exists(kb_path):
         try:
@@ -3214,18 +3192,11 @@ def rename_kb():
     data = request.json
     old_name = data.get('oldName')
     new_name = data.get('newName')
-    kb_type = data.get('type')
     
-    if not old_name or not new_name or not kb_type:
+    if not old_name or not new_name:
         return jsonify({"status": "error", "message": "参数缺失"})
     
-    type_map = {
-        'rule': 'rule_knowledge_base',
-        'issue': 'issue_knowledge_base',
-        'align': 'align_knowledge_base'
-    }
-    folder = type_map.get(kb_type, 'other_knowledge_base')
-    base_path = os.path.join(PROJECT_ROOT, "rag_database", folder)
+    base_path = os.path.join(PROJECT_ROOT, "rag_database")
     old_path = os.path.join(base_path, old_name)
     new_path = os.path.join(base_path, new_name)
     
@@ -3280,13 +3251,7 @@ def delete_kb_item():
     if result.get('status') == 'success':
         # Update metadata count
         try:
-            type_map = {
-                'rule': 'rule_knowledge_base',
-                'issue': 'issue_knowledge_base',
-                'align': 'align_knowledge_base'
-            }
-            folder = type_map.get(kb_type, 'other_knowledge_base')
-            kb_path = os.path.join(PROJECT_ROOT, "rag_database", folder, kb_name)
+            kb_path = os.path.join(PROJECT_ROOT, "rag_database", kb_name)
             meta_file = os.path.join(kb_path, "metadata.json")
             
             if os.path.exists(meta_file):

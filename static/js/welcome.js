@@ -78,11 +78,8 @@ const app = createApp({
         const showDetailDialog = ref(false);
         const currentDetailItem = ref(null);
         
-        // 监听文档类型变化
-        // 注意：不再强制重置 targetKbName，以免覆盖用户输入
-        // watch(importDocType, (newVal) => {
-        //     // Optionally hint user?
-        // });
+        const importMode = ref('new');
+        const selectedExistingKb = ref('');
 
         // 获取服务器 testdata 文件列表
         const fetchServerFiles = async () => {
@@ -235,25 +232,33 @@ const app = createApp({
         };
 
         const submitToKb = async () => {
-            if (!targetKbName.value) {
-                 ElMessage.warning('请输入知识库名称');
-                 return;
+            let finalKbName = '';
+            
+            if (importMode.value === 'new') {
+                if (!targetKbName.value) {
+                    ElMessage.warning('请输入新知识库名称');
+                    return;
+                }
+                finalKbName = targetKbName.value;
+            } else {
+                if (!selectedExistingKb.value) {
+                    ElMessage.warning('请选择要追加的知识库');
+                    return;
+                }
+                finalKbName = selectedExistingKb.value;
             }
 
             isCommitting.value = true;
             try {
-                // Prepare payload for /api/rag/build
                 const payload = {
                     kbType: importDocType.value,
-                    kbName: targetKbName.value,
-                    // Pass the file identifier
+                    kbName: finalKbName,
+                    append: importMode.value === 'append' // === 传递追加参数 ===
                 };
                 
                 if (fileSourceMode.value === 'server') {
                     payload.annotationFile = selectedServerFile.value;
                 } else {
-                    // For local file, we use the filename, assuming it was saved to temp_uploads during preview
-                    // CAUTION: 'preview' API saved it. 'build' API checks temp_uploads.
                     if (importFileList.value.length > 0) {
                         payload.annotationFile = importFileList.value[0].name;
                     }
@@ -264,8 +269,7 @@ const app = createApp({
                 if (response.data.status === 'success') {
                     ElMessage.success('入库成功！');
                     showImportReviewDialog.value = false;
-                    // 刷新列表
-                    await fetchKBs();
+                    await fetchKBs(); // 刷新列表，更新统计数据
                 } else {
                     ElMessage.error(`入库失败: ${response.data.message}`);
                 }
@@ -618,6 +622,19 @@ const app = createApp({
             }
         };
 
+        // 过滤出与当前选中类型相同的、可追加的知识库列表
+        const existingKbsForAppend = computed(() => {
+            let targetType = importDocType.value === 'history_align' ? 'align' : importDocType.value;
+            return kbList.value.filter(kb => kb.type === targetType);
+        });
+
+        // 监听新建名称，去除空格
+        watch(targetKbName, (newVal) => {
+            if (newVal && newVal.indexOf(' ') !== -1) {
+                targetKbName.value = newVal.replace(/\s+/g, '');
+            }
+        });
+
         // ====== 初始化 ======
         fetchRecentProjects();
         fetchKBs();
@@ -687,6 +704,9 @@ const app = createApp({
             currentKb,
             kbItems,
             deleteKbItem,
+            importMode,
+            selectedExistingKb,
+            existingKbsForAppend,
             
             // Formatters
             formatDetailValue: (val) => {

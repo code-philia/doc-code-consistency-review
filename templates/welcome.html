@@ -394,24 +394,54 @@
 
             <!-- Step 2: 预览审查 -->
             <div v-if="importStep === 1" class="review-section">
-                
+
                 <div class="review-header" style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background: #f5f7fa; padding: 10px; border-radius: 4px;">
-                     <div>
-                        <strong><i class="fas fa-info-circle"></i> 解析结果预览</strong>
-                        <span style="margin-left: 10px; color: #666; font-size: 13px;">
-                            共解析出 ${ previewTableData.length } 条数据
-                        </span>
-                     </div>
-                     <div style="display: flex; gap: 10px; align-items: center;">
-                         <!-- Knowledge Base Name Input -->
-                         <el-input v-model="targetKbName" placeholder="知识库名称" style="width: 200px">
-                             <template #prefix>名称</template>
-                         </el-input>
-                         
-                         <el-button type="success" @click="submitToKb" :loading="isCommitting">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <el-button @click="importStep = 0">
+                            <i class="fas fa-arrow-left"></i> 上一步
+                        </el-button>
+                        <div>
+                            <strong><i class="fas fa-info-circle"></i> 解析结果预览</strong>
+                            <span style="margin-left: 10px; color: #666; font-size: 13px;">
+                                共解析出 ${ previewTableData.length } 条数据
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <el-radio-group v-model="importMode">
+                            <el-radio-button label="new">新建</el-radio-button>
+                            <el-radio-button label="append">追加</el-radio-button>
+                        </el-radio-group>
+                        
+                        <el-input 
+                            v-if="importMode === 'new'" 
+                            v-model="targetKbName" 
+                            placeholder="名称不能含空格" 
+                            style="width: 180px"
+                            @input="targetKbName = targetKbName.replace(/\s+/g, '')"
+                        >
+                            <template #prefix>名称</template>
+                        </el-input>
+                        
+                        <el-select 
+                            v-if="importMode === 'append'" 
+                            v-model="selectedExistingKb" 
+                            placeholder="请选择目标知识库" 
+                            style="width: 180px"
+                        >
+                            <el-option 
+                                v-for="kb in existingKbsForAppend" 
+                                :key="kb.name" 
+                                :label="kb.name + ' (' + kb.doc_count + '条)'" 
+                                :value="kb.name"
+                            ></el-option>
+                        </el-select>
+                        
+                        <el-button type="success" @click="submitToKb" :loading="isCommitting">
                             <i class="fas fa-check"></i> 确认入库 (${ selectedReviewItems.length })
-                         </el-button>
-                     </div>
+                        </el-button>
+                    </div>
                 </div>
 
                 <el-table 
@@ -423,8 +453,8 @@
                     @selection-change="handleReviewSelectionChange"
                 >
                     <el-table-column type="selection" width="55"></el-table-column>
-                    <el-table-column prop="id" label="ID" width="100" show-overflow-tooltip></el-table-column>
-                    <el-table-column label="内容摘要" show-overflow-tooltip>
+                    <el-table-column prop="id" label="ID" width="100"></el-table-column>
+                    <el-table-column label="内容摘要">
                         <template #default="scope">
                             <div style="white-space: pre-wrap; max-height: 60px; overflow: hidden;">
                                 ${ scope.row.content || scope.row.description || scope.row.desc || 'No content' }
@@ -466,7 +496,7 @@
                  </el-alert>
             </div>
             <el-table :data="kbItems" border stripe style="width: 100%; height: 500px; overflow-y: auto;">
-                <el-table-column prop="id" label="ID" width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="id" label="ID" width="120"></el-table-column>
                 <el-table-column label="内容">
                     <template #default="scope">
                         <div style="white-space: pre-wrap; max-height: 60px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
