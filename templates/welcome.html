@@ -441,15 +441,21 @@
         </el-dialog>
 
         <!-- 详情弹窗 -->
-        <el-dialog v-model="showDetailDialog" title="条目详情" width="600px" append-to-body>
-            <div v-if="currentDetailItem" style="white-space: pre-wrap; line-height: 1.6;">
-                <div v-for="(val, key) in currentDetailItem" :key="key" style="margin-bottom: 10px;">
-                    <strong style="color: #409eff;">${ key }:</strong>
-                    <div style="background: #f9f9f9; padding: 8px; border-radius: 4px; margin-top: 4px;">
-                        ${ val }
-                    </div>
+        <el-dialog 
+            v-model="showDetailDialog" 
+            :title="currentDetailItem ? '条目详情' : '详情'" 
+            width="800px" 
+            append-to-body
+        >
+            <div v-if="currentDetailItem" class="detail-container" style="max-height: 600px; overflow-y: auto; padding-right: 10px;">
+                <div v-for="(val, key) in currentDetailItem" :key="key" style="margin-bottom: 15px;">
+                    <strong style="display: block; color: #409eff; margin-bottom: 5px; font-size: 14px;">${ key }</strong>
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; white-space: pre-wrap; font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 13px; line-height: 1.6; color: #333;">${ formatDetailValue(val) }</div>
                 </div>
             </div>
+            <template #footer>
+                <el-button @click="showDetailDialog = false">关闭</el-button>
+            </template>
         </el-dialog>
 
         <!-- 知识库查看弹窗 -->

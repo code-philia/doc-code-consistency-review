@@ -188,6 +188,10 @@ const app = createApp({
                 'content': '内容',
                 'desc': '描述',
                 'description': '描述',
+                'compliance_code': '遵循代码',
+                'violation_code': '违背代码',
+                'opinion': '意见',
+                'trace_id': '跟踪ID',
                 'source': '来源文件',
                 'source_type': '来源类型',
                 'category': '类别',
@@ -201,7 +205,7 @@ const app = createApp({
                 'orig_ann_id': '原始标注ID',
                 'meta': '元数据',
                 'GenReq': '生成需求',
-                'GenMermaid': '生成流程图'
+                'GenMermaid': '生成流程图',
             };
 
             const translate = (key) => keyMap[key] || key;
@@ -682,7 +686,15 @@ const app = createApp({
             showKbViewDialog,
             currentKb,
             kbItems,
-            deleteKbItem
+            deleteKbItem,
+            
+            // Formatters
+            formatDetailValue: (val) => {
+                if (typeof val === 'object') {
+                    return JSON.stringify(val, null, 2);
+                }
+                return val;
+            }
         };
     }
 });
