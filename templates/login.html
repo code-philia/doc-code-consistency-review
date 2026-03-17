@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户登录</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+
+    input[type="text"], input[type="password"], input[type="submit"] {
+      width: 100%;
+      padding: 0.8rem;
+      margin-top: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    input[type="submit"] {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+
+    input[type="submit"]:hover {
+      background: #0056b3;
+    }
+
+    .login-methods {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .login-methods button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 0.5rem;
+    }
+
+    .login-methods button:hover {
+      background: #0056b3;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <h2>用户登录</h2>
+
+    <!-- 用户密码登录表单 -->
+    <form id="passwordLogin" class="login-form" onsubmit="submitPasswordLogin(event)">
+      <div class="form-group">
+        <label for="username">用户名</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <input type="submit" value="登录">
+    </form>
+
+    <!-- IP 登录 -->
+    <div class="login-methods">
+      <p>或通过 IP 登录</p>
+      <button id="ipLoginBtn" onclick="submitIpLogin()">IP 登录</button>
+    </div>
+
+    <!-- 提示信息 -->
+    <div id="message" style="color: red; margin-top: 1rem; display: none;"></div>
+  </div>
+
+  <script>
+    // 获取用户 IP（由后端提供）
+    async function getIp() {
+      try {
+        const response = await fetch('/get-ip'); // 请求后端接口获取 IP
+        const data = await response.json();
+        return data.ip; // 返回 IP 字符串
+      } catch (error) {
+        console.error('获取 IP 失败:', error);
+        return '127.0.0.1'; // 默认 IP
+      }
+    }
+
+    // 提交用户密码登录
+    function submitPasswordLogin(event) {
+      event.preventDefault(); // 阻止表单默认提交
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      // 发送 POST 请求到后端
+      fetch('/login/password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          //alert('登录成功！');
+          window.location.href = '/welcome'; // 跳转到主页
+        } else {
+          document.getElementById('message').innerText = data.message || '登录失败';
+          document.getElementById('message').style.display = 'block';
+        }
+      })
+      .catch(err => {
+        document.getElementById('message').innerText = '网络错误，请重试';
+        document.getElementById('message').style.display = 'block';
+      });
+    }
+
+    async function submitIpLogin() {
+      const messageDiv = document.getElementById('message');
+      messageDiv.style.display = 'none';
+
+      // 获取用户 IP（通过后端接口）
+      const ip = await getIp();
+      console.log("用户 IP:", ip);
+
+      // 发送 IP 到后端验证
+      fetch('/login/ip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ip: ip })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          //alert('IP 登录成功！');
+          window.location.href = '/welcome'; // 跳转到主页
+        } else {
+          messageDiv.innerText = data.message || 'IP 登录失败';
+          messageDiv.style.display = 'block';
+        }
+      })
+      .catch(err => {
+        messageDiv.innerText = 'IP 登录失败，网络错误';
+        messageDiv.style.display = 'block';
+      });
+    }
+  </script>
+
+</body>
+</html>

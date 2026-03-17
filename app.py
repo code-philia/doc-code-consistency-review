@@ -52,12 +52,19 @@ TESTDATA_DIR = os.path.join(PROJECT_ROOT, 'testdata')
 
 app = Flask(__name__)
 
+
 # templates
 @app.route('/')
 def index():
     """Render the welcome page"""
+    #return render_template('login.html') # 切换成需要登录的页面
     return render_template('welcome.html')
 
+@app.route('/login')
+def login():
+    """Render the login page"""
+    return render_template('login.html')    
+    
 @app.route('/welcome')
 def welcome():
     """Render the welcome page"""
@@ -83,6 +90,118 @@ def flowchart_viewer_template():
     """Serve the flowchart viewer template"""
     return send_file('templates/flowchart-viewer.html', mimetype='text/html')
 
+# login
+@app.route('/get-ip', methods=['GET'])
+def get_ip():
+    ip = request.headers.get('X-Real-IP', request.remote_addr)
+    return jsonify({"ip": ip})
+
+@app.route('/login/ip', methods=['POST'])
+def validate_ip():
+    data = request.get_json()
+    ip = data.get('ip')
+
+    if not ip:
+        return jsonify({"success": False, "message": "IP 无效"})
+
+    # 数据库查询
+    #user = next((u for u in users if u["ip"] == ip), None)
+    user = read_ip_mapping_from_db(ip)
+
+    if user:
+        return jsonify({"success": True, "message": "IP 登录成功"})
+    else:
+        return jsonify({"success": False, "message": "IP 未授权，请联系管理员"})    
+  
+def read_ip_mapping_from_db(IP):
+    # 检查数据库文件是否存在
+    user = ''
+    DB_PATH = './user_data/user_info.db'
+    if not os.path.exists(DB_PATH):
+        print(f"数据库文件 {DB_PATH} 不存在。")
+        return user
+
+    # 连接数据库
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row  # 允许通过列名访问数据
+    cursor = conn.cursor()
+
+    try:
+        # 查询 ip_mapping 表
+        cursor.execute("SELECT username, ip FROM ip_mapping")
+        rows = cursor.fetchall()
+
+        if not rows:
+            print("数据库中没有找到任何 IP 映射记录。")
+            return user
+
+        #print(f"共找到 {len(rows)} 条 IP 映射记录：")
+        #print("-" * 50)
+        for row in rows:
+            #username = row['username']
+            if row['ip'] == IP:
+                user = row['username']
+                conn.close()
+                return user
+
+    except Exception as e:
+        print(f"读取数据库时出错: {e}")
+    finally:
+        conn.close()
+        return user
+        
+def read_user_from_db(username, password):
+    # 检查数据库文件是否存在
+    user = ''
+    DB_PATH = './user_data/user_info.db'
+    if not os.path.exists(DB_PATH):
+        print(f"数据库文件 {DB_PATH} 不存在。")
+        return user
+
+    # 连接数据库
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row  # 允许通过列名访问数据
+    cursor = conn.cursor()
+
+    try:
+        # 查询 ip_mapping 表
+        cursor.execute("SELECT username, password FROM user_pass")
+        rows = cursor.fetchall()
+
+        if not rows:
+            print("数据库中没有找到任何用户记录。")
+            return user
+
+        #print(f"共找到 {len(rows)} 条用户记录：")
+        #print("-" * 50)
+        for row in rows:
+            if row['username'] == username and row['password'] == password:
+                user = username
+                conn.close()
+                return user
+
+    except Exception as e:
+        print(f"读取数据库时出错: {e}")
+    finally:
+        conn.close()
+        return user
+  
+# 用户密码登录
+@app.route('/login/password', methods=['POST'])
+def login_password():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # 模拟数据库查询
+    user = read_user_from_db(username, password)
+
+    if user:
+        return jsonify({"success": True, "message": "登录成功"})
+    else:
+        return jsonify({"success": False, "message": "用户名或密码错误"})
+  
+    
 # project
 @app.route('/project/create', methods=['POST'])
 def create_project():
@@ -1120,7 +1239,7 @@ def export_issues_download():
             # 处理剩余的问题单
             for i, issue in enumerate(issues[1:], 2):
                 # 添加分页符
-                merged_doc.add_page_break()
+                #merged_doc.add_page_break()
                 
                 # 为每个问题单加载新的模板并填充
                 temp_doc = Document(template_path)
@@ -1290,7 +1409,7 @@ def save_abstract_to_db(project_path, file, codefile_abstract):
         return jsonify({"status": "error", "message": f"写入代码摘要数据失败: {e}"}), 500
 
     conn.commit()
-    conn.close()        
+    conn.close()     
         
 @app.route('/api/get-code-abstract', methods=['GET'])
 def abstract_code_from_project():
@@ -3463,7 +3582,7 @@ def get_alignments_from_sqlite(db_path):
         # 连接SQLite数据库
         conn = sqlite3.connect(db_path)
         # 读取name、docRanges、codeRanges三列所有数据
-        query_sql = "SELECT name, docRanges, codeRanges FROM alignments"
+        query_sql = "SELECT name, docRanges, codeRanges, GenReq, GenMermaid FROM alignments"
         # 直接用pandas读取SQL结果（简洁高效）
         df = pd.read_sql(query_sql, conn)
         conn.close()
@@ -3662,9 +3781,118 @@ def export_project_results():
     except Exception as e:
         logger.info(f"导出结果失败：{e}")
         return jsonify({"status": "error", "message": f"导出失败: {str(e)}"}), 500
-            
-            
-            
+
+# 提示词设置对话框       
+ 
+# 保存用户自定义提示词的文件
+from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
+
+# def load_user_prompt():
+    # if os.path.exists(PROMPT_FILE):
+        # with open(PROMPT_FILE, 'r') as f:
+            # data = json.load(f)
+            # return data.get('prompt', DEFAULT_PROMPT)
+    # return DEFAULT_PROMPT
+    
+# @app.route('/get_align_prompt')
+# def get_align_prompt():
+    # #prompt = load_user_prompt()
+    # prompt = ALIGN_REQ_PROMPT_TEMPLATE
+    # return jsonify({'prompt': prompt}) 
+
+# 设置提示词相关
+
+# 存储提示词（内存中，可替换为数据库或文件）
+prompts = {
+    'align': 'You are an expert in aligning AI responses to user intent...',
+    'review': 'You are an expert in reviewing AI responses...'
+}
+
+# 默认提示词
+default_prompts = {
+    'align': ALIGN_REQ_PROMPT_TEMPLATE,
+    'review': THINKING_PROMPT_TEMPLATE
+}
+
+# 从文件加载
+def load_prompts():
+    global prompts
+    try:
+        with open('prompts.json', 'r') as f:
+            prompts = json.load(f)
+    except:
+        pass
+
+# 保存提示词到文件
+def save_prompts():
+    with open('prompts.json', 'w') as f:
+        json.dump(prompts, f)
+
+# 加载提示词（用于 /get_prompts）
+@app.route('/get_prompts', methods=['GET'])
+def get_prompts():
+    return jsonify({
+        'align': default_prompts['align'],
+        'review': default_prompts['review']
+    })
+
+# 保存提示词（根据 tab 和 content）
+@app.route('/save_prompt', methods=['POST'])
+def save_prompt():
+    data = request.get_json()
+    tab = data.get('tab')
+    content = data.get('content')
+
+    if tab not in ['align', 'review']:
+        return jsonify({'success': False, 'message': 'Invalid tab'})
+
+    # 保存到内存
+    prompts[tab] = content
+    save_prompts()  # 保存到文件
+
+    return jsonify({'success': True, 'message': f'{tab} prompt saved'})
+
+# 恢复默认（根据 tab）
+@app.route('/restore_default', methods=['POST'])
+def restore_default():
+    data = request.get_json()
+    tab = data.get('tab')
+
+    if tab not in ['align', 'review']:
+        return jsonify({'success': False, 'message': 'Invalid tab'})
+
+    # 恢复默认
+    prompts[tab] = default_prompts[tab]
+
+    return jsonify({'default_prompt': prompts[tab]})
+    
+# 对齐提示词相关       
+@app.route('/get_default_align_prompt')
+def get_default_align_prompt():
+    return jsonify({'default_prompt': ALIGN_REQ_PROMPT_TEMPLATE})
+
+@app.route('/save_align_prompt', methods=['POST'])
+def save_align_prompt():
+    data = request.get_json()
+    prompt = data.get('prompt')
+    if not prompt:
+        return jsonify({'success': False, 'error': '提示词不能为空'})
+    save_user_prompt(prompt)
+    return jsonify({'success': True})
+
+# 审查提示词相关     
+@app.route('/get_default_review_prompt')
+def get_default_review_prompt():
+    return jsonify({'default_prompt': THINKING_PROMPT_TEMPLATE})
+
+@app.route('/save_review_prompt', methods=['POST'])
+def save_review_prompt():
+    data = request.get_json()
+    prompt = data.get('prompt')
+    if not prompt:
+        return jsonify({'success': False, 'error': '提示词不能为空'})
+    save_user_prompt(prompt)
+    return jsonify({'success': True})            
             
 if __name__ == '__main__':
     start_port = 5056
