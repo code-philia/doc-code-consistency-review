@@ -78,7 +78,15 @@ const app = createApp({
         const activeReviewTab = ref('issues');
         const editingIssueId = ref(null);
         const issueContentBeforeEdit = ref('');
-        
+        // 控制提示词设置弹窗
+        const showPromptDialog = ref(false)
+        const activeSetPromptTab = ref('align') // 默认对齐页
+        const showAlignPromptDialog = ref(false); // 控制对齐提示词设置弹窗
+        const currentAlignPrompt = ref('');
+        const defaultAlignPrompt = ref('');
+        const showReviewPromptDialog = ref(false); // 控制审查提示词设置弹窗
+        const currentReviewPrompt = ref('');
+        const defaultReviewPrompt = ref('');
         // 筛选相关状态
         const filteredAlignments = ref(null);
         const isFiltered = ref(false);
@@ -3523,7 +3531,119 @@ const app = createApp({
                 }
             }).catch(() => { });
         };
+        
+        
+        //==========调整提示词的功能=============
+        
+         // 执行操作（使用 currentPrompt）
+        async function SetPrompt() {
+          // 1. 先弹出提示词设置对话框
+          showPromptDialog.value = true
+          // 2. 加载默认提示词
+          await loadDefaultPrompt()
+        }
+        
+        // 可选：在组件挂载时自动恢复
+        onMounted(() => {
+          // 如果需要默认页是“对齐”，可以设置
+          activeSetPromptTab.value = 'align'
+          loadDefaultPrompt()
+        })
 
+        // 从后端加载
+         const loadDefaultPrompt = async () => {
+          try {
+            const res = await fetch('/get_prompts')
+            const data = await res.json()
+            currentAlignPrompt.value = data.align || defaultAlignPrompt
+            currentReviewPrompt.value = data.review || defaultReviewPrompt
+          } catch (err) {
+            console.error('Error loading prompts:', err)
+            currentAlignPrompt.value = defaultAlignPrompt
+            currentReviewPrompt.value = defaultReviewPrompt
+          }
+        }
+
+        // 恢复默认（调用后端 API）
+        const restorePromptDefault = async () => {
+          const tab = activeSetPromptTab.value
+          try {
+            const res = await fetch('/restore_default', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tab })
+            })
+            const data = await res.json()
+
+            // 根据当前 tab 更新对应输入框
+            if (tab === 'align') {
+              currentAlignPrompt.value = data.default_prompt
+            } else {
+              currentReviewPrompt.value = data.default_prompt
+            }
+
+            window.$message.success(data.message)
+          } catch (err) {
+            window.$message.error('恢复失败')
+          }
+        }
+        
+        // 保存
+        const savePrompt = async () => {
+          const tab = activeSetPromptTab.value
+          const content = tab === 'align' ? currentAlignPrompt.value : currentReviewPrompt.value
+
+          try {
+            const res = await fetch('/save_prompt', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tab, content })
+            })
+            const data = await res.json()
+            window.$message.success(data.message)
+          } catch (err) {
+            window.$message.error('保存失败')
+          }
+        }
+        
+        // 打开弹窗
+        const openPromptDialog = () => {
+          showPromptDialog.value = true
+          loadDefaultPrompt()
+        }
+
+        // 关闭弹窗
+        const closePromptModal = () => {
+          showPromptDialog.value = false
+        }  
+        //=======================
+        
+        
+        //==========调整对齐提示词的功能=============
+
+        // 执行对齐操作（使用 currentPrompt）
+        async function PromptAlignment() {
+          // 1. 先弹出提示词设置对话框
+          showAlignPromptDialog.value = true
+          // 2. 
+
+        }
+
+        // 关闭对话框
+        function closeAlignPromptModal() {
+          showAlignPromptDialog.value = false
+        }
+
+        // 执行对齐（在保存或恢复后）
+        async function executeAlignment() {
+          // 1. 
+          // 
+          await closeAlignPromptModal()
+          // 2. 执行对齐逻辑
+          await singleAlignment()
+        }
+        //=======================
+        
         // 单独对齐功能
         const singleAlignment = async () => {
             if (!contextMenu.value.selectedAlignment) return;
@@ -3601,7 +3721,33 @@ const app = createApp({
                 ElMessage.error(`对齐失败: ${error.message}`);
             }
         };
+        
+        
+        //==========调整审查提示词的功能=============
+        
+        // 执行审查操作（使用 currentPrompt）
+        async function PromptReview() {
+          // 1. 先弹出提示词设置对话框
+          showReviewPromptDialog.value = true
+          // 2. 加载默认提示词
+          // await loadDefaultReviewPrompt()
+        }
 
+        // 关闭对话框
+        function closeReviewPromptModal() {
+          showReviewPromptDialog.value = false
+        }
+
+        // 执行审查（在保存或恢复后）
+        async function executeReview() {
+          // 1. 
+
+          // 2. 执行对齐逻辑
+          await singleReview()
+        }
+        //=======================
+        
+        
         // 单独审查功能
         const singleReview = async () => {
             if (!contextMenu.value.selectedAlignment) return;
@@ -3742,6 +3888,8 @@ const app = createApp({
             // refreshFilteredAlignments();
         };
 
+        
+        
         const showReviewResult = () => {
             if (!contextMenu.value.selectedAlignment) return;
 
@@ -4744,6 +4892,25 @@ const app = createApp({
             confirmExport,
             exportResults,
             // 审查结果弹窗
+            SetPrompt,
+            showPromptDialog,
+            activeSetPromptTab,
+            currentAlignPrompt,
+            currentReviewPrompt,
+            restorePromptDefault,
+            savePrompt,
+            openPromptDialog,
+            loadDefaultPrompt,
+            closePromptModal,//设置提示词
+            PromptAlignment,
+            showAlignPromptDialog,
+            closeAlignPromptModal,
+            executeAlignment,//对齐
+            PromptReview,
+            showReviewPromptDialog,
+            singleReview,
+            closeReviewPromptModal,
+            executeReview,//审查
             showReviewDialog,
             selectedReviewAlignment,
             showReviewResult,

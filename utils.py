@@ -767,9 +767,18 @@ def parse_programming_rules(docx_path, debug=True):
                 if debug: print(f"   💾 [保存上一条] ID: {current_rule['id']}")
             
             rule_id = match.group(1)
-            description = text
+            #description = text
+            next_el = (parser.elements)[i+1]
+            description = next_el['text'].strip()
+            # 取最后一行，防止出现多余的代码
+            description = description.splitlines()
+            description = description[-1]
+            # 过滤掉异常字符
+            description = description.replace("违背示例：","") 
+            #print(description)
             
-            if debug: print(f"🟢 [发现新规则] ID: {rule_id} | 描述: {description[:20]}...")
+            #if debug: print(f"🟢 [发现新规则] ID: {rule_id} | 描述: {description[:20]}...")
+            if debug: print(f"🟢 [发现新规则] ID: {rule_id} | 描述: {description}.")
 
             current_rule = {
                 "id": rule_id,

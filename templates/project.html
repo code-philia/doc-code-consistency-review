@@ -499,6 +499,17 @@
                                         >
                                              导出结果
                                         </el-button>
+                                        <el-button 
+                                            @click="SetPrompt" 
+                                            size="small" 
+                                            text
+                                            plain
+                                            type="primary"
+                                        >
+                                             提示词设置
+                                        </el-button>
+                                        
+                                        
                                         </div>
                                        <div style="align-items: center;" v-if="rightSidebarMode === 'block'"> 
                                         <el-button 
@@ -742,10 +753,10 @@
                     >
                         <!-- 对齐关系右键菜单 -->
                         <template v-if="contextMenu.selectedAlignment">
-                            <div class="context-menu-item" @click="singleAlignment">
+                            <div class="context-menu-item" @click="PromptAlignment">
                                 <i class="fas fa-link"></i> 对齐
                             </div>
-                            <div class="context-menu-item" @click="singleReview">
+                            <div class="context-menu-item" @click="PromptReview">
                                 <i class="fas fa-tasks"></i> 审查
                             </div>
                             <div class="context-menu-separator"></div>
@@ -758,6 +769,8 @@
                             <div class="context-menu-item" @click="showReviewResult">
                                 <i class="fas fa-search"></i> 查看详情
                             </div>
+                        
+
                         </template>
                     </div>
                 </div>
@@ -843,7 +856,105 @@
                 <el-button type="success" @click="handleAlignmentDirectionSelect('codeToReq')">代码 → 需求</el-button>
             </template>
         </el-dialog>
+        
+        
+        <!-- 提示词设置弹窗 -->
+        <!-- 提示词设置弹窗 -->
+        <el-dialog
+          v-model="showPromptDialog"
+          title="对齐提示词设置"
+          width="60%"
+          top="2vh"
+          :close-on-click-modal="false"
+        >
+          <!-- 标签页 -->
+          <el-tabs v-model="activeSetPromptTab" type="border-card" style="margin-bottom: 15px;">
+            <!-- 对齐页 -->
+            <el-tab-pane label="对齐" name="align">
+              <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化对齐质量。
+              </div>
+              <el-input
+                v-model="currentAlignPrompt"
+                type="textarea"
+                :rows="10"
+                placeholder="请输入提示词..."
+                style="margin-bottom: 15px;"
+              ></el-input>
+            </el-tab-pane>
 
+            <!-- 审查页 -->
+            <el-tab-pane label="审查" name="review">
+              <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化审查质量。
+              </div>
+              <el-input
+                v-model="currentReviewPrompt"
+                type="textarea"
+                :rows="10"
+                placeholder="请输入提示词..."
+                style="margin-bottom: 15px;"
+              ></el-input>
+            </el-tab-pane>
+          </el-tabs>
+
+          <!-- 底部按钮 -->
+          <template #footer>
+            <el-button @click="closePromptModal">关闭</el-button>
+            <el-button @click="restorePromptDefault" type="warning" style="margin-left: 10px;">恢复默认</el-button>
+            <el-button @click="savePrompt" type="primary" style="margin-left: 10px;">保存</el-button>
+          </template>
+        </el-dialog>
+        
+        
+        <!-- 对齐提示词设置弹窗 -->
+        <el-dialog
+            v-model="showAlignPromptDialog"
+            title="对齐提示词设置"
+            width="60%"
+            top="2vh"
+            :close-on-click-modal="false"
+        >
+            <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                <i class="fas fa-info-circle"></i> 可选，编辑提示词，用于优化对齐质量。
+            </div>
+            <el-input
+                v-model="AddAlignPrompt"
+                type="textarea"
+                :rows="10"
+                placeholder="请输入提示词..."
+                style="margin-bottom: 15px;"
+            ></el-input>
+            <template #footer>
+                <el-button @click="closeAlignPromptModal">关闭</el-button>
+                <el-button @click="executeAlignment" type="success" style="margin-left: 10px;">应用并对齐</el-button>
+            </template>
+        </el-dialog>
+        
+        <!-- 审查提示词设置弹窗 -->
+        <el-dialog
+            v-model="showReviewPromptDialog"
+            title="审查提示词设置"
+            width="60%"
+            top="2vh"
+            :close-on-click-modal="false"
+        >
+            <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                <i class="fas fa-info-circle"></i> 可选，编辑提示词，用于优化审查质量。
+            </div>
+            <el-input
+                v-model="AddReviewPrompt"
+                type="textarea"
+                :rows="10"
+                placeholder="请输入提示词..."
+                style="margin-bottom: 15px;"
+            ></el-input>
+            <template #footer>
+                <el-button @click="closeReviewPromptModal">关闭</el-button>
+                <el-button @click="executeReview" type="success" style="margin-left: 10px;">应用并审查</el-button>
+            </template>
+        </el-dialog>
+        
         <!-- 审查结果详情弹窗 -->
         <el-dialog 
             v-model="showReviewDialog" 
