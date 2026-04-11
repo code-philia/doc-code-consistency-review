@@ -373,3 +373,23 @@ ISSUE_EXTRACTION_PROMPT = """
 
 请返回一个 JSON 列表，每个元素包含上述字段。
 """
+
+
+Combine_Align_UserPrompt = """
+{original_prompt}
+---以上是你需要遵循的规则，以下是本次任务---
+上一轮你针对需求{doc_range}，检索出的与该需求**相关**的代码内容是{code_ranges}。
+用户反馈是{user_feedback}。
+请你**认真理解用户的反馈**，重新检索，按照规则要求，输出正确的结果。
+/think
+"""
+
+
+Combine_Review_UserPrompt = """
+{original_prompt}
+---以上是你需要遵循的规则，以下是本次任务---
+上一轮你对给定需求文档片段和相关代码片段进行审查的结果是{review_thought}。
+用户反馈是{user_feedback}。
+请你**认真理解用户的反馈**，重新审查，禁止输出思考过程！！只能按照规则要求的json格式，输出准确、完整、全面的审查结果。
+/think
+"""

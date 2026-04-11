@@ -1,10 +1,16 @@
 import os
 import re
 import json
-from prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
+
+from flask_login import current_user
+
+from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
+from .prompt import Combine_Align_UserPrompt, Combine_Review_UserPrompt
 from openai import OpenAI
-from utils import chunk_list
-from rag_chroma import rag_engine
+from .utils import chunk_list
+from .request_llm import RequestLLM
+from . import get_db
+# from rag_chroma import rag_engine
 API_KEY = os.environ.get("API_KEY", "0")
 
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8002/v1")
@@ -13,37 +19,40 @@ API_KEY = os.environ.get("API_KEY", "0")
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
 MODEL_NAME = "Qwen3-32B"
 
+
 def query_llm(message, history=None):
-    client = OpenAI(
-        api_key=API_KEY,
-        base_url=API_BASE_URL,
-    )
+    # client = OpenAI(
+    #     api_key=API_KEY,
+    #     base_url=API_BASE_URL,
+    # )
+    #
+    # prompt_parts = []
+    # if history:
+    #     for turn in history:
+    #         role = turn.get("role", "user")
+    #         content = turn.get("content", "")
+    #         prompt_parts.append(f"{role.upper()}: {content}")
+    # prompt_parts.append(f"USER: {message}\nASSISTANT:")
+    # prompt = "\n".join(prompt_parts)
+    #
+    # resp = client.completions.create(
+    #     model=MODEL_NAME,
+    #     prompt=prompt,
+    #     temperature=0.1,00\、、
+    #     top_p=0.9,
+    #     max_tokens=1024,
+    #     n=1,
+    # )
+    req = RequestLLM('')
+    res = req.request_qwen_14b_llm_output(message)
 
-    prompt_parts = []
-    if history:
-        for turn in history:
-            role = turn.get("role", "user")
-            content = turn.get("content", "")
-            prompt_parts.append(f"{role.upper()}: {content}")
-    prompt_parts.append(f"USER: {message}\nASSISTANT:")
-    prompt = "\n".join(prompt_parts)
+    # text = res.choices[0].text
+    # class Resp:
+    #     pass
+    # r = Resp()
+    # r.content = text.strip()
 
-    resp = client.completions.create(
-        model=MODEL_NAME,
-        prompt=prompt,
-        temperature=0.1,
-        top_p=0.9,
-        max_tokens=1024,
-        n=1,
-    )
-
-    text = resp.choices[0].text
-
-    class Resp:
-        pass
-    r = Resp()
-    r.content = text.strip()
-    return r
+    return res
 
 
 def parse_abstract_output(response):
@@ -180,7 +189,7 @@ def query_codefile_abstract(code_abstracts):
     return llm_output   
             
         
-# ================= 对齐 查找相关代码块 =================
+# ================= 对齐：查找相关代码块 =================
 def query_related_code_block(requirement, code_blocks, icl_examples=None):
     """
     查询与需求点最相关的代码行号
@@ -208,6 +217,7 @@ def query_related_code_block(requirement, code_blocks, icl_examples=None):
         )
     else:
         # 构造提示词
+        
         template = ALIGN_PROMPT_TEMPLATE
         prompt = template.format(
             req_content=requirement,
@@ -257,6 +267,91 @@ def query_related_code(requirement, code_blocks, random_flag, block_limit=None, 
         print(similarity_results)   
         return similarity_results
     else:
+        return query_related_code_block(requirement, code_blocks)    
+    
+    
+    
+# ================= 对齐：参考用户反馈，查找相关代码块 =================
+def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, user_prompt):
+    """
+    查询与需求点最相关的代码行号
+    
+    参数:
+        requirement: 需求文本
+        code_blocks: 已经划分好的代码块
+        codeRanges: 上一次对齐的代码块
+        user_prompt: 用户补充输入的提示词，即用户反馈
+        
+        
+    返回:
+        相关行号列表
+    """
+
+    # 构造提示词
+    
+    #将用户输入的提示词结合到已有的结果中，形成新的提示词
+    #准备加到已有提示词的前面，用于优化大模型的输出
+
+    original_template = ALIGN_PROMPT_TEMPLATE
+    original_prompt = original_template.format(
+        req_content=requirement,
+        code_content=code_blocks
+    )
+
+    template = Combine_Align_UserPrompt
+    prompt = template.format(
+        original_prompt=original_prompt,
+        doc_range=requirement,
+        code_ranges=codeRanges,
+        user_feedback=user_prompt
+    )
+    #print(prompt)
+    
+    # 解析回复
+    response = query_llm(prompt)
+    llm_output = response.content
+    # print("original llm output: ", llm_output)
+    parsed_output = parse_alignment_output(llm_output)
+    # print("parsed llm output: ", parsed_output)
+    
+    return parsed_output    
+    
+    
+def query_related_code_by_feedback(requirement, code_blocks, codeRanges, user_prompt, block_limit=None):
+
+    if block_limit:
+        chunked_code_blocks = chunk_list(code_blocks, block_limit)
+        
+        related_code_blocks = []
+        for c in chunked_code_blocks:
+            res = query_related_code_block_by_feedback(requirement, c, codeRanges, user_prompt)
+            related_code_blocks.extend(res)
+        
+        print(related_code_blocks)
+        similarity_results = []
+        if (len(related_code_blocks) == 1):
+            similarity_results = related_code_blocks
+        elif (len(related_code_blocks) > 1):
+            max_sim_results = []
+            max_sim = -1.0
+            for item in related_code_blocks:
+                if item['similarity'] >= max_sim:
+                    max_sim = item['similarity']
+                    if item['similarity'] == max_sim:
+                        max_sim_results.append(item)
+                    elif item['similarity'] > max_sim:
+                        max_sim_results = []
+                        max_sim_results = [item]
+                if item['similarity'] >= 0.9:
+                    similarity_results.append(item)
+            if len(similarity_results) == 0:
+               similarity_results = max_sim_results  
+        
+        
+        print("************")   
+        print(similarity_results)   
+        return similarity_results
+    else:
         return query_related_code_block(requirement, code_blocks)
 
 
@@ -273,7 +368,12 @@ def query_related_requirement_block(code, req_blocks):
         相关需求块列表
     """
     # 构造提示词
-    template = ALIGN_REQ_PROMPT_TEMPLATE
+    # template = ALIGN_REQ_PROMPT_TEMPLATE
+    db = get_db()
+    c = db.cursor()
+    c.execute(f'select alignment from prompt where user_id={current_user.user_id}')
+    row = c.fetchone()
+    template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row[0]
     prompt = template.format(
         code_content=code,
         req_content=req_blocks
@@ -288,9 +388,9 @@ def query_related_requirement_block(code, req_blocks):
     
     return parsed_output
 
-def query_related_requirement(code, req_blocks, random_flag, block_limit=None):
+def query_related_requirement(code, req_blocks, block_limit=None):
     if block_limit:
-        chunked_req_blocks = chunk_list(req_blocks, block_limit, random_flag)
+        chunked_req_blocks = chunk_list(req_blocks, block_limit)
         
         related_req_blocks = []
         for c in chunked_req_blocks:
@@ -353,6 +453,93 @@ def parse_alignment_output(response):
         print(f"解析对齐输出失败: {e}")
         return []
 
+
+# ================= 审查：根据用户反馈，审查相关代码 =================
+def query_review_result_by_feedback(requirement, related_code, review_thought, user_prompt, rules=None, issues=None):
+    """
+    执行代码一致性审查
+    
+    参数:
+        requirement: 需求内容
+        related_code: 相关代码块列表，每个代码块包含文件名、内容等信息
+        review_thought: 上一轮的审查结果
+        user_prompt: 用户输入的提示词，即用户反馈
+        
+    返回:
+        review_process: 审查过程
+        issue: 问题单 (字典) 或 None
+    """
+    # 1. 拼接需求和代码上下文
+    requirement_context = "\n".join(
+        f"需求片段来源: {block.get('filename', 'unknown')} ，内容:\n{block.get('content', '')}"
+        for block in requirement
+    )
+    
+    code_context = "\n\n".join(
+        f"代码片段来源: {block.get('filename', 'unknown')}，内容:\n{block.get('content', '')}"
+        for block in related_code
+    )
+    
+    # 2. 知识库上下文
+    reference_rules = "无相关编码规范"
+    if rules:
+        rule_list = []
+        for idx, rule in enumerate(rules, 1):
+            # 支持字符串或字典格式
+            if isinstance(rule, str):
+                rule_str = f"参考规则 {idx}: {rule}"
+            else:
+                rule_str = f"参考规则 {idx}: {json.dumps(rule, ensure_ascii=False)}"
+            rule_list.append(rule_str)
+        reference_rules = "\n\n".join(rule_list)
+        
+    reference_issues = "无相关历史问题单"
+    if issues:
+        issue_list = []
+        for idx, issue in enumerate(issues, 1):
+            if isinstance(issue, str):
+                issue_str = f"参考问题单 {idx}: {issue}"
+            else:
+                issue_str = f"参考问题单 {idx}: {json.dumps(issue, ensure_ascii=False)}"
+            issue_list.append(issue_str)
+        reference_issues = "\n\n".join(issue_list)
+
+    # 3. 构造提示词
+    # template = REVIEW_PROMPT_TEMPLATE
+    # original_template = THINKING_PROMPT_TEMPLATE
+    db = get_db()
+    c = db.cursor()
+    c.execute(f'select review from prompt where user_id={current_user.user_id}')
+    row = c.fetchone()
+    original_template = THINKING_PROMPT_TEMPLATE if row is None else row[0]
+    original_prompt = original_template.format(
+        requirement=requirement_context,
+        related_code=code_context,
+        reference_rules=reference_rules,
+        reference_issues=reference_issues
+    )
+    
+    template = Combine_Review_UserPrompt
+    prompt = template.format(
+        original_prompt=original_prompt,
+        review_thought=review_thought,
+        user_feedback=user_prompt
+    )
+    #print(prompt)
+    
+    # 4. 调用LLM
+    try:
+        response = query_llm(prompt)
+        print("LLM response for review:", response.content)
+        parsed_output = parse_review_output(response.content)
+        
+        return parsed_output.get('review_process'), parsed_output.get('issue')
+        
+    except Exception as e:
+        print(f"审查过程中出错: {str(e)}")
+        return f"审查过程中发生错误: {e}", None        
+ 
+ 
  
 # ================= 审查 相关代码 =================
 def query_review_result(requirement, related_code, rules=None, issues=None):
@@ -404,7 +591,12 @@ def query_review_result(requirement, related_code, rules=None, issues=None):
 
     # 3. 构造提示词
     # template = REVIEW_PROMPT_TEMPLATE
-    template = THINKING_PROMPT_TEMPLATE
+    # template = THINKING_PROMPT_TEMPLATE
+    db = get_db()
+    c = db.cursor()
+    c.execute(f'select review from prompt where user_id={current_user.user_id}')
+    row = c.fetchone()
+    template = THINKING_PROMPT_TEMPLATE if row is None else row[0]
     prompt = template.format(
         requirement=requirement_context,
         related_code=code_context,

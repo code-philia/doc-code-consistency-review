@@ -4,7 +4,7 @@ import os
 import sys
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, Set
-from utils import get_filename_without_extension
+# from utils import get_filename_without_extension
 
 index = 0 # 代码块编号，待作为全局变量使用
 
@@ -694,8 +694,8 @@ def chunk_codes(name, cpp_file, output_json_path): #读入存放代码的工程�
 
 def get_codefile_blocks(code_base_path, file_name, code_block_base_path):
     
-    #file_name = os.path.basename(codefile_path)
-    code_block_file_path = os.path.join(code_block_base_path, file_name + '_code_blocks.jsonl')
+    file_name_wo = file_name.replace('/', '_')
+    code_block_file_path = os.path.join(code_block_base_path, file_name_wo + '_code_blocks.jsonl')
     #print(code_block_file_path)
     all_code_blocks = []
     # 已经有分块结果
@@ -704,7 +704,6 @@ def get_codefile_blocks(code_base_path, file_name, code_block_base_path):
             lines = f.readlines()
             all_code_blocks = [json.loads(line.strip()) for line in lines]
             return all_code_blocks
-
 
     # 获取原始块
     code_blocks = chunk_cpp_code(file_name, os.path.join(code_base_path, file_name))
@@ -723,7 +722,7 @@ def get_codefile_blocks(code_base_path, file_name, code_block_base_path):
     all_code_blocks = processor.extract_func_relations()
 
     # 保存最终结果
-    os.makedirs(code_block_base_path, exist_ok=True)
+    os.makedirs(code_block_base_path, exist_ok=True)  
     with open(code_block_file_path, "a", encoding="utf-8") as f:
         for block in all_code_blocks:
             f.write(json.dumps(block, ensure_ascii=False) + "\n")

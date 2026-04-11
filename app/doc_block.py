@@ -165,5 +165,5 @@ def get_all_doc_blocks(doc_base_path: str, all_rel_doc_paths: List[str]) -> List
 if __name__ == '__main__':
     md_path= r'.\doc_repo'
     all_rel_doc_paths = ["..md"]
-    output_path = r'.'
+    output_path = r'..'
     all_json_file = get_all_doc_blocks(md_path, all_rel_doc_paths)

@@ -12,7 +12,7 @@ from chromadb.config import Settings
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 本地模型路径
-LOCAL_MODEL_REL_PATH = os.path.join("models", "m3e-base")
+LOCAL_MODEL_REL_PATH = os.path.join("../models", "m3e-base")
 LOCAL_MODEL_ABS_PATH = os.path.join(BASE_DIR, LOCAL_MODEL_REL_PATH)
 
 COLLECTION_NAME = "rag_pairs"
@@ -72,10 +72,10 @@ class RAGEngine:
             self.emb_fn = LocalM3EFunction(LOCAL_MODEL_ABS_PATH)
         
         self.collections = {} # Cache for open collections
-        self.project_kb_root = os.path.join(BASE_DIR, "rag_database")
+        self.project_kb_root = os.path.join(BASE_DIR, "../rag_database")
 
     def initialize(self, project_path: str = None, *args, **kwargs):
-        self.project_kb_root = os.path.join(BASE_DIR, "rag_database")
+        self.project_kb_root = os.path.join(BASE_DIR, "../rag_database")
         os.makedirs(self.project_kb_root, exist_ok=True)
         print(f"[RAG] 知识库根目录: {self.project_kb_root}")
 

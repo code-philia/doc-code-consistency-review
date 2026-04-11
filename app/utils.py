@@ -291,14 +291,14 @@ def get_filename_without_extension(filepath):
 #         result.append(lst[i:i+limit])
 #     return result
 
-def chunk_list(code_blocks, max_chunk_size, random_flag):
+def chunk_list(code_blocks, max_chunk_size):
     all_chunks = []
     current_chunk = []
     max_chunk_size = 30000
 
     # 尝试随机打乱list中元素顺序
-    if random_flag:
-        random.shuffle(code_blocks)
+    # if random_flag:
+        # random.shuffle(code_blocks)
     
     for block in code_blocks:
         block_str_len = len(str(block))
