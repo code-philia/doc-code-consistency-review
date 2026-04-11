@@ -8,3 +8,5 @@ testdata/
 
 models/
 rag_database/
+
+*.db
