@@ -33,6 +33,7 @@ const formatRelativeTime = (isoString) => {
 // Vue 应用
 // ========================
 const app = createApp({
+
     delimiters: ['${', '}'],
     setup() {
         // ====== 状态 ======
@@ -306,13 +307,16 @@ const app = createApp({
             
             axios.post('/project/create', {
                 ...projectForm,
-                creationType: creationType.value
+                creationType: creationType.value,
+                project_id: window.projectId
             })
             .then(res => {
                 if (res.data.status === 'success') {
                     showNewProjForm.value = false;
                     ElMessage.success('创建成功');
-                    openProject({ name: projectForm.projectName, path: res.data.project_path });
+                    window.projectId = res.data.new_id
+//                    alert(cached_project_id)
+                    openProject({ name: projectForm.projectName, path: res.data.project_path, project_id: res.data.new_id });
                 } else {
                     ElMessage.error(res.data.message);
                 }
@@ -324,19 +328,30 @@ const app = createApp({
                 isCreating.value = false;
             });
         };
+        function getProjectId(project) {
+            if (project && project.id !== undefined && project.id !== null){
+                return project.id;
+            }
+            if (window.projectId !== null) {
+                return window.projectId
+            }
+            return null
+        }
 
         const openProject = (project) => {
+            const project_id = getProjectId(project);
             axios.post('/project/open', {
                 name: project.name,
-                path: project.path
+                path: project.path,
+                project_id: project_id
             }).then((res) => {
                 if (res.data.status === 'success') {
                     // Pass the verified path to the next page via URL query parameters
                     const verifiedPath = res.data.project_path || project.path;
                     const encodedPath = encodeURIComponent(verifiedPath);
                     const encodedName = encodeURIComponent(project.name);
-                    
-                    window.location.href = `/project?name=${encodedName}&path=${encodedPath}`;
+                    const project_id = res.data.project_id
+                    window.location.href = `/project?name=${encodedName}&path=${encodedPath}&project_id=${project_id}`;
                 } else {
                     ElMessage.error(res.data.message);
                 }
@@ -406,7 +421,9 @@ const app = createApp({
                         'Content-Type': 'multipart/form-data'
                     }
                 });
-                
+                window.projectId = response.data.new_id
+//                cached_project_id = response.data.new_id
+//                alert('缓存的参数:',cached_project_id)
                 if (response.data.status === 'success') {
                     // 自动填充项目信息
                     projectForm.projectName = folderName;

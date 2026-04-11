@@ -82,9 +82,11 @@ const app = createApp({
         const showPromptDialog = ref(false)
         const activeSetPromptTab = ref('align') // 默认对齐页
         const showAlignPromptDialog = ref(false); // 控制对齐提示词设置弹窗
+        const AddAlignPrompt = ref('');
         const currentAlignPrompt = ref('');
         const defaultAlignPrompt = ref('');
         const showReviewPromptDialog = ref(false); // 控制审查提示词设置弹窗
+        const AddReviewPrompt = ref('');
         const currentReviewPrompt = ref('');
         const defaultReviewPrompt = ref('');
         // 筛选相关状态
@@ -480,10 +482,13 @@ const app = createApp({
             if (!projectPath.value) return;
             
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const response = await axios.post('/api/delete-block', {
                     projectPath: projectPath.value,
                     blockType: blockType.value,
-                    blockData: block
+                    blockData: block,
+                    project_id: projectId
                 });
                 
                 if (response.data.status === 'success') {
@@ -509,8 +514,10 @@ const app = createApp({
             if (!projectPath.value) return;
 
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 // 始终获取项目所有对齐关系，不传递file参数
-                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`);
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`);
                 if (response.data.status === 'success' && response.data.data) {
                     // 后端返回的是以ID为键的对象，转换为数组以便渲染
                     let alignments = Object.values(response.data.data);
@@ -608,10 +615,12 @@ const app = createApp({
 		  }
 
 		  try {
+		    const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
 			// 步骤1：调用后端获取Excel文件流（不变）
 			const response = await axios({
 			  method: 'GET',
-			  url: `/project/export?path=${encodeURIComponent(projectPath.value)}`,
+			  url: `/project/export?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
 			  responseType: 'blob',
 			  timeout: 30000
 			});
@@ -826,12 +835,14 @@ const app = createApp({
                         
                         // 更新进度显示
                         updateProgress(i, docFile);
-
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const projectId = urlParams.get('project_id');
                         // 调用后端进行审查
                         await axios.post('/api/review-alignment', {
                             projectPath: projectPath.value,
                             docFile: docFile,
-                            alignment: alignment
+                            alignment: alignment,
+                            project_id: projectId
                         });
 
                         // 实时更新统计数据
@@ -875,7 +886,9 @@ const app = createApp({
 
             for (const docFile of projectFiles.value.doc_files) {
                 try {
-                    const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc`);
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc&project_id=${projectId}`);
                     if (response.data.status === 'success' && response.data.data) {
                         alignments[docFile] = Object.values(response.data.data);
                     } else {
@@ -893,7 +906,9 @@ const app = createApp({
         // 加载问题单数据
         const fetchIssues = async () => {
             try {
-                const response = await axios.get(`/project/issues?path=${encodeURIComponent(projectPath.value)}`);
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const response = await axios.get(`/project/issues?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`);
                 if (response.data.status === 'success') {
                     const issuesData = response.data.data || [];
 
@@ -903,8 +918,10 @@ const app = createApp({
                         if (issue._isEditing === undefined) issue._isEditing = false;
                         if (!issue.briefRequirement || !issue.briefCode) {
                             try {
+//                                const urlParams = new URLSearchParams(window.location.search);
+//                                const projectId = urlParams.get('project_id');
                                 // Lookup alignment by alignmentId to fill brief info
-                                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(issue.relatedDocFile)}&kind=doc`);
+                                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(issue.relatedDocFile)}&kind=doc&project_id=${projectId}`);
                                 if (alignmentResponse.data.status === 'success') {
                                     const alignments = alignmentResponse.data.data || {};
                                     const alignment = alignments[issue.alignmentId];
@@ -1234,8 +1251,11 @@ const app = createApp({
         // 清空项目所有结果的函数
         const clearAllResults = async () => {
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const response = await axios.post('/api/clear-project-results', {
-                    projectPath: projectPath.value
+                    projectPath: projectPath.value,
+                    project_id: projectId
                 });
                 
                 if (response.data.status === 'success') {
@@ -1281,9 +1301,12 @@ const app = createApp({
             }
             
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 // 先清空所有结果
                 await axios.post('/api/clear-project-results', {
-                    projectPath: projectPath.value
+                    projectPath: projectPath.value,
+                    project_id: projectId
                 });
                 
                 // 刷新界面状态
@@ -1332,9 +1355,12 @@ const app = createApp({
             }
             
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 // 先清空所有结果
                 await axios.post('/api/clear-project-results', {
-                    projectPath: projectPath.value
+                    projectPath: projectPath.value,
+                    project_id: projectId
                 });
                 
                 await fetchAlignments();
@@ -1377,9 +1403,12 @@ const app = createApp({
                 return;
             }
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 // 先清空所有结果
                 await axios.post('/api/clear-project-results', {
-                    projectPath: projectPath.value
+                    projectPath: projectPath.value,
+                    project_id: projectId
                 });
                 
                 await fetchAlignments();
@@ -1554,8 +1583,10 @@ const app = createApp({
                 }
                 // 0. 代码摘要，先存入数据库
                 ElMessage.warning('正在进行代码摘要...');
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const abstractResponse = await axios.get('/api/get-code-abstract', {
-                    params: { projectPath: projectPath.value }
+                    params: { projectPath: projectPath.value, project_id: projectId }
                 });
                 const codeFileAbstract = abstractResponse.data.status === 'success' ? abstractResponse.data.data : {};
                 
@@ -1592,7 +1623,7 @@ const app = createApp({
                             codeFileAbstract: codeFileAbstract,
                             projectPath: projectPath.value
                         });
-
+                        
                         const codeRanges = alignResponse.data.status === 'success' ? alignResponse.data.codeRanges : [];
                         
                         // 构造并保存对齐关系
@@ -1601,8 +1632,9 @@ const app = createApp({
                             codeRanges: codeRanges,
                             // 保持其他字段默认
                         };
-
-                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`, alignment);
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const projectId = urlParams.get('project_id');
+                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, alignment);
 
                     } catch (err) {
                         console.error('对齐出错:', err);
@@ -1666,7 +1698,8 @@ const app = createApp({
                             codeRanges: block.codeRanges,
                             projectPath: projectPath.value
                         });
-
+                        //console.log('对齐完毕')
+                        //ElMessage.success('对齐完毕')
                         const docRanges = alignResponse.data.status === 'success' ? alignResponse.data.docRanges : [];
                         
                         // 构造并保存对齐关系
@@ -1675,8 +1708,9 @@ const app = createApp({
                             docRanges: docRanges,
                             // 保持其他字段默认
                         };
-
-                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`, alignment);
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const projectId = urlParams.get('project_id');
+                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, alignment);
 
                     } catch (err) {
                         console.error('对齐出错:', err);
@@ -1934,8 +1968,10 @@ const app = createApp({
 
             // 发送到后端保存
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}`,
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
                     newAlignment
                 );
 
@@ -2937,8 +2973,10 @@ const app = createApp({
             currentSelection.value = null;
 
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc&project_id=${projectId}`,
                     alignment
                 );
                 
@@ -2983,8 +3021,10 @@ const app = createApp({
             currentSelection.value = null;
 
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 await axios.post(
-                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc&project_id=${projectId}`,
                     alignment
                 );
                 
@@ -3125,6 +3165,8 @@ const app = createApp({
             }
 
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 // 更新问题单状态为已确认
                 const updatedIssue = { ...selectedIssue.value, status: 'confirmed' };
                 const response = await axios.put(
@@ -3154,6 +3196,8 @@ const app = createApp({
             }
 
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const updatedIssue = { ...selectedIssue.value, status: 'false_positive' };
                 const response = await axios.put(
                     `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`,
@@ -3195,6 +3239,8 @@ const app = createApp({
             }
 
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const updatedIssue = { ...issue, status: newStatus };
                 const response = await axios.put(
                     `/project/issues/${issue.id}?path=${encodeURIComponent(projectPath.value)}`,
@@ -3233,8 +3279,10 @@ const app = createApp({
             }
 
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const response = await axios.delete(
-                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`
+                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`
                 );
 
                 if (response.data.status === 'success') {
@@ -3257,8 +3305,10 @@ const app = createApp({
             }
 
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const response = await axios.delete(
-                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`
+                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`
                 );
 
                 if (response.data.status === 'success') {
@@ -3336,8 +3386,11 @@ const app = createApp({
          ***********************/
         const doRestartAlignment = async (direction) => {
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const response = await axios.post('/api/clear-code-ranges', {
-                    projectPath: projectPath.value
+                    projectPath: projectPath.value,
+                    project_id: projectId
                 });
                 
                 if (response.data.status === 'success') {
@@ -3373,10 +3426,13 @@ const app = createApp({
                     }
                 );
 
-                if (result === 'confirm') {                    
+                if (result === 'confirm') {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
                     // 调用后端清除审查结果
                     const response = await axios.post('/api/clear-review-results', {
-                        projectPath: projectPath.value
+                        projectPath: projectPath.value,
+                        project_id: projectId
                     });
                     
                     if (response.data.status === 'success') {
@@ -3471,8 +3527,10 @@ const app = createApp({
             if (newName && newName.trim() !== '' && newName.trim() !== oldName) {
                 alignment.name = newName.trim();
                 try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
                     await axios.post(
-                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc&project_id=${projectId}`,
                         alignment
                     );
                 } catch (err) {
@@ -3494,7 +3552,9 @@ const app = createApp({
                 type: 'warning'
             }).then(async () => {
                 try {
-                    await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignmentToDelete.id}`);
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignmentToDelete.id}&project_id=${projectId}`);
                     const index = alignmentResults.value.findIndex(a => a.id === alignmentToDelete.id);
                     if (index > -1) {
                         // 移除对应的高亮
@@ -3620,13 +3680,53 @@ const app = createApp({
         
         
         //==========调整对齐提示词的功能=============
-
+        
+        // 复制预设文字
+        const copyAndClose = (text) => {
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text)
+              .then(() => {
+                ElMessage.success('已复制: ' + text)
+              })
+              .catch(() => {
+                // 降级
+                const input = document.createElement('input')
+                input.value = text
+                document.body.appendChild(input)
+                input.select()
+                document.execCommand('copy')
+                document.body.removeChild(input)
+                ElMessage.success('已复制: ' + text)
+              })
+          } else {
+            // 降级
+            const input = document.createElement('input')
+            input.value = text
+            document.body.appendChild(input)
+            input.select()
+            document.execCommand('copy')
+            document.body.removeChild(input)
+            ElMessage.success('已复制: ' + text)
+          }
+        }
+        
+        
         // 执行对齐操作（使用 currentPrompt）
         async function PromptAlignment() {
           // 1. 先弹出提示词设置对话框
           showAlignPromptDialog.value = true
-          // 2. 
-
+          // 2. 加载默认提示词
+          //await loadDefaultAlignPrompt()
+        }
+        
+        
+        // 备用，可改成从后端加载
+         const loadDefaultAlignPrompt = async () => {
+          try {
+            AddAlignPrompt.value = "现在的对齐结果是错误的"
+          } catch (err) {
+            console.error('Error loading prompts:', err)
+          }
         }
 
         // 关闭对话框
@@ -3634,21 +3734,21 @@ const app = createApp({
           showAlignPromptDialog.value = false
         }
 
-        // 执行对齐（在保存或恢复后）
+        // 执行对齐（在应用后）
         async function executeAlignment() {
-          // 1. 
+          // 1. 获取用户的输入
+          const userPrompt= AddAlignPrompt.value;
           // 
           await closeAlignPromptModal()
           // 2. 执行对齐逻辑
-          await singleAlignment()
+          await singleAlignment(userPrompt)
         }
         //=======================
         
         // 单独对齐功能
-        const singleAlignment = async () => {
+        const singleAlignment = async (userPrompt) => {
             if (!contextMenu.value.selectedAlignment) return;
             const alignment = contextMenu.value.selectedAlignment;
-
             ElMessageBox({
                 title:'选择对齐方向',
                 message: `对齐操作将清除"${alignment.name}" 当前已有的对齐和审查结果。\n\n请选择以哪一方为基准进行对齐：`,
@@ -3661,25 +3761,29 @@ const app = createApp({
                 closeOnPressEscape: true
             })
             .then(async ()=>{
-                await performSingleAlignment(alignment, 'doc-to-code');
+                await performSingleAlignment(alignment, 'doc-to-code', userPrompt);
             })
             .catch(async (action) =>{
                 if(action === 'cancel'){
-                    await performSingleAlignment(alignment, 'code-to-doc');
+                    await performSingleAlignment(alignment, 'code-to-doc', userPrompt);
                 }
             });
         };
 
         // 执行单独对齐
-        const performSingleAlignment = async (alignment, direction) => {
+        const performSingleAlignment = async (alignment, direction, userPrompt) => {
             try {
+                
                 const ready = await ensureDecompositionReady();
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 if (!ready) return;
 
                 if (alignment.isReviewed) {
                     await axios.post('/api/clear-alignment-review', {
                         projectPath: projectPath.value,
-                        alignmentId: alignment.id
+                        alignmentId: alignment.id,
+                        project_id: projectId
                     });
                 }
 
@@ -3690,10 +3794,32 @@ const app = createApp({
                 };
 
                 if (direction === 'doc-to-code') {
-                    const alignResponse = await axios.post('/api/align-requirement-to-project', {
+                    //console.log("用户输入的提示词是3：", userPrompt)
+                    //return;
+                    // 0. 代码摘要，先存入数据库
+                    ElMessage.warning('正在进行代码摘要...');
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    const abstractResponse = await axios.get('/api/get-code-abstract', {
+                        params: { projectPath: projectPath.value, project_id: projectId }
+                    });
+                    const codeFileAbstract = abstractResponse.data.status === 'success' ? abstractResponse.data.data : {};
+                    
+                    // 1. 调用后端对齐接口
+                    const alignResponse = await axios.post('/api/align-requirement-to-project-addprompt', {
+                        docRanges: updatedAlignment.docRanges || [],
+                        codeRanges: updatedAlignment.codeRanges || [],
+                        codeFileAbstract: codeFileAbstract,
+                        projectPath: projectPath.value,
+                        userInputPrompt: userPrompt //增加用户的输入作为提示词
+                    });
+                    
+                    /* const alignResponse = await axios.post('/api/align-requirement-to-project', {
                         docRanges: updatedAlignment.docRanges || [],
                         projectPath: projectPath.value
-                    });
+                    }); */
+                    
+                    
                     if (!alignResponse.data || alignResponse.data.status !== 'success') {
                         throw new Error(alignResponse.data?.message || '需求 → 代码 对齐失败');
                     }
@@ -3708,8 +3834,9 @@ const app = createApp({
                     }
                     updatedAlignment.docRanges = alignResponse.data.docRanges || [];
                 }
-
-                await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}`, updatedAlignment);
+                urlParams = new URLSearchParams(window.location.search);
+                projectId = urlParams.get('project_id');
+                await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, updatedAlignment);
                 
                 // 刷新对齐数据
                 await fetchAlignments();
@@ -3730,7 +3857,16 @@ const app = createApp({
           // 1. 先弹出提示词设置对话框
           showReviewPromptDialog.value = true
           // 2. 加载默认提示词
-          // await loadDefaultReviewPrompt()
+           //await loadDefaultReviewPrompt()
+        }
+        
+        // 备用，可改成从后端加载
+         const loadDefaultReviewPrompt = async () => {
+          try {
+            AddReviewPrompt.value = "现在的审查结果是错误的"
+          } catch (err) {
+            console.error('Error loading prompts:', err)
+          }
         }
 
         // 关闭对话框
@@ -3738,18 +3874,19 @@ const app = createApp({
           showReviewPromptDialog.value = false
         }
 
-        // 执行审查（在保存或恢复后）
+        // 执行审查（在应用后）
         async function executeReview() {
-          // 1. 
+          // 1. 获取用户的输入
+          const userPrompt= AddReviewPrompt.value;
 
           // 2. 执行对齐逻辑
-          await singleReview()
+          await singleReview(userPrompt)
         }
         //=======================
         
         
         // 单独审查功能
-        const singleReview = async () => {
+        const singleReview = async (userPrompt) => {
             if (!contextMenu.value.selectedAlignment) return;
             const alignment = contextMenu.value.selectedAlignment;
 
@@ -3771,11 +3908,14 @@ const app = createApp({
                     }
                 ).then(async () => {
                     try {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const projectId = urlParams.get('project_id');
                         // First clear previous review results for this alignment
                         const resp = await axios.post('/api/clear-alignment-review', {
                             projectPath: projectPath.value,
                             docFile: selectedDocFile.value,
-                            alignmentId: alignment.id
+                            alignmentId: alignment.id,
+                            project_id: projectId
                         });
 
                         if (resp.data && resp.data.status === 'success') {
@@ -3791,28 +3931,38 @@ const app = createApp({
                         await fetchIssues();
 
                         // Then perform re-review
-                        await performSingleReview(alignment);
+                        await performSingleReview(alignment, userPrompt);
                     } catch (err) {
                         console.error('清理并重新审查失败:', err);
                         ElMessage.error(`清理或重新审查失败: ${err.message}`);
                     }
                 }).catch(() => {});
             } else {
-                await performSingleReview(alignment);
+                await performSingleReview(alignment, userPrompt);
             }
         };
 
         // 执行单独审查
-        const performSingleReview = async (alignment) => {
+        const performSingleReview = async (alignment, userPrompt) => {
             try {
                 ElMessage.info(`开始为 "${alignment.name}" 进行审查...`);
-                
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 // 调用后端审查API
-                await axios.post('/api/review-alignment', {
+                await axios.post('/api/review-alignment-addprompt', {
+                    projectPath: projectPath.value,
+                    docFile: selectedDocFile.value,
+                    alignment: alignment,
+                    project_id: projectId,
+                    userInputPrompt: userPrompt //增加用户的输入作为提示词
+                });
+                
+                
+               /*  await axios.post('/api/review-alignment', {
                     projectPath: projectPath.value,
                     docFile: selectedDocFile.value,
                     alignment: alignment
-                });
+                }); */
                 
                 // 刷新对齐数据
                 await fetchAlignments();
@@ -3855,7 +4005,9 @@ const app = createApp({
                 const idx = alignmentResults.value.indexOf(alignment);
                 if (idx !== -1) {
                     try {
-                        await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignment.id}`);
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const projectId = urlParams.get('project_id');
+                        await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignment.id}&project_id=${projectId}`);
                         alignmentResults.value.splice(idx, 1);
                         await fetchAlignments(); // Fetch alignments again to sync state
                     } catch (err) {
@@ -3865,8 +4017,10 @@ const app = createApp({
                 }
             } else {
                 try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
                     await axios.post(
-                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc`,
+                        `/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(selectedDocFile.value)}&kind=doc&project_id=${projectId}`,
                         alignment
                     );
                     // 重新获取对齐关系以更新状态
@@ -3935,11 +4089,14 @@ const app = createApp({
         const saveIssue = async (issue) => {
             issue._isEditing = false; // Exit edit mode
             try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 const response = await axios.post('/project/issue/update', {
                     path: projectPath.value,
                     issueId: issue.id,
                     description: issue.description,
-                    level: issue.level
+                    level: issue.level,
+                    project_id: projectId
                 });
                 if (response.data.status === 'success') {
                 } else {
@@ -3971,8 +4128,10 @@ const app = createApp({
                 );
 
                 if (result === 'confirm') {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
                     const response = await axios.delete(
-                        `/project/issues/${issue.id}?path=${encodeURIComponent(projectPath.value)}`
+                        `/project/issues/${issue.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`
                     );
 
                     if (response.data.status === 'success') {
@@ -4005,9 +4164,10 @@ const app = createApp({
                     ElMessage.error('问题单缺少关联的文档信息');
                     return;
                 }
-
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
                 // 使用新的API端点加载对齐关系数据
-                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFilename)}&kind=doc`);
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFilename)}&kind=doc&project_id=${projectId}`);
                 if (response.data.status === 'success') {
                     const alignments = response.data.data || {};
 
@@ -4902,16 +5062,21 @@ const app = createApp({
             openPromptDialog,
             loadDefaultPrompt,
             closePromptModal,//设置提示词
+            copyAndClose,
             PromptAlignment,
+            AddAlignPrompt,
             showAlignPromptDialog,
             closeAlignPromptModal,
             executeAlignment,//对齐
             PromptReview,
+            loadDefaultAlignPrompt,
             showReviewPromptDialog,
             singleReview,
+            AddReviewPrompt,
             closeReviewPromptModal,
             executeReview,//审查
             showReviewDialog,
+            loadDefaultReviewPrompt,
             selectedReviewAlignment,
             showReviewResult,
             getIssueById,

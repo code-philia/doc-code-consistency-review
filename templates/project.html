@@ -909,26 +909,43 @@
         
         <!-- 对齐提示词设置弹窗 -->
         <el-dialog
-            v-model="showAlignPromptDialog"
-            title="对齐提示词设置"
-            width="60%"
-            top="2vh"
-            :close-on-click-modal="false"
+          v-model="showAlignPromptDialog"
+          title="对齐提示词设置"
+          width="60%"
+          top="2vh"
+          :close-on-click-modal="false"
+          @close="onClose"
         >
-            <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
-                <i class="fas fa-info-circle"></i> 可选，编辑提示词，用于优化对齐质量。
+          <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+            <i class="fas fa-info-circle"></i> 可选，编辑提示词，用于优化对齐质量。
+          </div>
+
+          <!-- 输入框 -->
+          <el-input
+            v-model="AddAlignPrompt"
+            type="textarea"
+            :rows="10"
+            placeholder="请输入提示词..."
+            style="margin-bottom: 15px;"
+          ></el-input>
+
+          <!-- 可复制的两行提示 -->
+          <div style="margin-bottom: 15px; font-size: 14px; color: #666; border: 1px dashed #f00; padding: 10px; background-color: #fff5f5; border-radius: 6px;">
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <span style="flex: 1;">你的对齐结果错误</span>
+              <el-button @click="copyAndClose('你的对齐结果错误')" type="primary" size="small" style="margin-left: 10px; font-size: 12px;">复制</el-button>
             </div>
-            <el-input
-                v-model="AddAlignPrompt"
-                type="textarea"
-                :rows="10"
-                placeholder="请输入提示词..."
-                style="margin-bottom: 15px;"
-            ></el-input>
-            <template #footer>
-                <el-button @click="closeAlignPromptModal">关闭</el-button>
-                <el-button @click="executeAlignment" type="success" style="margin-left: 10px;">应用并对齐</el-button>
-            </template>
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+              <span style="flex: 1;">你的对齐结果不完整，缺少了...</span>
+              <el-button @click="copyAndClose('你的对齐结果不完整，缺少了...')" type="primary" size="small" style="margin-left: 10px; font-size: 12px;">复制</el-button>
+            </div>
+          </div>
+
+          <!-- 底部按钮 -->
+          <template #footer>
+            <el-button @click="closeAlignPromptModal">关闭</el-button>
+            <el-button @click="executeAlignment" type="success" style="margin-left: 10px;">应用并对齐</el-button>
+          </template>
         </el-dialog>
         
         <!-- 审查提示词设置弹窗 -->
@@ -949,6 +966,20 @@
                 placeholder="请输入提示词..."
                 style="margin-bottom: 15px;"
             ></el-input>
+            
+            <!-- 可复制的两行提示 -->
+            <div style="margin-bottom: 15px; font-size: 14px; color: #666; border: 1px dashed #f00; padding: 10px; background-color: #fff5f5; border-radius: 6px;">
+              <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <span style="flex: 1;">你的审查结果错误</span>
+                <el-button @click="copyAndClose('你的审查结果错误')" type="primary" size="small" style="margin-left: 10px; font-size: 12px;">复制</el-button>
+              </div>
+              <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <span style="flex: 1;">你审查的代码缺陷有缺失，缺少了...</span>
+                <el-button @click="copyAndClose('你审查的代码缺陷有缺失，缺少了...')" type="primary" size="small" style="margin-left: 10px; font-size: 12px;">复制</el-button>
+              </div>
+            </div>               
+            
+            <!-- 底部按钮 -->
             <template #footer>
                 <el-button @click="closeReviewPromptModal">关闭</el-button>
                 <el-button @click="executeReview" type="success" style="margin-left: 10px;">应用并审查</el-button>

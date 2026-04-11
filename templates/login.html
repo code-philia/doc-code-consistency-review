@@ -135,7 +135,7 @@
       const password = document.getElementById('password').value;
 
       // 发送 POST 请求到后端
-      fetch('/login/password', {
+      const response = fetch('/login/password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,43 +145,45 @@
           password: password
         })
       })
+
       .then(response => response.json())
       .then(data => {
         if (data.success) {
           //alert('登录成功！');
-          window.location.href = '/welcome'; // 跳转到主页
+          window.location.href = data.redirect_url; // 跳转到主页
         } else {
           document.getElementById('message').innerText = data.message || '登录失败';
           document.getElementById('message').style.display = 'block';
         }
       })
-      .catch(err => {
-        document.getElementById('message').innerText = '网络错误，请重试';
-        document.getElementById('message').style.display = 'block';
-      });
-    }
+      }
+<!--      .catch(err => {-->
+<!--        document.getElementById('message').innerText = '网络错误，请重试';-->
+<!--        document.getElementById('message').style.display = 'block';-->
+<!--      });-->
+<!--    }-->
 
     async function submitIpLogin() {
       const messageDiv = document.getElementById('message');
       messageDiv.style.display = 'none';
 
       // 获取用户 IP（通过后端接口）
-      const ip = await getIp();
-      console.log("用户 IP:", ip);
+<!--      const ip = await getIp();-->
+<!--      console.log("用户 IP:", ip);-->
 
       // 发送 IP 到后端验证
       fetch('/login/ip', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ip: ip })
+<!--        headers: {-->
+<!--          'Content-Type': 'application/json',-->
+<!--        },-->
+<!--        body: JSON.stringify({ ip: ip })-->
       })
       .then(response => response.json())
       .then(data => {
         if (data.success) {
           //alert('IP 登录成功！');
-          window.location.href = '/welcome'; // 跳转到主页
+          window.location.href = data.redirect_url; // 跳转到主页
         } else {
           messageDiv.innerText = data.message || 'IP 登录失败';
           messageDiv.style.display = 'block';

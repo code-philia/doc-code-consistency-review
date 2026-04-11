@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/static/css/welcome.css">
     <link rel="stylesheet" href="/static/js/thirdParty/element/index.css">
     <link rel="stylesheet" href="/static/js/thirdParty/element/index.iife.min.js">
+    <link rel="stylesheet" href="/static/css/style.css">
 
     <script src="/static/js/thirdParty/vue.global.js"></script>
     <script src="/static/js/thirdParty/auto-render.min.js"></script>
@@ -24,6 +25,14 @@
             <i class="fas fa-code-branch"></i>
         </div>
         <h1 class="title">需求与代码一致性审查平台</h1>
+        <div class="user-info">
+            {% if current_user.is_authenticated %}
+                欢迎, {{ current_user.username }}
+                <a href="{{ url_for('user.logout') }}" class="logout-btn">登出</a>
+            {% else %}
+                <a href="{{ url_for('user.login') }}">登录</a>
+            {% endif %}
+        </div>
     </header>
     
     <div class="main-container">
