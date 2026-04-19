@@ -2382,6 +2382,12 @@ const app = createApp({
 
         // 处理新高亮块的点击事件
         const handleHighlightBlockClick = async (event) => {
+            // 若当前存在真实文本选中，则优先文本操作，不触发块联动跳转
+            const selectedText = window.getSelection()?.toString() || '';
+            if (selectedText.trim() !== '') {
+                return;
+            }
+
             const target = getHighlightBlockAtEvent(event);
             if (!target) return;
 
