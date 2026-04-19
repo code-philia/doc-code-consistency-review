@@ -2486,6 +2486,11 @@ const app = createApp({
             currentDocBlockIndex.value = docIndex;
             currentCodeBlockIndex.value = codeIndex;
 
+            // 右键或反向联动时也要确保对应列表项展开
+            if (!expandedAlignmentIds.value.includes(alignment.id)) {
+                expandedAlignmentIds.value.push(alignment.id);
+            }
+
             statusFilters.value = ['unaligned', 'unreviewed', 'reviewed'];
             await nextTick();
             scrollToAlignmentInSidebar(alignment.id);
@@ -2626,7 +2631,8 @@ const app = createApp({
 
         const clearAlignmentYellow = () => {
             if (linkedAlignmentIdPersist) {
-                const el = document.getElementById(`alignment-item-${linkedAlignmentIdPersist}`);
+                const container = document.getElementById(`alignment-item-${linkedAlignmentIdPersist}`);
+                const el = container?.querySelector('.alignment-list-item') || container;
                 if (el) el.classList.remove('linked-yellow');
                 linkedAlignmentIdPersist = null;
             }
@@ -2648,7 +2654,8 @@ const app = createApp({
 
         const applyAlignmentYellow = (alignmentId) => {
             clearAlignmentYellow();
-            const el = document.getElementById(`alignment-item-${alignmentId}`);
+            const container = document.getElementById(`alignment-item-${alignmentId}`);
+            const el = container?.querySelector('.alignment-list-item') || container;
             if (el) {
                 el.classList.add('linked-yellow');
                 linkedAlignmentIdPersist = alignmentId;
