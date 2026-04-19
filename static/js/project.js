@@ -48,7 +48,12 @@ const app = createApp({
         const urlParams = new URLSearchParams(window.location.search);
         const projectName = ref(urlParams.get('name') || '未命名项目');
         const projectPath = ref(urlParams.get('path') || '未知路径');
-
+        const taskId = ref(null);
+        const pollingTimer = ref(null);
+        const pollingTimerReview = ref(null);
+        const pollCount = ref(0);
+        const pollCountReview = ref(0);
+        const MAX_POLL_COUNT = 200;
         const projectFiles = ref({
             code_files: [],
             doc_files: [],
@@ -781,6 +786,67 @@ const app = createApp({
         /***********************
          * 自动审查功能
          ***********************/
+
+        // 查询进度
+        const getReviewProgress = async () => {
+            if (!taskId.value) {
+                clearInterval(pollingTimerReview.value)
+                pollingTimerReview.value = null
+                isAutoAligning.value = false;
+                reviewProgress.value = { current: 0, total: 0 };
+                stopProgress();
+                return
+            }
+
+
+            if (pollCountReview.value >= MAX_POLL_COUNT) {
+                ElMessage.info('轮询次数已达上限，已停止轮询');
+                clearInterval(pollingTimerReview.value)
+                pollingTimerReview.value = null
+                isAutoAligning.value = false;
+                reviewProgress.value = { current: 0, total: 0 };
+                stopProgress();
+                return
+            }
+            try {
+                const response = await axios.get(`/get-progress/${taskId.value}`);
+
+                if (response.data.meta?.current === 1) {
+                    startProgress('自动审查', response.data.meta?.total);
+                }
+
+                if (response.data.code === 0) {
+                    const current = response.data.meta?.current || 0
+                    updateProgress(current, response.data.meta?.name || 'Unknown');
+                    reviewProgress.value.current = current
+//                    if (response.data.meta?.current === response.data.meta?.total){
+//                        stopProgress();
+//                        reviewProgress.value = { current: 0, total: response.data.meta?.total };
+//                        startProgress('自动审查', response.data.meta?.total);
+//                    }
+
+                    if (response.data.state === 'SUCCESS' || response.data.state === 'FAILURE'){
+                        clearInterval(pollingTimerReview.value)
+                        pollingTimerReview.value = null
+                        await fetchAllAlignments();
+                        isAutoAligning.value = false;
+                        reviewProgress.value = { current: 0, total: 0 };
+                        stopProgress();
+                        ElMessage.success('审查完成！');
+                    }
+                }
+            } catch (error) {
+                clearInterval(pollingTimerReview.value)
+                pollingTimerReview.value = null
+                isAutoAligning.value = false;
+                reviewProgress.value = { current: 0, total: 0 };
+                stopProgress();
+                ElMessage.warning(`查询进度失败: ${error.message}`);
+            } finally {
+                pollCountReview.value++
+            }
+        }
+
         const startAutoReview = async () => {
             if (isAutoReviewing.value) {
                 ElMessage.warning('自动审查正在进行中，请稍候...');
@@ -803,7 +869,7 @@ const app = createApp({
                     });
                 });
 
-                reviewProgress.value.total = unreviewed.length;
+//                reviewProgress.value.total = unreviewed.length;
                 
                 // 按文档分组处理
                 const groupedByDoc = {};
@@ -814,67 +880,78 @@ const app = createApp({
                     groupedByDoc[docFile].push(alignment);
                 });
 
-                for (const [docFile, alignments] of Object.entries(groupedByDoc)) {
-                    // 检查是否需要中断
-                    if (!isAutoReviewing.value) {
-                        break;
-                    }
+//                for (const [docFile, alignments] of Object.entries(groupedByDoc)) {
+//                    // 检查是否需要中断
+//                    if (!isAutoReviewing.value) {
+//                        break;
+//                    }
 
-                    // 启动当前文档的进度显示
-                    startProgress('自动审查', alignments.length);
+                // 启动当前文档的进度显示
+//                startProgress('自动审查', unreviewed.length);
+                // 更新进度显示
+//                    updateProgress(i, docFile);
 
-                    for (let i = 0; i < alignments.length; i++) {
-                        const alignment = alignments[i];
-                        
-                        // 检查是否需要中断
-                        if (!isAutoReviewing.value) {
-                            break;
-                        }
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                // 调用后端进行审查
+                const reviewResponse = await axios.post('/api/review-alignment', {
+                    projectPath: projectPath.value,
+//                    docFile: docFile,
+//                    alignments: alignments,
+                    project_id: projectId,
+                    requirement_files: groupedByDoc
+                });
 
-                        reviewProgress.value.current++;
-                        
-                        // 更新进度显示
-                        updateProgress(i, docFile);
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const projectId = urlParams.get('project_id');
-                        // 调用后端进行审查
-                        await axios.post('/api/review-alignment', {
-                            projectPath: projectPath.value,
-                            docFile: docFile,
-                            alignment: alignment,
-                            project_id: projectId
-                        });
+                if (reviewResponse.data.status === 'success'){
+                taskId.value = reviewResponse.data.task_id;
+                // 开始轮询进度
+                pollingTimerReview.value = setInterval(getReviewProgress, 2000);
+                } else {
+                ElMessage.warning('任务启动失败')
+                }
 
-                        // 实时更新统计数据
-                        await fetchAllAlignments();
-
-                        // 如果当前审查的对齐关系属于当前选中的文档，实时更新右侧面板
-                        if (docFile === selectedDocFile.value) {
-                            await fetchAlignments();
-                        }
-
-                        // 添加延迟以模拟处理时间
-                        await new Promise(resolve => setTimeout(resolve, 800));
-                    }
+//                    for (let i = 0; i < alignments.length; i++) {
+//                        const alignment = alignments[i];
+//
+//                        // 检查是否需要中断
+//                        if (!isAutoReviewing.value) {
+//                            break;
+//                        }
+//
+//                        reviewProgress.value.current++;
+//
+//
+//
+//                        // 实时更新统计数据
+//                        await fetchAllAlignments();
+//
+//                        // 如果当前审查的对齐关系属于当前选中的文档，实时更新右侧面板
+//                        if (docFile === selectedDocFile.value) {
+//                            await fetchAlignments();
+//                        }
+//
+//                        // 添加延迟以模拟处理时间
+//                        await new Promise(resolve => setTimeout(resolve, 800));
+//                    }
 
                     // 停止当前文档的进度显示
-                    stopProgress();
-                }
+//                    stopProgress();
+//                }
 
                 // 重新加载所有对齐数据和问题单
                 await fetchAllAlignments();
                 await fetchAlignments(); // 确保右侧面板显示最新状态
                 await fetchIssues();
 
-                ElMessage.success(`自动审查完成！`);
+//                ElMessage.success(`自动审查完成！`);
             } catch (error) {
                 console.error('自动审查过程中出现错误:', error);
                 ElMessage.error(`自动审查失败: ${error.message}`);
             } finally {
-                isAutoReviewing.value = false;
-                reviewProgress.value = { current: 0, total: 0 };
+//                isAutoReviewing.value = false;
+//                reviewProgress.value = { current: 0, total: 0 };
                 // 停止进度显示
-                stopProgress();
+//                stopProgress();
             }
         };
 
@@ -1569,6 +1646,52 @@ const app = createApp({
             isAutoAligning.value = false;
         };
 
+        // 查询进度
+        const getProgress = async () => {
+            if (!taskId.value) {
+                clearInterval(pollingTimer.value)
+                pollingTimer.value = null
+                isAutoAligning.value = false;
+                stopProgress();
+                return
+            }
+            pollCount.value++
+            if (pollCount.value >= MAX_POLL_COUNT) {
+                ElMessage.info('轮询次数已达上限，已停止轮询');
+                clearInterval(pollingTimer.value)
+                pollingTimer.value = null
+                isAutoAligning.value = false;
+                stopProgress();
+                return
+            }
+            try {
+                const response = await axios.get(`/get-progress/${taskId.value}`);
+
+                if (response.data.code === 0) {
+                    const current = response.data.meta?.current || 0
+                    updateProgress(current, response.data.meta?.name || 'Unknown');
+                    alignmentProgress.value.current = current
+
+                    if (response.data.state === 'SUCCESS' || response.data.state === 'FAILURE'){
+                        clearInterval(pollingTimer.value)
+                        pollingTimer.value = null
+                        await fetchAllAlignments();
+                        isAutoAligning.value = false;
+                        stopProgress();
+                        ElMessage.success('对齐完成！');
+                    }
+                }
+            } catch (error) {
+                clearInterval(pollingTimer.value)
+                pollingTimer.value = null
+                isAutoAligning.value = false;
+                stopProgress();
+                ElMessage.warning(`查询进度失败: ${error.message}`);
+            } finally {
+
+            }
+        }
+
         const startAutoAlignmentReqToCode = async () => {
             if (isAutoAligning.value) return;
             isAutoAligning.value = true;
@@ -1581,76 +1704,90 @@ const app = createApp({
                     stopProgress();
                     return;
                 }
-                // 0. 代码摘要，先存入数据库
-                ElMessage.warning('正在进行代码摘要...');
-                const urlParams = new URLSearchParams(window.location.search);
-                const projectId = urlParams.get('project_id');
-                const abstractResponse = await axios.get('/api/get-code-abstract', {
-                    params: { projectPath: projectPath.value, project_id: projectId }
-                });
-                const codeFileAbstract = abstractResponse.data.status === 'success' ? abstractResponse.data.data : {};
-                
-                
-                // 1. 获取需求分块
+                 // 0. 获取需求分块
                 const chunksResponse = await axios.get('/api/get-requirement-chunks', {
                     params: { projectPath: projectPath.value }
                 });
                 const requirements = chunksResponse.data.data || [];
-                
+
                 if (requirements.length === 0) {
                     ElMessage.warning('未找到需求分块，请检查需求分解结果');
                     isAutoAligning.value = false;
                     return;
                 }
 
+                // 1. 代码摘要，先存入数据库
+                ElMessage.warning('正在进行代码摘要...');
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const abstractResponse = await axios.post('/api/get-code-abstract', {
+                    projectPath: projectPath.value,
+                    project_id: projectId,
+                    requirements: requirements
+                });
+//                const codeFileAbstract = abstractResponse.data.status === 'success' ? abstractResponse.data.data : {};
+
                 // 初始化进度
                 startProgress('自动对齐 (需求 → 代码)', requirements.length);
                 alignmentProgress.value.total = requirements.length;
                 alignmentProgress.value.current = 0;
 
-                // 2. 遍历处理
-                for (let i = 0; i < requirements.length; i++) {
-                    if (!isAutoAligning.value) break;
-
-                    const req = requirements[i];
-                    updateProgress(i, req.docRanges[0]?.filename || 'Unknown');
-                    alignmentProgress.value.current++;
-
-                    try {
-                        // 调用对齐API
-                        const alignResponse = await axios.post('/api/align-requirement-to-project', {
-                            docRanges: req.docRanges,
-                            codeFileAbstract: codeFileAbstract,
-                            projectPath: projectPath.value
-                        });
-                        
-                        const codeRanges = alignResponse.data.status === 'success' ? alignResponse.data.codeRanges : [];
-                        
-                        // 构造并保存对齐关系
-                        const alignment = {
-                            ...req,
-                            codeRanges: codeRanges,
-                            // 保持其他字段默认
-                        };
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const projectId = urlParams.get('project_id');
-                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, alignment);
-
-                    } catch (err) {
-                        console.error('对齐出错:', err);
-                    }
-                    
-                    if (i % 5 === 0) await nextTick();
+                if (abstractResponse.data.status === 'success'){
+                    taskId.value = abstractResponse.data.task_id;
+                    // 开始轮询进度
+                    pollingTimer.value = setInterval(getProgress, 2000);
+                } else {
+                    ElMessage.warning('任务启动失败')
                 }
 
-                await fetchAllAlignments();
-                ElMessage.success('需求 → 代码 对齐完成！');
+                // 2. 遍历处理
+//                for (let i = 0; i < requirements.length; i++) {
+//                    if (!isAutoAligning.value) break;
+//
+//                    const req = requirements[i];
+//                    updateProgress(i, req.docRanges[0]?.filename || 'Unknown');
+//                    alignmentProgress.value.current++;
+//
+//                    try {
+//                        const params = new URLSearchParams(window.location.search);
+//                        const project_Id = params.get('project_id');
+//                        const alignment = {...req}
+//                        // 调用对齐API
+//                        const alignResponse = await axios.post('/api/align-requirement-to-project', {
+//                            docRanges: req.docRanges,
+//                            codeFileAbstract: codeFileAbstract,
+//                            projectPath: projectPath.value,
+//                            project_id: project_Id,
+//                            alignment: alignment
+//                        });
+//
+//                        // const codeRanges = alignResponse.data.status === 'success' ? alignResponse.data.codeRanges : [];
+//
+//                        // 构造并保存对齐关系
+//                        // const alignment = {
+//                            // ...req,
+//                            // codeRanges: codeRanges,
+//                            // 保持其他字段默认
+//                        // };
+//                        // const urlParams = new URLSearchParams(window.location.search);
+//                        // const projectId = urlParams.get('project_id');
+//                        // await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, alignment);
+//
+//                    } catch (err) {
+//                        console.error('对齐出错:', err);
+//                    }
+//
+//                    if (i % 5 === 0) await nextTick();
+//                }
+
+//                await fetchAllAlignments();
+//                ElMessage.success('需求 → 代码 对齐完成！');
 
             } catch (error) {
                 ElMessage.error(`对齐失败: ${error.message}`);
             } finally {
-                isAutoAligning.value = false;
-                stopProgress();
+//                isAutoAligning.value = false;
+//                stopProgress();
             }
         };
 
@@ -1679,54 +1816,70 @@ const app = createApp({
                     return;
                 }
 
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const abstractResponse = await axios.post('/api/align-code-to-requirement-for', {
+                    projectPath: projectPath.value,
+                    project_id: projectId,
+                    codeBlocks: codeBlocks
+                });
+
                 // 初始化进度
                 startProgress('自动对齐 (代码 → 需求)', codeBlocks.length);
                 alignmentProgress.value.total = codeBlocks.length;
                 alignmentProgress.value.current = 0;
 
-                // 2. 遍历处理
-                for (let i = 0; i < codeBlocks.length; i++) {
-                    if (!isAutoAligning.value) break;
-
-                    const block = codeBlocks[i];
-                    updateProgress(i, block.codeRanges[0]?.filename || 'Unknown');
-                    alignmentProgress.value.current++;
-
-                    try {
-                        // 调用对齐API
-                        const alignResponse = await axios.post('/api/align-code-to-requirement', {
-                            codeRanges: block.codeRanges,
-                            projectPath: projectPath.value
-                        });
-                        //console.log('对齐完毕')
-                        //ElMessage.success('对齐完毕')
-                        const docRanges = alignResponse.data.status === 'success' ? alignResponse.data.docRanges : [];
-                        
-                        // 构造并保存对齐关系
-                        const alignment = {
-                            ...block,
-                            docRanges: docRanges,
-                            // 保持其他字段默认
-                        };
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const projectId = urlParams.get('project_id');
-                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, alignment);
-
-                    } catch (err) {
-                        console.error('对齐出错:', err);
-                    }
-                    
-                    if (i % 5 === 0) await nextTick();
+                if (abstractResponse.data.status === 'success'){
+                    taskId.value = abstractResponse.data.task_id;
+                    // 开始轮询进度
+                    pollingTimer.value = setInterval(getProgress, 2000);
+                } else {
+                    ElMessage.warning('任务启动失败')
                 }
 
-                await fetchAllAlignments();
-                ElMessage.success('代码 → 需求 对齐完成！');
+                // 2. 遍历处理
+//                for (let i = 0; i < codeBlocks.length; i++) {
+//                    if (!isAutoAligning.value) break;
+//
+//                    const block = codeBlocks[i];
+//                    updateProgress(i, block.codeRanges[0]?.filename || 'Unknown');
+//                    alignmentProgress.value.current++;
+//
+//                    try {
+//                        // 调用对齐API
+//                        const alignResponse = await axios.post('/api/align-code-to-requirement', {
+//                            codeRanges: block.codeRanges,
+//                            projectPath: projectPath.value
+//                        });
+//                        //console.log('对齐完毕')
+//                        //ElMessage.success('对齐完毕')
+//                        const docRanges = alignResponse.data.status === 'success' ? alignResponse.data.docRanges : [];
+//
+//                        // 构造并保存对齐关系
+//                        const alignment = {
+//                            ...block,
+//                            docRanges: docRanges,
+//                            // 保持其他字段默认
+//                        };
+//                        const urlParams = new URLSearchParams(window.location.search);
+//                        const projectId = urlParams.get('project_id');
+//                        await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, alignment);
+//
+//                    } catch (err) {
+//                        console.error('对齐出错:', err);
+//                    }
+//
+//                    if (i % 5 === 0) await nextTick();
+//                }
+
+//                await fetchAllAlignments();
+//                ElMessage.success('代码 → 需求 对齐完成！');
 
             } catch (error) {
                 ElMessage.error(`对齐失败: ${error.message}`);
             } finally {
-                isAutoAligning.value = false;
-                stopProgress();
+//                isAutoAligning.value = false;
+//                stopProgress();
             }
         };
 
@@ -3129,9 +3282,11 @@ const app = createApp({
                 );
 
                 if (result === 'confirm') {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
                     // 调用后端API删除项目
-                    const response = await axios.post('/project/delete', {
-                        path: projectPath.value
+                    const response = await axios.delete('/project/delete', {
+                        data: {path: projectPath.value, project_id: projectId}
                     });
                     
                     if (response.data.status === 'success') {
@@ -3811,7 +3966,8 @@ const app = createApp({
                         codeRanges: updatedAlignment.codeRanges || [],
                         codeFileAbstract: codeFileAbstract,
                         projectPath: projectPath.value,
-                        userInputPrompt: userPrompt //增加用户的输入作为提示词
+                        userInputPrompt: userPrompt,  //增加用户的输入作为提示词
+                        project_id: projectId
                     });
                     
                     /* const alignResponse = await axios.post('/api/align-requirement-to-project', {
@@ -3824,7 +3980,8 @@ const app = createApp({
                         throw new Error(alignResponse.data?.message || '需求 → 代码 对齐失败');
                     }
                     updatedAlignment.codeRanges = alignResponse.data.codeRanges || [];
-                } else {
+                }
+                else {
                     const alignResponse = await axios.post('/api/align-code-to-requirement', {
                         codeRanges: updatedAlignment.codeRanges || [],
                         projectPath: projectPath.value
@@ -4379,10 +4536,13 @@ const app = createApp({
                     codeContent += `文件: ${codeRange.filename}\n`;
                     codeContent += `代码:\n${codeRange.content}\n\n`;
                 }
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
 
                 const response = await axios.post('/api/generate-reverse-requirement', {
                     requirementContent: requirementContent,
-                    codeContent: codeContent
+                    codeContent: codeContent,
+                    project_id: projectId
                 });
 
                 if (response.data.status === 'success') {

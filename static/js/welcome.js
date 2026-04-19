@@ -463,8 +463,9 @@ const app = createApp({
             if (!contextMenu.project) return;
             
             try {
-                await axios.delete('/project/history', {
-                    data: { path: contextMenu.project.path }
+                const project_id = getProjectId(contextMenu.project);
+                await axios.delete('/project/delete', {
+                    data: { path: contextMenu.project.path, project_id: project_id }
                 });
                 await fetchRecentProjects(); // 刷新列表
             } catch (err) {
