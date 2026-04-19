@@ -9,46 +9,44 @@ from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PRO
 from .prompt import Combine_Align_UserPrompt, Combine_Review_UserPrompt
 from openai import OpenAI
 from .utils import chunk_list
-#from .request_llm import RequestLLM
-from . import get_db, get_db_celery
+from . import get_db_celery
 
-# from rag_chroma import rag_engine
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8002/v1")
 API_KEY = os.environ.get("API_KEY", "0")
-
-# API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8002/v1")
-# MODEL_NAME = "Qwen/Qwen3-8B"
-
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-MODEL_NAME = "Qwen3-32B"
-
+MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
 
 def query_llm(message, history=None):
     client = OpenAI(
         api_key=API_KEY,
         base_url=API_BASE_URL,
     )
-    
-    prompt_parts = []
+
+    messages = []
     if history:
         for turn in history:
             role = turn.get("role", "user")
-            content = turn.get("content", "")
-            prompt_parts.append(f"{role.upper()}: {content}")
-    prompt_parts.append(f"USER: {message}\nASSISTANT:")
-    prompt = "\n".join(prompt_parts)
-    
-    resp = client.completions.create(
+            if role not in ("system", "user", "assistant"):
+                role = "user"
+            messages.append({
+                "role": role,
+                "content": str(turn.get("content", ""))
+            })
+
+    messages.append({"role": "user", "content": str(message)})
+
+    resp = client.chat.completions.create(
         model=MODEL_NAME,
-        prompt=prompt,
+        messages=messages,
         temperature=0.1,
         top_p=0.9,
         max_tokens=1024,
-        n=1,
     )
     #req = RequestLLM('')
     #res = req.request_qwen_14b_llm_output(message)
 
-    text = resp.choices[0].text
+    text = ""
+    if resp.choices and resp.choices[0].message:
+        text = resp.choices[0].message.content or ""
 
     class Resp:
         pass
