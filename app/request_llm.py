@@ -25,6 +25,8 @@ from openai import OpenAI
 class RequestLLM:
     def __init__(self, request_type):
         self.request_type = request_type
+        self.api_key = "EMPTY"
+        self.default_model = "deepseek-r1:14b"
         self.url_generate = "http://192.168.0.223:11434/v1"
         self.url_embedding = "http://192.168.0.223:11434/api/embeddings"
 
@@ -205,10 +207,10 @@ class RequestLLM:
     # 调用本地大模型
     def request_qwen_14b_llm_output(self, messages):
         try:
-            client = OpenAI(base_url=self.url_generate, api_key='EMPTY')
+            client = OpenAI(base_url=self.url_generate, api_key= self.api_key)
             chat_completion = client.chat.completions.create(
                 messages=messages,
-                model='deepseek-r1:14b',
+                model=self.default_model,
                 temperature=0,
                 top_p=0.95,
                 max_tokens=6000,
