@@ -1,7 +1,6 @@
-import sqlite3
-
 from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template
 from flask_login import UserMixin, login_user, login_required, logout_user
+
 from . import get_db
 
 user_bp = Blueprint('user', __name__)
@@ -104,3 +103,18 @@ def logout():
     logout_user()
     flash('已退出登录', 'success')
     return redirect(url_for('user.login'))
+
+
+@user_bp.route('/add/<int:x>/<int:y>')
+def add_task(x, y):
+    from tasks import add
+    result = add.delay(x, y)
+    return jsonify({"success": True, "task_id": result.id})
+
+
+@user_bp.route("/result/<task_id>")
+def task_result(task_id):
+    from tasks import celery
+    from celery.result import AsyncResult
+    task = AsyncResult(task_id, app=celery)
+    return jsonify({"status": task.state, "result": task.result if task.ready() else None})

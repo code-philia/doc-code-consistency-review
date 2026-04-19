@@ -1,15 +1,17 @@
 import os
 import re
 import json
-
+import sys
 from flask_login import current_user
 
+# from app.views import logger
 from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
 from .prompt import Combine_Align_UserPrompt, Combine_Review_UserPrompt
 from openai import OpenAI
 from .utils import chunk_list
-from .request_llm import RequestLLM
-from . import get_db
+#from .request_llm import RequestLLM
+from . import get_db, get_db_celery
+
 # from rag_chroma import rag_engine
 API_KEY = os.environ.get("API_KEY", "0")
 
@@ -21,38 +23,38 @@ MODEL_NAME = "Qwen3-32B"
 
 
 def query_llm(message, history=None):
-    # client = OpenAI(
-    #     api_key=API_KEY,
-    #     base_url=API_BASE_URL,
-    # )
-    #
-    # prompt_parts = []
-    # if history:
-    #     for turn in history:
-    #         role = turn.get("role", "user")
-    #         content = turn.get("content", "")
-    #         prompt_parts.append(f"{role.upper()}: {content}")
-    # prompt_parts.append(f"USER: {message}\nASSISTANT:")
-    # prompt = "\n".join(prompt_parts)
-    #
-    # resp = client.completions.create(
-    #     model=MODEL_NAME,
-    #     prompt=prompt,
-    #     temperature=0.1,00\、、
-    #     top_p=0.9,
-    #     max_tokens=1024,
-    #     n=1,
-    # )
-    req = RequestLLM('')
-    res = req.request_qwen_14b_llm_output(message)
+    client = OpenAI(
+        api_key=API_KEY,
+        base_url=API_BASE_URL,
+    )
+    
+    prompt_parts = []
+    if history:
+        for turn in history:
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
+            prompt_parts.append(f"{role.upper()}: {content}")
+    prompt_parts.append(f"USER: {message}\nASSISTANT:")
+    prompt = "\n".join(prompt_parts)
+    
+    resp = client.completions.create(
+        model=MODEL_NAME,
+        prompt=prompt,
+        temperature=0.1,
+        top_p=0.9,
+        max_tokens=1024,
+        n=1,
+    )
+    #req = RequestLLM('')
+    #res = req.request_qwen_14b_llm_output(message)
 
-    # text = res.choices[0].text
-    # class Resp:
-    #     pass
-    # r = Resp()
-    # r.content = text.strip()
+    text = resp.choices[0].text
 
-    return res
+    class Resp:
+        pass
+    r = Resp()
+    r.content = text.strip()
+    return r
 
 
 def parse_abstract_output(response):
@@ -225,17 +227,26 @@ def query_related_code_block(requirement, code_blocks, icl_examples=None):
         )
 
     # 解析回复
-    response = query_llm(prompt)
-    llm_output = response.content
-    # print("original llm output: ", llm_output)
-    parsed_output = parse_alignment_output(llm_output)
-    # print("parsed llm output: ", parsed_output)
-    
+    max_req = 5
+    parsed_output = ""
+    for attempt in range(max_req):
+        response = query_llm(prompt)
+        llm_output = response.content
+
+        # print("original llm output: ", llm_output)
+        try:
+            parsed_output = parse_alignment_output(llm_output)
+            # print("parsed llm output: ", parsed_output)
+            return parsed_output
+        except Exception as e:
+            print(f"第{attempt+1}次调用大模型输出解析失败")
+            print(e)
+    print('已尝试多次，无法正确输出和解析结果')        
     return parsed_output
 
-def query_related_code(requirement, code_blocks, random_flag, block_limit=None, icl_examples=None):
+def query_related_code(requirement, code_blocks, block_limit=None, icl_examples=None):
     if block_limit:
-        chunked_code_blocks = chunk_list(code_blocks, block_limit, random_flag)
+        chunked_code_blocks = chunk_list(code_blocks, block_limit)
         
         related_code_blocks = []
         for c in chunked_code_blocks:
@@ -311,7 +322,7 @@ def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, u
     response = query_llm(prompt)
     llm_output = response.content
     # print("original llm output: ", llm_output)
-    parsed_output = parse_alignment_output(llm_output)
+    parsed_output = parse_output(llm_output)
     # print("parsed llm output: ", parsed_output)
     
     return parsed_output    
@@ -356,7 +367,7 @@ def query_related_code_by_feedback(requirement, code_blocks, codeRanges, user_pr
 
 
 # ================= 对齐 查找相关需求块 =================
-def query_related_requirement_block(code, req_blocks):
+def query_related_requirement_block(code, req_blocks, user_id=None):
     """
     查询与代码最相关的需求块
     
@@ -367,13 +378,15 @@ def query_related_requirement_block(code, req_blocks):
     返回:
         相关需求块列表
     """
+    user_id = user_id if user_id else current_user.user_id
     # 构造提示词
     # template = ALIGN_REQ_PROMPT_TEMPLATE
-    db = get_db()
+    db = get_db_celery()
     c = db.cursor()
-    c.execute(f'select alignment from prompt where user_id={current_user.user_id}')
+    c.execute(f'select alignment from prompt where user_id={user_id}')
     row = c.fetchone()
     template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row[0]
+    db.close()
     prompt = template.format(
         code_content=code,
         req_content=req_blocks
@@ -383,18 +396,18 @@ def query_related_requirement_block(code, req_blocks):
     response = query_llm(prompt)
     llm_output = response.content
     print("original llm output (req): ", llm_output)
-    parsed_output = parse_alignment_output(llm_output)
+    parsed_output = parse_output(llm_output)
     print("parsed llm output (req): ", parsed_output)
     
     return parsed_output
 
-def query_related_requirement(code, req_blocks, block_limit=None):
+def query_related_requirement(code, req_blocks, block_limit=None, user_id=None):
     if block_limit:
         chunked_req_blocks = chunk_list(req_blocks, block_limit)
         
         related_req_blocks = []
         for c in chunked_req_blocks:
-            res = query_related_requirement_block(code, c)
+            res = query_related_requirement_block(code, c, user_id)
             related_req_blocks.extend(res)
         
         #print(related_req_blocks)
@@ -421,9 +434,36 @@ def query_related_requirement(code, req_blocks, block_limit=None):
         print(similarity_results)   
         return similarity_results
     else:
-        return query_related_requirement_block(code, req_blocks)
+        return query_related_requirement_block(code, req_blocks, user_id)
 
 def parse_alignment_output(response):
+    """
+    解析对齐输出的JSON
+    
+    参数:
+        response: LLM的完整响应文本
+        
+    """
+    json_match = re.search(r'```(?:json)?\s*([\[\{].*?[\]\}])\s*```', response, re.DOTALL)
+    if json_match:
+        json_str = json_match.group(1)
+    else:
+        json_match = re.search(r'([\[\{].*[\]\}])', response, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            json_str = response.strip()
+
+    data = _safe_json_loads(json_str)
+    if isinstance(data, dict):
+        return [data]
+    elif isinstance(data, list):
+        return data
+    else:
+        return []    
+        
+        
+def parse_output(response):
     """
     解析对齐输出的JSON
     
@@ -450,12 +490,13 @@ def parse_alignment_output(response):
         else:
             return []
     except (json.JSONDecodeError, AttributeError) as e:
+        print(response)
         print(f"解析对齐输出失败: {e}")
         return []
 
 
 # ================= 审查：根据用户反馈，审查相关代码 =================
-def query_review_result_by_feedback(requirement, related_code, review_thought, user_prompt, rules=None, issues=None):
+def query_review_result_by_feedback(requirement, related_code, review_thought, user_prompt, rules=None, issues=None, user_id=None):
     """
     执行代码一致性审查
     
@@ -507,9 +548,10 @@ def query_review_result_by_feedback(requirement, related_code, review_thought, u
     # 3. 构造提示词
     # template = REVIEW_PROMPT_TEMPLATE
     # original_template = THINKING_PROMPT_TEMPLATE
-    db = get_db()
+    user_id = user_id if user_id else current_user.user_id
+    db = get_db_celery()
     c = db.cursor()
-    c.execute(f'select review from prompt where user_id={current_user.user_id}')
+    c.execute(f'select review from prompt where user_id={user_id}')
     row = c.fetchone()
     original_template = THINKING_PROMPT_TEMPLATE if row is None else row[0]
     original_prompt = original_template.format(
@@ -542,7 +584,7 @@ def query_review_result_by_feedback(requirement, related_code, review_thought, u
  
  
 # ================= 审查 相关代码 =================
-def query_review_result(requirement, related_code, rules=None, issues=None):
+def query_review_result(requirement, related_code, rules=None, issues=None, user_id=None):
     """
     执行代码一致性审查
     
@@ -592,11 +634,14 @@ def query_review_result(requirement, related_code, rules=None, issues=None):
     # 3. 构造提示词
     # template = REVIEW_PROMPT_TEMPLATE
     # template = THINKING_PROMPT_TEMPLATE
-    db = get_db()
+    user_id = user_id if user_id else current_user.user_id
+    db = get_db_celery()
     c = db.cursor()
-    c.execute(f'select review from prompt where user_id={current_user.user_id}')
+    c.execute(f'select review from prompt where user_id={user_id}')
     row = c.fetchone()
     template = THINKING_PROMPT_TEMPLATE if row is None else row[0]
+    db.close()
+
     prompt = template.format(
         requirement=requirement_context,
         related_code=code_context,
@@ -784,7 +829,7 @@ def smart_parse_doc(text, type='rule'):
     
     try:
         response = query_llm(prompt)
-        parsed = parse_alignment_output(response.content)
+        parsed = parse_output(response.content)
         
         # 标准化输出键名
         normalized = []

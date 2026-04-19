@@ -380,7 +380,7 @@ class RAGEngine:
                 documents=documents[i:end],
                 metadatas=metadatas[i:end]
             )
-            print(f"[RAG] 已写入批次 {i} - {end}")
+        print(f"[RAG] 已写入批次 {i} - {end}")
         
         total_count = collection.count()
         return {"status": "success", "message": f"构建完成！新增了 {count} 个数据对，库内总数: {total_count}", "total_count": total_count}

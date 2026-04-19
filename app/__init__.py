@@ -8,10 +8,21 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATABASE = os.path.join(BASE_DIR, 'doc_code_sql.db')
 
 
+def get_db_celery():
+    """异步任务使用，每次获取一个新的数据库连接对象"""
+    db = sqlite3.connect(DATABASE, check_same_thread=False, timeout=30)
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=30000")
+    cursor.close()
+    return db
+
+
 def get_db():
     """获取当前请求的数据库连接，若不存在则创建"""
     if 'db' not in g:
-        g.db = sqlite3.connect(DATABASE)
+        g.db = sqlite3.connect(DATABASE, check_same_thread=False)
         g.db.row_factory = sqlite3.Row
     return g.db
 
@@ -48,4 +59,8 @@ def create_app():
 
     from .project import project_bp
     app.register_blueprint(project_bp)
+
+    from .task_view import task_bp
+    app.register_blueprint(task_bp)
+
     return app

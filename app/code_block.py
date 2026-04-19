@@ -696,7 +696,7 @@ def get_codefile_blocks(code_base_path, file_name, code_block_base_path):
     
     file_name_wo = file_name.replace('/', '_')
     code_block_file_path = os.path.join(code_block_base_path, file_name_wo + '_code_blocks.jsonl')
-    #print(code_block_file_path)
+
     all_code_blocks = []
     # 已经有分块结果
     if os.path.exists(code_block_file_path):

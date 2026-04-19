@@ -1,7 +1,9 @@
+import os
+import shutil
 from datetime import datetime
 
-from flask import Blueprint, jsonify
-from flask_login import current_user
+from flask import Blueprint, jsonify, request
+from flask_login import current_user, login_required
 from . import get_db
 
 project_bp = Blueprint('project', __name__)
@@ -62,3 +64,34 @@ def get_project_id_by_name(project_name):
     c.execute(sql)
     row = c.fetchone()
     return row[0]
+
+
+@login_required
+@project_bp.route('/project/delete', methods=['delete'])
+def delete_project():
+    """删除项目目录和历史记录"""
+    data = request.json
+    project_path = data.get('path')
+    project_id = data.get('project_id')
+
+    if not project_path:
+        return jsonify({"status": "error", "message": "项目路径不能为空"}), 400
+
+    if not os.path.exists(project_path):
+        return jsonify({"status": "error", "message": "项目路径不存在"}), 404
+
+    db = get_db()
+    c = db.cursor()
+    try:
+        # 从历史记录中删除项目条目
+        c.execute(f"delete from project where project_id={project_id} and user_id={current_user.user_id}")
+        # 删除项目目录
+        shutil.rmtree(project_path)
+        return jsonify({"status": "success", "message": "项目删除成功"})
+
+    except PermissionError:
+        db.rollback()
+        return jsonify({"status": "error", "message": "没有权限删除项目文件"}), 403
+    except Exception as e:
+        db.rollback()
+        return jsonify({"status": "error", "message": f"删除项目时出错: {str(e)}"}), 500

@@ -1,6 +1,8 @@
 import os
 
+from celery import chain
 from flask_login import login_manager, login_required, current_user
+
 
 os.environ["OPENBLAS_NUM_THREADS"] = "128"
 os.environ["OMP_NUM_THREADS"]="128"
@@ -8,7 +10,7 @@ os.environ["OMP_NUM_THREADS"]="128"
 import time
 import traceback
 from .project import project_access, get_project_id_by_name
-from . import get_db
+from . import get_db, get_db_celery
 from flask import Flask, json, render_template, request, jsonify, send_file, Blueprint
 import sqlite3
 import json as pyjson
@@ -55,7 +57,7 @@ MAX_HISTORY_ITEMS = 15 # 最多记录15条历史
 
 # 定义testdata目录路径
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-TESTDATA_DIR = os.path.join(PROJECT_ROOT, '../testdata')
+TESTDATA_DIR = os.path.join(PROJECT_ROOT, r'../testdata')
 NEW_PROJECT_ROOT = os.path.dirname(PROJECT_ROOT)
 NEW_TESTDATA_DIR = os.path.join(NEW_PROJECT_ROOT, '/testdata')
 print('NEW_TESTDATA_DIR',NEW_TESTDATA_DIR)
@@ -206,6 +208,9 @@ def create_project():
     project_name = data.get('projectName')
     project_location = data.get('projectLocation')
     project_id = data.get('project_id')
+    code = project_location.split('_')[-1]
+    project_name += code
+    # print(f'project_name=======:{project_name}')
 
     if not project_name or not project_location:
         return jsonify({"status": "error", "message": "项目名称和路径不能为空。"}), 400
@@ -545,54 +550,54 @@ def auto_load_rag_db(project_path):
 #         conn.close()
 
 
-@bp.route('/project/history', methods=['GET'])
-def get_project_history():
-    """获取最近打开的项目列表"""
-    if not os.path.exists(HISTORY_FILE):
-        return jsonify([])
+# @bp.route('/project/history', methods=['GET'])
+# def get_project_history():
+#     """获取最近打开的项目列表"""
+#     if not os.path.exists(HISTORY_FILE):
+#         return jsonify([])
+#
+#     with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+#         try:
+#             history = json.load(f)
+#             return jsonify(history)
+#         except json.JSONDecodeError:
+#             return jsonify([])
 
-    with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
-        try:
-            history = json.load(f)
-            return jsonify(history)
-        except json.JSONDecodeError:
-            return jsonify([])
-
-@bp.route('/project/history', methods=['DELETE'])
-def delete_project_history():
-    """删除指定的历史记录"""
-    data = request.json
-    project_path = data.get('path')
-
-    if not project_path:
-        return jsonify({"status": "error", "message": "项目路径不能为空"}), 400
-
-    if not os.path.exists(HISTORY_FILE):
-        return jsonify({"status": "error", "message": "历史记录文件不存在"}), 404
-
-    try:
-        with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
-            history = json.load(f)
-
-        # 查找并删除指定的历史记录
-        original_length = len(history)
-        history = [item for item in history if item.get('path') != project_path]
-
-        if len(history) == original_length:
-            return jsonify({"status": "error", "message": "未找到指定的历史记录"}), 404
-
-        # 写回文件
-        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
-            json.dump(history, f, indent=4, ensure_ascii=False)
-
-        return jsonify({"status": "success", "message": "历史记录删除成功"})
-
-    except json.JSONDecodeError:
-        return jsonify({"status": "error", "message": "历史记录文件格式错误"}), 500
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"删除历史记录时出错: {e}"}), 500
-
-@bp.route('/project/delete', methods=['POST'])
+# @bp.route('/project/history', methods=['DELETE'])
+# def delete_project_history():
+#     """删除指定的历史记录"""
+#     data = request.json
+#     project_path = data.get('path')
+#
+#     if not project_path:
+#         return jsonify({"status": "error", "message": "项目路径不能为空"}), 400
+#
+#     if not os.path.exists(HISTORY_FILE):
+#         return jsonify({"status": "error", "message": "历史记录文件不存在"}), 404
+#
+#     try:
+#         with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+#             history = json.load(f)
+#
+#         # 查找并删除指定的历史记录
+#         original_length = len(history)
+#         history = [item for item in history if item.get('path') != project_path]
+#
+#         if len(history) == original_length:
+#             return jsonify({"status": "error", "message": "未找到指定的历史记录"}), 404
+#
+#         # 写回文件
+#         with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+#             json.dump(history, f, indent=4, ensure_ascii=False)
+#
+#         return jsonify({"status": "success", "message": "历史记录删除成功"})
+#
+#     except json.JSONDecodeError:
+#         return jsonify({"status": "error", "message": "历史记录文件格式错误"}), 500
+#     except Exception as e:
+#         return jsonify({"status": "error", "message": f"删除历史记录时出错: {e}"}), 500
+#
+# @bp.route('/project/delete', methods=['POST'])
 def delete_project():
     """删除项目目录和历史记录"""
     data = request.json
@@ -919,10 +924,10 @@ def upload_folder():
 
         # 创建目标文件夹路径
         target_folder_path = os.path.join(TESTDATA_DIR, folder_name)
-        logger.info('target_folder_path',target_folder_path)
+        # logger.info('target_folder_path',target_folder_path)
+        timestamp = int(time.time())
         # 如果目标文件夹已存在，添加时间戳后缀
         if os.path.exists(target_folder_path):
-            timestamp = int(time.time())
             target_folder_path = os.path.join(TESTDATA_DIR, f"{folder_name}_{timestamp}")
 
         # 创建目标文件夹
@@ -956,7 +961,7 @@ def upload_folder():
 
         sql = f"""
         insert into project(user_id,last_opened,name,path,create_time,update_time) 
-        values({current_user.user_id}, "{datetime.now().isoformat()}", "{folder_name}", 
+        values({current_user.user_id}, "{datetime.now().isoformat()}", "{folder_name}_{timestamp}", 
         "{target_folder_path}", "{datetime.now().isoformat()}", "{datetime.now().isoformat()}");
         """
         # print('sql:', sql)
@@ -985,7 +990,7 @@ def get_file_content():
     project_path = request.args.get('path')
     filename = request.args.get('filename')
     file_type = request.args.get('type') # 'doc' or 'code'
-    print(111,project_path,filename,file_type)
+    #print(111,project_path,filename,file_type)
 
     if not project_path or not filename or not file_type:
         return jsonify({"status": "error", "message": "缺少必要的参数"}), 400
@@ -1020,9 +1025,21 @@ def get_file_content():
             return jsonify({"status": "error", "message": "文件未找到"}), 404
 
         # 读取文件内容
-        with open(file_path, 'r', encoding='utf-8') as f:
+        #with open(file_path, 'r', encoding='utf-8') as f:
+        #    content = f.read()
+        
+        
+        # 遍历可能的文件编码格式，读取文件内容
+        encodings = ['utf-8', 'gbk', 'gb2312', 'iso-8859-1']
+        with open(file_path, 'rb') as f:
             content = f.read()
-
+        for enc in encodings:
+            try:
+                content = content.decode(enc)
+                break
+            except UnicodeDecodeError:
+                continue
+        
         return jsonify({"status": "success", "content": content}), 200
 
     except Exception as e:
@@ -1375,18 +1392,19 @@ def download_file(filename):
 #------------------------#
 #     核心流程函数
 #------------------------#
-def get_abstracts_from_sqlite(db_path, project_id):
+def get_abstracts_from_sqlite(project_id):
     """从project.db的abstracts表读取指定列数据"""
     try:
         # 连接SQLite数据库
         # conn = sqlite3.connect(db_path)
-        conn = get_db()
+        conn = get_db_celery()
         #conn.execute('PRAGMA encoding = UTF-8')
         # 读取name、docRanges、codeRanges、GenReq、 GenMermaid 列所有数据
         query_sql = f"SELECT filename, abstract FROM abstracts where project_id={project_id}"
         # 直接用pandas读取SQL结果（简洁高效）
         df = pd.read_sql(query_sql, conn)
-        # conn.close()
+        conn.close()
+        print('读取摘要成功!!!!!!!!!!!')
         return df
     except sqlite3.Error as e:
         print(f"SQLite数据库读取失败：{e}")
@@ -1419,30 +1437,59 @@ def generate_abstract(file_path):
     return codefile_abstract
 
 
-def save_abstract_to_db(project_path, file, codefile_abstract, project_id):
+def save_abstract_to_db(project_path, file, codefile_abstract, project_id, user_id):
     # 代码摘要写入数据库
+    conn = get_db_celery()
+    cur = conn.cursor()
     try:
-        conn = get_db()
-        cur = conn.cursor()
+
         cur.execute(
             'INSERT INTO abstracts(filename,abstract,user_id,project_id,createdAt,updatedAt) '
-            'VALUES (?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
-            'ON CONFLICT(filename) DO UPDATE SET filename=excluded.filename,abstract=excluded.abstract,user_id=excluded.user_id,project_id=excluded.project_id,updatedAt=CURRENT_TIMESTAMP',
+            'VALUES (?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) ',
             (
                 file,
                 codefile_abstract,
-                current_user.user_id,
+                user_id,
                 project_id
             )
         )
-
+        conn.commit()
+        print(f'写入代码摘要数据:{project_id}')
     except Exception as e:
+        conn.rollback()
         logger.info("写入代码摘要数据失败")
         logger.info(e)
         return jsonify({"status": "error", "message": f"写入代码摘要数据失败: {e}"}), 500
+    finally:
+        conn.close()
 
     # conn.commit()
     # conn.close()
+
+# 对齐 需求->代码 需要异步处理
+# @bp.route('/api/get-code-abstract', methods=['GET'])
+# def abstract_code_from_project():
+#     """
+#     代码摘要：摘要每个代码文件，存入数据库
+#     """
+#
+#     project_path = request.args.get('projectPath')
+#     project_id = request.args.get('project_id')
+#     print('/api/get-code-abstract, project_id:', project_id)
+#
+#     if not project_path:
+#         return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
+#
+#     code_file_path = os.path.join(project_path, 'code_repo')
+#     if not os.path.exists(code_file_path):
+#         return jsonify({'status': 'success', 'data': []})
+#
+#     from tasks import abstract_code_from_project_task
+#
+#     task = abstract_code_from_project_task.delay(project_path, project_id, code_file_path, current_user.user_id)
+#
+#     return jsonify({'status': 'success', 'task_id': task.id})
+
 
 @bp.route('/api/get-code-abstract', methods=['GET'])
 def abstract_code_from_project():
@@ -1463,13 +1510,13 @@ def abstract_code_from_project():
             return jsonify({'status': 'success', 'data': []})
 
         # 读取数据库里的代码摘要
-        db_file = os.path.join(project_path, 'project.db')
-        if not os.path.exists(db_file):
-            logger.info('未找到数据库文件')
-            df = pd.DataFrame()
-        else:
+        # db_file = os.path.join(project_path, 'project.db')
+        # if not os.path.exists(db_file):
+        #     logger.info('未找到数据库文件')
+        #     df = pd.DataFrame()
+        # else:
             # 从SQLite读取数据
-            df = get_abstracts_from_sqlite(db_file, project_id)
+        df = get_abstracts_from_sqlite(project_id)
 
         # 排除无关文件夹/目录
         exclude_folders = ['.git', '.idea']
@@ -1487,7 +1534,7 @@ def abstract_code_from_project():
                     if not df.empty:
                         # 先看数据库里有没有已经生成好的代码摘要
                         row_data = df[df['filename'] == file]
-                        
+
                         # 数据库有该代码文件的摘要
                         if not row_data.empty:
                             logger.info('数据库有该代码文件的摘要')
@@ -1498,21 +1545,21 @@ def abstract_code_from_project():
                             file_path = os.path.join(root, file)
                             codefile_abstract = generate_abstract(file_path)
                             file_abstract[rel_path] = codefile_abstract
-                            
-                            #save_abstract_to_db(project_path, file, codefile_abstract, project_id)
-                            save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id)
+
+                            # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
+                            save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id,
+                                                current_user.user_id)
 
                     # 数据库里代码摘要这张表是空的，需要新生成
                     else:
                         file_path = os.path.join(root, file)
                         codefile_abstract = generate_abstract(file_path)
                         file_abstract[rel_path] = codefile_abstract
-                        #save_abstract_to_db(project_path, file, codefile_abstract, project_id)
-                        save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id)
+                        # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
+                        save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id, current_user.user_id)
 
-
-        #logger.info(file_abstract)
-        #sys.exit()
+        # logger.info(file_abstract)
+        # sys.exit()
 
         return jsonify({
             "status": "success",
@@ -1527,108 +1574,72 @@ def abstract_code_from_project():
         }), 500
 
 
-@bp.route('/api/align-requirement-to-project', methods=['POST'])
-def align_requirement_to_project():
-    """
-    对齐功能：为单个doc需求点在项目中查找相关代码并返回codeRanges格式的结果
-    2026-01-21更新：为单个doc需求点在数据库中根据代码摘要检索相关代码文件，然后查找相关代码，返回codeRanges格式的结果
-    """
+@bp.route('/api/get-code-abstract', methods=['POST'])
+def abstract_code_from_project_post():
     data = request.json
     doc_ranges = data.get('docRanges', [])
-    file_abstract = data.get('codeFileAbstract', {})
     project_path = data.get('projectPath', '')
+    project_id = data.get('project_id')
+    alignment = data.get('alignment')
+    total = data.get('total')
 
-    doc_name = doc_ranges[0]['filename']
+    if not project_path:
+        return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
+
+    code_file_path = os.path.join(project_path, 'code_repo')
+    if not os.path.exists(code_file_path):
+        return jsonify({'status': 'success', 'data': []})
+    from tasks import abstract_code_from_project_task, align_requirement_to_project_task
+    task_chain = chain(
+        abstract_code_from_project_task.s(data, code_file_path, current_user.user_id),
+        align_requirement_to_project_task.s(data, current_user.user_id)
+    )
+    async_result = task_chain()
+    return jsonify({'status': 'success', 'message':'链式任务已启动', 'task_id': async_result.id})
 
 
-    # 获取项目中所有代码文件
-    code_repo_path = os.path.join(project_path, 'code_repo')
-    code_block_base_path = os.path.join(project_path, 'code_block_repo')
-    all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
-
-    # 拼接所有docRanges的content作为requirement_text
-    requirement_text = '\n\n'.join([doc_range.get('content', '') for doc_range in doc_ranges if doc_range.get('content')])
-    if not requirement_text or not project_path:
-        return jsonify({"status": "error", "message": "缺少需求内容或项目路径参数"}), 400
-
-    # 如果有多个代码文件，执行检索代码摘要
-    if len(all_files) > 1:
-        # 基于需求，利用大模型检索代码摘要，先定位代码文件
-        # 调用llm
-        file_name_list = query_codefile_from_abstract(requirement_text, file_abstract)
-    # 如果只有一个代码文件，就不检索代码摘要
-    else:
-        file_name_list = all_files
-
-    # 尝试初始化RAG引擎，以便在agent中使用
+def get_project_abstract(project_id):
+    """通过project_id获取所有摘要"""
+    db = get_db_celery()
+    cur = db.cursor()
     try:
-        rag_engine.initialize(project_path)
-    except Exception as e:
-        print(f"[Align] RAG initialize failed: {e}")
-
-    try:
-        code_ranges = []
-        
-        # 遍历经过代码摘要筛选的代码文件
-        for file_name in file_name_list:
-           
-            # 为代码进行分块或读取分块结果
-            all_code_blocks = get_codefile_blocks(code_repo_path, file_name, code_block_base_path)
-
-            # 调用对齐函数获取相关代码
-            related_code = query_related_code(requirement_text, all_code_blocks, block_limit=50)
-            
-            # 检查并添加 related_id 对应的代码块
-            related_code = include_related_blocks(related_code, all_code_blocks)
-            
-            # 转换为codeRanges格式
-            for code_block in related_code:
-                # 获取原始代码内容（不带行号）
-                file_path = os.path.join(code_repo_path, code_block['file'])
-                if os.path.exists(file_path):
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        original_content = f.read()
-                        lines = original_content.splitlines(keepends=True)  # 保留换行符
-
-                        # 提取指定行范围的内容
-                        start_line = max(1, code_block['range'][0])
-                        end_line = min(len(lines), code_block['range'][1])
-
-                        if start_line <= end_line:
-                            # 计算字符偏移量
-                            char_start = sum(len(line) for line in lines[:start_line-1])
-                            char_end = sum(len(line) for line in lines[:end_line])
-
-                            # 提取内容（不保留换行符用于显示）
-                            range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
-
-                            code_ranges.append({
-                                'filename': code_block['file'],
-                                'start': char_start,  # 字符偏移量
-                                'end': char_end,      # 字符偏移量
-                                'content': range_content,
-                                'documentId': code_block['file'],
-                                'startLine': start_line,
-                                'endLine': end_line
-                            })
-
-        # logger.info("对齐结果...................")
-        # logger.info(code_ranges)
-        # sys.exit()
-
-        return jsonify({
-            "status": "success",
-            "codeRanges": code_ranges
-        })
+        # logger.info(f'project_id==========={project_id}')
+        cur.execute('select filename,abstract from abstracts where project_id=?', (project_id,))
+        rows = cur.fetchall()
+        result = {row['filename']: row['abstract'] for row in rows}
 
     except Exception as e:
-        traceback.print_exc()
-        return jsonify({
-            "status": "error",
-            "message": f"对齐过程中出错: {str(e)}"
-        }), 500
+        logger.error(f'查询摘要失败:{str(e)}', exc_info=True)
+        result = {}
+    finally:
+        db.close()
+    # logger.info(f'获取摘要=============={result}')
+    return result
 
 
+# 对齐 需求->代码 需要异步处理
+# @bp.route('/api/align-requirement-to-project', methods=['POST'])
+# def align_requirement_to_project():
+#     """
+#     对齐功能：为单个doc需求点在项目中查找相关代码并返回codeRanges格式的结果
+#     2026-01-21更新：为单个doc需求点在数据库中根据代码摘要检索相关代码文件，然后查找相关代码，返回codeRanges格式的结果
+#     """
+#     data = request.json
+#     doc_ranges = data.get('docRanges', [])
+#     # file_abstract = data.get('codeFileAbstract', {})
+#     project_path = data.get('projectPath', '')
+#     project_id = data.get('project_id')
+#     alignment = data.get('alignment')
+#     print('/api/align-requirement-to-project, project_id', project_id)
+#     file_abstract = get_project_abstract(project_id)
+#
+#     from tasks import align_requirement_to_project_task
+#     task = align_requirement_to_project_task.delay(project_path, doc_ranges, file_abstract, alignment, project_id,
+#                                                    current_user.user_id)
+#     return jsonify({'status': 'success', 'task_id': task.id})
+
+
+# 需要异步处理
 @bp.route('/api/align-requirement-to-project-addprompt', methods=['POST'])
 def align_requirement_to_project_addprompt():
     """
@@ -1641,6 +1652,9 @@ def align_requirement_to_project_addprompt():
     project_path = data.get('projectPath', '')
     codeRanges_aligned = data.get('codeRanges', [])
     userPrompt = data.get('userInputPrompt', [])
+    project_id = data.get('project_id')
+    print('/api/align-requirement-to-project-addprompt, project_id', project_id)
+    # file_abstract = get_project_abstract(project_id)
 
     doc_name = doc_ranges[0]['filename']
 
@@ -1665,10 +1679,10 @@ def align_requirement_to_project_addprompt():
         file_name_list = all_files
 
     # 尝试初始化RAG引擎，以便在agent中使用
-    try:
-        rag_engine.initialize(project_path)
-    except Exception as e:
-        print(f"[Align] RAG initialize failed: {e}")
+    # try:
+        # rag_engine.initialize(project_path)
+    # except Exception as e:
+        # print(f"[Align] RAG initialize failed: {e}")
 
     try:
         code_ranges = []
@@ -1751,15 +1765,29 @@ def generate_flowchart():
         print(f"Error generating flowchart: {str(e)}")
         return jsonify({"status": "error", "message": f"Failed to generate flowchart: {str(e)}"}), 500
 
+
+# 改成从数据库查询
 @bp.route('/api/generate-reverse-requirement', methods=['POST'])
 def generate_reverse_requirement():
     try:
         data = request.get_json()
         requirement_content = data.get('requirementContent')
         code_content = data.get('codeContent')
+        project_id = data.get('project_id')
 
         if not code_content:
             return jsonify({"status": "error", "message": "Missing code content"}), 400
+
+        db = get_db()
+        cur = db.cursor()
+        cur.execute(f"select GenReq, GenMermaid from alignments where project_id={project_id}")
+        row = cur.fetchone()
+        if row is not None:
+            return jsonify({
+                "status": "success",
+                "generatedRequirement": row[0],
+                "mermaidCode": row[1]
+            })
 
         # 构建代码块列表，格式与现有函数兼容
         code_blocks = []
@@ -1793,156 +1821,33 @@ def generate_reverse_requirement():
         print(f"Error generating reverse requirement: {str(e)}")
         return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
 
+
+# 审查 需要异步处理
 @bp.route('/api/review-alignment', methods=['POST'])
 def review_alignment():
     data = request.json
     project_path = data.get('projectPath')
-    doc_file = data.get('docFile')
-    alignment = data.get('alignment')
+    # doc_file = data.get('docFile')
+    # alignments = data.get('alignments')
     project_id = data.get('project_id')
+    files = data.get('requirement_files')
 
-    if not all([project_path, doc_file, alignment]):
+    if not all([project_path, project_id, files]):
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
-    # init_project_db(project_path)
-
     # 尝试初始化RAG引擎
-    try:
-        rag_engine.initialize()
-    except Exception as e:
-        print(f"[Review] RAG initialize failed: {e}")
+    # try:
+        # rag_engine.initialize()
+    # except Exception as e:
+        # print(f"[Review] RAG initialize failed: {e}")
 
-    # 获取选定的 knowledge base
-    selected_rule_kbs = []
-    selected_issue_kbs = []
-    try:
-        metadata_file = os.path.join(project_path, 'metadata.json')
-        if os.path.exists(metadata_file):
-            with open(metadata_file, 'r', encoding='utf-8') as f:
-                metadata = json.load(f)
-                selected_kbs = metadata.get('selected_kbs', [])
-                selected_rule_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'rule']
-                selected_issue_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'issue']
-    except Exception:
-        pass
+    from tasks import review_alignment_task
+    task = review_alignment_task.delay(project_path, project_id, current_user.user_id, files)
 
-    # 检索上下文
-    retrieved_rules = []
-    retrieved_issues = []
-
-    doc_ranges = alignment.get('docRanges', [])
-    code_ranges = alignment.get('codeRanges', [])
-
-    # 构造查询文本
-    query_text = ""
-    if doc_ranges:
-        query_text += doc_ranges[0].get('content', '') + "\n"
-    if code_ranges:
-        query_text += code_ranges[0].get('content', '')
-
-    # 检索规则
-    for kb_name in selected_rule_kbs:
-        collection = rag_engine.get_collection('rule', kb_name)
-        if collection:
-            results = collection.query(query_texts=[query_text], n_results=3)
-            if results and results['documents']:
-                for doc in results['documents'][0]:
-                    retrieved_rules.append(doc)
-
-    # 检索问题单
-    for kb_name in selected_issue_kbs:
-        collection = rag_engine.get_collection('issue', kb_name)
-        if collection:
-            results = collection.query(query_texts=[query_text], n_results=3)
-            if results and results['documents']:
-                for doc in results['documents'][0]:
-                    retrieved_issues.append(doc)
-
-    # 1. 调用 agent 获取审查结果
-    review_process, issue = query_review_result(
-        doc_ranges,
-        code_ranges,
-        rules=retrieved_rules,
-        issues=retrieved_issues
-    )
-
-    # 2. 更新对齐关系
-    alignment['isReviewed'] = True
-    alignment['reviewThoughts'] = review_process
-
-    if isinstance(issue, list):
-        issues_list = [x for x in issue if isinstance(x, dict)]
-    elif isinstance(issue, dict):
-        issues_list = [issue]
-    else:
-        issues_list = []
-
-    try:
-        # conn = get_db_conn(project_path)
-        conn = get_db()
-        cur = conn.cursor()
-
-        cur.execute(
-            'UPDATE alignments SET isReviewed=1, reviewThoughts=?, updatedAt=CURRENT_TIMESTAMP WHERE id=? and project_id=?',
-            (alignment.get('reviewThoughts') or '', alignment.get('id'), project_id)
-        )
-
-        if issues_list:
-            cur.execute(f"SELECT displayId FROM issues WHERE displayId LIKE 'ISSUE-%' and project_id={project_id}")
-            used = set()
-            for r in cur.fetchall():
-                disp = r['displayId']
-                if disp and disp.startswith('ISSUE-'):
-                    try:
-                        used.add(int(disp.split('-')[1]))
-                    except Exception:
-                        pass
-            next_number = (max(used) + 1) if used else 1
-
-            brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
-            brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
-
-            for one in issues_list:
-                display_id = f"ISSUE-{next_number:03d}"
-                next_number += 1
-
-                severity = one.get('level') or one.get('severity')
-                title = one.get('summary') or one.get('title') or ''
-                content = one.get('description') or one.get('content') or ''
-                status = one.get('status') or 'unconfirmed'
-
-                cur.execute(
-                    'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-                    'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                    (
-                        current_user.user_id,
-                        project_id,
-                        display_id,
-                        alignment.get('id'),
-                        severity,
-                        title,
-                        content,
-                        status,
-                        doc_file,
-                        alignment.get('id'),
-                        brief_req,
-                        brief_code
-                    )
-                )
-
-        # conn.commit()
-        # conn.close()
-    except Exception as e:
-        try:
-            conn.rollback()
-            # conn.close()
-        except Exception:
-            pass
-        return jsonify({"status": "error", "message": f"Failed to save review result: {str(e)}"}), 500
-
-    return jsonify({"status": "success", "createdIssues": len(issues_list)})
+    return jsonify({"status": "success", "task_id": task.id})
 
 
+# 需要异步处理
 @bp.route('/api/review-alignment-addprompt', methods=['POST'])
 def review_alignment_addprompt():
     data = request.json
@@ -1955,146 +1860,16 @@ def review_alignment_addprompt():
     if not all([project_path, doc_file, alignment]):
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
-    # init_project_db(project_path)
-
     # 尝试初始化RAG引擎
-    try:
-        rag_engine.initialize()
-    except Exception as e:
-        print(f"[Review] RAG initialize failed: {e}")
+    # try:
+        # rag_engine.initialize()
+    # except Exception as e:
+        # print(f"[Review] RAG initialize failed: {e}")
 
-    # 获取选定的 knowledge base
-    selected_rule_kbs = []
-    selected_issue_kbs = []
-    try:
-        metadata_file = os.path.join(project_path, 'metadata.json')
-        if os.path.exists(metadata_file):
-            with open(metadata_file, 'r', encoding='utf-8') as f:
-                metadata = json.load(f)
-                selected_kbs = metadata.get('selected_kbs', [])
-                selected_rule_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'rule']
-                selected_issue_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'issue']
-    except Exception:
-        pass
+    from tasks import review_alignment_addprompt_task
+    task = review_alignment_addprompt_task.delay(project_path, alignment, project_id, current_user.user_id, doc_file, userPrompt)
 
-    # 检索上下文
-    retrieved_rules = []
-    retrieved_issues = []
-
-    doc_ranges = alignment.get('docRanges', [])
-    code_ranges = alignment.get('codeRanges', [])
-    reviewThoughts = alignment.get('reviewThoughts', [])
-
-    # 构造查询文本
-    query_text = ""
-    if doc_ranges:
-        query_text += doc_ranges[0].get('content', '') + "\n"
-    if code_ranges:
-        query_text += code_ranges[0].get('content', '')
-
-    # 检索规则
-    for kb_name in selected_rule_kbs:
-        collection = rag_engine.get_collection('rule', kb_name)
-        if collection:
-            results = collection.query(query_texts=[query_text], n_results=3)
-            if results and results['documents']:
-                for doc in results['documents'][0]:
-                    retrieved_rules.append(doc)
-
-    # 检索问题单
-    for kb_name in selected_issue_kbs:
-        collection = rag_engine.get_collection('issue', kb_name)
-        if collection:
-            results = collection.query(query_texts=[query_text], n_results=3)
-            if results and results['documents']:
-                for doc in results['documents'][0]:
-                    retrieved_issues.append(doc)
-
-    # 1. 调用 agent 获取审查结果
-    review_process, issue = query_review_result_by_feedback(
-        doc_ranges,
-        code_ranges,
-        reviewThoughts,
-        userPrompt,
-        rules=retrieved_rules,
-        issues=retrieved_issues
-    )
-
-    # 2. 更新对齐关系
-    alignment['isReviewed'] = True
-    alignment['reviewThoughts'] = review_process
-
-    if isinstance(issue, list):
-        issues_list = [x for x in issue if isinstance(x, dict)]
-    elif isinstance(issue, dict):
-        issues_list = [issue]
-    else:
-        issues_list = []
-
-    try:
-        # conn = get_db_conn(project_path)
-        conn = get_db()
-        cur = conn.cursor()
-
-        cur.execute(
-            'UPDATE alignments SET isReviewed=1, reviewThoughts=?, updatedAt=CURRENT_TIMESTAMP WHERE id=? and project_id=?',
-            (alignment.get('reviewThoughts') or '', alignment.get('id'), project_id)
-        )
-
-        if issues_list:
-            cur.execute(f"SELECT displayId FROM issues WHERE displayId LIKE 'ISSUE-%' and project_id={project_id}")
-            used = set()
-            for r in cur.fetchall():
-                disp = r['displayId']
-                if disp and disp.startswith('ISSUE-'):
-                    try:
-                        used.add(int(disp.split('-')[1]))
-                    except Exception:
-                        pass
-            next_number = (max(used) + 1) if used else 1
-
-            brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
-            brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
-
-            for one in issues_list:
-                display_id = f"ISSUE-{next_number:03d}"
-                next_number += 1
-
-                severity = one.get('level') or one.get('severity')
-                title = one.get('summary') or one.get('title') or ''
-                content = one.get('description') or one.get('content') or ''
-                status = one.get('status') or 'unconfirmed'
-
-                cur.execute(
-                    'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-                    'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                    (
-                        current_user.user_id,
-                        project_id,
-                        display_id,
-                        alignment.get('id'),
-                        severity,
-                        title,
-                        content,
-                        status,
-                        doc_file,
-                        alignment.get('id'),
-                        brief_req,
-                        brief_code
-                    )
-                )
-
-        # conn.commit()
-        # conn.close()
-    except Exception as e:
-        try:
-            conn.rollback()
-            # conn.close()
-        except Exception:
-            pass
-        return jsonify({"status": "error", "message": f"Failed to save review result: {str(e)}"}), 500
-
-    return jsonify({"status": "success", "createdIssues": len(issues_list)})
+    return jsonify({"status": "success", "task_id": task.id})
 
 
 @bp.route('/api/clear-alignment-review', methods=['POST'])
@@ -3216,6 +2991,23 @@ def get_code_chunks():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@bp.route('/api/align-code-to-requirement-for', methods=['POST'])
+def align_code_to_requirements():
+    """循环处理多个代码=>需求"""
+    data = request.json
+    code_blocks = data.get('codeBlocks', [])
+    project_path = data.get('projectPath', '')
+    project_id = data.get('project_id', '')
+    if not project_path:
+        return jsonify({"status": "error", "message": "缺少项目路径参数"}), 400
+
+    from tasks import align_code_to_requirements_task
+    task = align_code_to_requirements_task.delay(project_path, code_blocks, project_id, current_user.user_id)
+
+    return jsonify({"status": "success", "task_id": task.id})
+
+
+# 需要异步处理
 @bp.route('/api/align-code-to-requirement', methods=['POST'])
 def align_code_to_requirement():
     """为单个代码块在项目中查找相关需求"""
@@ -3430,8 +3222,12 @@ def build_rag_db():
 
     # Determine full path of the source file
     # If it comes from testdata (server file)
-    if os.path.exists(os.path.join(TESTDATA_DIR, annotation_file)):
-        full_path = os.path.join(TESTDATA_DIR, annotation_file)
+
+    FILEDATA_DIR = os.path.join(PROJECT_ROOT, 'temp_uploads')
+    annotation_file = secure_filename(annotation_file)
+
+    if os.path.exists(os.path.join(FILEDATA_DIR, annotation_file)):
+        full_path = os.path.join(FILEDATA_DIR, annotation_file)
     elif os.path.exists(annotation_file):
         full_path = annotation_file
     else:
@@ -3632,7 +3428,7 @@ def add_items_to_kb():
             collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
 
         total_count = collection.count()
-
+        
         # 4. 更新元数据 metadata.json (使用展平结构)
         target_type = 'align' if kb_type == 'history_align' else kb_type
         kb_root = os.path.join(PROJECT_ROOT, "../rag_database", kb_name)
@@ -3911,12 +3707,15 @@ def find_available_port(start_port):
 """导出需求-代码匹配和审查结果"""
 
 # ========== 新增：SQLite数据库操作函数 ==========
-def get_alignments_from_sqlite(db_path, project_id):
+def get_alignments_from_sqlite(project_id):
     """从project.db的alignments表读取指定列数据"""
     try:
         # 连接SQLite数据库
         # conn = sqlite3.connect(db_path)
+        
         conn = get_db()
+        #conn = get_db_celery()
+        
         # 读取name、docRanges、codeRanges三列所有数据
         query_sql = f"SELECT name, docRanges, codeRanges, GenReq, GenMermaid FROM alignments where project_id={project_id}"
         # 直接用pandas读取SQL结果（简洁高效）
@@ -3942,12 +3741,13 @@ def export_project_results():
         return jsonify({"status": "error", "message": "无效的项目路径。"}), 400
 
     # 2. 定位project.db文件（默认在项目路径根目录）
-    db_file = os.path.join(project_path, 'project.db')
-    if not os.path.exists(db_file):
-        return jsonify({"status": "error", "message": f"未找到数据库文件：{db_file}"}), 400
-
+    # db_file = os.path.join(project_path, 'project.db')
+    # if not os.path.exists(db_file):
+        # return jsonify({"status": "error", "message": f"未找到数据库文件：{db_file}"}), 400
+     
     # 3. 从SQLite读取数据
-    df = get_alignments_from_sqlite(db_file, project_id)
+    df = get_alignments_from_sqlite(project_id)
+    
 
     #logger.info(df.loc[2, "GenMermaid"])
     #sys.exit()

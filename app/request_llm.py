@@ -6,8 +6,8 @@
 import os
 import re
 import json
-# import dashscope
-# from dashscope import Generation
+import dashscope
+from dashscope import Generation
 from http import HTTPStatus
 # 相似化度量相关的函数
 # from rank_bm25 import BM25Okapi
@@ -25,8 +25,8 @@ from openai import OpenAI
 class RequestLLM:
     def __init__(self, request_type):
         self.request_type = request_type
-        self.url_generate = "http://192.168.0.1:11434/v1"
-        self.url_embedding = "http://192.168.0.1:11434/api/embeddings"
+        self.url_generate = "http://192.168.0.223:11434/v1"
+        self.url_embedding = "http://192.168.0.223:11434/api/embeddings"
 
     # # 分词
     # def tokenize(self, text):
