@@ -1356,6 +1356,32 @@
     font-size: 11px;
 }
 
+/* 文档面板中的 markdown 代码块按普通文本展示：去掉背景和高亮样式 */
+.content-text-doc pre,
+.content-text-doc pre.hljs,
+.content-text-doc .hljs,
+.content-text-doc pre code,
+.content-text-doc code {
+    background: transparent !important;
+    color: inherit !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.content-text-doc pre,
+.content-text-doc pre code,
+.content-text-doc code {
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+}
+
+.content-text-doc pre {
+    padding: 0 !important;
+    margin: 4px 0 !important;
+    white-space: pre-wrap;
+}
+
 .content-text-doc pre,
 .markdown-content-rendered pre,
 .doc-content-rendered pre,
