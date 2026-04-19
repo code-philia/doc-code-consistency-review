@@ -3018,15 +3018,22 @@ def get_code_chunks():
                 raw_code = _read_text_file(abs_code_path)
                 char_start, char_end = _line_range_to_char_offsets(raw_code, start_line, end_line)
 
-                # 改成按照函数名命名
-                code_lines = [line.lstrip() for line in content.splitlines(True)]
-                # 先找到函数第一行，再匹配需要的函数名
-                for line in code_lines: # 跳过注释行
-                    if line[0] == '/' or line[0] == '*':
+                # 优先使用首个有效代码行作为块名；注释块/空内容使用兜底名称
+                chunk_name = None
+                for raw_line in content.splitlines():
+                    line = raw_line.lstrip()
+                    if not line:
                         continue
+                    if line.startswith('//') or line.startswith('/*') or line.startswith('*') or line.startswith('*/'):
+                        continue
+                    chunk_name = line
+                    break
+
+                if not chunk_name:
+                    if content.strip():
+                        chunk_name = _compact_title_from_text(content, max_len=48)
                     else:
-                        chunk_name = line
-                        break
+                        chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
 
                 code_range = {
                     'name': chunk_name,
