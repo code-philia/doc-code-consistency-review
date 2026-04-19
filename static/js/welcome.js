@@ -51,6 +51,8 @@ const app = createApp({
         const importPath = ref('');
         const isImporting = ref(false);
         const folderUpload = ref(null);
+        const selectedFolderFiles = ref([]);
+        const selectedFolderName = ref('');
 
         // ============================================================
         // 知识库管理逻辑
@@ -295,38 +297,84 @@ const app = createApp({
         };
 
         const openNewProjectDialog = () => {
+            projectForm.projectName = '';
+            projectForm.projectLocation = '';
+            selectedFolderFiles.value = [];
+            selectedFolderName.value = '';
             showNewProjForm.value = true;
         };
 
-        const handleNewProject = () => {
-            if (!projectForm.projectName || !projectForm.projectLocation) {
-                ElMessage.error('请填写完整信息');
+        const handleNewProject = async () => {
+            const projectLocation = (projectForm.projectLocation || '').trim();
+            let projectName = (projectForm.projectName || '').trim();
+
+            if (!projectLocation) {
+                ElMessage.error('请填写项目存放路径');
                 return;
             }
+
+            // 项目名可选，默认使用路径最后一级
+            if (!projectName) {
+                const pathParts = projectLocation.replace(/\\/g, '/').split('/').filter(Boolean);
+                projectName = pathParts[pathParts.length - 1] || '新项目';
+                projectForm.projectName = projectName;
+            }
+
             isCreating.value = true;
-            
-            axios.post('/project/create', {
-                ...projectForm,
-                creationType: creationType.value,
-                project_id: window.projectId
-            })
-            .then(res => {
-                if (res.data.status === 'success') {
-                    showNewProjForm.value = false;
-                    ElMessage.success('创建成功');
-                    window.projectId = res.data.new_id
-//                    alert(cached_project_id)
-                    openProject({ name: projectForm.projectName, path: res.data.project_path, project_id: res.data.new_id });
+
+            try {
+                if (selectedFolderFiles.value.length > 0) {
+                    const formData = new FormData();
+                    formData.append('projectName', projectName);
+                    formData.append('projectLocation', projectLocation);
+                    formData.append('folderName', selectedFolderName.value || projectName);
+
+                    selectedFolderFiles.value.forEach(file => {
+                        formData.append('files', file);
+                        formData.append('paths', file.webkitRelativePath || file.name);
+                    });
+
+                    const res = await axios.post('/project/upload-folder', formData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+
+                    if (res.data.status === 'success') {
+                        showNewProjForm.value = false;
+                        ElMessage.success('创建成功');
+                        window.projectId = res.data.new_id;
+                        openProject({
+                            name: res.data.project_name || projectName,
+                            path: res.data.project_path,
+                            project_id: res.data.new_id
+                        });
+                    } else {
+                        ElMessage.error(res.data.message || '创建失败');
+                    }
                 } else {
-                    ElMessage.error(res.data.message);
+                    const res = await axios.post('/project/create', {
+                        projectName: projectName,
+                        projectLocation: projectLocation,
+                        creationType: 'blank',
+                        project_id: window.projectId
+                    });
+                    if (res.data.status === 'success') {
+                        showNewProjForm.value = false;
+                        ElMessage.success('创建成功');
+                        window.projectId = res.data.new_id;
+                        openProject({
+                            name: res.data.project_name || projectName,
+                            path: res.data.project_path,
+                            project_id: res.data.new_id
+                        });
+                    } else {
+                        ElMessage.error(res.data.message || '创建失败');
+                    }
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 ElMessage.error(err.response?.data?.message || '创建失败');
-            })
-            .finally(() => {
+            } finally {
                 isCreating.value = false;
-            });
+            }
         };
         function getProjectId(project) {
             if (project && project.id !== undefined && project.id !== null){
@@ -397,46 +445,22 @@ const app = createApp({
             if (files.length === 0) return;
 
             try {
-                // 创建FormData对象
-                const formData = new FormData();
-                
-                // 获取文件夹名称（从第一个文件的路径中提取）
                 const firstFile = files[0];
                 const pathParts = firstFile.webkitRelativePath.split('/');
                 const folderName = pathParts[0];
-                
-                // 添加所有文件到FormData
-                files.forEach(file => {
-                    formData.append('files', file);
-                    formData.append('paths', file.webkitRelativePath);
-                });
-                
-                formData.append('folderName', folderName);
-                
-                ElMessage.info('正在上传文件夹，请稍候...');
-                
-                // 发送到后端
-                const response = await axios.post('/project/upload-folder', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-                window.projectId = response.data.new_id
-//                cached_project_id = response.data.new_id
-//                alert('缓存的参数:',cached_project_id)
-                if (response.data.status === 'success') {
-                    // 自动填充项目信息
+                selectedFolderFiles.value = files;
+                selectedFolderName.value = folderName;
+
+                if (!projectForm.projectName) {
                     projectForm.projectName = folderName;
-                    projectForm.projectLocation = response.data.serverPath;
-                } else {
-                    ElMessage.error(response.data.message || '上传失败');
                 }
-                
+
+                ElMessage.success(`已选择源文件夹：${folderName}（${files.length} 个文件）`);
             } catch (error) {
-                console.error('文件夹上传失败:', error);
-                ElMessage.error(`上传失败: ${error.response?.data?.message || error.message}`);
+                console.error('文件夹选择失败:', error);
+                ElMessage.error(`选择失败: ${error.message}`);
             }
-            
+
             // 清空文件选择
             event.target.value = '';
         };
@@ -485,7 +509,7 @@ const app = createApp({
 
         // ====== 监听 ======
         watch(() => projectForm.projectLocation, (newPath) => {
-            if (creationType.value === 'folder' && newPath) {
+            if (newPath) {
                 const pathParts = newPath.replace(/\\/g, '/').split('/');
                 const folderName = pathParts.pop() || pathParts.pop();
                 if (folderName) {
@@ -674,6 +698,7 @@ const app = createApp({
             openImportDialog,
             handleImportProject,
             folderUpload,
+            selectedFolderName,
             triggerFolderUpload,
             handleFolderUpload,
             refreshHistory,

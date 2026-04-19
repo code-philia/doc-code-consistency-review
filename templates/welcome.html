@@ -117,48 +117,28 @@
                         
                         <el-dialog v-model="showNewProjForm" title="创建新项目" width="700px" :show-close="false" custom-class="new-project-dialog">
                             <div class="dialog-container">
-                                <div class="dialog-sidebar">
-                                    <div class="option-menu">
-                                        <div class="option-item" :class="{ 'is-active': creationType === 'blank' }" @click="creationType = 'blank'">
-                                            <el-icon><DocumentAdd /></el-icon>
-                                            <span>创建空白项目</span>
-                                        </div>
-                                        <div class="option-item" :class="{ 'is-active': creationType === 'folder' }" @click="creationType = 'folder'">
-                                            <el-icon><FolderOpened /></el-icon>
-                                            <span>从文件夹创建</span>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div class="dialog-content">
-                                    <div v-if="creationType === 'blank'" class="form-section">
-                                        <h3 class="form-title">创建一个空白项目</h3>
-                                        <p class="form-description">系统将为您创建一个包含标准 `code_repo` 和 `doc_repo` 子目录的空项目结构。</p>
+                                    <div class="form-section">
+                                        <h3 class="form-title">创建项目</h3>
+                                        <p class="form-description">填写项目存放路径和项目名称；可选上传一个源文件夹。若未选择源文件夹，则创建空白项目目录。</p>
                                         <el-form :model="projectForm" label-position="top" class="project-form">
+                                            <el-form-item label="项目存放路径（绝对路径）">
+                                                <el-input v-model="projectForm.projectLocation" placeholder="例如：/data/review/my_project"></el-input>
+                                            </el-form-item>
                                             <el-form-item label="项目名称">
-                                                <el-input v-model="projectForm.projectName" placeholder="例如：运载火箭接口控制文件审查"></el-input>
+                                                <el-input v-model="projectForm.projectName" placeholder="根据项目路径实时生成，可手动修改"></el-input>
                                             </el-form-item>
-                                            <el-form-item label="项目存放位置">
-                                                <el-input v-model="projectForm.projectLocation" placeholder="例如：D:\my_projects"></el-input>
-                                            </el-form-item>
-                                        </el-form>
-                                    </div>
-
-                                    <div v-if="creationType === 'folder'" class="form-section">
-                                        <h3 class="form-title">从现有文件夹创建项目</h3>
-                                        <p class="form-description">选择一个包含 `code_repo` 和 `doc_repo` 子目录的文件夹。系统将扫描并生成元数据。</p>
-                                        <el-form :model="projectForm" label-position="top" class="project-form">
-                                            <el-form-item label="项目文件夹路径">
+                                            <el-form-item label="源文件夹（可选）">
                                                 <div class="folder-input-group">
-                                                    <el-input v-model="projectForm.projectLocation" placeholder="请粘贴或输入项目文件夹的完整路径"></el-input>
-                                                        <el-button type="primary" @click="triggerFolderUpload" class="folder-select-btn">
-                                                            <i class="fas fa-folder-open"></i> 选择文件夹
-                                                        </el-button>
+                                                    <el-input :model-value="selectedFolderName" placeholder="未选择则创建空白目录" readonly></el-input>
+                                                    <el-button type="primary" @click="triggerFolderUpload" class="folder-select-btn">
+                                                        <i class="fas fa-folder-open"></i> 选择文件夹
+                                                    </el-button>
                                                 </div>
                                                 <input type="file" ref="folderUpload" @change="handleFolderUpload" webkitdirectory multiple style="display: none;">
-                                            </el-form-item>
-                                            <el-form-item label="项目名称">
-                                                <el-input v-model="projectForm.projectName" placeholder="（可选）默认为文件夹名称"></el-input>
+                                                <div style="margin-top: 8px; color: #666; font-size: 12px;">
+                                                    ${ selectedFolderName ? ('已选择源文件夹：' + selectedFolderName) : '未选择源文件夹，提交后创建空白项目目录' }
+                                                </div>
                                             </el-form-item>
                                         </el-form>
                                     </div>

@@ -203,17 +203,18 @@ def read_user_from_db(username, password):
 # project
 @bp.route('/project/create', methods=['POST'])
 def create_project():
-    data = request.json
+    data = request.json or {}
     creation_type = data.get('creationType', 'blank')
-    project_name = data.get('projectName')
+    project_name = (data.get('projectName') or '').strip()
     project_location = data.get('projectLocation')
-    project_id = data.get('project_id')
-    code = project_location.split('_')[-1]
-    project_name += code
-    # print(f'project_name=======:{project_name}')
 
-    if not project_name or not project_location:
-        return jsonify({"status": "error", "message": "项目名称和路径不能为空。"}), 400
+    try:
+        project_location = normalize_project_location(project_location)
+    except ValueError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+    if not project_name:
+        project_name = get_default_project_name(project_location)
 
     if creation_type == 'blank':
         return create_blank_project(project_name, project_location)
@@ -223,29 +224,90 @@ def create_project():
         return jsonify({"status": "error", "message": "无效的创建类型。"}), 400
 
 
+def normalize_project_location(project_location):
+    """校验并规范化项目路径（必须为绝对路径）"""
+    if project_location is None:
+        raise ValueError("项目存放路径不能为空。")
+
+    if not isinstance(project_location, str):
+        raise ValueError("项目存放路径格式无效。")
+
+    normalized = project_location.strip()
+    if not normalized:
+        raise ValueError("项目存放路径不能为空。")
+
+    if not os.path.isabs(normalized):
+        raise ValueError("项目存放路径必须是绝对路径。")
+
+    return os.path.abspath(os.path.normpath(normalized))
+
+
+def get_default_project_name(project_location):
+    normalized = project_location.rstrip(os.sep)
+    return os.path.basename(normalized) or "新项目"
+
+
+def insert_project_record(project_name, project_path):
+    db = get_db()
+    c = db.cursor()
+    c.execute(
+        """
+        insert into project(user_id,last_opened,name,path,create_time,update_time)
+        values(?, ?, ?, ?, ?, ?)
+        """,
+        (
+            current_user.user_id,
+            datetime.now().isoformat(),
+            project_name,
+            project_path,
+            datetime.now().isoformat(),
+            datetime.now().isoformat(),
+        ),
+    )
+    return c.lastrowid
+
+
+def build_project_metadata(project_name, project_path, code_repo_path, doc_repo_path):
+    code_files = get_all_files_with_relative_paths(code_repo_path, type='code')
+    doc_files = get_all_files_with_relative_paths(doc_repo_path, type='doc')
+
+    code_file_lines = {}
+    total_loc = 0
+    for file in code_files:
+        loc = count_lines_of_code(os.path.join(code_repo_path, file))
+        code_file_lines[file] = loc
+        total_loc += loc
+
+    return {
+        "project_name": project_name,
+        "project_location": os.path.dirname(project_path),
+        "create_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+        "code_repo": code_repo_path,
+        "doc_repo": doc_repo_path,
+        "code_files": code_files,
+        "doc_files": doc_files,
+        "code_scale": total_loc,
+        "code_file_lines": code_file_lines
+    }
+
+
 def create_blank_project(project_name, project_location):
     """处理创建空白项目的逻辑"""
-    project_path = os.path.join(project_location, project_name)
+    project_path = project_location
     if os.path.exists(project_path):
-        return jsonify({"status": "error", "message": f"项目文件夹 '{project_name}' 已存在于目标位置。"}), 400
+        if not os.path.isdir(project_path):
+            return jsonify({"status": "error", "message": "项目路径已存在且不是文件夹。"}), 400
+        if os.listdir(project_path):
+            return jsonify({"status": "error", "message": "项目路径已存在且不为空，请更换路径。"}), 400
 
     try:
+        os.makedirs(project_path, exist_ok=True)
         code_repo_path = os.path.join(project_path, 'code_repo')
         doc_repo_path = os.path.join(project_path, 'doc_repo')
         os.makedirs(code_repo_path, exist_ok=True)
         os.makedirs(doc_repo_path, exist_ok=True)
 
-        metadata = {
-            "project_name": project_name,
-            "project_location": project_location,
-            "create_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-            "code_repo": code_repo_path,
-            "doc_repo": doc_repo_path,
-            "code_files": [],
-            "doc_files": [],
-            "code_scale": 0,
-            "code_file_lines": {}
-        }
+        metadata = build_project_metadata(project_name, project_path, code_repo_path, doc_repo_path)
 
         metadata_file = os.path.join(project_path, 'metadata.json')
         with open(metadata_file, 'w', encoding='utf-8') as f:
@@ -254,26 +316,20 @@ def create_blank_project(project_name, project_location):
         # update_history(project_name, project_path)
         # init_project_db(project_path)
         auto_load_rag_db(project_path)
-        sql = f"""
-            insert into project(user_id,last_opened,name,path,create_time,update_time) 
-            values({current_user.user_id}, "{datetime.now().isoformat()}", "{project_name}", 
-            "{project_path}", "{datetime.now().isoformat()}", "{datetime.now().isoformat()}");
-            """
-        # print('sql:', sql)
-
-        db = get_db()
-        c = db.cursor()
-        c.execute(sql)
-        new_id = c.lastrowid
-
-        return jsonify({"status": "success", "project_path": project_path, 'new_id': new_id}), 200
+        new_id = insert_project_record(project_name, project_path)
+        return jsonify({
+            "status": "success",
+            "project_path": project_path,
+            "project_name": project_name,
+            "new_id": new_id
+        }), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"创建目录或文件时出错: {e}"}), 500
 
 
 def create_project_from_folder(project_name, folder_path):
     """处理从现有文件夹创建项目的逻辑"""
-    project_path = folder_path # 项目路径就是用户选择的文件夹
+    project_path = folder_path
     if not os.path.isdir(project_path):
         return jsonify({"status": "error", "message": "提供的路径不是一个有效的文件夹。"}), 400
 
@@ -305,34 +361,20 @@ def create_project_from_folder(project_name, folder_path):
             # 转换后重新获取文档文件列表
             doc_files = get_all_files_with_relative_paths(doc_repo_path, type ='doc')
 
-        code_file_lines = {}
-        total_loc = 0
-        for file in code_files:
-            loc = count_lines_of_code(os.path.join(code_repo_path, file))
-            code_file_lines[file] = loc
-            total_loc += loc
-
-        metadata = {
-            "project_name": project_name,
-            "project_location": os.path.dirname(project_path), # 存储其父目录
-            "create_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-            "code_repo": code_repo_path,
-            "doc_repo": doc_repo_path,
-            "code_files": code_files,
-            "doc_files": doc_files,
-            "code_scale": total_loc,
-            "code_file_lines": code_file_lines
-        }
+        metadata = build_project_metadata(project_name, project_path, code_repo_path, doc_repo_path)
 
         metadata_file = os.path.join(project_path, 'metadata.json')
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
 
-        # update_history(project_name, project_path)
-        # init_project_db(project_path)
         auto_load_rag_db(project_path)
-
-        return jsonify({"status": "success", "project_path": project_path}), 200
+        new_id = insert_project_record(project_name, project_path)
+        return jsonify({
+            "status": "success",
+            "project_path": project_path,
+            "project_name": project_name,
+            "new_id": new_id
+        }), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"扫描文件夹或生成元数据时出错: {e}"}), 500
 
@@ -909,73 +951,98 @@ def upload_files():
 
 @bp.route('/project/upload-folder', methods=['POST'])
 def upload_folder():
-    """处理文件夹上传功能"""
+    """从本地源文件夹创建项目并批量上传文件"""
     try:
-        # 获取上传的文件和文件夹名称
+        project_location_raw = request.form.get('projectLocation')
+        project_name = (request.form.get('projectName') or '').strip()
+        source_folder_name = request.form.get('folderName')
         files = request.files.getlist('files')
         paths = request.form.getlist('paths')
-        folder_name = request.form.get('folderName')
+        if not files:
+            return jsonify({"status": "error", "message": "没有接收到源文件夹中的文件"}), 400
 
-        if not files or not folder_name:
-            return jsonify({"status": "error", "message": "没有接收到文件或文件夹名称"}), 400
+        if len(paths) != len(files):
+            return jsonify({"status": "error", "message": "上传参数异常：文件路径数量不匹配"}), 400
 
-        # 确保testdata目录存在
-        os.makedirs(TESTDATA_DIR, exist_ok=True)
+        try:
+            project_path = normalize_project_location(project_location_raw)
+        except ValueError as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
 
-        # 创建目标文件夹路径
-        target_folder_path = os.path.join(TESTDATA_DIR, folder_name)
-        # logger.info('target_folder_path',target_folder_path)
-        timestamp = int(time.time())
-        # 如果目标文件夹已存在，添加时间戳后缀
-        if os.path.exists(target_folder_path):
-            target_folder_path = os.path.join(TESTDATA_DIR, f"{folder_name}_{timestamp}")
+        if not project_name:
+            project_name = get_default_project_name(project_path)
 
-        # 创建目标文件夹
-        os.makedirs(target_folder_path, exist_ok=True)
+        if os.path.exists(project_path):
+            if not os.path.isdir(project_path):
+                return jsonify({"status": "error", "message": "项目路径已存在且不是文件夹。"}), 400
+            if os.listdir(project_path):
+                return jsonify({"status": "error", "message": "项目路径已存在且不为空，请更换路径。"}), 400
+        else:
+            os.makedirs(project_path, exist_ok=True)
 
-        # 保存所有文件，保持目录结构
+        code_repo_path = os.path.join(project_path, 'code_repo')
+        doc_repo_path = os.path.join(project_path, 'doc_repo')
+        os.makedirs(code_repo_path, exist_ok=True)
+        os.makedirs(doc_repo_path, exist_ok=True)
+
+        doc_exts = {'.md', '.markdown', '.txt', '.doc', '.docx'}
+        has_docx = False
+
         for file, relative_path in zip(files, paths):
             if not file.filename:
                 continue
 
-            # 移除文件夹名称前缀，获取相对路径
-            if relative_path.startswith(folder_name + '/'):
-                file_relative_path = relative_path[len(folder_name) + 1:]
+            cleaned_path = (relative_path or file.filename).replace('\\', '/').lstrip('/')
+            if source_folder_name and cleaned_path.startswith(source_folder_name + '/'):
+                cleaned_path = cleaned_path[len(source_folder_name) + 1:]
+            if not cleaned_path:
+                cleaned_path = os.path.basename(file.filename)
+
+            normalized_rel = cleaned_path.lstrip('/')
+            if normalized_rel.startswith('code_repo/'):
+                # 源目录中已包含 code_repo，写入目标 code_repo 时去掉这一层
+                base_repo = code_repo_path
+                rel_in_repo = normalized_rel[len('code_repo/'):]
+            elif normalized_rel.startswith('doc_repo/'):
+                # 源目录中已包含 doc_repo，写入目标 doc_repo 时去掉这一层
+                base_repo = doc_repo_path
+                rel_in_repo = normalized_rel[len('doc_repo/'):]
             else:
-                file_relative_path = relative_path
+                ext = os.path.splitext(normalized_rel)[1].lower()
+                base_repo = doc_repo_path if ext in doc_exts else code_repo_path
+                rel_in_repo = normalized_rel
 
-            # 构建完整的目标文件路径
-            target_file_path = os.path.join(target_folder_path, file_relative_path)
+            if not rel_in_repo:
+                rel_in_repo = os.path.basename(file.filename)
 
-            # 安全检查：确保目标路径在目标文件夹内
-            target_file_path = os.path.abspath(target_file_path)
-            if not target_file_path.startswith(os.path.abspath(target_folder_path)):
+            target_file_path = os.path.abspath(os.path.join(base_repo, rel_in_repo))
+            if not target_file_path.startswith(os.path.abspath(base_repo) + os.sep):
                 return jsonify({"status": "error", "message": f"检测到不安全的路径: {relative_path}"}), 400
 
-            # 创建目标目录
             target_dir = os.path.dirname(target_file_path)
             os.makedirs(target_dir, exist_ok=True)
-
-            # 保存文件
             file.save(target_file_path)
 
-        sql = f"""
-        insert into project(user_id,last_opened,name,path,create_time,update_time) 
-        values({current_user.user_id}, "{datetime.now().isoformat()}", "{folder_name}_{timestamp}", 
-        "{target_folder_path}", "{datetime.now().isoformat()}", "{datetime.now().isoformat()}");
-        """
-        # print('sql:', sql)
+            ext = os.path.splitext(rel_in_repo)[1].lower()
+            if ext == '.docx':
+                has_docx = True
 
-        db = get_db()
-        c = db.cursor()
-        c.execute(sql)
-        new_id = c.lastrowid
+        if has_docx:
+            convert_doc_to_markdown(doc_repo_path)
+
+        metadata = build_project_metadata(project_name, project_path, code_repo_path, doc_repo_path)
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=4, ensure_ascii=False)
+
+        auto_load_rag_db(project_path)
+        new_id = insert_project_record(project_name, project_path)
 
         return jsonify({
             "status": "success",
-            "message": f"文件夹 '{folder_name}' 上传成功",
-            "serverPath": target_folder_path,
-            "folderName": os.path.basename(target_folder_path),
+            "message": f"项目 '{project_name}' 创建成功",
+            "project_path": project_path,
+            "project_name": project_name,
             "new_id": new_id
         }), 200
 
