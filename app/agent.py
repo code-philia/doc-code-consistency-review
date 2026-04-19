@@ -54,6 +54,7 @@ def query_llm(message, history=None):
         pass
     r = Resp()
     r.content = text.strip()
+
     return r
 
 

@@ -2711,7 +2711,10 @@ const app = createApp({
             const correspondingAlignment = findAlignmentByDocRange(rangeStart, rangeEnd);
             
             if (!correspondingAlignment) {
-                ElMessage.warning('未找到与此高亮块对应的对齐关系');
+                const block = findDocBlockByRange(rangeStart, rangeEnd);
+                if (block) {
+                    showBlockContextMenu(event, block, 'doc');
+                }
                 return;
             }
 
@@ -2737,8 +2740,8 @@ const app = createApp({
         const handleCodeHighlightBlockRightClick = (event) => {
             event.preventDefault(); // 阻止默认右键菜单
             
-            const target = event.target;
-            if (!target.classList.contains('highlight-block')) return;
+            const target = getHighlightBlockAtEvent(event);
+            if (!target) return;
 
             const type = target.getAttribute('data-type');
             // 只处理代码类型的高亮块
@@ -2753,7 +2756,10 @@ const app = createApp({
             const correspondingAlignment = findAlignmentByCodeRange(rangeStart, rangeEnd);
             
             if (!correspondingAlignment) {
-                ElMessage.warning('未找到与此高亮块对应的对齐关系');
+                const block = findCodeBlockByRange(rangeStart, rangeEnd);
+                if (block) {
+                    showBlockContextMenu(event, block, 'code');
+                }
                 return;
             }
 
@@ -2768,7 +2774,22 @@ const app = createApp({
             showAlignmentDirectionDialog.value = false;
             if (!direction) return;
             if (alignmentDirectionMode.value === 'auto') {
-                await startAutoAlignmentWithDirection(direction);
+                try {
+                    await ElMessageBox.confirm(
+                        '这将清除已有的对齐结果，是否继续？',
+                        '自动对齐',
+                        {
+                            confirmButtonText: '继续',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }
+                    );
+                    await doRestartAlignment(direction);
+                } catch (error) {
+                    if (error !== 'cancel' && error !== 'close') {
+                        ElMessage.error(`自动对齐失败: ${error.message}`);
+                    }
+                }
             } else if (alignmentDirectionMode.value === 'restart') {
                 await doRestartAlignment(direction);
             }
@@ -3621,6 +3642,8 @@ const app = createApp({
             top: 0,
             left: 0,
             selectedAlignment: null,
+            selectedBlock: null,
+            selectedBlockType: null,
         });
 
         const showContextMenu = (event, alignment) => {
@@ -3629,6 +3652,8 @@ const app = createApp({
 
             contextMenu.value.visible = true;
             contextMenu.value.selectedAlignment = alignment;
+            contextMenu.value.selectedBlock = null;
+            contextMenu.value.selectedBlockType = null;
 
             // 先设置菜单可见，以便获取菜单尺寸
             nextTick(() => {
@@ -3664,8 +3689,42 @@ const app = createApp({
             document.addEventListener('click', hideContextMenu);
         };
 
+        const showBlockContextMenu = (event, block, blockType) => {
+            contextMenu.value.visible = true;
+            contextMenu.value.selectedAlignment = null;
+            contextMenu.value.selectedBlock = block;
+            contextMenu.value.selectedBlockType = blockType;
+
+            nextTick(() => {
+                const menuElement = document.querySelector('.context-menu');
+                if (!menuElement) return;
+
+                const menuRect = menuElement.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                let left = event.clientX;
+                let top = event.clientY;
+
+                if (left + menuRect.width > viewportWidth) {
+                    left = event.clientX - menuRect.width;
+                }
+                if (top + menuRect.height > viewportHeight) {
+                    top = event.clientY - menuRect.height;
+                }
+
+                contextMenu.value.left = Math.max(0, left);
+                contextMenu.value.top = Math.max(0, top);
+            });
+
+            document.addEventListener('click', hideContextMenu);
+        };
+
         const hideContextMenu = () => {
             contextMenu.value.visible = false;
+            contextMenu.value.selectedAlignment = null;
+            contextMenu.value.selectedBlock = null;
+            contextMenu.value.selectedBlockType = null;
             // 移除监听器，避免内存泄漏
             document.removeEventListener('click', hideContextMenu);
         };
@@ -3701,7 +3760,7 @@ const app = createApp({
             if (!contextMenu.value.selectedAlignment) return;
             const alignmentToDelete = contextMenu.value.selectedAlignment;
 
-            ElMessageBox.confirm(`确定要删除对齐项 "${alignmentToDelete.name}" 吗？`, '确认删除', {
+            ElMessageBox.confirm(`确定要取消对齐关系 "${alignmentToDelete.name}" 吗？`, '取消对齐', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'warning'
@@ -3738,7 +3797,7 @@ const app = createApp({
                         // 刷新筛选状态下的对齐列表
                         refreshFilteredAlignments();
                         
-                        ElMessage.info('对齐项已删除。');
+                        ElMessage.info('对齐关系已取消。');
                     }
                 } catch (err) {
                     console.error("Error deleting alignment:", err);
@@ -4199,10 +4258,139 @@ const app = createApp({
             // refreshFilteredAlignments();
         };
 
+        const findDocBlockByRange = (rangeStart, rangeEnd) => {
+            return (docBlocks.value || []).find(block =>
+                block.filename === selectedDocFile.value &&
+                block.start === rangeStart &&
+                block.end === rangeEnd
+            ) || null;
+        };
+
+        const findCodeBlockByRange = (rangeStart, rangeEnd) => {
+            return (codeBlocks.value || []).find(block => {
+                if (block.file !== selectedCodeFile.value) return false;
+                if (!Array.isArray(block.range) || block.range.length !== 2) return false;
+                const offsets = getOffsetsFromLineRange(selectedCodeRawContent.value, block.range[0], block.range[1]);
+                return offsets.start === rangeStart && offsets.end === rangeEnd;
+            }) || null;
+        };
+
+        const alignBlockFromContextMenu = async () => {
+            const block = contextMenu.value.selectedBlock;
+            const blockTypeForMenu = contextMenu.value.selectedBlockType;
+            if (!block || !blockTypeForMenu) return;
+
+            const id = generateUUIDLike();
+            const newAlignment = {
+                id: id,
+                name: blockTypeForMenu === 'doc'
+                    ? (extractPlainTextFromMarkdown(block.content || '需求块', 20) || '需求块对齐')
+                    : ((block.code || block.content || '代码块').split('\n')[0].trim().slice(0, 20) || '代码块对齐'),
+                isReviewed: false,
+                reviewThoughts: '',
+                docRanges: [],
+                codeRanges: []
+            };
+
+            if (blockTypeForMenu === 'doc') {
+                const content = block.content || '';
+                const { startLine, endLine } = convertOffsetToLineNumbers(
+                    selectedDocRawContent.value,
+                    block.start,
+                    block.end
+                );
+                newAlignment.docRanges.push({
+                    documentId: block.filename,
+                    filename: block.filename,
+                    start: block.start,
+                    end: block.end,
+                    content: content,
+                    startLine: startLine,
+                    endLine: endLine
+                });
+            } else {
+                const content = selectedCodeRawContent.value;
+                const startLine = block.range[0];
+                const endLine = block.range[1];
+                const offsets = getOffsetsFromLineRange(content, startLine, endLine);
+                newAlignment.codeRanges.push({
+                    documentId: block.file,
+                    filename: block.file,
+                    start: offsets.start,
+                    end: offsets.end,
+                    startLine: startLine,
+                    endLine: endLine,
+                    content: block.code || block.content || ''
+                });
+            }
+
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                await axios.post(
+                    `/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
+                    newAlignment
+                );
+                hideContextMenu();
+                await fetchAlignments();
+
+                // 复用已有单条对齐流程：需求块默认需求->代码，代码块默认代码->需求
+                const direction = blockTypeForMenu === 'doc' ? 'doc-to-code' : 'code-to-doc';
+                await performSingleAlignment(newAlignment, direction, '');
+            } catch (error) {
+                console.error('块对齐失败:', error);
+                ElMessage.error(`块对齐失败: ${error.message}`);
+            }
+        };
+
+        const deleteBlockFromContextMenu = async () => {
+            const block = contextMenu.value.selectedBlock;
+            const blockTypeForMenu = contextMenu.value.selectedBlockType;
+            if (!block || !blockTypeForMenu) return;
+
+            try {
+                await ElMessageBox.confirm(
+                    `确定删除当前${blockTypeForMenu === 'doc' ? '需求' : '代码'}块吗？`,
+                    '删除块',
+                    {
+                        confirmButtonText: '删除',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
+                    }
+                );
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const response = await axios.post('/api/delete-block', {
+                    projectPath: projectPath.value,
+                    blockType: blockTypeForMenu,
+                    blockData: block,
+                    project_id: projectId
+                });
+
+                if (response.data.status === 'success') {
+                    hideContextMenu();
+                    if (blockTypeForMenu === 'doc') {
+                        await loadAndRenderDocBlocks(true);
+                    } else {
+                        await loadAndRenderCodeBlocks(true);
+                    }
+                    await fetchAlignments();
+                    ElMessage.success(response.data.message || '删除成功');
+                } else {
+                    ElMessage.warning(response.data.message || '删除失败');
+                }
+            } catch (error) {
+                if (error === 'cancel' || error === 'close') return;
+                console.error('删除块失败:', error);
+                ElMessage.error(`删除块失败: ${error.message}`);
+            }
+        };
+
         
         
         const showReviewResult = () => {
-            if (!contextMenu.value.selectedAlignment) return;
 
             selectedReviewAlignment.value = contextMenu.value.selectedAlignment;
             showReviewDialog.value = true;
@@ -5159,6 +5347,8 @@ const app = createApp({
             handleNodeClick,
             contextMenu,
             showContextMenu,
+            alignBlockFromContextMenu,
+            deleteBlockFromContextMenu,
             renameAlignment,
             deleteAlignment,
             removeRange,

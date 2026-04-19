@@ -30,6 +30,7 @@ class RequestLLM:
         self.url_generate = "http://192.168.0.223:11434/v1"
         self.url_embedding = "http://192.168.0.223:11434/api/embeddings"
 
+
     # # 分词
     # def tokenize(self, text):
     #     return list(jieba.cut(text))
@@ -213,13 +214,16 @@ class RequestLLM:
                 model=self.default_model,
                 temperature=0,
                 top_p=0.95,
-                max_tokens=6000,
+                max_tokens=6000
             )
 
             # print("################")
             if chat_completion and chat_completion.choices[0].message.content:
-                data = chat_completion.choices[0].message.content.split('</think>')[1]
-                return data
+                if '</think>' in chat_completion.choices[0].message.content:
+                    data = chat_completion.choices[0].message.content.split('</think>')[1]
+                    return data
+                else:
+                    return chat_completion.choices[0].message.content
             return ""
         except requests.exceptions.RequestException as e:
             print('[ollama异常]', str(e))

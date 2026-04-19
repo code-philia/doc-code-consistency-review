@@ -764,13 +764,19 @@
                                 <i class="fas fa-pen"></i> 重命名
                             </div>
                             <div class="context-menu-item" @click="deleteAlignment">
-                                <i class="fas fa-trash"></i> 删除
+                                <i class="fas fa-unlink"></i> 取消对齐
                             </div>
                             <div class="context-menu-item" @click="showReviewResult">
                                 <i class="fas fa-search"></i> 查看详情
                             </div>
-                        
-
+                        </template>
+                        <template v-else-if="contextMenu.selectedBlock">
+                            <div class="context-menu-item" @click="alignBlockFromContextMenu">
+                                <i class="fas fa-link"></i> 对齐
+                            </div>
+                            <div class="context-menu-item" @click="deleteBlockFromContextMenu">
+                                <i class="fas fa-trash"></i> 删除
+                            </div>
                         </template>
                     </div>
                 </div>
