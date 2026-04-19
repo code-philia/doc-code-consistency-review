@@ -1984,23 +1984,32 @@ const app = createApp({
                 return;
             }
 
-            let blockData = {};
-            if (type === 'doc') {
-                blockData = {
-                    filename: currentSelection.value.documentId,
-                    start: currentSelection.value.start,
-                    end: currentSelection.value.end,
-                    content: currentSelection.value.content
-                };
-            } else if (type === 'code') {
-                const codeFileContent = selectedCodeRawContent.value;
-                const { startLine, endLine } = convertOffsetToLineNumbers(codeFileContent, currentSelection.value.start, currentSelection.value.end);
-                blockData = {
-                    file: currentSelection.value.documentId,
-                    range: [startLine, endLine],
-                    content: currentSelection.value.content
-                };
-            }
+            const buildBlockDataFromSelection = (selectionType) => {
+                let blockData = {};
+                if (selectionType === 'doc') {
+                    blockData = {
+                        filename: currentSelection.value.documentId,
+                        start: currentSelection.value.start,
+                        end: currentSelection.value.end,
+                        content: currentSelection.value.content
+                    };
+                } else if (selectionType === 'code') {
+                    const codeFileContent = selectedCodeRawContent.value;
+                    const { startLine, endLine } = convertOffsetToLineNumbers(
+                        codeFileContent,
+                        currentSelection.value.start,
+                        currentSelection.value.end
+                    );
+                    blockData = {
+                        file: currentSelection.value.documentId,
+                        range: [startLine, endLine],
+                        content: currentSelection.value.content
+                    };
+                }
+                return blockData;
+            };
+
+            const blockData = buildBlockDataFromSelection(type);
 
             try {
                 const response = await axios.post('/api/add-block', {
@@ -2026,6 +2035,37 @@ const app = createApp({
                 console.error('Error adding block:', error);
                 ElMessage.error('添加块失败: ' + (error.response?.data?.message || error.message));
             }
+        };
+
+        const buildBlockDataFromCurrentSelection = () => {
+            if (!currentSelection.value) return null;
+            const selectionType = currentSelection.value.type === 'code' ? 'code' : 'doc';
+            if (selectionType === 'doc') {
+                return {
+                    blockType: 'doc',
+                    blockData: {
+                        filename: currentSelection.value.documentId,
+                        start: currentSelection.value.start,
+                        end: currentSelection.value.end,
+                        content: currentSelection.value.content
+                    }
+                };
+            }
+
+            const codeFileContent = selectedCodeRawContent.value;
+            const { startLine, endLine } = convertOffsetToLineNumbers(
+                codeFileContent,
+                currentSelection.value.start,
+                currentSelection.value.end
+            );
+            return {
+                blockType: 'code',
+                blockData: {
+                    file: currentSelection.value.documentId,
+                    range: [startLine, endLine],
+                    content: currentSelection.value.content
+                }
+            };
         };
 
         const createAlignment = async () => {
@@ -2110,6 +2150,26 @@ const app = createApp({
                     startLine: startLine, // 添加起始行号
                     endLine: endLine // 添加结束行号
                 });
+            }
+
+            // 先将当前选中内容保存为块（写入 doc_blocks/code_blocks jsonl）
+            try {
+                const blockPayload = buildBlockDataFromCurrentSelection();
+                if (blockPayload) {
+                    const blockResp = await axios.post('/api/add-block', {
+                        projectPath: projectPath.value,
+                        blockType: blockPayload.blockType,
+                        blockData: blockPayload.blockData
+                    });
+                    if (blockResp.data?.status === 'error') {
+                        ElMessage.error('创建对齐关系前保存块失败: ' + (blockResp.data?.message || '未知错误'));
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('创建对齐关系前保存块失败:', err);
+                ElMessage.error('创建对齐关系前保存块失败: ' + (err.response?.data?.message || err.message));
+                return;
             }
 
             // 更新前端UI
