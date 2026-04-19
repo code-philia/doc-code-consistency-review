@@ -8,3 +8,10 @@ Pillow
 python-docx
 werkzeug
 python-dotenv
+celery
+redis
+gevent
+sqlalchemy
+flask-login
+supervisor
+waitress
