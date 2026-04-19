@@ -2691,6 +2691,20 @@ const app = createApp({
             }
         };
 
+        // 对右键命中的当前块做浅黄色高亮（适用于未对齐块）
+        const applyCurrentBlockYellow = (target, type) => {
+            if (!target) return;
+            if (type === 'doc') {
+                clearDocYellow();
+                target.classList.add('linked-yellow');
+                linkedDocElement = target;
+            } else if (type === 'code') {
+                clearCodeYellow();
+                target.classList.add('linked-yellow');
+                linkedCodeElement = target;
+            }
+        };
+
         // 处理需求高亮块的右键点击事件
         const handleHighlightBlockRightClick = (event) => {
             event.preventDefault(); // 阻止默认右键菜单
@@ -2715,6 +2729,9 @@ const app = createApp({
                 if (block) {
                     showBlockContextMenu(event, block, 'doc');
                 }
+                applyCurrentBlockYellow(target, 'doc');
+                // 未对齐块在块视图模式下也需要联动跳转并高亮
+                handleHighlightBlockClick(event);
                 return;
             }
 
@@ -2760,6 +2777,9 @@ const app = createApp({
                 if (block) {
                     showBlockContextMenu(event, block, 'code');
                 }
+                applyCurrentBlockYellow(target, 'code');
+                // 未对齐块在块视图模式下也需要联动跳转并高亮
+                handleHighlightBlockClick(event);
                 return;
             }
 
