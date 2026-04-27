@@ -176,7 +176,8 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
                 code_ranges,
                 rules=retrieved_rules,
                 issues=retrieved_issues,
-                user_id=user_id
+                user_id=user_id,
+                project_path=project_path
             )
 
             # 2. 更新对齐关系
@@ -320,7 +321,8 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
         user_prompt,
         rules=retrieved_rules,
         issues=retrieved_issues,
-        user_id=user_id
+        user_id=user_id,
+        project_path=project_path
     )
 
     # 2. 更新对齐关系
@@ -455,7 +457,13 @@ def align_requirement_to_project_task(self, file_abstract, params, user_id):
                 all_code_blocks = get_codefile_blocks(code_repo_path, file_name, code_block_base_path)
 
                 # 调用对齐函数获取相关代码
-                related_code = query_related_code(requirement_text, all_code_blocks, block_limit=50, user_id=user_id)
+                related_code = query_related_code(
+                    requirement_text,
+                    all_code_blocks,
+                    block_limit=50,
+                    user_id=user_id,
+                    project_path=project_path
+                )
 
                 # 检查并添加 related_id 对应的代码块
                 related_code = include_related_blocks(related_code, all_code_blocks)
@@ -559,7 +567,13 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
                     [code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
 
                 # 调用LLM
-                related_reqs = query_related_requirement(code_content, all_doc_blocks, block_limit=50, user_id=user_id)
+                related_reqs = query_related_requirement(
+                    code_content,
+                    all_doc_blocks,
+                    block_limit=50,
+                    user_id=user_id,
+                    project_path=project_path
+                )
 
                 # 转换结果为docRanges
                 doc_ranges = []
@@ -660,7 +674,12 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
             enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
 
             # 调用LLM (使用增强后的 Query)
-            related_reqs = query_related_requirement(enhanced_query, all_doc_blocks, block_limit=50)
+            related_reqs = query_related_requirement(
+                enhanced_query,
+                all_doc_blocks,
+                block_limit=50,
+                project_path=project_path
+            )
 
             doc_ranges = []
             blocks_by_file = defaultdict(list)

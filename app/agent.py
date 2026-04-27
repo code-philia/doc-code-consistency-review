@@ -2,6 +2,7 @@ import os
 import re
 import json
 import sys
+from typing import Any, Dict, List, Optional
 from flask_login import current_user
 from dotenv import load_dotenv
 
@@ -69,6 +70,124 @@ def _resolve_user_id(user_id=None):
         return current_user.user_id
     except Exception:
         return None
+
+
+def _load_selected_kbs(project_path: str, kb_type: str) -> List[str]:
+    if not project_path:
+        return []
+    metadata_file = os.path.join(project_path, "metadata.json")
+    if not os.path.exists(metadata_file):
+        return []
+    try:
+        with open(metadata_file, "r", encoding="utf-8") as f:
+            metadata = json.load(f)
+        selected_kbs = metadata.get("selected_kbs", [])
+        return [kb.get("name", "") for kb in selected_kbs if kb.get("type") == kb_type and kb.get("name")]
+    except Exception:
+        return []
+
+
+def _query_kb_items(
+    query_text: str,
+    kb_type: str,
+    kb_names: List[str],
+    top_k_per_kb: int = 3
+) -> List[Dict[str, Any]]:
+    if not query_text or not kb_names:
+        return []
+    try:
+        from .rag_chroma import rag_engine
+    except Exception:
+        return []
+
+    items: List[Dict[str, Any]] = []
+    try:
+        rag_engine.initialize()
+    except Exception:
+        pass
+
+    for kb_name in kb_names:
+        try:
+            collection = rag_engine.get_collection(kb_type, kb_name)
+            if not collection:
+                continue
+            results = collection.query(query_texts=[query_text], n_results=top_k_per_kb)
+            if not results or not results.get("documents"):
+                continue
+
+            docs = results.get("documents", [[]])[0] or []
+            metas = results.get("metadatas", [[]])[0] or []
+            distances = results.get("distances", [[]])[0] or []
+            for i, doc in enumerate(docs):
+                items.append({
+                    "kb_name": kb_name,
+                    "doc": doc,
+                    "meta": metas[i] if i < len(metas) else {},
+                    "distance": distances[i] if i < len(distances) else 999.0
+                })
+        except Exception:
+            continue
+
+    items.sort(key=lambda x: x.get("distance", 999.0))
+    return items
+
+
+def _format_align_references(items: List[Dict[str, Any]], title: str) -> str:
+    if not items:
+        return "无可用知识库参考"
+    parts = []
+    for idx, item in enumerate(items[:5], 1):
+        meta = item.get("meta") or {}
+        req_text = item.get("doc", "") or meta.get("query_text", "")
+        code_text = meta.get("code_text", "") or ""
+        source_file = meta.get("source_file", "") or meta.get("source", "")
+        part = (
+            f"{title}{idx} (kb={item.get('kb_name', '')}, source={source_file}, distance={item.get('distance', 999.0)}):\n"
+            f"[需求侧]\n{req_text}\n"
+            f"[代码侧]\n{code_text}"
+        )
+        parts.append(part.strip())
+    return "\n\n".join(parts)
+
+
+def _build_align_reference_from_icl(icl_examples: List[Dict[str, Any]], title: str) -> str:
+    if not icl_examples:
+        return "无可用知识库参考"
+    parts = []
+    for idx, ex in enumerate(icl_examples[:5], 1):
+        req_text = ex.get("query_text") or ex.get("content") or ""
+        meta = ex.get("meta") or {}
+        code_text = ex.get("code_text") or meta.get("code_text") or ""
+        source_file = meta.get("source_file", "") or meta.get("source", "")
+        distance = ex.get("score", ex.get("distance", ""))
+        parts.append(
+            f"{title}{idx} (source={source_file}, distance={distance}):\n"
+            f"[需求侧]\n{req_text}\n"
+            f"[代码侧]\n{code_text}"
+        )
+    return "\n\n".join(parts)
+
+
+def _format_review_references(
+    align_items: List[Dict[str, Any]],
+    rules: Optional[List[Any]] = None,
+    issues: Optional[List[Any]] = None
+) -> str:
+    parts = []
+    if align_items:
+        parts.append("历史对齐/审查案例：")
+        for idx, item in enumerate(align_items[:5], 1):
+            meta = item.get("meta") or {}
+            parts.append(
+                f"案例{idx} (kb={item.get('kb_name', '')}, source={meta.get('source_file', '')}, distance={item.get('distance', 999.0)}):\n"
+                f"需求片段:\n{item.get('doc', '')}\n"
+                f"代码片段:\n{meta.get('code_text', '')}"
+            )
+    if rules:
+        parts.append(f"已检索到编码规范条目数: {len(rules)}")
+    if issues:
+        parts.append(f"已检索到历史问题条目数: {len(issues)}")
+    return "\n\n".join(parts) if parts else "无可用历史审查/对齐记录"
 
 
 def parse_abstract_output(response):
@@ -206,7 +325,14 @@ def query_codefile_abstract(code_abstracts):
             
         
 # ================= 对齐：查找相关代码块 =================
-def query_related_code_block(requirement, code_blocks, icl_examples=None, user_id=None):
+def query_related_code_block(
+    requirement,
+    code_blocks,
+    icl_examples=None,
+    user_id=None,
+    project_path=None,
+    reference_alignments=None
+):
     """
     查询与需求点最相关的代码行号
     
@@ -233,6 +359,12 @@ def query_related_code_block(requirement, code_blocks, icl_examples=None, user_i
         )
     else:
         resolved_user_id = _resolve_user_id(user_id)
+        if reference_alignments is None and project_path:
+            kb_names = _load_selected_kbs(project_path, "align")
+            kb_items = _query_kb_items(requirement, "align", kb_names, top_k_per_kb=3)
+            reference_alignments = _format_align_references(kb_items, "历史对齐参考")
+        elif reference_alignments is None:
+            reference_alignments = "无可用知识库参考"
 
         # 构造提示词
         row = None
@@ -246,7 +378,8 @@ def query_related_code_block(requirement, code_blocks, icl_examples=None, user_i
         template = ALIGN_PROMPT_TEMPLATE if row is None else row['Req2CodeAlign']
         prompt = template.format(
             req_content=requirement,
-            code_content=code_blocks
+            code_content=code_blocks,
+            reference_alignments=reference_alignments
         )
 
     # 解析回复
@@ -267,13 +400,28 @@ def query_related_code_block(requirement, code_blocks, icl_examples=None, user_i
     print('已尝试多次，无法正确输出和解析结果')        
     return parsed_output
 
-def query_related_code(requirement, code_blocks, block_limit=None, icl_examples=None, user_id=None):
+def query_related_code(
+    requirement,
+    code_blocks,
+    block_limit=None,
+    icl_examples=None,
+    user_id=None,
+    project_path=None,
+    reference_alignments=None
+):
     if block_limit:
         chunked_code_blocks = chunk_list(code_blocks, block_limit)
         
         related_code_blocks = []
         for c in chunked_code_blocks:
-            res = query_related_code_block(requirement, c, icl_examples, user_id=user_id)
+            res = query_related_code_block(
+                requirement,
+                c,
+                icl_examples,
+                user_id=user_id,
+                project_path=project_path,
+                reference_alignments=reference_alignments
+            )
             related_code_blocks.extend(res)
         
         print(related_code_blocks)
@@ -301,12 +449,27 @@ def query_related_code(requirement, code_blocks, block_limit=None, icl_examples=
         print(similarity_results)   
         return similarity_results
     else:
-        return query_related_code_block(requirement, code_blocks, icl_examples, user_id=user_id)
+        return query_related_code_block(
+            requirement,
+            code_blocks,
+            icl_examples,
+            user_id=user_id,
+            project_path=project_path,
+            reference_alignments=reference_alignments
+        )
     
     
     
 # ================= 对齐：参考用户反馈，根据需求块查找相关代码块 =================
-def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, user_prompt, user_id=None):
+def query_related_code_block_by_feedback(
+    requirement,
+    code_blocks,
+    codeRanges,
+    user_prompt,
+    user_id=None,
+    project_path=None,
+    reference_alignments=None
+):
     """
     查询与需求点最相关的代码行号
     
@@ -333,11 +496,18 @@ def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, u
     
     #将用户输入的提示词结合到已有的结果中，形成新的提示词
     #准备加到已有提示词的前面，用于优化大模型的输出
+    if reference_alignments is None and project_path:
+        kb_names = _load_selected_kbs(project_path, "align")
+        kb_items = _query_kb_items(requirement, "align", kb_names, top_k_per_kb=3)
+        reference_alignments = _format_align_references(kb_items, "历史对齐参考")
+    elif reference_alignments is None:
+        reference_alignments = "无可用知识库参考"
     
     original_template = ALIGN_PROMPT_TEMPLATE if row is None else row['Req2CodeAlign']
     original_prompt = original_template.format(
         req_content=requirement,
-        code_content=code_blocks
+        code_content=code_blocks,
+        reference_alignments=reference_alignments
     )
 
     template = Combine_Req2Code_Align_UserPrompt
@@ -359,14 +529,31 @@ def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, u
     return parsed_output    
     
     
-def query_related_code_by_feedback(requirement, code_blocks, codeRanges, user_prompt, block_limit=None, user_id=None):
+def query_related_code_by_feedback(
+    requirement,
+    code_blocks,
+    codeRanges,
+    user_prompt,
+    block_limit=None,
+    user_id=None,
+    project_path=None,
+    reference_alignments=None
+):
 
     if block_limit:
         chunked_code_blocks = chunk_list(code_blocks, block_limit)
         
         related_code_blocks = []
         for c in chunked_code_blocks:
-            res = query_related_code_block_by_feedback(requirement, c, codeRanges, user_prompt, user_id=user_id)
+            res = query_related_code_block_by_feedback(
+                requirement,
+                c,
+                codeRanges,
+                user_prompt,
+                user_id=user_id,
+                project_path=project_path,
+                reference_alignments=reference_alignments
+            )
             related_code_blocks.extend(res)
         
         print(related_code_blocks)
@@ -394,11 +581,26 @@ def query_related_code_by_feedback(requirement, code_blocks, codeRanges, user_pr
         print(similarity_results)   
         return similarity_results
     else:
-        return query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, user_prompt, user_id=user_id)
+        return query_related_code_block_by_feedback(
+            requirement,
+            code_blocks,
+            codeRanges,
+            user_prompt,
+            user_id=user_id,
+            project_path=project_path,
+            reference_alignments=reference_alignments
+        )
 
 
 # ================= 对齐 根据代码块查找相关需求块 =================
-def query_related_requirement_block(code, req_blocks, user_id=None):
+def query_related_requirement_block(
+    code,
+    req_blocks,
+    user_id=None,
+    icl_examples=None,
+    project_path=None,
+    reference_alignments=None
+):
     """
     查询与代码最相关的需求块
     
@@ -409,20 +611,32 @@ def query_related_requirement_block(code, req_blocks, user_id=None):
     返回:
         相关需求块列表
     """
-    user_id = user_id if user_id else current_user.user_id
+    resolved_user_id = _resolve_user_id(user_id)
+    if reference_alignments is None and icl_examples:
+        reference_alignments = _build_align_reference_from_icl(icl_examples, "历史对齐参考")
+    elif reference_alignments is None and project_path:
+        kb_names = _load_selected_kbs(project_path, "align")
+        kb_items = _query_kb_items(code, "align", kb_names, top_k_per_kb=3)
+        reference_alignments = _format_align_references(kb_items, "历史对齐参考")
+    elif reference_alignments is None:
+        reference_alignments = "无可用知识库参考"
+
     # 构造提示词
     # template = ALIGN_REQ_PROMPT_TEMPLATE
-    db = get_db_celery()
-    c = db.cursor()
-    c.execute(f'select Code2ReqAlign from prompt where user_id={user_id}')
-    row = c.fetchone()
-    db.close()
+    row = None
+    if resolved_user_id is not None:
+        db = get_db_celery()
+        c = db.cursor()
+        c.execute(f'select Code2ReqAlign from prompt where user_id={resolved_user_id}')
+        row = c.fetchone()
+        db.close()
     
     template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
     
     prompt = template.format(
         code_content=code,
-        req_content=req_blocks
+        req_content=req_blocks,
+        reference_alignments=reference_alignments
     )
 
     # 解析回复
@@ -434,13 +648,28 @@ def query_related_requirement_block(code, req_blocks, user_id=None):
     
     return parsed_output
 
-def query_related_requirement(code, req_blocks, block_limit=None, user_id=None):
+def query_related_requirement(
+    code,
+    req_blocks,
+    block_limit=None,
+    user_id=None,
+    icl_examples=None,
+    project_path=None,
+    reference_alignments=None
+):
     if block_limit:
         chunked_req_blocks = chunk_list(req_blocks, block_limit)
         
         related_req_blocks = []
         for c in chunked_req_blocks:
-            res = query_related_requirement_block(code, c, user_id)
+            res = query_related_requirement_block(
+                code,
+                c,
+                user_id,
+                icl_examples=icl_examples,
+                project_path=project_path,
+                reference_alignments=reference_alignments
+            )
             related_req_blocks.extend(res)
         
         #print(related_req_blocks)
@@ -467,11 +696,27 @@ def query_related_requirement(code, req_blocks, block_limit=None, user_id=None):
         print(similarity_results)   
         return similarity_results
     else:
-        return query_related_requirement_block(code, req_blocks, user_id)
+        return query_related_requirement_block(
+            code,
+            req_blocks,
+            user_id,
+            icl_examples=icl_examples,
+            project_path=project_path,
+            reference_alignments=reference_alignments
+        )
 
         
 # ================= 对齐 参考用户反馈，根据代码块查找相关需求块 =================
-def query_related_requirement_block_by_feedback(code, docRanges, req_blocks, user_prompt, user_id=None):
+def query_related_requirement_block_by_feedback(
+    code,
+    docRanges,
+    req_blocks,
+    user_prompt,
+    user_id=None,
+    icl_examples=None,
+    project_path=None,
+    reference_alignments=None
+):
     """
     查询与代码最相关的需求块
     
@@ -482,14 +727,25 @@ def query_related_requirement_block_by_feedback(code, docRanges, req_blocks, use
     返回:
         相关需求块列表
     """
-    user_id = user_id if user_id else current_user.user_id
+    resolved_user_id = _resolve_user_id(user_id)
+    if reference_alignments is None and icl_examples:
+        reference_alignments = _build_align_reference_from_icl(icl_examples, "历史对齐参考")
+    elif reference_alignments is None and project_path:
+        kb_names = _load_selected_kbs(project_path, "align")
+        kb_items = _query_kb_items(code, "align", kb_names, top_k_per_kb=3)
+        reference_alignments = _format_align_references(kb_items, "历史对齐参考")
+    elif reference_alignments is None:
+        reference_alignments = "无可用知识库参考"
+
     # 构造提示词
     # template = ALIGN_REQ_PROMPT_TEMPLATE
-    db = get_db_celery()
-    c = db.cursor()
-    c.execute(f'select Code2ReqAlign from prompt where user_id={user_id}')
-    row = c.fetchone()
-    db.close()
+    row = None
+    if resolved_user_id is not None:
+        db = get_db_celery()
+        c = db.cursor()
+        c.execute(f'select Code2ReqAlign from prompt where user_id={resolved_user_id}')
+        row = c.fetchone()
+        db.close()
     
     # template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
     # prompt = template.format(
@@ -505,7 +761,8 @@ def query_related_requirement_block_by_feedback(code, docRanges, req_blocks, use
     original_template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
     original_prompt = original_template.format(
         code_content=code,
-        req_content=req_blocks
+        req_content=req_blocks,
+        reference_alignments=reference_alignments
     )
 
     template = Combine_Code2Req_Align_UserPrompt
@@ -529,13 +786,32 @@ def query_related_requirement_block_by_feedback(code, docRanges, req_blocks, use
     return parsed_output
 
 
-def query_related_requirement_by_feedback(code, docRanges, req_blocks, user_prompt, block_limit=None, user_id=None):
+def query_related_requirement_by_feedback(
+    code,
+    docRanges,
+    req_blocks,
+    user_prompt,
+    block_limit=None,
+    user_id=None,
+    icl_examples=None,
+    project_path=None,
+    reference_alignments=None
+):
     if block_limit:
         chunked_req_blocks = chunk_list(req_blocks, block_limit)
         
         related_req_blocks = []
         for c in chunked_req_blocks:
-            res = query_related_requirement_block_by_feedback(code, docRanges, c, user_prompt, user_id)
+            res = query_related_requirement_block_by_feedback(
+                code,
+                docRanges,
+                c,
+                user_prompt,
+                user_id,
+                icl_examples=icl_examples,
+                project_path=project_path,
+                reference_alignments=reference_alignments
+            )
             related_req_blocks.extend(res)
         
         #print(related_req_blocks)
@@ -562,7 +838,16 @@ def query_related_requirement_by_feedback(code, docRanges, req_blocks, user_prom
         print(similarity_results)   
         return similarity_results
     else:
-        return query_related_requirement_block(code, req_blocks, user_id)        
+        return query_related_requirement_block_by_feedback(
+            code,
+            docRanges,
+            req_blocks,
+            user_prompt,
+            user_id,
+            icl_examples=icl_examples,
+            project_path=project_path,
+            reference_alignments=reference_alignments
+        )
         
         
 def parse_alignment_output(response):
@@ -625,7 +910,17 @@ def parse_output(response):
 
 
 # ================= 审查：根据用户反馈，审查相关代码 =================
-def query_review_result_by_feedback(requirement, related_code, review_thought, user_prompt, rules=None, issues=None, user_id=None):
+def query_review_result_by_feedback(
+    requirement,
+    related_code,
+    review_thought,
+    user_prompt,
+    rules=None,
+    issues=None,
+    user_id=None,
+    project_path=None,
+    reference_reviews=None
+):
     """
     执行代码一致性审查
     
@@ -674,22 +969,33 @@ def query_review_result_by_feedback(requirement, related_code, review_thought, u
             issue_list.append(issue_str)
         reference_issues = "\n\n".join(issue_list)
 
+    if reference_reviews is None and project_path:
+        query_text = f"{requirement_context}\n{code_context}"
+        align_kbs = _load_selected_kbs(project_path, "align")
+        align_items = _query_kb_items(query_text, "align", align_kbs, top_k_per_kb=3)
+        reference_reviews = _format_review_references(align_items, rules=rules, issues=issues)
+    elif reference_reviews is None:
+        reference_reviews = "无可用历史审查/对齐记录"
+
     # 3. 构造提示词
     # template = REVIEW_PROMPT_TEMPLATE
     # original_template = THINKING_PROMPT_TEMPLATE
-    user_id = user_id if user_id else current_user.user_id
-    db = get_db_celery()
-    c = db.cursor()
-    c.execute(f'select review from prompt where user_id={user_id}')
-    row = c.fetchone()
-    db.close()
+    resolved_user_id = _resolve_user_id(user_id)
+    row = None
+    if resolved_user_id is not None:
+        db = get_db_celery()
+        c = db.cursor()
+        c.execute(f'select review from prompt where user_id={resolved_user_id}')
+        row = c.fetchone()
+        db.close()
     
     original_template = THINKING_PROMPT_TEMPLATE if row is None else row['review']
     original_prompt = original_template.format(
         requirement=requirement_context,
         related_code=code_context,
         reference_rules=reference_rules,
-        reference_issues=reference_issues
+        reference_issues=reference_issues,
+        reference_reviews=reference_reviews
     )
     
     template = Combine_Review_UserPrompt
@@ -715,7 +1021,15 @@ def query_review_result_by_feedback(requirement, related_code, review_thought, u
  
  
 # ================= 审查 相关代码 =================
-def query_review_result(requirement, related_code, rules=None, issues=None, user_id=None):
+def query_review_result(
+    requirement,
+    related_code,
+    rules=None,
+    issues=None,
+    user_id=None,
+    project_path=None,
+    reference_reviews=None
+):
     """
     执行代码一致性审查
     
@@ -762,22 +1076,33 @@ def query_review_result(requirement, related_code, rules=None, issues=None, user
             issue_list.append(issue_str)
         reference_issues = "\n\n".join(issue_list)
 
+    if reference_reviews is None and project_path:
+        query_text = f"{requirement_context}\n{code_context}"
+        align_kbs = _load_selected_kbs(project_path, "align")
+        align_items = _query_kb_items(query_text, "align", align_kbs, top_k_per_kb=3)
+        reference_reviews = _format_review_references(align_items, rules=rules, issues=issues)
+    elif reference_reviews is None:
+        reference_reviews = "无可用历史审查/对齐记录"
+
     # 3. 构造提示词
     # template = REVIEW_PROMPT_TEMPLATE
     # template = THINKING_PROMPT_TEMPLATE
-    user_id = user_id if user_id else current_user.user_id
-    db = get_db_celery()
-    c = db.cursor()
-    c.execute(f'select review from prompt where user_id={user_id}')
-    row = c.fetchone()
+    resolved_user_id = _resolve_user_id(user_id)
+    row = None
+    if resolved_user_id is not None:
+        db = get_db_celery()
+        c = db.cursor()
+        c.execute(f'select review from prompt where user_id={resolved_user_id}')
+        row = c.fetchone()
+        db.close()
     template = THINKING_PROMPT_TEMPLATE if row is None else row['review']
-    db.close()
 
     prompt = template.format(
         requirement=requirement_context,
         related_code=code_context,
         reference_rules=reference_rules,
-        reference_issues=reference_issues
+        reference_issues=reference_issues,
+        reference_reviews=reference_reviews
     )
     
     # 4. 调用LLM
