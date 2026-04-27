@@ -3,6 +3,7 @@ import re
 import json
 import sys
 from flask_login import current_user
+from dotenv import load_dotenv
 
 # from app.views import logger
 from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
@@ -11,12 +12,13 @@ from openai import OpenAI
 from .utils import chunk_list
 from .db import get_db_celery
 
-#API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8002/v1")
-API_KEY = os.environ.get("API_KEY", "0")
-#MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
+# 从项目根目录加载 .env
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
+API_KEY = os.environ.get("API_KEY", "0")
+MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-MODEL_NAME = "Qwen3-32B"
 
 def query_llm(message, history=None):
     client = OpenAI(
