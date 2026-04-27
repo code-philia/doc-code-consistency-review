@@ -5,11 +5,11 @@ from collections import defaultdict
 
 import pandas as pd
 from celery import Celery
-
-from app import get_db_celery, create_app
+from app import create_app
 from app.agent import query_review_result, query_review_result_by_feedback, query_codefile_from_abstract, \
     query_related_code, query_generated_requirement, query_flow_chart, query_related_requirement
 from app.code_block import get_codefile_blocks
+from app.db import get_db_celery
 from app.rag_chroma import rag_engine
 from app.utils import get_all_files_with_relative_paths, include_related_blocks
 from app.views import logger, get_abstracts_from_sqlite, generate_abstract, save_abstract_to_db
@@ -195,8 +195,8 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
             try:
 
                 cur.execute(
-                    'UPDATE alignments SET isReviewed=1, reviewThoughts=?, updatedAt=CURRENT_TIMESTAMP '
-                    'WHERE id=? and project_id=?',
+                    'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, updatedAt=CURRENT_TIMESTAMP '
+                    'WHERE id=%s and project_id=%s',
                     (alignment.get('reviewThoughts') or '', alignment.get('id'), project_id)
                 )
 
@@ -229,7 +229,7 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
                         cur.execute(
                             'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
                             'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-                            'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                            'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
                             (
                                 user_id,
                                 project_id,
@@ -346,8 +346,8 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
 
     try:
         cur.execute(
-            'UPDATE alignments SET isReviewed=1, reviewThoughts=?, updatedAt=CURRENT_TIMESTAMP '
-            'WHERE id=? and project_id=?',
+            'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, updatedAt=CURRENT_TIMESTAMP '
+            'WHERE id=%s and project_id=%s',
             (alignment.get('reviewThoughts') or '', alignment.get('id'), project_id)
         )
 
@@ -379,7 +379,7 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
                 cur.execute(
                     'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
                     'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-                    'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                    'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
                     (
                         user_id,
                         project_id,
@@ -863,12 +863,19 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
     try:
         # conn = get_db_conn(project_path)
         cur.execute(
-            'INSERT INTO alignments(id,user_id,project_id,name,isReviewed,reviewThoughts,docRanges,codeRanges,GenReq,'
-            'GenMermaid,createdAt,updatedAt) '
-            'VALUES (?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
-            'ON CONFLICT(id) DO UPDATE SET name=excluded.name,isReviewed=excluded.isReviewed,reviewThoughts=excluded.'
-            'reviewThoughts,docRanges=excluded.docRanges,codeRanges=excluded.codeRanges,GenReq=excluded.GenReq,'
-            'GenMermaid=excluded.GenMermaid,updatedAt=CURRENT_TIMESTAMP',
+            '''
+            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, GenReq, GenMermaid, createdAt, updatedAt) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+            ON DUPLICATE KEY UPDATE 
+                name = VALUES(name),
+                isReviewed = VALUES(isReviewed),
+                reviewThoughts = VALUES(reviewThoughts),
+                docRanges = VALUES(docRanges),
+                codeRanges = VALUES(codeRanges),
+                GenReq = VALUES(GenReq),
+                GenMermaid = VALUES(GenMermaid),
+                updatedAt = CURRENT_TIMESTAMP
+            ''',
             (
                 new_alignment.get('id'),
                 user_id,

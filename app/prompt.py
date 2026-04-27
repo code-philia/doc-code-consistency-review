@@ -376,7 +376,7 @@ ISSUE_EXTRACTION_PROMPT = """
 """
 
 
-Combine_Align_UserPrompt = """
+Combine_Req2Code_Align_UserPrompt = """
 {original_prompt}
 ---以上是你需要遵循的规则，以下是本次任务---
 上一轮你针对需求{doc_range}，检索出的与该需求**相关**的代码内容是{code_ranges}。
@@ -385,6 +385,14 @@ Combine_Align_UserPrompt = """
 /think
 """
 
+Combine_Code2Req_Align_UserPrompt = """
+{original_prompt}
+---以上是你需要遵循的规则，以下是本次任务---
+上一轮你针对代码{code_content}，检索出的与该需求**相关**的代码内容是{req_content}。
+用户反馈是{user_feedback}。
+请你**认真理解用户的反馈**，重新检索，按照规则要求，输出正确的结果。
+/think
+"""
 
 Combine_Review_UserPrompt = """
 {original_prompt}

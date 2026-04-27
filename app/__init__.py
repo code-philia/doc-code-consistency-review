@@ -1,38 +1,9 @@
 import os
-import sqlite3
-
 from flask import g, Flask
 from flask_login import LoginManager
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATABASE = os.path.join(BASE_DIR, 'doc_code_sql.db')
-
-
-def get_db_celery():
-    """异步任务使用，每次获取一个新的数据库连接对象"""
-    db = sqlite3.connect(DATABASE, check_same_thread=False, timeout=30)
-    db.row_factory = sqlite3.Row
-    cursor = db.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA busy_timeout=30000")
-    cursor.close()
-    return db
-
-
-def get_db():
-    """获取当前请求的数据库连接，若不存在则创建"""
-    if 'db' not in g:
-        g.db = sqlite3.connect(DATABASE, check_same_thread=False)
-        g.db.row_factory = sqlite3.Row
-    return g.db
-
-
-def close_db(e=None):
-    """关闭数据库连接(如果存在)"""
-    db = g.pop('db', None)
-    if db is not None:
-        db.commit()
-        db.close()
 
 
 def create_app():
@@ -48,9 +19,6 @@ def create_app():
     def load_user(user_id):
         return User.get(int(user_id))
 
-    # 注册关闭数据库连接的函数，在应用上下文销毁时调用
-    app.teardown_appcontext(close_db)
-
     from .views import bp
     app.register_blueprint(bp)
 
@@ -62,5 +30,15 @@ def create_app():
 
     from .task_view import task_bp
     app.register_blueprint(task_bp)
+
+    @app.teardown_appcontext
+    def close_db(exception):
+        db = g.pop('db', None)
+        if db is not None:
+            if exception is None:
+                db.commit()
+            else:
+                db.rollback()
+            db.close()
 
     return app

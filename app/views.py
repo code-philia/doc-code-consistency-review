@@ -2,7 +2,7 @@ import os
 
 from celery import chain
 from flask_login import login_manager, login_required, current_user
-
+from .db import DB_CONFIG
 
 os.environ["OPENBLAS_NUM_THREADS"] = "128"
 os.environ["OMP_NUM_THREADS"]="128"
@@ -10,7 +10,7 @@ os.environ["OMP_NUM_THREADS"]="128"
 import time
 import traceback
 from .project import project_access, get_project_id_by_name
-from . import get_db, get_db_celery
+from .db import get_db, get_db_celery
 from flask import Flask, json, render_template, request, jsonify, send_file, Blueprint
 import sqlite3
 import json as pyjson
@@ -18,7 +18,7 @@ import socket
 from .utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension,\
     replace_text_in_docx, generate_issue_content, include_related_blocks
 from .agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart, query_related_requirement, query_code_abstract, query_codefile_abstract, query_codefile_from_abstract
-from .agent import query_related_code_by_feedback, query_review_result_by_feedback
+from .agent import query_related_code_by_feedback, query_review_result_by_feedback, query_related_requirement_by_feedback
 from .rag_chroma import rag_engine
 from .doc_block import chunk_markdown
 import random
@@ -40,6 +40,8 @@ import sys
 from io import BytesIO
 import pandas as pd
 from collections import defaultdict
+from sqlalchemy import create_engine
+import pymysql
 
 from .utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
 from .agent import smart_parse_doc
@@ -58,10 +60,10 @@ MAX_HISTORY_ITEMS = 15 # 最多记录15条历史
 # 定义testdata目录路径
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 TESTDATA_DIR = os.path.join(PROJECT_ROOT, r'../testdata')
-NEW_PROJECT_ROOT = os.path.dirname(PROJECT_ROOT)
-NEW_TESTDATA_DIR = os.path.join(NEW_PROJECT_ROOT, '/testdata')
-print('NEW_TESTDATA_DIR',NEW_TESTDATA_DIR)
-print('NEW_PROJECT_ROOT',NEW_PROJECT_ROOT)
+# NEW_PROJECT_ROOT = os.path.dirname(PROJECT_ROOT)
+# NEW_TESTDATA_DIR = os.path.join(NEW_PROJECT_ROOT, '/testdata')
+# print('NEW_TESTDATA_DIR',NEW_TESTDATA_DIR)
+# print('NEW_PROJECT_ROOT',NEW_PROJECT_ROOT)
 
 # app = Flask(__name__)
 bp = Blueprint('main', __name__)
@@ -203,18 +205,17 @@ def read_user_from_db(username, password):
 # project
 @bp.route('/project/create', methods=['POST'])
 def create_project():
-    data = request.json or {}
+    data = request.json
     creation_type = data.get('creationType', 'blank')
-    project_name = (data.get('projectName') or '').strip()
+    project_name = data.get('projectName')
     project_location = data.get('projectLocation')
+    project_id = data.get('project_id')
+    code = project_location.split('_')[-1]
+    #project_name += code
+    # print(f'project_name=======:{project_name}')
 
-    try:
-        project_location = normalize_project_location(project_location)
-    except ValueError as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
-
-    if not project_name:
-        project_name = get_default_project_name(project_location)
+    if not project_name or not project_location:
+        return jsonify({"status": "error", "message": "项目名称和路径不能为空。"}), 400
 
     if creation_type == 'blank':
         return create_blank_project(project_name, project_location)
@@ -224,90 +225,29 @@ def create_project():
         return jsonify({"status": "error", "message": "无效的创建类型。"}), 400
 
 
-def normalize_project_location(project_location):
-    """校验并规范化项目路径（必须为绝对路径）"""
-    if project_location is None:
-        raise ValueError("项目存放路径不能为空。")
-
-    if not isinstance(project_location, str):
-        raise ValueError("项目存放路径格式无效。")
-
-    normalized = project_location.strip()
-    if not normalized:
-        raise ValueError("项目存放路径不能为空。")
-
-    if not os.path.isabs(normalized):
-        raise ValueError("项目存放路径必须是绝对路径。")
-
-    return os.path.abspath(os.path.normpath(normalized))
-
-
-def get_default_project_name(project_location):
-    normalized = project_location.rstrip(os.sep)
-    return os.path.basename(normalized) or "新项目"
-
-
-def insert_project_record(project_name, project_path):
-    db = get_db()
-    c = db.cursor()
-    c.execute(
-        """
-        insert into project(user_id,last_opened,name,path,create_time,update_time)
-        values(?, ?, ?, ?, ?, ?)
-        """,
-        (
-            current_user.user_id,
-            datetime.now().isoformat(),
-            project_name,
-            project_path,
-            datetime.now().isoformat(),
-            datetime.now().isoformat(),
-        ),
-    )
-    return c.lastrowid
-
-
-def build_project_metadata(project_name, project_path, code_repo_path, doc_repo_path):
-    code_files = get_all_files_with_relative_paths(code_repo_path, type='code')
-    doc_files = get_all_files_with_relative_paths(doc_repo_path, type='doc')
-
-    code_file_lines = {}
-    total_loc = 0
-    for file in code_files:
-        loc = count_lines_of_code(os.path.join(code_repo_path, file))
-        code_file_lines[file] = loc
-        total_loc += loc
-
-    return {
-        "project_name": project_name,
-        "project_location": os.path.dirname(project_path),
-        "create_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
-        "code_repo": code_repo_path,
-        "doc_repo": doc_repo_path,
-        "code_files": code_files,
-        "doc_files": doc_files,
-        "code_scale": total_loc,
-        "code_file_lines": code_file_lines
-    }
-
-
 def create_blank_project(project_name, project_location):
     """处理创建空白项目的逻辑"""
-    project_path = project_location
+    project_path = os.path.join(project_location, project_name)
     if os.path.exists(project_path):
-        if not os.path.isdir(project_path):
-            return jsonify({"status": "error", "message": "项目路径已存在且不是文件夹。"}), 400
-        if os.listdir(project_path):
-            return jsonify({"status": "error", "message": "项目路径已存在且不为空，请更换路径。"}), 400
+        return jsonify({"status": "error", "message": f"项目文件夹 '{project_name}' 已存在于目标位置。"}), 400
 
     try:
-        os.makedirs(project_path, exist_ok=True)
         code_repo_path = os.path.join(project_path, 'code_repo')
         doc_repo_path = os.path.join(project_path, 'doc_repo')
         os.makedirs(code_repo_path, exist_ok=True)
         os.makedirs(doc_repo_path, exist_ok=True)
 
-        metadata = build_project_metadata(project_name, project_path, code_repo_path, doc_repo_path)
+        metadata = {
+            "project_name": project_name,
+            "project_location": project_location,
+            "create_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "code_repo": code_repo_path,
+            "doc_repo": doc_repo_path,
+            "code_files": [],
+            "doc_files": [],
+            "code_scale": 0,
+            "code_file_lines": {}
+        }
 
         metadata_file = os.path.join(project_path, 'metadata.json')
         with open(metadata_file, 'w', encoding='utf-8') as f:
@@ -316,20 +256,26 @@ def create_blank_project(project_name, project_location):
         # update_history(project_name, project_path)
         # init_project_db(project_path)
         auto_load_rag_db(project_path)
-        new_id = insert_project_record(project_name, project_path)
-        return jsonify({
-            "status": "success",
-            "project_path": project_path,
-            "project_name": project_name,
-            "new_id": new_id
-        }), 200
+        sql = f"""
+            insert into project(user_id,last_opened,name,path,create_time,update_time) 
+            values({current_user.user_id}, "{datetime.now().isoformat()}", "{project_name}", 
+            "{project_path}", "{datetime.now().isoformat()}", "{datetime.now().isoformat()}");
+            """
+        # print('sql:', sql)
+
+        db = get_db()
+        c = db.cursor()
+        c.execute(sql)
+        new_id = c.lastrowid
+
+        return jsonify({"status": "success", "project_path": project_path, 'new_id': new_id}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"创建目录或文件时出错: {e}"}), 500
 
 
 def create_project_from_folder(project_name, folder_path):
     """处理从现有文件夹创建项目的逻辑"""
-    project_path = folder_path
+    project_path = folder_path # 项目路径就是用户选择的文件夹
     if not os.path.isdir(project_path):
         return jsonify({"status": "error", "message": "提供的路径不是一个有效的文件夹。"}), 400
 
@@ -361,20 +307,34 @@ def create_project_from_folder(project_name, folder_path):
             # 转换后重新获取文档文件列表
             doc_files = get_all_files_with_relative_paths(doc_repo_path, type ='doc')
 
-        metadata = build_project_metadata(project_name, project_path, code_repo_path, doc_repo_path)
+        code_file_lines = {}
+        total_loc = 0
+        for file in code_files:
+            loc = count_lines_of_code(os.path.join(code_repo_path, file))
+            code_file_lines[file] = loc
+            total_loc += loc
+
+        metadata = {
+            "project_name": project_name,
+            "project_location": os.path.dirname(project_path), # 存储其父目录
+            "create_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "code_repo": code_repo_path,
+            "doc_repo": doc_repo_path,
+            "code_files": code_files,
+            "doc_files": doc_files,
+            "code_scale": total_loc,
+            "code_file_lines": code_file_lines
+        }
 
         metadata_file = os.path.join(project_path, 'metadata.json')
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
 
+        # update_history(project_name, project_path)
+        # init_project_db(project_path)
         auto_load_rag_db(project_path)
-        new_id = insert_project_record(project_name, project_path)
-        return jsonify({
-            "status": "success",
-            "project_path": project_path,
-            "project_name": project_name,
-            "new_id": new_id
-        }), 200
+
+        return jsonify({"status": "success", "project_path": project_path}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"扫描文件夹或生成元数据时出错: {e}"}), 500
 
@@ -520,7 +480,7 @@ def auto_load_rag_db(project_path):
 #                                 try:
 #                                     cur.execute(
 #                                         'INSERT INTO alignments(id,name,isReviewed,reviewThoughts,docRanges,codeRanges,createdAt,updatedAt)'
-#                                         ' VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)'
+#                                         ' VALUES (%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)'
 #                                         ' ON CONFLICT(id) DO UPDATE SET name=excluded.name,isReviewed=excluded.isReviewed,reviewThoughts=excluded.reviewThoughts,docRanges=excluded.docRanges,codeRanges=excluded.codeRanges,updatedAt=CURRENT_TIMESTAMP',
 #                                         (
 #                                             alignment.get('id') or aid,
@@ -555,7 +515,7 @@ def auto_load_rag_db(project_path):
 #                     try:
 #                         cur.execute(
 #                             'INSERT INTO issues(displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-#                             'VALUES (?,?,?,?,?,?,?,?,?,?,?,?) '
+#                             'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) '
 #                             'ON CONFLICT(displayId) DO UPDATE SET '
 #                             'alignmentId=excluded.alignmentId, '
 #                             'severity=excluded.severity, '
@@ -640,39 +600,39 @@ def auto_load_rag_db(project_path):
 #         return jsonify({"status": "error", "message": f"删除历史记录时出错: {e}"}), 500
 #
 # @bp.route('/project/delete', methods=['POST'])
-def delete_project():
-    """删除项目目录和历史记录"""
-    data = request.json
-    project_path = data.get('path')
-
-    if not project_path:
-        return jsonify({"status": "error", "message": "项目路径不能为空"}), 400
-
-    if not os.path.exists(project_path):
-        return jsonify({"status": "error", "message": "项目路径不存在"}), 404
-
-    try:
-        # 删除项目目录
-        shutil.rmtree(project_path)
-
-        # 从历史记录中删除项目条目
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
-                history = json.load(f)
-
-            # 过滤掉要删除的项目
-            history = [item for item in history if item.get('path') != project_path]
-
-            # 写回历史记录文件
-            with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
-                json.dump(history, f, indent=4, ensure_ascii=False)
-
-        return jsonify({"status": "success", "message": "项目删除成功"})
-
-    except PermissionError:
-        return jsonify({"status": "error", "message": "没有权限删除项目文件"}), 403
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"删除项目时出错: {str(e)}"}), 500
+# def delete_project():
+#     """删除项目目录和历史记录"""
+#     data = request.json
+#     project_path = data.get('path')
+#
+#     if not project_path:
+#         return jsonify({"status": "error", "message": "项目路径不能为空"}), 400
+#
+#     if not os.path.exists(project_path):
+#         return jsonify({"status": "error", "message": "项目路径不存在"}), 404
+#
+#     try:
+#         # 删除项目目录
+#         shutil.rmtree(project_path)
+#
+#         # 从历史记录中删除项目条目
+#         if os.path.exists(HISTORY_FILE):
+#             with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+#                 history = json.load(f)
+#
+#             # 过滤掉要删除的项目
+#             history = [item for item in history if item.get('path') != project_path]
+#
+#             # 写回历史记录文件
+#             with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+#                 json.dump(history, f, indent=4, ensure_ascii=False)
+#
+#         return jsonify({"status": "success", "message": "项目删除成功"})
+#
+#     except PermissionError:
+#         return jsonify({"status": "error", "message": "没有权限删除项目文件"}), 403
+#     except Exception as e:
+#         return jsonify({"status": "error", "message": f"删除项目时出错: {str(e)}"}), 500
 
 @bp.route('/project/open', methods=['POST'])
 def open_project():
@@ -951,98 +911,74 @@ def upload_files():
 
 @bp.route('/project/upload-folder', methods=['POST'])
 def upload_folder():
-    """从本地源文件夹创建项目并批量上传文件"""
+    """处理文件夹上传功能"""
     try:
-        project_location_raw = request.form.get('projectLocation')
-        project_name = (request.form.get('projectName') or '').strip()
-        source_folder_name = request.form.get('folderName')
+        # 获取上传的文件和文件夹名称
         files = request.files.getlist('files')
         paths = request.form.getlist('paths')
-        if not files:
-            return jsonify({"status": "error", "message": "没有接收到源文件夹中的文件"}), 400
+        folder_name = request.form.get('folderName')
+        project_name = request.form.get('folderName')
 
-        if len(paths) != len(files):
-            return jsonify({"status": "error", "message": "上传参数异常：文件路径数量不匹配"}), 400
+        if not files or not folder_name:
+            return jsonify({"status": "error", "message": "没有接收到文件或文件夹名称"}), 400
 
-        try:
-            project_path = normalize_project_location(project_location_raw)
-        except ValueError as e:
-            return jsonify({"status": "error", "message": str(e)}), 400
+        # 确保testdata目录存在
+        os.makedirs(TESTDATA_DIR, exist_ok=True)
 
-        if not project_name:
-            project_name = get_default_project_name(project_path)
+        # 创建目标文件夹路径
+        target_folder_path = os.path.join(TESTDATA_DIR, folder_name)
+        # logger.info('target_folder_path',target_folder_path)
+        timestamp = int(time.time())
+        # 如果目标文件夹已存在，添加时间戳后缀
+        if os.path.exists(target_folder_path):
+            target_folder_path = os.path.join(TESTDATA_DIR, f"{folder_name}_{timestamp}")
+            project_name = project_name + '_' + str(timestamp)
+        # 创建目标文件夹
+        os.makedirs(target_folder_path, exist_ok=True)
 
-        if os.path.exists(project_path):
-            if not os.path.isdir(project_path):
-                return jsonify({"status": "error", "message": "项目路径已存在且不是文件夹。"}), 400
-            if os.listdir(project_path):
-                return jsonify({"status": "error", "message": "项目路径已存在且不为空，请更换路径。"}), 400
-        else:
-            os.makedirs(project_path, exist_ok=True)
-
-        code_repo_path = os.path.join(project_path, 'code_repo')
-        doc_repo_path = os.path.join(project_path, 'doc_repo')
-        os.makedirs(code_repo_path, exist_ok=True)
-        os.makedirs(doc_repo_path, exist_ok=True)
-
-        doc_exts = {'.md', '.markdown', '.txt', '.doc', '.docx'}
-        has_docx = False
-
+        # 保存所有文件，保持目录结构
         for file, relative_path in zip(files, paths):
             if not file.filename:
                 continue
 
-            cleaned_path = (relative_path or file.filename).replace('\\', '/').lstrip('/')
-            if source_folder_name and cleaned_path.startswith(source_folder_name + '/'):
-                cleaned_path = cleaned_path[len(source_folder_name) + 1:]
-            if not cleaned_path:
-                cleaned_path = os.path.basename(file.filename)
-
-            normalized_rel = cleaned_path.lstrip('/')
-            if normalized_rel.startswith('code_repo/'):
-                # 源目录中已包含 code_repo，写入目标 code_repo 时去掉这一层
-                base_repo = code_repo_path
-                rel_in_repo = normalized_rel[len('code_repo/'):]
-            elif normalized_rel.startswith('doc_repo/'):
-                # 源目录中已包含 doc_repo，写入目标 doc_repo 时去掉这一层
-                base_repo = doc_repo_path
-                rel_in_repo = normalized_rel[len('doc_repo/'):]
+            # 移除文件夹名称前缀，获取相对路径
+            if relative_path.startswith(folder_name + '/'):
+                file_relative_path = relative_path[len(folder_name) + 1:]
             else:
-                ext = os.path.splitext(normalized_rel)[1].lower()
-                base_repo = doc_repo_path if ext in doc_exts else code_repo_path
-                rel_in_repo = normalized_rel
+                file_relative_path = relative_path
 
-            if not rel_in_repo:
-                rel_in_repo = os.path.basename(file.filename)
+            # 构建完整的目标文件路径
+            target_file_path = os.path.join(target_folder_path, file_relative_path)
 
-            target_file_path = os.path.abspath(os.path.join(base_repo, rel_in_repo))
-            if not target_file_path.startswith(os.path.abspath(base_repo) + os.sep):
+            # 安全检查：确保目标路径在目标文件夹内
+            target_file_path = os.path.abspath(target_file_path)
+            if not target_file_path.startswith(os.path.abspath(target_folder_path)):
                 return jsonify({"status": "error", "message": f"检测到不安全的路径: {relative_path}"}), 400
 
+            # 创建目标目录
             target_dir = os.path.dirname(target_file_path)
             os.makedirs(target_dir, exist_ok=True)
+
+            # 保存文件
             file.save(target_file_path)
 
-            ext = os.path.splitext(rel_in_repo)[1].lower()
-            if ext == '.docx':
-                has_docx = True
+        sql = f"""
+        insert into project(user_id,last_opened,name,path,create_time,update_time) 
+        values({current_user.user_id}, "{datetime.now().isoformat()}", "{project_name}", 
+        "{target_folder_path}", "{datetime.now().isoformat()}", "{datetime.now().isoformat()}");
+        """
+        # print('sql:', sql)
 
-        if has_docx:
-            convert_doc_to_markdown(doc_repo_path)
-
-        metadata = build_project_metadata(project_name, project_path, code_repo_path, doc_repo_path)
-        metadata_file = os.path.join(project_path, 'metadata.json')
-        with open(metadata_file, 'w', encoding='utf-8') as f:
-            json.dump(metadata, f, indent=4, ensure_ascii=False)
-
-        auto_load_rag_db(project_path)
-        new_id = insert_project_record(project_name, project_path)
+        db = get_db()
+        c = db.cursor()
+        c.execute(sql)
+        new_id = c.lastrowid
 
         return jsonify({
             "status": "success",
-            "message": f"项目 '{project_name}' 创建成功",
-            "project_path": project_path,
-            "project_name": project_name,
+            "message": f"文件夹 '{folder_name}' 上传成功",
+            "serverPath": target_folder_path,
+            "folderName": os.path.basename(target_folder_path),
             "new_id": new_id
         }), 200
 
@@ -1469,7 +1405,18 @@ def get_abstracts_from_sqlite(project_id):
         # 读取name、docRanges、codeRanges、GenReq、 GenMermaid 列所有数据
         query_sql = f"SELECT filename, abstract FROM abstracts where project_id={project_id}"
         # 直接用pandas读取SQL结果（简洁高效）
-        df = pd.read_sql(query_sql, conn)
+        # df = pd.read_sql(query_sql, conn)
+
+        # 创建引擎
+        db_url = f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+
+        engine = create_engine(
+            db_url,
+            echo=False,
+            pool_pre_ping=True
+        )
+        df = pd.read_sql(query_sql, engine)
+        
         conn.close()
         print('读取摘要成功!!!!!!!!!!!')
         return df
@@ -1512,7 +1459,7 @@ def save_abstract_to_db(project_path, file, codefile_abstract, project_id, user_
 
         cur.execute(
             'INSERT INTO abstracts(filename,abstract,user_id,project_id,createdAt,updatedAt) '
-            'VALUES (?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) ',
+            'VALUES (%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) ',
             (
                 file,
                 codefile_abstract,
@@ -1521,7 +1468,7 @@ def save_abstract_to_db(project_path, file, codefile_abstract, project_id, user_
             )
         )
         conn.commit()
-        print(f'写入代码摘要数据:{project_id}')
+        print(f'写入代码摘要数据，project_id={project_id}')
     except Exception as e:
         conn.rollback()
         logger.info("写入代码摘要数据失败")
@@ -1634,7 +1581,7 @@ def abstract_code_from_project():
         })
     except Exception as e:
         print(f"生成代码摘要失败: {str(e)}")
-        logger.info(f"生成代码摘要失败: {str(e)}")
+        traceback.print_exc()
         return jsonify({
             "status": "error",
             "message": f"生成代码摘要过程中出错: {str(e)}"
@@ -1671,7 +1618,7 @@ def get_project_abstract(project_id):
     cur = db.cursor()
     try:
         # logger.info(f'project_id==========={project_id}')
-        cur.execute('select filename,abstract from abstracts where project_id=?', (project_id,))
+        cur.execute('select filename,abstract from abstracts where project_id=%s', (project_id,))
         rows = cur.fetchall()
         result = {row['filename']: row['abstract'] for row in rows}
 
@@ -1852,8 +1799,8 @@ def generate_reverse_requirement():
         if row is not None:
             return jsonify({
                 "status": "success",
-                "generatedRequirement": row[0],
-                "mermaidCode": row[1]
+                "generatedRequirement": row['GenReq'],
+                "mermaidCode": row['GenMermaid']
             })
 
         # 构建代码块列表，格式与现有函数兼容
@@ -1953,8 +1900,8 @@ def clear_alignment_review():
         # conn = get_db_conn(project_path)
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('UPDATE alignments SET isReviewed=0, reviewThoughts="" WHERE id=? and project_id=?', (alignment_id, project_id))
-        cur.execute('DELETE FROM issues WHERE alignmentId=? and project_id=?', (alignment_id, project_id))
+        cur.execute('UPDATE alignments SET isReviewed=0, reviewThoughts="" WHERE id=%s and project_id=%s', (alignment_id, project_id))
+        cur.execute('DELETE FROM issues WHERE alignmentId=%s and project_id=%s', (alignment_id, project_id))
         removed = cur.rowcount
         # conn.commit()
         # conn.close()
@@ -1987,9 +1934,15 @@ def get_alignments():
         if file_path:
             target = file_path
             col = 'docRanges' if kind == 'doc' else 'codeRanges'
-            query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments " \
-                    f"WHERE project_id={project_id} and EXISTS (SELECT 1 FROM json_each({col}) jr WHERE json_extract(jr.value,'$.documentId') = ?)"
+
+            query = '''
+            SELECT id, name, isReviewed, reviewThoughts, docRanges, codeRanges 
+            FROM alignments 
+            WHERE JSON_SEARCH(alignments.`{col}`, 'one', %s, NULL, '$[*].documentId') IS NOT NULL  
+            '''.format(col=col)
+
             cur.execute(query, (target,))
+            #cur.execute(query, (target,))
         else:
             query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments where project_id={project_id}"
             cur.execute(query)
@@ -2006,8 +1959,10 @@ def get_alignments():
                 'codeRanges': pyjson.loads(r['codeRanges'] or '[]')
             }
             result[alignment['id']] = alignment
+            
         return jsonify({"status": "success", "data": result}), 200
     except Exception as e:
+
         return jsonify({"status": "error", "message": f"读取对齐数据失败: {e}"}), 500
 
 @bp.route('/project/alignments', methods=['POST'])
@@ -2164,10 +2119,21 @@ def add_alignment():
         # conn = get_db_conn(project_path)
         conn = get_db()
         cur = conn.cursor()
+        
         cur.execute(
-            'INSERT INTO alignments(id,user_id,project_id,name,isReviewed,reviewThoughts,docRanges,codeRanges,GenReq,GenMermaid,createdAt,updatedAt) '
-            'VALUES (?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) '
-            'ON CONFLICT(id) DO UPDATE SET name=excluded.name,isReviewed=excluded.isReviewed,reviewThoughts=excluded.reviewThoughts,docRanges=excluded.docRanges,codeRanges=excluded.codeRanges,GenReq=excluded.GenReq,GenMermaid=excluded.GenMermaid,updatedAt=CURRENT_TIMESTAMP',
+            '''
+            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, GenReq, GenMermaid, createdAt, updatedAt) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+            ON DUPLICATE KEY UPDATE 
+                name = VALUES(name),
+                isReviewed = VALUES(isReviewed),
+                reviewThoughts = VALUES(reviewThoughts),
+                docRanges = VALUES(docRanges),
+                codeRanges = VALUES(codeRanges),
+                GenReq = VALUES(GenReq),
+                GenMermaid = VALUES(GenMermaid),
+                updatedAt = CURRENT_TIMESTAMP
+            ''',
             (
                 new_alignment.get('id'),
                 current_user.user_id,
@@ -2175,12 +2141,14 @@ def add_alignment():
                 new_alignment.get('name'),
                 1 if new_alignment.get('isReviewed') else 0,
                 new_alignment.get('reviewThoughts') or '',
-                pyjson.dumps(new_alignment.get('docRanges') or []),
-                pyjson.dumps(new_alignment.get('codeRanges') or []),
+                json.dumps(new_alignment.get('docRanges') or []),
+                json.dumps(code_ranges or []),
                 generated_requirement or '',
                 mermaid_code or ''
             )
         )
+
+        
         # conn.commit()
         # conn.close()
         return jsonify({"status": "success"}), 200
@@ -2203,7 +2171,7 @@ def delete_alignment():
         # conn = get_db_conn(project_path)
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('DELETE FROM alignments WHERE id=? and project_id=?', (alignment_id, project_id))
+        cur.execute('DELETE FROM alignments WHERE id=%s and project_id=%s', (alignment_id, project_id))
         # conn.commit()
         # conn.close()
         return jsonify({"status": "success"}), 200
@@ -2272,7 +2240,7 @@ def get_issues():
 #             issue_data['displayId'] = f"ISSUE-{next_number:03d}"
 #         cur.execute(
 #             'INSERT INTO issues(displayId,alignmentId,severity,title,content,status,createdAt,updatedAt) '
-#             'VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+#             'VALUES (%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
 #             (
 #                 issue_data.get('displayId'),
 #                 issue_data.get('alignmentId'),
@@ -2300,7 +2268,7 @@ def update_issue(issue_id):
         # conn = get_db_conn(project_path)
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('UPDATE issues SET severity=?, title=?, content=?, status=?, updatedAt=CURRENT_TIMESTAMP WHERE id=? and project_id=?', (
+        cur.execute('UPDATE issues SET severity=%s, title=%s, content=%s, status=%s, updatedAt=CURRENT_TIMESTAMP WHERE id=%s and project_id=%s', (
             issue_data.get('level') or issue_data.get('severity'),
             issue_data.get('title'),
             issue_data.get('description') or issue_data.get('content'),
@@ -2326,7 +2294,7 @@ def delete_issue(issue_id):
         # conn = get_db_conn(project_path)
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('DELETE FROM issues WHERE id=? and project_id=?', (issue_id, project_id))
+        cur.execute('DELETE FROM issues WHERE id=%s and project_id=%s', (issue_id, project_id))
         # conn.commit()
         # conn.close()
         return jsonify({'status': 'success', 'message': '问题单删除成功'})
@@ -2441,7 +2409,7 @@ def update_issue_content():
         # conn = get_db_conn(project_path)
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('UPDATE issues SET content=?, status=?, severity=?, updatedAt=CURRENT_TIMESTAMP WHERE id=? and project_id=?', (
+        cur.execute('UPDATE issues SET content=%s, status=%s, severity=%s, updatedAt=CURRENT_TIMESTAMP WHERE id=%s and project_id=%s', (
             new_description,
             new_status,
             new_level,
@@ -2498,7 +2466,7 @@ def get_alignment_by_id():
     try:
         conn = get_db_conn(project_path)
         cur = conn.cursor()
-        cur.execute('SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments WHERE id=?', (alignment_id,))
+        cur.execute('SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments WHERE id=%s', (alignment_id,))
         r = cur.fetchone()
         conn.close()
         if not r:
@@ -2964,11 +2932,11 @@ def delete_block():
 
         # 执行数据库更新
         for align_id in deletions:
-            cur.execute("DELETE FROM alignments WHERE id = ? and project_id=?", (align_id, project_id))
+            cur.execute("DELETE FROM alignments WHERE id = %s and project_id=%s", (align_id, project_id))
 
         for doc_r, code_r, align_id in updates:
-            cur.execute("UPDATE alignments SET docRanges = ?, codeRanges = ?, updatedAt = CURRENT_TIMESTAMP "
-                        "WHERE id = ? and project_id=?",
+            cur.execute("UPDATE alignments SET docRanges = %s, codeRanges = %s, updatedAt = CURRENT_TIMESTAMP "
+                        "WHERE id = %s and project_id=%s",
                         (doc_r, code_r, align_id, project_id))
 
         # conn.commit()
@@ -3018,22 +2986,15 @@ def get_code_chunks():
                 raw_code = _read_text_file(abs_code_path)
                 char_start, char_end = _line_range_to_char_offsets(raw_code, start_line, end_line)
 
-                # 优先使用首个有效代码行作为块名；注释块/空内容使用兜底名称
-                chunk_name = None
-                for raw_line in content.splitlines():
-                    line = raw_line.lstrip()
-                    if not line:
+                # 改成按照函数名命名
+                code_lines = [line.lstrip() for line in content.splitlines(True)]
+                # 先找到函数第一行，再匹配需要的函数名
+                for line in code_lines: # 跳过注释行
+                    if line[0] == '/' or line[0] == '*':
                         continue
-                    if line.startswith('//') or line.startswith('/*') or line.startswith('*') or line.startswith('*/'):
-                        continue
-                    chunk_name = line
-                    break
-
-                if not chunk_name:
-                    if content.strip():
-                        chunk_name = _compact_title_from_text(content, max_len=48)
                     else:
-                        chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
+                        chunk_name = line
+                        break
 
                 code_range = {
                     'name': chunk_name,
@@ -3255,6 +3216,185 @@ def align_code_to_requirement():
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": f"对齐过程中出错: {str(e)}"}), 500
+        
+
+@bp.route('/api/align-code-to-requirement-addprompt', methods=['POST'])
+def align_code_to_requirement_addprompt():
+    """为单个代码块在项目中查找相关需求"""
+    try:
+        data = request.json
+        code_ranges = data.get('codeRanges', [])
+        project_path = data.get('projectPath', '')
+        userPrompt = data.get('userInputPrompt', [])
+        project_id = data.get('project_id')
+        reqRanges_aligned = data.get('docRanges', [])
+
+        if not code_ranges or not project_path:
+             return jsonify({"status": "error", "message": "缺少代码内容或项目路径参数"}), 400
+
+        # 获取选定的 align 类型知识库
+        selected_align_kbs = []
+        try:
+            metadata_file = os.path.join(project_path, 'metadata.json')
+            if os.path.exists(metadata_file):
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+                    selected_kbs = metadata.get('selected_kbs', [])
+                    selected_align_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'align']
+        except Exception:
+            pass
+
+        # 如果没有选择任何 align 知识库，使用原来的 LLM 逻辑
+        if not selected_align_kbs:
+            # 原有的 LLM 逻辑
+            # 获取需求块
+            doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
+            doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
+
+            if not os.path.exists(doc_block_file_path):
+                return jsonify({"status": "success", "docRanges": []}) # 没有需求文件，无法对齐
+
+            all_doc_blocks = []
+            all_original_doc_blocks = []
+            with open(doc_block_file_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        original_doc_block = json.loads(line.strip())
+                        all_doc_blocks.append({
+                            "file":original_doc_block.get("filename",''),
+                            "range":[original_doc_block.get("start",0),original_doc_block.get("end",0)],
+                            "content":original_doc_block.get("content",'')
+                        })
+                        all_original_doc_blocks.append(original_doc_block)
+
+            code_content = '\n\n'.join([code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
+
+            # 调用LLM
+            related_reqs = query_related_requirement_by_feedback(code_content, reqRanges_aligned, all_doc_blocks, userPrompt, block_limit=50)
+
+            # 转换结果为docRanges
+            doc_ranges = []
+
+            # 通过文件名和起止范围匹配
+            blocks_by_file = defaultdict(list)
+            for block in all_original_doc_blocks:
+                blocks_by_file[block.get("filename","default")].append(block)
+
+            for req in related_reqs:
+                req_start, req_end = req.get("range",[0,0])
+                target_file = req.get("file","default")
+                candidates = blocks_by_file.get(target_file,[])
+                for block in candidates:
+                    if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
+                        doc_ranges.append(block)
+
+            return jsonify({
+                "status": "success",
+                "docRanges": doc_ranges
+            })
+
+        # 如果选择了 align 知识库，使用 RAG 进行检索
+        try:
+            rag_engine.initialize() # 确保初始化
+        except Exception as e:
+            print(f"[Align] RAG initialize failed: {e}")
+
+        code_content = '\n\n'.join([code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
+
+        all_retrieved_items = []
+        for kb_name in selected_align_kbs:
+            # 检索 'align' 类型的知识库
+            # 注意：align 知识库里存储的是历史对齐数据
+            # 这里的检索策略可以是：用代码去搜相关的历史对齐，然后把历史对齐中的文档部分作为推荐
+
+            # 暂时假设 rag_chroma 提供了 query 接口，如果没有需要添加
+            # 这里先模拟直接调用 collection.query
+            collection = rag_engine.get_collection('align', kb_name)
+            if collection:
+                results = collection.query(
+                    query_texts=[code_content],
+                    n_results=5 # Top 5 per KB
+                )
+
+                if results and results['documents']:
+                    for i, doc in enumerate(results['documents'][0]):
+                        meta = results['metadatas'][0][i]
+                        # 历史对齐数据通常包含 code_text 和 doc_text (query_text)
+                        # 我们需要提取其中的 doc 部分
+                        # 在 build_from_json 中，document 是 doc_text, meta 中有 code_text
+                        # 但我们现在是用 code 去搜 doc，所以 doc 正好是 document
+                        all_retrieved_items.append({
+                            'content': doc,
+                            'score': results['distances'][0][i] if results['distances'] else 0,
+                            'meta': meta
+                        })
+
+        # 对所有结果排序
+        all_retrieved_items.sort(key=lambda x: x['score']) # distance 越小越好
+        top_items = all_retrieved_items[:5]
+
+        # 构造返回结果
+        # 注意：这里返回的是参考的历史对齐文档内容，而不是当前项目中的具体需求块
+        # 前端可能需要展示这些参考内容供用户选择，或者作为提示
+        # 但目前的接口契约是返回 docRanges (当前项目的需求块)
+        # 这是一个逻辑断层：历史对齐是"参考"，而不是"直接结果"
+        # 如果要用历史对齐来辅助定位当前项目的需求，需要两步：
+        # 1. 检索历史对齐 -> 得到相关的历史需求描述
+        # 2. 用历史需求描述去匹配当前项目的需求块 (类似 query_related_requirement)
+
+        history_doc_contents = [item['content'] for item in top_items]
+        combined_history_content = "\n".join(history_doc_contents)
+
+        # 再次读取当前项目的需求块
+        doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
+        doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
+
+        if not os.path.exists(doc_block_file_path):
+             return jsonify({"status": "success", "docRanges": []})
+
+        all_doc_blocks = []
+        all_original_doc_blocks = []
+        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    original_doc_block = json.loads(line.strip())
+                    all_doc_blocks.append({
+                        "file":original_doc_block.get("filename",''),
+                        "range":[original_doc_block.get("start",0),original_doc_block.get("end",0)],
+                        "content":original_doc_block.get("content",'')
+                    })
+                    all_original_doc_blocks.append(original_doc_block)
+
+        # 使用历史需求内容 + 代码内容 共同作为 Query 去查询当前项目需求
+        enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
+
+        # 调用LLM (使用增强后的 Query)
+        related_reqs = query_related_requirement(enhanced_query, all_doc_blocks, block_limit=50, icl_examples=top_items)
+
+        doc_ranges = []
+        blocks_by_file = defaultdict(list)
+        for block in all_original_doc_blocks:
+            blocks_by_file[block.get("filename","default")].append(block)
+
+        for req in related_reqs:
+            req_start, req_end = req.get("range",[0,0])
+            target_file = req.get("file","default")
+            candidates = blocks_by_file.get(target_file,[])
+            for block in candidates:
+                if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
+                    doc_ranges.append(block)
+
+        return jsonify({
+            "status": "success",
+            "docRanges": doc_ranges,
+            "debug_info": "Used history alignment for enhancement"
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"对齐过程中出错: {str(e)}"}), 500
+        
 
 # 1. 获取标注文件列表
 @bp.route('/api/files/list-annotations', methods=['GET'])
@@ -3793,7 +3933,19 @@ def get_alignments_from_sqlite(project_id):
         # 读取name、docRanges、codeRanges三列所有数据
         query_sql = f"SELECT name, docRanges, codeRanges, GenReq, GenMermaid FROM alignments where project_id={project_id}"
         # 直接用pandas读取SQL结果（简洁高效）
-        df = pd.read_sql(query_sql, conn)
+        # df = pd.read_sql(query_sql, conn)
+        # 创建引擎
+        db_url = f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+
+        engine = create_engine(
+            db_url,
+            echo=False,
+            pool_pre_ping=True
+        )
+        df = pd.read_sql(query_sql, engine)
+        
+        
+        
         # conn.close()
         return df
     except sqlite3.Error as e:
@@ -4021,7 +4173,8 @@ prompts = {
 
 # 默认提示词
 default_prompts = {
-    'align': ALIGN_REQ_PROMPT_TEMPLATE,
+    'req-code-align': ALIGN_PROMPT_TEMPLATE,
+    'code-req-align': ALIGN_REQ_PROMPT_TEMPLATE,
     'review': THINKING_PROMPT_TEMPLATE
 }
 
@@ -4044,16 +4197,16 @@ default_prompts = {
 @login_required
 @bp.route('/get_prompts', methods=['GET'])
 def get_prompts():
-
-    sql = f"select alignment, review from prompt where user_id={current_user.user_id}"
+    sql = f"select Req2CodeAlign, Code2ReqAlign, review from prompt where user_id={current_user.user_id}"
     db = get_db()
     c = db.cursor()
     c.execute(sql)
     row = c.fetchone()
+
     if row:
-        return jsonify({'align': row[0], 'review': row[1]})
+        return jsonify({'Req2CodeAlign': row['Req2CodeAlign'], 'Code2ReqAlign': row['Code2ReqAlign'], 'review': row['review']})
     else:
-        return jsonify({'align': default_prompts['align'], 'review': default_prompts['review']})
+        return jsonify({'Req2CodeAlign': default_prompts['req-code-align'], 'Code2ReqAlign': default_prompts['code-req-align'], 'review': default_prompts['review']})
 
 
 # 保存提示词（根据 tab 和 content）
@@ -4064,7 +4217,7 @@ def save_prompt():
     tab = data.get('tab')
     content = data.get('content')
 
-    if tab not in ['align', 'review']:
+    if tab not in ['req-code-align', 'code-req-align', 'review']:
         return jsonify({'success': False, 'message': 'Invalid tab'})
 
     select_sql = f"select * from prompt where user_id={current_user.user_id};"
@@ -4072,18 +4225,29 @@ def save_prompt():
     c = db.cursor()
     c.execute(select_sql)
     row = c.fetchone()
+    
     if row:
-        condition = f"where user_id={current_user.user_id}"
-        sql = f"update prompt set alignment=?" if tab == 'align' else f"update prompt set review=?"
+        condition = f" where user_id={current_user.user_id}"
+        if tab == 'req-code-align':
+            sql = f"update prompt set Req2CodeAlign=%s"
+        elif tab == 'code-req-align':
+            sql = f"update prompt set Code2ReqAlign=%s"
+        else:
+            sql = f"update prompt set review=%s"
+        
+        #sql = f"update prompt set alignment=%s" if tab == 'req-code-align' else f"update prompt set review=%s"
         sql += condition
         params = (content,)
     else:
-        if tab == 'align':
-            sql = "insert into prompt(user_id,alignment,review) values(?,?,?)"
-            params = (current_user.user_id, content, default_prompts['review'])
+        if tab == 'req-code-align':
+            sql = "insert into prompt(user_id,Req2CodeAlign,Code2ReqAlign,review) values(%s,%s,%s,%s)"
+            params = (current_user.user_id, content, default_prompts['code-req-align'], default_prompts['review'])
+        elif tab == 'code-req-align':
+            sql = "insert into prompt(user_id,Req2CodeAlign,Code2ReqAlign,review) values(%s,%s,%s,%s)"
+            params = (current_user.user_id, default_prompts['req-code-align'], content, default_prompts['review'])
         else:
-            sql = "insert into prompt(user_id,alignment,review) values(?,?,?)"
-            params = (current_user.user_id, default_prompts['align'], content)
+            sql = "insert into prompt(user_id,Req2CodeAlign,Code2ReqAlign,review) values(%s,%s,%s,%s)"
+            params = (current_user.user_id, default_prompts['req-code-align'], default_prompts['code-req-align'],content)
 
     # print('sql:', sql)
     c.execute(sql, params)
@@ -4097,7 +4261,7 @@ def restore_default():
     data = request.get_json()
     tab = data.get('tab')
 
-    if tab not in ['align', 'review']:
+    if tab not in ['req-code-align', 'code-req-align', 'review']:
         return jsonify({'success': False, 'message': 'Invalid tab'})
 
     # 恢复默认
@@ -4132,7 +4296,27 @@ def save_review_prompt():
         return jsonify({'success': False, 'error': '提示词不能为空'})
     save_user_prompt(prompt)
     return jsonify({'success': True})            
-            
+
+    
+# 从数据库获取当前用户的所有项目
+@bp.route('/welcome/get_user_projects', methods=['GET'])
+def get_user_projects():
+    user_id = current_user.user_id
+    db = get_db_celery()
+    c = db.cursor()
+    c.execute(f'select name from project where user_id={user_id};')
+    rows = c.fetchall()
+    projects = [row['name'] for row in rows]
+    db.close()
+    paths = [os.path.join(TESTDATA_DIR, project) for project in projects]
+    #print(projects)
+    return jsonify({
+            'status': 'success',
+            'name': projects,
+            'path': paths
+        })
+    
+      
 # if __name__ == '__main__':
 #     start_port = 5056
 #     available_port = find_available_port(start_port)

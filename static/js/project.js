@@ -47,6 +47,7 @@ const app = createApp({
          ***********************/
         const urlParams = new URLSearchParams(window.location.search);
         const projectName = ref(urlParams.get('name') || '未命名项目');
+        
         const projectPath = ref(urlParams.get('path') || '未知路径');
         const taskId = ref(null);
         const pollingTimer = ref(null);
@@ -85,11 +86,13 @@ const app = createApp({
         const issueContentBeforeEdit = ref('');
         // 控制提示词设置弹窗
         const showPromptDialog = ref(false)
-        const activeSetPromptTab = ref('align') // 默认对齐页
+        const activeSetPromptTab = ref('req-code-align') // 默认对齐页
         const showAlignPromptDialog = ref(false); // 控制对齐提示词设置弹窗
         const AddAlignPrompt = ref('');
-        const currentAlignPrompt = ref('');
-        const defaultAlignPrompt = ref('');
+        const currentReq2CodeAlignPrompt = ref('');
+        const currentCode2ReqAlignPrompt = ref('');
+        const defaultReq2CodeAlignPrompt = ref('');
+        const defaultCode2ReqAlignPrompt = ref('');
         const showReviewPromptDialog = ref(false); // 控制审查提示词设置弹窗
         const AddReviewPrompt = ref('');
         const currentReviewPrompt = ref('');
@@ -858,10 +861,13 @@ const app = createApp({
             ElMessage.info('开始自动审查，正在分析对齐关系...');
 
             try {
+                await fetchAllAlignments();
+
                 // 收集所有已对齐但未审查的需求点
                 const unreviewed = [];
                 Object.keys(allAlignments.value).forEach(docFile => {
                     const alignments = allAlignments.value[docFile] || [];
+
                     alignments.forEach(alignment => {
                         if (alignment.codeRanges && alignment.codeRanges.length > 0 && !alignment.isReviewed) {
                             unreviewed.push({ docFile, alignment });
@@ -870,7 +876,7 @@ const app = createApp({
                 });
 
 //                reviewProgress.value.total = unreviewed.length;
-                
+
                 // 按文档分组处理
                 const groupedByDoc = {};
                 unreviewed.forEach(({ docFile, alignment }) => {
@@ -879,7 +885,7 @@ const app = createApp({
                     }
                     groupedByDoc[docFile].push(alignment);
                 });
-
+                
 //                for (const [docFile, alignments] of Object.entries(groupedByDoc)) {
 //                    // 检查是否需要中断
 //                    if (!isAutoReviewing.value) {
@@ -1048,7 +1054,7 @@ const app = createApp({
                     const metadata = response.data.metadata;
                     projectFiles.value.code_files = metadata.code_files || [];
                     projectFiles.value.doc_files = metadata.doc_files || [];
-                    projectName.value = metadata.project_name || projectName.value;
+                    projectName.value = metadata.project_name || projectName.value; //urlParams.get('name')
                     codeFileLines.value = metadata.code_file_lines || {};
                     codeScale.value = metadata.code_scale || 0;
 
@@ -1642,8 +1648,18 @@ const app = createApp({
             return true;
         };
 
-        const stopAutoAlignment = () => {
-            isAutoAligning.value = false;
+        const stopAutoAlignment = async () => {
+            if (!taskId.value) return;
+
+            try {
+                await axios.post(`/api/stop-task/${taskId.value}`)
+                clearInterval(pollingTimer.value)
+                pollingTimer.value = null
+                isAutoAligning.value = false;
+                stopProgress();
+            } catch (err) {
+                ElMessage.warning(`停止失败: ${err.message}`);
+            }
         };
 
         // 查询进度
@@ -1957,7 +1973,7 @@ const app = createApp({
          ***********************/
         const handleDocSelection = (event) => {
             const selection = window.getSelection();
-            console.log("User selection:", selection ? selection.toString() : 'null');
+            //console.log("User selection:", selection ? selection.toString() : 'null');
             if (!selection || selection.toString().trim() === '') return;
 
             const range = selection.getRangeAt(0);
@@ -2553,9 +2569,9 @@ const app = createApp({
             currentCodeBlockIndex.value = codeIndex;
 
             // 右键或反向联动时也要确保对应列表项展开
-            if (!expandedAlignmentIds.value.includes(alignment.id)) {
-                expandedAlignmentIds.value.push(alignment.id);
-            }
+            //if (!expandedAlignmentIds.value.includes(alignment.id)) {
+            //    expandedAlignmentIds.value.push(alignment.id);
+            //}
 
             statusFilters.value = ['unaligned', 'unreviewed', 'reviewed'];
             await nextTick();
@@ -3187,7 +3203,7 @@ const app = createApp({
         // 处理代码选择
         const handleCodeSelection = (event) => {
             const selection = window.getSelection();
-            console.log("Code selection:", selection ? selection.toString() : 'null');
+            //console.log("Code selection:", selection ? selection.toString() : 'null');
             if (!selection || selection.toString().trim() === '') return;
 
             const range = selection.getRangeAt(0);
@@ -3626,11 +3642,20 @@ const app = createApp({
         };
 
         const toggleAutoAlignment = async () => {
+
             if (isAutoAligning.value) {
-                isAutoAligning.value = false;
-                alignmentProgress.value = { current: 0, total: 0 };
-                stopProgress();
-                ElMessage.info('已停止自动对齐');
+                if (!taskId.value) return;
+
+                try {
+                    await axios.post(`/api/stop-task/${taskId.value}`)
+                    clearInterval(pollingTimer.value)
+                    pollingTimer.value = null
+                    isAutoAligning.value = false;
+                    stopProgress();
+                    ElMessage.info('已停止自动对齐');
+                } catch (err) {
+                    ElMessage.warning(`停止失败: ${err.message}`);
+                }
             } else {
                 openAlignmentDirectionDialog('auto');
             }
@@ -3639,6 +3664,9 @@ const app = createApp({
         const toggleAutoReview = async () => {
             if (isAutoReviewing.value) {
                 // 停止审查
+                await axios.post(`/api/stop-task/${taskId.value}`)
+                clearInterval(pollingTimerReview.value)
+                pollingTimerReview.value = null
                 isAutoReviewing.value = false;
                 reviewProgress.value = { current: 0, total: 0 };
                 // 停止进度显示
@@ -3815,9 +3843,9 @@ const app = createApp({
 
         const hideContextMenu = () => {
             contextMenu.value.visible = false;
-            contextMenu.value.selectedAlignment = null;
-            contextMenu.value.selectedBlock = null;
-            contextMenu.value.selectedBlockType = null;
+            //contextMenu.value.selectedAlignment = null;
+            //contextMenu.value.selectedBlock = null;
+            //contextMenu.value.selectedBlockType = null;
             // 移除监听器，避免内存泄漏
             document.removeEventListener('click', hideContextMenu);
         };
@@ -3913,20 +3941,22 @@ const app = createApp({
         // 可选：在组件挂载时自动恢复
         onMounted(() => {
           // 如果需要默认页是“对齐”，可以设置
-          activeSetPromptTab.value = 'align'
+          activeSetPromptTab.value = 'req-code-align'
           loadDefaultPrompt()
         })
 
         // 从后端加载
          const loadDefaultPrompt = async () => {
           try {
-            const res = await fetch('/get_prompts')
-            const data = await res.json()
-            currentAlignPrompt.value = data.align || defaultAlignPrompt
+            const res = await axios.get('/get_prompts')
+            //console.log(res)
+            const data = await res.data
+            currentReq2CodeAlignPrompt.value = data.Req2CodeAlign || defaultReq2CodeAlignPrompt
+            currentCode2ReqAlignPrompt.value = data.Code2ReqAlign || defaultCode2ReqAlignPrompt
             currentReviewPrompt.value = data.review || defaultReviewPrompt
           } catch (err) {
             console.error('Error loading prompts:', err)
-            currentAlignPrompt.value = defaultAlignPrompt
+            currentReq2CodeAlignPrompt.value = defaultReq2CodeAlignPrompt
             currentReviewPrompt.value = defaultReviewPrompt
           }
         }
@@ -3943,22 +3973,36 @@ const app = createApp({
             const data = await res.json()
 
             // 根据当前 tab 更新对应输入框
-            if (tab === 'align') {
-              currentAlignPrompt.value = data.default_prompt
-            } else {
+            if (tab === 'req-code-align') {
+              currentReq2CodeAlignPrompt.value = data.default_prompt
+            } 
+            else if (tab === 'code-req-align'){
+              currentCode2ReqAlignPrompt.value = data.default_prompt
+            }
+            else {
               currentReviewPrompt.value = data.default_prompt
             }
 
-            window.$message.success(data.message)
+            ElMessage.success('已恢复默认提示词')
           } catch (err) {
-            window.$message.error('恢复失败')
+            ElMessage.error('恢复失败')
           }
         }
         
         // 保存
         const savePrompt = async () => {
           const tab = activeSetPromptTab.value
-          const content = tab === 'align' ? currentAlignPrompt.value : currentReviewPrompt.value
+          //const content = tab === 'req-code-align' ? currentReq2CodeAlignPrompt.value : currentCode2ReqAlignPrompt : currentReviewPrompt.value
+          let content = ''
+          if (tab === 'req-code-align') {
+              content = currentReq2CodeAlignPrompt.value
+            } 
+            else if (tab === 'code-req-align'){
+              content = currentCode2ReqAlignPrompt.value
+            }
+            else {
+              content = currentReviewPrompt.value
+            }
 
           try {
             const res = await fetch('/save_prompt', {
@@ -3966,10 +4010,21 @@ const app = createApp({
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ tab, content })
             })
+            
+            
+            // 检查响应是否成功
+            if (!res) {
+              throw new Error(`请求失败! status: ${res.status}`)
+            }
+            
             const data = await res.json()
-            window.$message.success(data.message)
+              if (data && data.error) {
+                throw new Error(data.error)
+              }
+            ElMessage.success('保存成功')
           } catch (err) {
-            window.$message.error('保存失败')
+            console.error('错误详情：', err)
+            ElMessage.error('保存失败')
           }
         }
         
@@ -3983,10 +4038,10 @@ const app = createApp({
         const closePromptModal = () => {
           showPromptDialog.value = false
         }  
-        //=======================
+        //=====================================================
         
         
-        //==========调整对齐提示词的功能=============
+        //==========调整附加的对齐提示词的功能=============
         
         // 复制预设文字
         const copyAndClose = (text) => {
@@ -4060,19 +4115,19 @@ const app = createApp({
                 title:'选择对齐方向',
                 message: `对齐操作将清除"${alignment.name}" 当前已有的对齐和审查结果。\n\n请选择以哪一方为基准进行对齐：`,
                 showCancelButton: true,
-                confirmButtonText: '需求 -> 代码',
-                cancelButtonText: '代码 -> 需求',
+                confirmButtonText: '代码 -> 需求',
+                cancelButtonText: '需求 -> 代码',
                 distinguishCancelAndClose: true,
                 type: 'warning',
                 closeOnClickModal: true,
                 closeOnPressEscape: true
             })
             .then(async ()=>{
-                await performSingleAlignment(alignment, 'doc-to-code', userPrompt);
+                await performSingleAlignment(alignment, 'code-to-doc', userPrompt);
             })
             .catch(async (action) =>{
                 if(action === 'cancel'){
-                    await performSingleAlignment(alignment, 'code-to-doc', userPrompt);
+                    await performSingleAlignment(alignment, 'doc-to-code', userPrompt);
                 }
             });
         };
@@ -4099,9 +4154,9 @@ const app = createApp({
                     isReviewed: false,
                     reviewThoughts: ''
                 };
-
+                // 需求-代码方向
                 if (direction === 'doc-to-code') {
-                    //console.log("用户输入的提示词是3：", userPrompt)
+                    //console.log("用户输入的提示词是：", userPrompt)
                     //return;
                     // 0. 代码摘要，先存入数据库
                     ElMessage.warning('正在进行代码摘要...');
@@ -4133,20 +4188,26 @@ const app = createApp({
                     }
                     updatedAlignment.codeRanges = alignResponse.data.codeRanges || [];
                 }
+                // 代码-需求方向
                 else {
-                    const alignResponse = await axios.post('/api/align-code-to-requirement', {
+                    //console.log("用户输入的提示词是：", userPrompt)
+                    const alignResponse = await axios.post('/api/align-code-to-requirement-addprompt', {
                         codeRanges: updatedAlignment.codeRanges || [],
-                        projectPath: projectPath.value
+                        projectPath: projectPath.value,
+                        userInputPrompt: userPrompt,  //增加用户的输入作为提示词
+                        project_id: projectId,
+                        docRanges: updatedAlignment.docRanges || [],
                     });
                     if (!alignResponse.data || alignResponse.data.status !== 'success') {
                         throw new Error(alignResponse.data?.message || '代码 → 需求 对齐失败');
                     }
                     updatedAlignment.docRanges = alignResponse.data.docRanges || [];
                 }
-                urlParams = new URLSearchParams(window.location.search);
-                projectId = urlParams.get('project_id');
-                await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, updatedAlignment);
+                //urlParams = new URLSearchParams(window.location.search);
+                //project_Id = urlParams.get('project_id');
                 
+                await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, updatedAlignment);
+                console.error('projectId:', projectId);
                 // 刷新对齐数据
                 await fetchAlignments();
                 refreshFilteredAlignments();
@@ -4159,7 +4220,7 @@ const app = createApp({
         };
         
         
-        //==========调整审查提示词的功能=============
+        //==========调整附加的审查提示词的功能=============
         
         // 执行审查操作（使用 currentPrompt）
         async function PromptReview() {
@@ -5498,7 +5559,8 @@ const app = createApp({
             SetPrompt,
             showPromptDialog,
             activeSetPromptTab,
-            currentAlignPrompt,
+            currentReq2CodeAlignPrompt,
+            currentCode2ReqAlignPrompt,
             currentReviewPrompt,
             restorePromptDefault,
             savePrompt,

@@ -865,23 +865,36 @@
         
         
         <!-- 提示词设置弹窗 -->
-        <!-- 提示词设置弹窗 -->
         <el-dialog
           v-model="showPromptDialog"
-          title="对齐提示词设置"
+          title="提示词设置"
           width="60%"
           top="2vh"
           :close-on-click-modal="false"
         >
           <!-- 标签页 -->
           <el-tabs v-model="activeSetPromptTab" type="border-card" style="margin-bottom: 15px;">
-            <!-- 对齐页 -->
-            <el-tab-pane label="对齐" name="align">
+            <!-- 需求->代码对齐页 -->
+            <el-tab-pane label="需求-代码对齐" name="req-code-align">
               <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
-                <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化对齐质量。
+                <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化需求->代码的对齐质量。
               </div>
               <el-input
-                v-model="currentAlignPrompt"
+                v-model="currentReq2CodeAlignPrompt"
+                type="textarea"
+                :rows="10"
+                placeholder="请输入提示词..."
+                style="margin-bottom: 15px;"
+              ></el-input>
+            </el-tab-pane>
+            
+            <!-- 代码->需求对齐页 -->
+            <el-tab-pane label="代码-需求对齐" name="code-req-align">
+              <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化代码->需求的对齐质量。
+              </div>
+              <el-input
+                v-model="currentCode2ReqAlignPrompt"
                 type="textarea"
                 :rows="10"
                 placeholder="请输入提示词..."

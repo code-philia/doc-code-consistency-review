@@ -6,14 +6,17 @@ from flask_login import current_user
 
 # from app.views import logger
 from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
-from .prompt import Combine_Align_UserPrompt, Combine_Review_UserPrompt
+from .prompt import Combine_Req2Code_Align_UserPrompt, Combine_Code2Req_Align_UserPrompt, Combine_Review_UserPrompt
 from openai import OpenAI
 from .utils import chunk_list
-from . import get_db_celery
+from .db import get_db_celery
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8002/v1")
+#API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8002/v1")
 API_KEY = os.environ.get("API_KEY", "0")
-MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
+#MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
+
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+MODEL_NAME = "Qwen3-32B"
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -217,9 +220,16 @@ def query_related_code_block(requirement, code_blocks, icl_examples=None):
             icl_code_text=code_text
         )
     else:
-        # 构造提示词
+        user_id = user_id if user_id else current_user.user_id
         
-        template = ALIGN_PROMPT_TEMPLATE
+        # 构造提示词
+        db = get_db_celery()
+        c = db.cursor()
+        c.execute(f'select Req2CodeAlign from prompt where user_id={user_id}')
+        row = c.fetchone()
+        db.close()
+        
+        template = ALIGN_PROMPT_TEMPLATE if row is None else row['Req2CodeAlign']
         prompt = template.format(
             req_content=requirement,
             code_content=code_blocks
@@ -281,7 +291,7 @@ def query_related_code(requirement, code_blocks, block_limit=None, icl_examples=
     
     
     
-# ================= 对齐：参考用户反馈，查找相关代码块 =================
+# ================= 对齐：参考用户反馈，根据需求块查找相关代码块 =================
 def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, user_prompt):
     """
     查询与需求点最相关的代码行号
@@ -298,17 +308,22 @@ def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, u
     """
 
     # 构造提示词
+    db = get_db_celery()
+    c = db.cursor()
+    c.execute(f'select Req2CodeAlign from prompt where user_id={user_id}')
+    row = c.fetchone()
+    db.close()
     
     #将用户输入的提示词结合到已有的结果中，形成新的提示词
     #准备加到已有提示词的前面，用于优化大模型的输出
-
-    original_template = ALIGN_PROMPT_TEMPLATE
+    
+    original_template = ALIGN_PROMPT_TEMPLATE if row is None else row['Req2CodeAlign']
     original_prompt = original_template.format(
         req_content=requirement,
         code_content=code_blocks
     )
 
-    template = Combine_Align_UserPrompt
+    template = Combine_Req2Code_Align_UserPrompt
     prompt = template.format(
         original_prompt=original_prompt,
         doc_range=requirement,
@@ -365,7 +380,7 @@ def query_related_code_by_feedback(requirement, code_blocks, codeRanges, user_pr
         return query_related_code_block(requirement, code_blocks)
 
 
-# ================= 对齐 查找相关需求块 =================
+# ================= 对齐 根据代码块查找相关需求块 =================
 def query_related_requirement_block(code, req_blocks, user_id=None):
     """
     查询与代码最相关的需求块
@@ -382,10 +397,12 @@ def query_related_requirement_block(code, req_blocks, user_id=None):
     # template = ALIGN_REQ_PROMPT_TEMPLATE
     db = get_db_celery()
     c = db.cursor()
-    c.execute(f'select alignment from prompt where user_id={user_id}')
+    c.execute(f'select Code2ReqAlign from prompt where user_id={user_id}')
     row = c.fetchone()
-    template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row[0]
     db.close()
+    
+    template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
+    
     prompt = template.format(
         code_content=code,
         req_content=req_blocks
@@ -435,6 +452,102 @@ def query_related_requirement(code, req_blocks, block_limit=None, user_id=None):
     else:
         return query_related_requirement_block(code, req_blocks, user_id)
 
+        
+# ================= 对齐 参考用户反馈，根据代码块查找相关需求块 =================
+def query_related_requirement_block_by_feedback(code, docRanges, req_blocks, user_prompt, user_id=None):
+    """
+    查询与代码最相关的需求块
+    
+    参数:
+        code: 代码内容
+        req_blocks: 需求块列表
+        
+    返回:
+        相关需求块列表
+    """
+    user_id = user_id if user_id else current_user.user_id
+    # 构造提示词
+    # template = ALIGN_REQ_PROMPT_TEMPLATE
+    db = get_db_celery()
+    c = db.cursor()
+    c.execute(f'select Code2ReqAlign from prompt where user_id={user_id}')
+    row = c.fetchone()
+    db.close()
+    
+    # template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
+    # prompt = template.format(
+        # code_content=code,
+        # req_content=req_blocks
+    # )
+    
+    # 构造提示词
+    
+    #将用户输入的提示词结合到已有的结果中，形成新的提示词
+    #准备加到已有提示词的前面，用于优化大模型的输出
+
+    original_template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
+    original_prompt = original_template.format(
+        code_content=code,
+        req_content=req_blocks
+    )
+
+    template = Combine_Code2Req_Align_UserPrompt
+    prompt = template.format(
+        original_prompt=original_prompt,
+        code_content=code,
+        req_content=docRanges,
+        user_feedback=user_prompt
+    )
+    #print(prompt)
+    
+    
+
+    # 解析回复
+    response = query_llm(prompt)
+    llm_output = response.content
+    #print("original llm output (req): ", llm_output)
+    parsed_output = parse_output(llm_output)
+    print("parsed llm output (req): ", parsed_output)
+    
+    return parsed_output
+
+
+def query_related_requirement_by_feedback(code, docRanges, req_blocks, user_prompt, block_limit=None, user_id=None):
+    if block_limit:
+        chunked_req_blocks = chunk_list(req_blocks, block_limit)
+        
+        related_req_blocks = []
+        for c in chunked_req_blocks:
+            res = query_related_requirement_block_by_feedback(code, docRanges, c, user_prompt, user_id)
+            related_req_blocks.extend(res)
+        
+        #print(related_req_blocks)
+        similarity_results = []
+        if (len(related_req_blocks) == 1):
+            similarity_results = related_req_blocks
+        elif (len(related_req_blocks) > 1):
+            max_sim_results = []
+            max_sim = -1.0
+            for item in related_req_blocks:
+                if item.get('similarity', 0) >= max_sim:
+                    max_sim = item.get('similarity', 0)
+                    if item.get('similarity', 0) == max_sim:
+                        max_sim_results.append(item)
+                    elif item.get('similarity', 0) > max_sim:
+                        max_sim_results = []
+                        max_sim_results = [item]
+                if item.get('similarity', 0) >= 0.9:
+                    similarity_results.append(item)
+            if len(similarity_results) == 0:
+               similarity_results = max_sim_results  
+        
+        print("************")   
+        print(similarity_results)   
+        return similarity_results
+    else:
+        return query_related_requirement_block(code, req_blocks, user_id)        
+        
+        
 def parse_alignment_output(response):
     """
     解析对齐输出的JSON
@@ -489,7 +602,7 @@ def parse_output(response):
         else:
             return []
     except (json.JSONDecodeError, AttributeError) as e:
-        print(response)
+        #print(response)
         print(f"解析对齐输出失败: {e}")
         return []
 
@@ -552,7 +665,9 @@ def query_review_result_by_feedback(requirement, related_code, review_thought, u
     c = db.cursor()
     c.execute(f'select review from prompt where user_id={user_id}')
     row = c.fetchone()
-    original_template = THINKING_PROMPT_TEMPLATE if row is None else row[0]
+    db.close()
+    
+    original_template = THINKING_PROMPT_TEMPLATE if row is None else row['review']
     original_prompt = original_template.format(
         requirement=requirement_context,
         related_code=code_context,
@@ -638,7 +753,7 @@ def query_review_result(requirement, related_code, rules=None, issues=None, user
     c = db.cursor()
     c.execute(f'select review from prompt where user_id={user_id}')
     row = c.fetchone()
-    template = THINKING_PROMPT_TEMPLATE if row is None else row[0]
+    template = THINKING_PROMPT_TEMPLATE if row is None else row['review']
     db.close()
 
     prompt = template.format(

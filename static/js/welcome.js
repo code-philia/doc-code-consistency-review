@@ -45,15 +45,18 @@ const app = createApp({
             projectName: '',
             projectLocation: '',
         });
-
+        
         const recentProjects = ref([]);
         const showImportDialog = ref(false);
-        const importPath = ref('');
         const isImporting = ref(false);
         const folderUpload = ref(null);
         const selectedFolderFiles = ref([]);
         const selectedFolderName = ref('');
-
+        const projectFolders = ref([]); // 存储从从后端获取数据库加载的文件夹列表
+        const importProject = ref(''); // 当前选中的项目
+        const importPath = ref(''); // 当前选中的项目路径
+        const loading = ref(false); // 加载状态
+        
         // ============================================================
         // 知识库管理逻辑
         // ============================================================
@@ -298,27 +301,27 @@ const app = createApp({
 
         const openNewProjectDialog = () => {
             projectForm.projectName = '';
-            projectForm.projectLocation = '';
+            projectForm.projectLocation = '',
             selectedFolderFiles.value = [];
             selectedFolderName.value = '';
             showNewProjForm.value = true;
         };
 
         const handleNewProject = async () => {
-            const projectLocation = (projectForm.projectLocation || '').trim();
+            const projectLocation = 'testdata'//(projectForm.projectLocation || '').trim();
             let projectName = (projectForm.projectName || '').trim();
 
-            if (!projectLocation) {
+            /* if (!projectLocation) {
                 ElMessage.error('请填写项目存放路径');
                 return;
-            }
+            } */
 
             // 项目名可选，默认使用路径最后一级
-            if (!projectName) {
+            /* if (!projectName) {
                 const pathParts = projectLocation.replace(/\\/g, '/').split('/').filter(Boolean);
                 projectName = pathParts[pathParts.length - 1] || '新项目';
                 projectForm.projectName = projectName;
-            }
+            } */
 
             isCreating.value = true;
 
@@ -333,21 +336,42 @@ const app = createApp({
                         formData.append('files', file);
                         formData.append('paths', file.webkitRelativePath || file.name);
                     });
-
-                    const res = await axios.post('/project/upload-folder', formData, {
+                                     
+                    
+                    const resu = await axios.post('/project/upload-folder', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
-
+                    /* 
                     if (res.data.status === 'success') {
                         showNewProjForm.value = false;
                         ElMessage.success('创建成功');
                         window.projectId = res.data.new_id;
                         openProject({
-                            name: res.data.project_name || projectName,
-                            path: res.data.project_path,
+                            name: res.data.folderName || projectName,
+                            path: res.data.serverPath,
                             project_id: res.data.new_id
                         });
-                    } else {
+                    }   */
+                    
+                    const res = await axios.post('/project/create', {
+                        projectName: resu.data.folderName || projectName,
+                        projectLocation: resu.data.serverPath || projectLocation,
+                        creationType: 'folder',
+                        project_id: resu.data.new_id
+                    });
+                    if (res.data.status === 'success') {
+                        showNewProjForm.value = false;
+                        ElMessage.success('创建成功');
+                        window.projectId = res.data.new_id;
+                        console.log('resu.data.new_id:',resu.data.new_id)
+                        openProject({
+                            name: res.data.project_name || projectName,
+                            path: res.data.project_path || projectLocation,
+                            project_id: resu.data.new_id
+                        });
+                    } 
+                    
+                    else {
                         ElMessage.error(res.data.message || '创建失败');
                     }
                 } else {
@@ -363,7 +387,7 @@ const app = createApp({
                         window.projectId = res.data.new_id;
                         openProject({
                             name: res.data.project_name || projectName,
-                            path: res.data.project_path,
+                            path: res.data.project_path || projectLocation,
                             project_id: res.data.new_id
                         });
                     } else {
@@ -377,8 +401,8 @@ const app = createApp({
             }
         };
         function getProjectId(project) {
-            if (project && project.id !== undefined && project.id !== null){
-                return project.id;
+            if (project && project.project_id !== undefined && project.project_id !== null){
+                return project.project_id;
             }
             if (window.projectId !== null) {
                 return window.projectId
@@ -387,7 +411,9 @@ const app = createApp({
         }
 
         const openProject = (project) => {
+            console.log('project:', project)
             const project_id = getProjectId(project);
+            console.log('project_id:', project_id)
             axios.post('/project/open', {
                 name: project.name,
                 path: project.path,
@@ -414,12 +440,13 @@ const app = createApp({
             importPath.value = '';
         };
 
-        const handleImportProject = () => {
+        const handleImportProject = async() => {
+            
             if (!importPath.value) {
                 ElMessage.error('项目文件夹路径不能为空！');
                 return;
             }
-            isImporting.value = true;
+            isImporting.value = true; 
 
             axios.post('/project/import', { path: importPath.value })
                 .then(res => {
@@ -433,7 +460,56 @@ const app = createApp({
                 })
                 .finally(() => {
                     isImporting.value = false;
-                });
+                }); 
+        };
+        
+
+        // 新增：加载项目列表
+        const loadProjectFolders = async () => {
+            loading.value = true;
+            try {
+                const res = await axios.get('/welcome/get_user_projects');
+                if (res.data.status === 'success') {
+                    const names = res.data.name || [];
+                    const paths = res.data.path || [];
+                    projectFolders.value = names.map((name, index) => ({
+                        id: index,
+                        label: name.trim(),
+                        value: name.trim(),
+                        path: paths[index].trim() || ''
+                    }));
+
+                    await nextTick();
+                    //console.log(projectFoldersList)
+                    // 默认选中第一个项目
+                    if (projectFolders.value.length > 0) {
+                        importPath.value = projectFolders.value[0].path;
+                        importProject.value = projectFolders.value[0].value;
+                        //console.log(importPath.value)
+                        //console.log(importProject.value)
+                }
+                } else{
+                    ElMessage.error('加载项目列表失败');
+                    throw new Error('Failed to load projects');
+                }
+                
+            } catch (error) {
+                ElMessage.error('加载项目列表失败，请重试');
+            } finally {
+                loading.value = false;
+            }
+        };
+ 
+        // 监听下拉框展开/收起
+        const handleVisibleChange = (visible) => {
+            if (visible && projectFolders.value.length === 0) {
+                loadProjectFolders();
+            } 
+        };
+        
+        const handleSelectChange = (value) => {
+            console.log('选中项目:', value);
+            // 可选：触发其他逻辑
         };
 
         const triggerFolderUpload = () => {
@@ -464,10 +540,46 @@ const app = createApp({
             // 清空文件选择
             event.target.value = '';
         };
+       
 
         const refreshHistory = async () => {
             await fetchRecentProjects();
         };
+
+        const isAllSelected = computed({
+            get() {
+                if (recentProjects.value.length === 0) return false;
+                return recentProjects.value.every(p => p.selected);
+            },
+            set(value) {
+                recentProjects.value.forEach(p => p.selected = value);
+            }
+        });
+
+        const handleDelete = async () => {
+            const selectedList = recentProjects.value.filter(p => p.selected);
+
+            if (selectedList.length === 0) {
+                alert('请先选择要删除的项目');
+                return;
+            }
+
+            if (!confirm(`确定要删除选中的${selectedList.length}个项目吗?`)){
+                return;
+            }
+
+            try {
+                const ids = selectedList.map(p => p.id);
+                const paths = selectedList.map(p => p.path);
+                // 调用删除接口
+                await axios.delete('/project/delete', {
+                    data: { paths: paths, ids: ids }
+                });
+                await fetchRecentProjects(); // 刷新列表
+            } catch (error) {
+                ElMessage.error(`删除失败: ${error.response?.data?.message || error.message}`);
+            }
+        }
 
         // 上下文菜单方法
         const showContextMenu = (event, project) => {
@@ -688,12 +800,19 @@ const app = createApp({
             projectForm,
             isCreating,
             recentProjects,
+            isAllSelected,
+            handleDelete, 
+            handleVisibleChange,// 新增
+            loadProjectFolders,// 新增
+            handleSelectChange,// 新增
+            projectFolders,// 新增
             handleNewProject,
             openNewProjectDialog,
             formatRelativeTime,
             openProject,
             showImportDialog,
             importPath,
+            importProject,
             isImporting,
             openImportDialog,
             handleImportProject,

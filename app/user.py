@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template
 from flask_login import UserMixin, login_user, login_required, logout_user
 
-from . import get_db
+from .db import get_db
 
 user_bp = Blueprint('user', __name__)
 
@@ -27,7 +27,7 @@ class User(UserMixin):
         c.execute(f'select user_id, username, password, ip, name, role from user where user_id={user_id}')
         row = c.fetchone()
         if row:
-            return User(row[0], row[1], row[2], row[3], row[4], row[5])
+            return User(row['user_id'], row['username'], row['password'], row['ip'], row['name'], row['role'])
         return None
 
     @staticmethod
@@ -37,9 +37,8 @@ class User(UserMixin):
         c = db.cursor()
         c.execute(f'select user_id, username, password, ip, name, role from user where username="{username}"')
         row = c.fetchone()
-        print('row', row)
         if row:
-            return User(row[0], row[1], row[2], row[3], row[4], row[5])
+            return User(row['user_id'], row['username'], row['password'], row['ip'], row['name'], row['role'])
         return None
 
     @staticmethod
@@ -51,7 +50,7 @@ class User(UserMixin):
         row = c.fetchone()
         print('row', row)
         if row:
-            return User(row[0], row[1], row[2], row[3], row[4], row[5])
+            return User(row['user_id'], row['username'], row['password'], row['ip'], row['name'], row['role'])
         return None
 
 
