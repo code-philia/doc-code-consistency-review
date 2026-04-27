@@ -10,3 +10,4 @@ models/
 rag_database/
 
 *.db
+.env
