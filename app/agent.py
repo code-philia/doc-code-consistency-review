@@ -59,6 +59,16 @@ def query_llm(message, history=None):
     return r
 
 
+def _resolve_user_id(user_id=None):
+    """优先使用显式 user_id；在请求上下文中再回退到 current_user。"""
+    if user_id is not None:
+        return user_id
+    try:
+        return current_user.user_id
+    except Exception:
+        return None
+
+
 def parse_abstract_output(response):
     """
     解析输出的JSON
@@ -194,7 +204,7 @@ def query_codefile_abstract(code_abstracts):
             
         
 # ================= 对齐：查找相关代码块 =================
-def query_related_code_block(requirement, code_blocks, icl_examples=None):
+def query_related_code_block(requirement, code_blocks, icl_examples=None, user_id=None):
     """
     查询与需求点最相关的代码行号
     
@@ -220,14 +230,16 @@ def query_related_code_block(requirement, code_blocks, icl_examples=None):
             icl_code_text=code_text
         )
     else:
-        user_id = user_id if user_id else current_user.user_id
-        
+        resolved_user_id = _resolve_user_id(user_id)
+
         # 构造提示词
-        db = get_db_celery()
-        c = db.cursor()
-        c.execute(f'select Req2CodeAlign from prompt where user_id={user_id}')
-        row = c.fetchone()
-        db.close()
+        row = None
+        if resolved_user_id is not None:
+            db = get_db_celery()
+            c = db.cursor()
+            c.execute(f'select Req2CodeAlign from prompt where user_id={resolved_user_id}')
+            row = c.fetchone()
+            db.close()
         
         template = ALIGN_PROMPT_TEMPLATE if row is None else row['Req2CodeAlign']
         prompt = template.format(
@@ -253,13 +265,13 @@ def query_related_code_block(requirement, code_blocks, icl_examples=None):
     print('已尝试多次，无法正确输出和解析结果')        
     return parsed_output
 
-def query_related_code(requirement, code_blocks, block_limit=None, icl_examples=None):
+def query_related_code(requirement, code_blocks, block_limit=None, icl_examples=None, user_id=None):
     if block_limit:
         chunked_code_blocks = chunk_list(code_blocks, block_limit)
         
         related_code_blocks = []
         for c in chunked_code_blocks:
-            res = query_related_code_block(requirement, c, icl_examples)
+            res = query_related_code_block(requirement, c, icl_examples, user_id=user_id)
             related_code_blocks.extend(res)
         
         print(related_code_blocks)
@@ -287,12 +299,12 @@ def query_related_code(requirement, code_blocks, block_limit=None, icl_examples=
         print(similarity_results)   
         return similarity_results
     else:
-        return query_related_code_block(requirement, code_blocks)    
+        return query_related_code_block(requirement, code_blocks, icl_examples, user_id=user_id)
     
     
     
 # ================= 对齐：参考用户反馈，根据需求块查找相关代码块 =================
-def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, user_prompt):
+def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, user_prompt, user_id=None):
     """
     查询与需求点最相关的代码行号
     
@@ -308,11 +320,14 @@ def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, u
     """
 
     # 构造提示词
-    db = get_db_celery()
-    c = db.cursor()
-    c.execute(f'select Req2CodeAlign from prompt where user_id={user_id}')
-    row = c.fetchone()
-    db.close()
+    resolved_user_id = _resolve_user_id(user_id)
+    row = None
+    if resolved_user_id is not None:
+        db = get_db_celery()
+        c = db.cursor()
+        c.execute(f'select Req2CodeAlign from prompt where user_id={resolved_user_id}')
+        row = c.fetchone()
+        db.close()
     
     #将用户输入的提示词结合到已有的结果中，形成新的提示词
     #准备加到已有提示词的前面，用于优化大模型的输出
@@ -342,14 +357,14 @@ def query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, u
     return parsed_output    
     
     
-def query_related_code_by_feedback(requirement, code_blocks, codeRanges, user_prompt, block_limit=None):
+def query_related_code_by_feedback(requirement, code_blocks, codeRanges, user_prompt, block_limit=None, user_id=None):
 
     if block_limit:
         chunked_code_blocks = chunk_list(code_blocks, block_limit)
         
         related_code_blocks = []
         for c in chunked_code_blocks:
-            res = query_related_code_block_by_feedback(requirement, c, codeRanges, user_prompt)
+            res = query_related_code_block_by_feedback(requirement, c, codeRanges, user_prompt, user_id=user_id)
             related_code_blocks.extend(res)
         
         print(related_code_blocks)
@@ -377,7 +392,7 @@ def query_related_code_by_feedback(requirement, code_blocks, codeRanges, user_pr
         print(similarity_results)   
         return similarity_results
     else:
-        return query_related_code_block(requirement, code_blocks)
+        return query_related_code_block_by_feedback(requirement, code_blocks, codeRanges, user_prompt, user_id=user_id)
 
 
 # ================= 对齐 根据代码块查找相关需求块 =================
