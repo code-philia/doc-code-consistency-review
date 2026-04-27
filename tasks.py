@@ -254,15 +254,8 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
             finally:
                 conn.close()
     except Exception as e:
-        self.update_state(
-            state="FAILURE",
-            meta={
-                'status': f'任务失败: {str(e)}',
-                'error': str(e)
-            }
-        )
         logger.error(f"审查失败2: {str(e)}", exc_info=True)
-        return {"status": "error", "message": f"Failed to save review result: {str(e)}"}
+        raise RuntimeError(f"Failed to save review result: {str(e)}") from e
 
     self.update_state(
         state="SUCCESS",
@@ -462,7 +455,7 @@ def align_requirement_to_project_task(self, file_abstract, params, user_id):
                 all_code_blocks = get_codefile_blocks(code_repo_path, file_name, code_block_base_path)
 
                 # 调用对齐函数获取相关代码
-                related_code = query_related_code(requirement_text, all_code_blocks, block_limit=50)
+                related_code = query_related_code(requirement_text, all_code_blocks, block_limit=50, user_id=user_id)
 
                 # 检查并添加 related_id 对应的代码块
                 related_code = include_related_blocks(related_code, all_code_blocks)
@@ -508,14 +501,7 @@ def align_requirement_to_project_task(self, file_abstract, params, user_id):
 
     except Exception as e:
         logger.error(f'对齐过程中出错:{str(e)}', exc_info=True)
-        self.update_state(
-            state="FAILURE",
-            meta={
-                'status': f'任务失败: {str(e)}',
-                'error': str(e)
-            }
-        )
-        return {'status': 'error', 'message': f'对齐过程中出错:{str(e)}'}
+        raise RuntimeError(f'对齐过程中出错:{str(e)}') from e
 
 
 @celery.task(bind=True)
@@ -699,14 +685,7 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
 
     except Exception as e:
         logger.error(f'对齐 代码=>需求 过程中出错:{str(e)}', exc_info=True)
-        self.update_state(
-            state="FAILURE",
-            meta={
-                'status': f'任务失败: {str(e)}',
-                'error': str(e)
-            }
-        )
-        return {'status': 'error', 'message': f'对齐 代码=>需求 过程中出错:{str(e)}'}
+        raise RuntimeError(f'对齐 代码=>需求 过程中出错:{str(e)}') from e
 
 
 def add_alignment_data(project_path, new_alignment, project_id, user_id):
