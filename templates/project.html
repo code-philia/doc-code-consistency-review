@@ -641,21 +641,22 @@
                                                    :id="'block-item-' + index"
                                                    style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; position: relative; padding-right: 35px;"
                                                    @click="handleBlockItemClick(block, index)"
+                                                   @contextmenu.prevent="handleBlockItemContextMenu($event, block, index, blockType)"
                                                 >
                                                    <div style="font-weight: 500; font-size: 12px; color: var(--text-primary); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                                       ${ blockType === 'doc' ? (block.filename || '未知文件') : (block.file || '未知文件') }
+                                                       ${ getBlockDisplayName(block, blockType) }
                                                    </div>
                                                    <div style="font-size: 11px; color: var(--text-secondary);">
-                                                       ${ blockType === 'doc' ? 'Offset: ' + block.start + ' - ' + block.end : 'Line: ' + (block.range ? block.range[0] : '?') + ' - ' + (block.range ? block.range[1] : '?') }
+                                                       ${ getBlockMetaText(block, blockType) }
                                                    </div>
                                                    <div style="font-size: 11px; color: var(--text-secondary); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                                       ${ (block.content && typeof block.content === 'string' && block.content.length > 50) ? block.content.substring(0, 50) + '...' : (block.content || '无内容') }
+                                                       ${ getBlockPreviewText(block, blockType) }
                                                    </div>
 
                                                    <!-- Delete Button -->
                                                    <div class="block-delete-btn" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%);" @click.stop>
                                                        <el-popconfirm
-                                                           :title="'确认删除' + (blockType === 'doc' ? '需求' : '代码') + '块？\n内容：' + (block.content ? (block.content.length > 50 ? block.content.substring(0, 50) + '...' : block.content) : '无内容')"
+                                                           :title="'确认删除' + (blockType === 'doc' ? '需求' : '代码') + '块？\n内容：' + getBlockPreviewText(block, blockType)"
                                                            confirm-button-text="删除"
                                                            cancel-button-text="取消"
                                                            icon="el-icon-warning"

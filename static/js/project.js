@@ -2421,6 +2421,95 @@ const app = createApp({
             }
         };
 
+        const getCodeBlockText = (block) => {
+            if (!block) return '';
+            return (block.code || block.content || '').toString();
+        };
+
+        const getCodeBlockFunctionName = (block) => {
+            const text = getCodeBlockText(block);
+            if (!text.trim()) return '代码块';
+            const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+            const firstMeaningful = lines.find(line =>
+                !line.startsWith('//') && !line.startsWith('/*') && !line.startsWith('*')
+            );
+            const rawName = (firstMeaningful || lines[0] || '代码块').replace(/\s*\{$/, '').trim();
+            return rawName.length > 60 ? `${rawName.slice(0, 60)}...` : rawName;
+        };
+
+        const getDocBlockDisplayName = (block) => {
+            if (!block) return '需求块';
+            const explicitName = (block.name || '').toString().trim();
+            if (explicitName) return explicitName;
+            const extracted = extractPlainTextFromMarkdown(block.content || '', 40);
+            return extracted || '需求块';
+        };
+
+        const getBlockDisplayName = (block, type) => {
+            if (type === 'doc') return getDocBlockDisplayName(block);
+            return getCodeBlockFunctionName(block);
+        };
+
+        const getBlockMetaText = (block, type) => {
+            if (!block) return '';
+            if (type === 'doc') {
+                return block.filename || block.documentId || '未知文件';
+            }
+            const filename = block.file || block.filename || '未知文件';
+            const startLine = Array.isArray(block.range) ? block.range[0] : '?';
+            const endLine = Array.isArray(block.range) ? block.range[1] : '?';
+            return `${filename} (${startLine}-${endLine})`;
+        };
+
+        const getBlockPreviewText = (block, type) => {
+            if (!block) return '无内容';
+            const raw = (type === 'code' ? getCodeBlockText(block) : (block.content || '')).toString().trim();
+            if (!raw) return '无内容';
+            return raw.length > 50 ? `${raw.substring(0, 50)}...` : raw;
+        };
+
+        const findAlignmentForSidebarBlock = (block, type) => {
+            if (!block) return null;
+            if (type === 'doc') {
+                const filename = block.filename || block.documentId;
+                const start = Number(block.start);
+                const end = Number(block.end);
+                return alignmentResults.value.find(alignment =>
+                    (alignment.docRanges || []).some(docRange =>
+                        (docRange.documentId || docRange.filename) === filename &&
+                        Number(docRange.start) < end &&
+                        Number(docRange.end) > start
+                    )
+                ) || null;
+            }
+
+            const filename = block.file || block.filename;
+            const startLine = Array.isArray(block.range) ? Number(block.range[0]) : NaN;
+            const endLine = Array.isArray(block.range) ? Number(block.range[1]) : NaN;
+            return alignmentResults.value.find(alignment =>
+                (alignment.codeRanges || []).some(codeRange => {
+                    const codeFile = codeRange.documentId || codeRange.filename;
+                    if (codeFile !== filename) return false;
+                    if (!Number.isNaN(startLine) && !Number.isNaN(endLine) &&
+                        codeRange.startLine !== undefined && codeRange.endLine !== undefined) {
+                        return Math.max(Number(codeRange.startLine), startLine) <= Math.min(Number(codeRange.endLine), endLine);
+                    }
+                    return false;
+                })
+            ) || null;
+        };
+
+        const handleBlockItemContextMenu = async (event, block, index, type) => {
+            event.preventDefault();
+            await handleBlockItemClick(block, index);
+            const matchedAlignment = findAlignmentForSidebarBlock(block, type);
+            if (matchedAlignment) {
+                showContextMenu(event, matchedAlignment);
+            } else {
+                showBlockContextMenu(event, block, type);
+            }
+        };
+
         // 根据事件坐标获取高亮块
         const getHighlightBlockAtEvent = (event) => {
             const x = event.clientX;
@@ -5618,6 +5707,10 @@ const app = createApp({
             refreshBlocks,
             currentSelectedBlockIndex,
             handleBlockItemClick,
+            handleBlockItemContextMenu,
+            getBlockDisplayName,
+            getBlockMetaText,
+            getBlockPreviewText,
             statusFilters,
             sidebarAlignments,
             expandedAlignmentIds,
