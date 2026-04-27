@@ -3425,6 +3425,7 @@ def build_rag_db():
     project_path = data.get('projectPath') or PROJECT_ROOT # Default to system root if not provided
     annotation_file = data.get('annotationFile') # Could be filename in testdata or absolute path
     kb_type = data.get('kbType', 'other')
+    source_file_name = data.get('sourceFileName')
 
     # User provided KB Name, default to filename without extension
     kb_name = data.get('kbName')
@@ -3435,32 +3436,79 @@ def build_rag_db():
     if not annotation_file:
         return jsonify({"status": "error", "message": "参数缺失: annotationFile"})
 
-    # Determine full path of the source file
-    # If it comes from testdata (server file)
+    # Resolve source file path robustly:
+    # 1) try raw filename/path first (preserve spaces/Chinese),
+    # 2) then try secure_filename fallback for local upload temp files.
+    raw_annotation_file = str(annotation_file).strip()
+    safe_annotation_file = secure_filename(raw_annotation_file)
+    temp_dir = os.path.join(PROJECT_ROOT, 'temp_uploads')
 
-    FILEDATA_DIR = os.path.join(PROJECT_ROOT, 'temp_uploads')
-    annotation_file = secure_filename(annotation_file)
-
-    if os.path.exists(os.path.join(FILEDATA_DIR, annotation_file)):
-        full_path = os.path.join(FILEDATA_DIR, annotation_file)
-    elif os.path.exists(annotation_file):
-        full_path = annotation_file
-    else:
-        # Check if it was uploaded to temp
-        temp_path = os.path.join(PROJECT_ROOT, 'temp_uploads', annotation_file)
-        if os.path.exists(temp_path):
-            full_path = temp_path
+    candidates = []
+    if raw_annotation_file:
+        if os.path.isabs(raw_annotation_file):
+            candidates.append(raw_annotation_file)
         else:
-             return jsonify({"status": "error", "message": f"找不到文件: {annotation_file}"})
+            candidates.extend([
+                os.path.join(TESTDATA_DIR, raw_annotation_file),
+                os.path.join(temp_dir, raw_annotation_file),
+                os.path.join(PROJECT_ROOT, raw_annotation_file),
+                raw_annotation_file
+            ])
+
+    if safe_annotation_file and safe_annotation_file != raw_annotation_file:
+        candidates.extend([
+            os.path.join(TESTDATA_DIR, safe_annotation_file),
+            os.path.join(temp_dir, safe_annotation_file),
+            os.path.join(PROJECT_ROOT, safe_annotation_file),
+            safe_annotation_file
+        ])
+
+    full_path = ""
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            full_path = candidate
+            break
+
+    if not full_path:
+        return jsonify({
+            "status": "error",
+            "message": f"找不到文件: {raw_annotation_file}",
+        })
+
+    raw_source_name = str(source_file_name or os.path.basename(full_path)).strip()
+    normalized_source_name = re.sub(r'\s+', '_', raw_source_name)
 
     if not kb_name:
         # Generate from filename
         base = os.path.basename(full_path)
         kb_name = os.path.splitext(base)[0]
 
+    def normalize_kb_type(raw_type):
+        mapping = {
+            "rule": "coding_rule",
+            "issue": "history_issue",
+            "history_align": "history_issue",
+            "align": "history_issue",
+            "case": "typical_case",
+            "coding_rule": "coding_rule",
+            "history_issue": "history_issue",
+            "typical_case": "typical_case",
+            "checklist": "checklist",
+            "other": "other"
+        }
+        return mapping.get((raw_type or "other").strip(), "other")
+
+    def resolve_processing_type(raw_type):
+        normalized = normalize_kb_type(raw_type)
+        if normalized in ["coding_rule", "checklist"]:
+            return "rule"
+        if normalized == "history_issue":
+            return "issue"
+        return "other"
+
     def save_kb_metadata(k_type, k_name, total_count=0):
         try:
-            target_type = 'align' if k_type == 'history_align' else k_type
+            target_type = normalize_kb_type(k_type)
             # 展平结构，直接存在根目录下
             kb_root = os.path.join(PROJECT_ROOT, "../rag_database", k_name)
             os.makedirs(kb_root, exist_ok=True)
@@ -3480,7 +3528,7 @@ def build_rag_db():
                     "create_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     "update_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     "doc_count": total_count,
-                    "source_file": os.path.basename(full_path)
+                    "source_file": normalized_source_name
                 }
             with open(meta_file, 'w', encoding='utf-8') as f:
                 json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -3496,10 +3544,7 @@ def build_rag_db():
         json_data = None
 
         # Ensure kb_type is standardized for processing
-        if kb_type == 'history_align':
-            processing_type = 'align'
-        else:
-            processing_type = kb_type
+        processing_type = resolve_processing_type(kb_type)
 
         # === Word 文档处理逻辑 ===
         if full_path.lower().endswith('.docx'):
@@ -3535,14 +3580,19 @@ def build_rag_db():
                 with open(temp_json, 'w', encoding='utf-8') as f:
                     json.dump(json_data, f, ensure_ascii=False)
 
-                result = rag_engine.build_from_json(temp_json, kb_type=processing_type, kb_name=kb_name, append=append_mode)
+                result = rag_engine.build_from_json(
+                    temp_json,
+                    kb_type=processing_type,
+                    kb_name=kb_name,
+                    append=append_mode,
+                    source_file=normalized_source_name
+                )
                 try: os.remove(temp_json)
                 except: pass
 
                 if result.get("status") == "success":
                     # Parse count from message or result if possible, for now just 0 or parsed from result string
                     # Or modify rag_engine to return count
-                    import re
                     match = re.search(r'(\d+)', result.get("message", ""))
                     count = int(match.group(1)) if match else 0
                     save_kb_metadata(kb_type, kb_name, count) # Use original type for meta, logic inside handles mapping
@@ -3553,9 +3603,14 @@ def build_rag_db():
 
         # === JSON 逻辑 ===
         elif full_path.lower().endswith('.json'):
-            result = rag_engine.build_from_json(full_path, kb_type=processing_type, kb_name=kb_name, append=append_mode)
+            result = rag_engine.build_from_json(
+                full_path,
+                kb_type=processing_type,
+                kb_name=kb_name,
+                append=append_mode,
+                source_file=normalized_source_name
+            )
             if result.get("status") == "success":
-                import re
                 match = re.search(r'(\d+)', result.get("message", ""))
                 count = int(match.group(1)) if match else 0
                 save_kb_metadata(kb_type, kb_name, count)
@@ -3645,7 +3700,19 @@ def add_items_to_kb():
         total_count = collection.count()
         
         # 4. 更新元数据 metadata.json (使用展平结构)
-        target_type = 'align' if kb_type == 'history_align' else kb_type
+        target_type_map = {
+            "rule": "coding_rule",
+            "issue": "history_issue",
+            "history_align": "history_issue",
+            "align": "history_issue",
+            "case": "typical_case",
+            "coding_rule": "coding_rule",
+            "history_issue": "history_issue",
+            "typical_case": "typical_case",
+            "checklist": "checklist",
+            "other": "other"
+        }
+        target_type = target_type_map.get((kb_type or "other").strip(), "other")
         kb_root = os.path.join(PROJECT_ROOT, "../rag_database", kb_name)
         os.makedirs(kb_root, exist_ok=True)
         meta_file = os.path.join(kb_root, "metadata.json")
@@ -3683,6 +3750,22 @@ def add_items_to_kb():
 # Knowledge Base API
 # ========================================================
 
+KB_TYPE_NORMALIZE_MAP = {
+    "rule": "coding_rule",
+    "issue": "history_issue",
+    "history_align": "history_issue",
+    "align": "history_issue",
+    "case": "typical_case",
+    "coding_rule": "coding_rule",
+    "history_issue": "history_issue",
+    "typical_case": "typical_case",
+    "checklist": "checklist",
+    "other": "other"
+}
+
+def normalize_kb_type(raw_type):
+    return KB_TYPE_NORMALIZE_MAP.get((raw_type or "other").strip(), "other")
+
 @bp.route('/api/list-testdata', methods=['GET'])
 def list_testdata():
     """列出 testdata 目录下的所有文件"""
@@ -3691,6 +3774,55 @@ def list_testdata():
 
     files = [f for f in os.listdir(TESTDATA_DIR) if os.path.isfile(os.path.join(TESTDATA_DIR, f)) and not f.startswith('.')]
     return jsonify({"status": "success", "files": files})
+
+@bp.route('/api/kb/create', methods=['POST'])
+def create_kb():
+    """创建空知识库（先建库，再上传文件）"""
+    data = request.json or {}
+    kb_name = (data.get('name') or '').strip()
+    kb_type = normalize_kb_type(data.get('type'))
+    description = (data.get('description') or '').strip()
+    security_level = (data.get('security_level') or '内部').strip()
+    language = (data.get('language') or '中文').strip()
+    parse_method = (data.get('parse_method') or '通用解析方法').strip()
+    editors = data.get('editors') or []
+    viewers = data.get('viewers') or []
+
+    if not kb_name:
+        return jsonify({"status": "error", "message": "知识库名称不能为空"})
+    if ' ' in kb_name:
+        return jsonify({"status": "error", "message": "知识库名称不能包含空格"})
+
+    kb_root = os.path.join(PROJECT_ROOT, "../rag_database")
+    os.makedirs(kb_root, exist_ok=True)
+    kb_path = os.path.join(kb_root, kb_name)
+    meta_file = os.path.join(kb_path, "metadata.json")
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    if os.path.exists(kb_path):
+        return jsonify({"status": "error", "message": "知识库已存在，请更换名称"})
+
+    try:
+        os.makedirs(kb_path, exist_ok=True)
+        metadata = {
+            "name": kb_name,
+            "type": kb_type,
+            "description": description,
+            "security_level": security_level,
+            "language": language,
+            "parse_method": parse_method,
+            "editors": editors,
+            "viewers": viewers,
+            "create_time": now,
+            "update_time": now,
+            "doc_count": 0,
+            "source_file": ""
+        }
+        with open(meta_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+        return jsonify({"status": "success", "message": "知识库创建成功", "kb": metadata})
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"创建失败: {e}"})
 
 @bp.route('/api/list-kbs', methods=['GET'])
 def list_kbs():
@@ -3706,7 +3838,9 @@ def list_kbs():
                 "name": kb_name,
                 "type": "other",
                 "create_time": "",
-                "doc_count": 0
+                "doc_count": 0,
+                "description": "",
+                "security_level": "内部"
             }
             # 读取 metadata 决定类型
             meta_file = os.path.join(kb_path, "metadata.json")

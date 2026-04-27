@@ -72,7 +72,7 @@
                                 </label>
                                 <button
                                     @click="handleDelete"
-                                    style="background: #ff4d4f; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor">
+                                    style="background: #ff4d4f; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">
                                     删除
                                 </button>
                                 <button class="history-btn" @click="refreshHistory"><i class="fas fa-sync"></i> 刷新</button>
@@ -250,13 +250,15 @@
             <!-- 知识库区域 -->
             <div class="section" id="kb-section" style="display: none;">
                 <div class="kb-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 class="section-title" style="margin-bottom: 0;"><i class="fas fa-database"></i> 知识库管理</h2>
-                    <div class="kb-controls" style="display: flex; align-items: center;">
+                    <h2 class="section-title" style="margin-bottom: 0;">知识库管理</h2>
+                    <div v-if="!currentKb" class="kb-controls" style="display: flex; align-items: center;">
                         <el-radio-group v-model="kbFilter" size="default" style="margin-right: 15px;">
                             <el-radio-button label="all">全部</el-radio-button>
-                            <el-radio-button label="rule">规则</el-radio-button>
-                            <el-radio-button label="issue">问题</el-radio-button>
-                            <el-radio-button label="align">对齐</el-radio-button>
+                            <el-radio-button label="coding_rule">编码规则</el-radio-button>
+                            <el-radio-button label="history_issue">历史问题</el-radio-button>
+                            <el-radio-button label="typical_case">典型案例</el-radio-button>
+                            <el-radio-button label="checklist">必查清单</el-radio-button>
+                            <el-radio-button label="other">其他</el-radio-button>
                         </el-radio-group>
                         
                         <el-select v-model="kbSort" placeholder="排序" size="default" style="width: 130px; margin-right: 15px;">
@@ -265,18 +267,22 @@
                             <el-option label="名称 A-Z" value="name_asc"></el-option>
                         </el-select>
 
-                        <button class="action-btn primary" @click="openImportReviewDialog">
-                            <i class="fas fa-plus"></i> 导入与审查
-                        </button>
+                        <button class="action-btn primary" @click="openCreateKbDialog" style="margin-right: 10px;">新建知识库</button>
+                        <button class="action-btn" @click="openImportReviewDialog">上传文件</button>
+                    </div>
+                    <div v-else style="display: flex; align-items: center; gap: 10px;">
+                        <el-button @click="backToKbList">返回知识库列表</el-button>
+                        <el-tag type="info">${ currentKb.name }</el-tag>
                     </div>
                 </div>
                 
-                <div class="kb-grid">
-                    <div v-for="kb in filteredKBs" :key="kb.name" class="kb-card">
+                <div v-if="!currentKb" class="kb-grid">
+                    <div v-for="kb in filteredKBs" :key="kb.name" class="kb-card" @click="handleKbAction('view', kb)">
                         <div class="kb-icon" :class="kb.type">
-                            <i v-if="kb.type === 'rule'" class="fas fa-gavel"></i>
-                            <i v-else-if="kb.type === 'issue'" class="fas fa-bug"></i>
-                            <i v-else-if="kb.type === 'align'" class="fas fa-link"></i>
+                            <i v-if="kb.type === 'coding_rule' || kb.type === 'rule'" class="fas fa-code"></i>
+                            <i v-else-if="kb.type === 'history_issue' || kb.type === 'issue' || kb.type === 'align'" class="fas fa-bug"></i>
+                            <i v-else-if="kb.type === 'typical_case'" class="fas fa-book-open"></i>
+                            <i v-else-if="kb.type === 'checklist'" class="fas fa-list-check"></i>
                             <i v-else class="fas fa-database"></i>
                         </div>
                         <div class="kb-info">
@@ -293,7 +299,7 @@
                         <div class="kb-type-badge" :class="kb.type">
                              ${ kb.type.toUpperCase() }
                         </div>
-                        <div class="kb-actions">
+                        <div class="kb-actions" @click.stop>
                             <el-dropdown trigger="click" @command="(cmd) => handleKbAction(cmd, kb)">
                                 <span class="kb-action-btn"><i class="fas fa-ellipsis-v"></i></span>
                                 <template #dropdown>
@@ -312,7 +318,123 @@
                         <p>暂无相关知识库</p>
                     </div>
                 </div>
+
+                <div v-if="currentKb && !currentKbDocument">
+                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <el-alert type="info" :closable="false">
+                            共 ${ kbDocuments.length } 个文档，${ kbItems.length } 条审查要点。
+                        </el-alert>
+                        <el-button type="primary" plain @click="openAddFileInKb">新增文件</el-button>
+                    </div>
+                    <el-table :data="kbDocuments" border stripe style="width: 100%; height: 500px; overflow-y: auto;">
+                        <el-table-column prop="name" label="文档名称" min-width="320"></el-table-column>
+                        <el-table-column prop="itemCount" label="审查要点数" width="120"></el-table-column>
+                        <el-table-column prop="updateTime" label="更新时间" width="180">
+                            <template #default="scope">
+                                ${ scope.row.updateTime || '-' }
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="150" fixed="right">
+                            <template #default="scope">
+                                <el-button link type="primary" size="small" @click="openKbDocumentDetail(scope.row)">查看详情</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <div v-if="currentKb && currentKbDocument">
+                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <el-button @click="backToKbDocuments">返回文件列表</el-button>
+                            <span style="margin-left: 10px; color: #606266;">当前文件：${ currentKbDocument.name }</span>
+                        </div>
+                        <el-button type="primary" plain @click="openAddFileInKb">新增文件</el-button>
+                    </div>
+                    <el-table :data="currentKbDocument.items" border stripe style="width: 100%; height: 500px; overflow-y: auto;">
+                        <el-table-column prop="id" label="ID" width="180"></el-table-column>
+                        <el-table-column label="审查要点">
+                            <template #default="scope">
+                                <div style="white-space: pre-wrap; max-height: 80px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical;">
+                                    ${ scope.row.content || '无内容' }
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="120" fixed="right">
+                            <template #default="scope">
+                                <el-button link type="primary" size="small" @click="viewDetail(scope.row)">详情</el-button>
+                                <el-popconfirm title="确定删除此条目吗？" @confirm="deleteKbItem(scope.row)">
+                                    <template #reference>
+                                        <el-button link type="danger" size="small">删除</el-button>
+                                    </template>
+                                </el-popconfirm>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
             </div>
+
+            <el-dialog
+                v-model="showCreateKbDialog"
+                title="创建知识库"
+                width="920px"
+                :close-on-click-modal="false"
+            >
+                <el-tabs type="border-card">
+                    <el-tab-pane label="基本信息">
+                        <el-form :model="createKbForm" label-width="120px">
+                            <el-form-item label="名称" required>
+                                <el-input v-model="createKbForm.name" placeholder="请输入知识库名称（不能含空格）"></el-input>
+                            </el-form-item>
+                            <el-form-item label="描述">
+                                <el-input v-model="createKbForm.description" type="textarea" :rows="3" placeholder="请输入描述"></el-input>
+                            </el-form-item>
+                            <el-form-item label="涉密等级">
+                                <el-select v-model="createKbForm.security_level" style="width: 100%;">
+                                    <el-option label="内部" value="内部"></el-option>
+                                    <el-option label="秘密" value="秘密"></el-option>
+                                    <el-option label="机密" value="机密"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="知识库类型" required>
+                                <el-select v-model="createKbForm.type" style="width: 100%;">
+                                    <el-option label="编码规则" value="coding_rule"></el-option>
+                                    <el-option label="历史问题" value="history_issue"></el-option>
+                                    <el-option label="典型案例" value="typical_case"></el-option>
+                                    <el-option label="必查清单" value="checklist"></el-option>
+                                    <el-option label="其他" value="other"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="知识库编辑权限">
+                                <el-input v-model="createKbForm.editors" placeholder="请输入用户，多个用户用逗号分隔"></el-input>
+                            </el-form-item>
+                            <el-form-item label="知识库使用权限">
+                                <el-input v-model="createKbForm.viewers" placeholder="请输入用户，多个用户用逗号分隔"></el-input>
+                            </el-form-item>
+                        </el-form>
+                    </el-tab-pane>
+                    <el-tab-pane label="知识库配置">
+                        <el-form :model="createKbForm" label-width="120px">
+                            <el-form-item label="语言">
+                                <el-select v-model="createKbForm.language" style="width: 100%;">
+                                    <el-option label="中文" value="中文"></el-option>
+                                    <el-option label="English" value="English"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="解析方法">
+                                <el-select v-model="createKbForm.parse_method" style="width: 100%;">
+                                    <el-option label="通用解析方法" value="通用解析方法"></el-option>
+                                    <el-option label="规则优先解析" value="规则优先解析"></el-option>
+                                    <el-option label="问题优先解析" value="问题优先解析"></el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-form>
+                    </el-tab-pane>
+                </el-tabs>
+                <template #footer>
+                    <el-button @click="showCreateKbDialog = false">取消</el-button>
+                    <el-button type="primary" :loading="isCreatingKb" @click="createKbAndContinueUpload">确定并上传文件</el-button>
+                </template>
+            </el-dialog>
             
             <!-- 底部区域 -->
             <div class="footer">
@@ -334,58 +456,61 @@
 
         <el-dialog 
             v-model="showImportReviewDialog" 
-            title="🛡️ 知识库人工审查与入库" 
+            title="知识库文件上传与入库" 
             width="900px"
             :close-on-click-modal="false"
             @open="loadInitData" 
         >
             <el-steps :active="importStep" finish-status="success" simple style="margin-bottom: 20px;">
-                <el-step title="选择文件">
-                    <template #icon><i class="fas fa-file-upload"></i></template>
-                </el-step>
-                <el-step title="审查入库">
-                    <template #icon><i class="fas fa-check-double"></i></template>
-                </el-step>
+                <el-step title="选择文件"></el-step>
+                <el-step title="审查入库"></el-step>
             </el-steps>
         
             <div v-if="importStep === 0" class="upload-section">
-                
-                <div style="margin-bottom: 20px; text-align: center;">
-                    <span style="margin-right: 15px; font-weight: bold;">文档类型：</span>
-                    <el-radio-group v-model="importDocType">
-                        <el-radio label="history_align" border>历史对齐 (History Align)</el-radio>
-                        <el-radio label="issue" border>问题单 (Issue)</el-radio>
-                        <el-radio label="rule" border>编程规则 (Rule)</el-radio>
-                    </el-radio-group>
-                </div>
-        
-                <el-tabs type="border-card" v-model="fileSourceMode" style="min-height: 200px;">
-                    <el-tab-pane name="server" label="📂 从服务器选择 (testdata)">
-                        <div style="text-align: center; padding: 20px;">
-                            <p style="color: #666; margin-bottom: 10px;">直接选择位于 <code>/testdata</code> 目录下的文件：</p>
-                            <el-select 
-                                v-model="selectedServerFile" 
-                                placeholder="请选择文件..." 
-                                style="width: 300px" 
-                                filterable
-                            >
-                                <el-option
-                                    v-for="file in serverFileList"
-                                    :key="file"
-                                    :label="file"
-                                    :value="file">
-                                    <span style="float: left">${ file }</span>
-                                    <span style="float: right; color: #8492a6; font-size: 13px">
-                                        <i class="fas fa-file-word"></i>
-                                    </span>
-                                </el-option>
-                            </el-select>
-                        </div>
-                    </el-tab-pane>
-                    <el-tab-pane name="local" label="💻 本地上传">
-                         <el-upload
-                            class="upload-demo"
-                            drag
+                <el-form label-width="120px">
+                    <el-form-item label="目标知识库" required>
+                        <el-input
+                            v-if="importLockedKbName"
+                            :model-value="importLockedKbName"
+                            readonly
+                        ></el-input>
+                        <el-select
+                            v-else
+                            v-model="selectedExistingKb"
+                            placeholder="请选择目标知识库"
+                            style="width: 100%;"
+                        >
+                            <el-option
+                                v-for="kb in existingKbsForAppend"
+                                :key="kb.name"
+                                :label="kb.name + ' (' + getKbTypeName(kb.type) + ')'"
+                                :value="kb.name"
+                            ></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="文件来源">
+                        <el-radio-group v-model="fileSourceMode">
+                            <el-radio-button label="server">服务器文件</el-radio-button>
+                            <el-radio-button label="local">本地上传</el-radio-button>
+                        </el-radio-group>
+                    </el-form-item>
+                    <el-form-item label="文件选择" required>
+                        <el-select
+                            v-if="fileSourceMode === 'server'"
+                            v-model="selectedServerFile"
+                            placeholder="请选择 /testdata 下的文件"
+                            style="width: 100%;"
+                            filterable
+                        >
+                            <el-option
+                                v-for="file in serverFileList"
+                                :key="file"
+                                :label="file"
+                                :value="file"
+                            ></el-option>
+                        </el-select>
+                        <el-upload
+                            v-else
                             action=""
                             :auto-upload="false"
                             :on-change="handleImportFileChange"
@@ -393,22 +518,17 @@
                             :limit="1"
                             accept=".docx,.json"
                         >
-                            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                            <div class="el-upload__text">
-                                拖拽文件到此处 或 <em>点击上传</em>
-                            </div>
+                            <el-button type="primary">选择文件</el-button>
                             <template #tip>
-                                <div class="el-upload__tip">
-                                    支持 .docx (文档) 或 .json (标注数据)
-                                </div>
+                                <div class="el-upload__tip">支持 .docx 或 .json</div>
                             </template>
                         </el-upload>
-                    </el-tab-pane>
-                </el-tabs>
+                    </el-form-item>
+                </el-form>
 
                 <div style="margin-top: 20px; text-align: center;">
-                    <el-button type="primary" size="large" @click="startPreview" :loading="isUploading">
-                        开始解析与预览 <el-icon class="el-icon--right"><Arrow-Right /></el-icon>
+                    <el-button type="primary" @click="startPreview" :loading="isUploading">
+                        开始解析与预览
                     </el-button>
                 </div>
             </div>
@@ -416,13 +536,11 @@
             <!-- Step 2: 预览审查 -->
             <div v-if="importStep === 1" class="review-section">
 
-                <div class="review-header" style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; background: #f5f7fa; padding: 10px; border-radius: 4px;">
+                <div class="review-header" style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <el-button @click="importStep = 0">
-                            <i class="fas fa-arrow-left"></i> 上一步
-                        </el-button>
+                        <el-button @click="importStep = 0">上一步</el-button>
                         <div>
-                            <strong><i class="fas fa-info-circle"></i> 解析结果预览</strong>
+                            <strong>解析结果预览</strong>
                             <span style="margin-left: 10px; color: #666; font-size: 13px;">
                                 共解析出 ${ previewTableData.length } 条数据
                             </span>
@@ -430,37 +548,11 @@
                     </div>
                     
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <el-radio-group v-model="importMode">
-                            <el-radio-button label="new">新建</el-radio-button>
-                            <el-radio-button label="append">追加</el-radio-button>
-                        </el-radio-group>
-                        
-                        <el-input 
-                            v-if="importMode === 'new'" 
-                            v-model="targetKbName" 
-                            placeholder="名称不能含空格" 
-                            style="width: 180px"
-                            @input="targetKbName = targetKbName.replace(/\s+/g, '')"
-                        >
-                            <template #prefix>名称</template>
-                        </el-input>
-                        
-                        <el-select 
-                            v-if="importMode === 'append'" 
-                            v-model="selectedExistingKb" 
-                            placeholder="请选择目标知识库" 
-                            style="width: 180px"
-                        >
-                            <el-option 
-                                v-for="kb in existingKbsForAppend" 
-                                :key="kb.name" 
-                                :label="kb.name + ' (' + kb.doc_count + '条)'" 
-                                :value="kb.name"
-                            ></el-option>
-                        </el-select>
-                        
-                        <el-button type="success" @click="submitToKb" :loading="isCommitting">
-                            <i class="fas fa-check"></i> 确认入库 (${ selectedReviewItems.length })
+                        <el-tag type="info">
+                            目标库：${ importLockedKbName || selectedExistingKb || '未选择' }
+                        </el-tag>
+                        <el-button type="primary" @click="submitToKb" :loading="isCommitting">
+                            确认入库 (${ selectedReviewItems.length })
                         </el-button>
                     </div>
                 </div>
@@ -507,35 +599,6 @@
             <template #footer>
                 <el-button @click="showDetailDialog = false">关闭</el-button>
             </template>
-        </el-dialog>
-
-        <!-- 知识库查看弹窗 -->
-        <el-dialog v-model="showKbViewDialog" :title="'📚 知识库内容: ' + (currentKb ? currentKb.name : '')" width="900px">
-            <div style="margin-bottom: 15px;">
-                 <el-alert type="info" :closable="false" show-icon>
-                    共 ${ kbItems.length } 条数据。
-                 </el-alert>
-            </div>
-            <el-table :data="kbItems" border stripe style="width: 100%; height: 500px; overflow-y: auto;">
-                <el-table-column prop="id" label="ID" width="120"></el-table-column>
-                <el-table-column label="内容">
-                    <template #default="scope">
-                        <div style="white-space: pre-wrap; max-height: 60px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                            ${ scope.row.content }
-                        </div>
-                    </template>
-                </el-table-column>
-                <el-table-column label="操作" width="120" fixed="right">
-                    <template #default="scope">
-                        <el-button link type="primary" size="small" @click="viewDetail(scope.row)">详情</el-button>
-                        <el-popconfirm title="确定删除此条目吗？" @confirm="deleteKbItem(scope.row)">
-                            <template #reference>
-                                <el-button link type="danger" size="small">删除</el-button>
-                            </template>
-                        </el-popconfirm>
-                    </template>
-                </el-table-column>
-            </el-table>
         </el-dialog>
 
     </div>

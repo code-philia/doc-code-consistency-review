@@ -73,7 +73,6 @@ const app = createApp({
         // 审查相关
         const previewTableData = ref([]);
         const selectedReviewItems = ref([]);
-        const targetKbName = ref('');
         
         // 状态
         const isUploading = ref(false);
@@ -84,7 +83,6 @@ const app = createApp({
         const showDetailDialog = ref(false);
         const currentDetailItem = ref(null);
         
-        const importMode = ref('new');
         const selectedExistingKb = ref('');
 
         // 获取服务器 testdata 文件列表
@@ -101,36 +99,42 @@ const app = createApp({
             importStep.value = 0;
             importFileList.value = [];
             previewTableData.value = [];
-            targetKbName.value = ''; // Reset name
+            selectedReviewItems.value = [];
+            if (importLockedKbName.value) {
+                selectedExistingKb.value = importLockedKbName.value;
+            } else {
+                selectedExistingKb.value = '';
+            }
             await fetchServerFiles();
         };
 
-        const openImportReviewDialog = () => {
+        const openImportReviewDialog = (lockedKbName = '') => {
+            importLockedKbName.value = lockedKbName;
             showImportReviewDialog.value = true;
         };
 
         // 本地文件选择回调
-        const handleImportFileChange = (file, fileList) => {
+        const handleImportFileChange = (_file, fileList) => {
             if (fileList.length > 1) fileList.splice(0, 1);
             importFileList.value = fileList;
             
-            // Auto fill name from filename
-            if (file && file.name) {
-                const name = file.name.substring(0, file.name.lastIndexOf('.'));
-                targetKbName.value = name;
-            }
         };
         
-        // Server file selection change
-        watch(selectedServerFile, (newVal) => {
-            if (newVal) {
-                const name = newVal.substring(0, newVal.lastIndexOf('.'));
-                targetKbName.value = name;
-            }
-        });
+        const resolveTargetKb = () => {
+            const targetName = importLockedKbName.value || selectedExistingKb.value;
+            if (!targetName) return null;
+            return kbList.value.find(kb => kb.name === targetName) || null;
+        };
 
         // 开始解析
         const startPreview = async () => {
+            const targetKb = resolveTargetKb();
+            if (!targetKb) {
+                ElMessage.warning('请先选择目标知识库');
+                return;
+            }
+            importDocType.value = mapKbTypeToPreviewDocType(targetKb.type);
+
             const formData = new FormData();
             formData.append('doc_type', importDocType.value);
             
@@ -160,7 +164,7 @@ const app = createApp({
                     previewTableData.value = response.data.data;
                     
                     if (previewTableData.value.length === 0) {
-                        ElMessage.warning("未解析到有效数据，请检查文档格式或选择正确的文档类型");
+                        ElMessage.warning("未解析到有效数据，请检查文档格式");
                     } else {
                         importStep.value = 1; 
                         // 自动全选
@@ -238,35 +242,27 @@ const app = createApp({
         };
 
         const submitToKb = async () => {
-            let finalKbName = '';
-            
-            if (importMode.value === 'new') {
-                if (!targetKbName.value) {
-                    ElMessage.warning('请输入新知识库名称');
-                    return;
-                }
-                finalKbName = targetKbName.value;
-            } else {
-                if (!selectedExistingKb.value) {
-                    ElMessage.warning('请选择要追加的知识库');
-                    return;
-                }
-                finalKbName = selectedExistingKb.value;
+            const targetKb = resolveTargetKb();
+            if (!targetKb) {
+                ElMessage.warning('请选择要追加的知识库');
+                return;
             }
 
             isCommitting.value = true;
             try {
                 const payload = {
-                    kbType: importDocType.value,
-                    kbName: finalKbName,
-                    append: importMode.value === 'append' // === 传递追加参数 ===
+                    kbType: targetKb.type,
+                    kbName: targetKb.name,
+                    append: true
                 };
                 
                 if (fileSourceMode.value === 'server') {
                     payload.annotationFile = selectedServerFile.value;
+                    payload.sourceFileName = selectedServerFile.value;
                 } else {
                     if (importFileList.value.length > 0) {
                         payload.annotationFile = importFileList.value[0].name;
+                        payload.sourceFileName = importFileList.value[0].name;
                     }
                 }
 
@@ -275,7 +271,12 @@ const app = createApp({
                 if (response.data.status === 'success') {
                     ElMessage.success('入库成功！');
                     showImportReviewDialog.value = false;
+                    importLockedKbName.value = '';
+                    selectedExistingKb.value = '';
                     await fetchKBs(); // 刷新列表，更新统计数据
+                    if (currentKb.value && currentKb.value.name === targetKb.name) {
+                        await fetchKbItems(currentKb.value);
+                    }
                 } else {
                     ElMessage.error(`入库失败: ${response.data.message}`);
                 }
@@ -636,9 +637,22 @@ const app = createApp({
         const kbList = ref([]);
         const kbFilter = ref('all');
         const kbSort = ref('time_desc');
-        const showKbViewDialog = ref(false);
+        const showCreateKbDialog = ref(false);
+        const isCreatingKb = ref(false);
+        const createKbForm = reactive({
+            name: '',
+            description: '',
+            security_level: '内部',
+            type: 'coding_rule',
+            language: '中文',
+            parse_method: '通用解析方法',
+            editors: '',
+            viewers: ''
+        });
         const currentKb = ref(null);
         const kbItems = ref([]);
+        const currentKbDocument = ref(null);
+        const importLockedKbName = ref('');
 
         const fetchKBs = async () => {
             try {
@@ -669,14 +683,153 @@ const app = createApp({
             return list;
         });
 
+        const mapKbTypeToPreviewDocType = (kbType) => {
+            const type = (kbType || '').trim();
+            if (['coding_rule', 'checklist', 'rule'].includes(type)) return 'rule';
+            if (['history_issue', 'issue', 'history_align', 'align'].includes(type)) return 'issue';
+            return 'rule';
+        };
+
+        const parseUserList = (value) => {
+            if (!value) return [];
+            return value
+                .split(/[，,;；\s]+/)
+                .map(v => v.trim())
+                .filter(Boolean);
+        };
+
+        const openCreateKbDialog = () => {
+            createKbForm.name = '';
+            createKbForm.description = '';
+            createKbForm.security_level = '内部';
+            createKbForm.type = 'coding_rule';
+            createKbForm.language = '中文';
+            createKbForm.parse_method = '通用解析方法';
+            createKbForm.editors = '';
+            createKbForm.viewers = '';
+            showCreateKbDialog.value = true;
+        };
+
+        const openImportDialogForKb = (kb) => {
+            if (!kb) return;
+            selectedExistingKb.value = kb.name;
+            importDocType.value = mapKbTypeToPreviewDocType(kb.type);
+            openImportReviewDialog(kb.name);
+        };
+
+        const createKbAndContinueUpload = async () => {
+            const kbName = (createKbForm.name || '').trim();
+            if (!kbName) {
+                ElMessage.warning('请输入知识库名称');
+                return;
+            }
+            if (kbName.includes(' ')) {
+                ElMessage.warning('知识库名称不能包含空格');
+                return;
+            }
+
+            isCreatingKb.value = true;
+            try {
+                const payload = {
+                    name: kbName,
+                    description: createKbForm.description,
+                    security_level: createKbForm.security_level,
+                    type: createKbForm.type,
+                    language: createKbForm.language,
+                    parse_method: createKbForm.parse_method,
+                    editors: parseUserList(createKbForm.editors),
+                    viewers: parseUserList(createKbForm.viewers)
+                };
+                const res = await axios.post('/api/kb/create', payload);
+                if (res.data.status === 'success') {
+                    showCreateKbDialog.value = false;
+                    ElMessage.success('知识库创建成功，请继续上传文件');
+                    await fetchKBs();
+                    openImportDialogForKb(res.data.kb || payload);
+                } else {
+                    ElMessage.error(res.data.message || '创建失败');
+                }
+            } catch (e) {
+                ElMessage.error(`创建失败: ${e.response?.data?.message || e.message}`);
+            } finally {
+                isCreatingKb.value = false;
+            }
+        };
+
+        const kbDocuments = computed(() => {
+            const groups = new Map();
+            (kbItems.value || []).forEach((item) => {
+                const meta = item.meta || {};
+                const fallbackDocName = (currentKb.value && currentKb.value.source_file)
+                    ? String(currentKb.value.source_file).trim()
+                    : '未标注文档';
+                const sourceName = (
+                    meta.source_file ||
+                    meta.source ||
+                    meta.filename ||
+                    meta.file ||
+                    meta.document ||
+                    meta.doc_name ||
+                    ''
+                ).toString().trim() || fallbackDocName;
+                if (!groups.has(sourceName)) {
+                    groups.set(sourceName, {
+                        id: sourceName,
+                        name: sourceName,
+                        itemCount: 0,
+                        updateTime: meta.updateTime || '',
+                        items: []
+                    });
+                }
+                const group = groups.get(sourceName);
+                group.items.push(item);
+                group.itemCount += 1;
+                if (!group.updateTime && meta.updateTime) {
+                    group.updateTime = meta.updateTime;
+                }
+            });
+            return Array.from(groups.values()).sort((a, b) => b.itemCount - a.itemCount);
+        });
+
+        const openKbDocumentDetail = (doc) => {
+            currentKbDocument.value = doc;
+        };
+
+        const openAddFileInKb = () => {
+            if (!currentKb.value) return;
+            openImportDialogForKb(currentKb.value);
+        };
+
+        const backToKbList = () => {
+            currentKb.value = null;
+            currentKbDocument.value = null;
+            kbItems.value = [];
+        };
+
+        const backToKbDocuments = () => {
+            currentKbDocument.value = null;
+        };
+
         const getKbTypeName = (type) => {
-            const map = { 'rule': '编程规则', 'issue': '问题单', 'align': '历史对齐', 'other': '其他' };
+            const map = {
+                'coding_rule': '编码规则',
+                'history_issue': '历史问题',
+                'typical_case': '典型案例',
+                'checklist': '必查清单',
+                'other': '其他',
+                // 兼容旧类型
+                'rule': '编码规则',
+                'issue': '历史问题',
+                'align': '历史问题',
+                'history_align': '历史问题'
+            };
             return map[type] || type || '未知';
         };
 
         const handleKbAction = (cmd, kb) => {
             if (cmd === 'view') {
                 currentKb.value = kb;
+                currentKbDocument.value = null;
                 fetchKbItems(kb);
             } else if (cmd === 'rename') {
                 ElMessageBox.prompt('请输入新的知识库名称', '重命名', {
@@ -710,7 +863,6 @@ const app = createApp({
                 });
                 if (res.data.status === 'success') {
                     kbItems.value = res.data.items;
-                    showKbViewDialog.value = true;
                 } else {
                     ElMessage.error(res.data.message);
                 }
@@ -731,6 +883,13 @@ const app = createApp({
                     ElMessage.success("条目已删除");
                     // Remove from list
                     kbItems.value = kbItems.value.filter(i => i.id !== item.id);
+                    if (currentKbDocument.value) {
+                        currentKbDocument.value = {
+                            ...currentKbDocument.value,
+                            items: currentKbDocument.value.items.filter(i => i.id !== item.id),
+                            itemCount: Math.max((currentKbDocument.value.itemCount || 1) - 1, 0)
+                        };
+                    }
                     // Refresh KB list to update count
                     fetchKBs();
                 } else {
@@ -778,15 +937,7 @@ const app = createApp({
 
         // 过滤出与当前选中类型相同的、可追加的知识库列表
         const existingKbsForAppend = computed(() => {
-            let targetType = importDocType.value === 'history_align' ? 'align' : importDocType.value;
-            return kbList.value.filter(kb => kb.type === targetType);
-        });
-
-        // 监听新建名称，去除空格
-        watch(targetKbName, (newVal) => {
-            if (newVal && newVal.indexOf(' ') !== -1) {
-                targetKbName.value = newVal.replace(/\s+/g, '');
-            }
+            return kbList.value.slice();
         });
 
         // ====== 初始化 ======
@@ -836,7 +987,6 @@ const app = createApp({
             importFileList,
             previewTableData,
             selectedReviewItems,
-            targetKbName,
             isUploading,
             isCommitting,
             reviewTableRef,
@@ -859,16 +1009,26 @@ const app = createApp({
             filteredKBs,
             getKbTypeName,
             fetchKBs,
+            showCreateKbDialog,
+            openCreateKbDialog,
+            createKbForm,
+            createKbAndContinueUpload,
+            isCreatingKb,
             
             // KB Actions
             handleKbAction,
-            showKbViewDialog,
+            backToKbList,
+            backToKbDocuments,
             currentKb,
             kbItems,
+            kbDocuments,
+            openKbDocumentDetail,
+            currentKbDocument,
+            openAddFileInKb,
             deleteKbItem,
-            importMode,
             selectedExistingKb,
             existingKbsForAppend,
+            importLockedKbName,
             
             // Formatters
             formatDetailValue: (val) => {

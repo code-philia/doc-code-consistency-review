@@ -231,7 +231,7 @@ class RAGEngine:
         except Exception as e:
             return {"status": "error", "message": str(e)}
 
-    def build_from_json(self, json_path: str, kb_type: str, kb_name: str, append: bool = False):
+    def build_from_json(self, json_path: str, kb_type: str, kb_name: str, append: bool = False, source_file: str = ""):
         print(f"[RAG] 正在解析并构建索引: {json_path} (追加模式: {append})")        
         try:
             with open(json_path, "r", encoding="utf-8") as f:
@@ -328,6 +328,28 @@ class RAGEngine:
                 if not code_segments: code_segments = [""]
                 if not query_text and all(not c for c in code_segments): continue
 
+                source_name = ""
+                for dr in ann.get("docRanges", []) or []:
+                    if not isinstance(dr, dict):
+                        continue
+                    source_name = (
+                        dr.get("source_file")
+                        or dr.get("source")
+                        or dr.get("filename")
+                        or dr.get("file")
+                        or dr.get("document")
+                        or dr.get("doc_name")
+                        or ""
+                    )
+                    # 仅当 documentId 看起来像文件名时才使用，避免 rules_doc / issue_doc 之类占位符污染分组
+                    if not source_name:
+                        did = dr.get("documentId")
+                        if isinstance(did, str) and ('.' in did or '/' in did or '\\' in did):
+                            source_name = did
+                    if source_name:
+                        break
+                source_name = str(source_name or source_file or "").strip()
+
                 for code_idx, code_text in enumerate(code_segments):
                     if len(code_segments) == 1:
                         pair_id = base_pair_id
@@ -342,7 +364,8 @@ class RAGEngine:
                         "code_index": code_idx,
                         "code_count": len(code_segments),
                         "code_text": code_text,  
-                        "source_type": "annotation"
+                        "source_type": "annotation",
+                        "source_file": source_name
                     }
 
                     ids.append(pair_id)
@@ -362,7 +385,8 @@ class RAGEngine:
                     "pair_id": pair_id, 
                     "source": d.get("name", ""),
                     "code_text": "",
-                    "source_type": "raw_doc"
+                    "source_type": "raw_doc",
+                    "source_file": str(d.get("name") or source_file or "").strip()
                 })
                 count += 1
 

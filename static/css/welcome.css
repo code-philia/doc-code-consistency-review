@@ -836,7 +836,17 @@ header {
     color: #3498db;
 }
 
+.kb-icon.coding_rule {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+}
+
 .kb-icon.issue {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+}
+
+.kb-icon.history_issue {
     background-color: rgba(231, 76, 60, 0.1);
     color: #e74c3c;
 }
@@ -844,6 +854,16 @@ header {
 .kb-icon.align {
     background-color: rgba(46, 204, 113, 0.1);
     color: #2ecc71;
+}
+
+.kb-icon.typical_case {
+    background-color: rgba(46, 204, 113, 0.12);
+    color: #2ecc71;
+}
+
+.kb-icon.checklist {
+    background-color: rgba(155, 89, 182, 0.12);
+    color: #9b59b6;
 }
 
 .kb-info h3 {
@@ -912,6 +932,10 @@ header {
 .kb-type-tag.rule { background-color: #ecf5ff; color: #409eff; }
 .kb-type-tag.issue { background-color: #fef0f0; color: #f56c6c; }
 .kb-type-tag.align { background-color: #f0f9eb; color: #67c23a; }
+.kb-type-tag.coding_rule { background-color: #ecf5ff; color: #409eff; }
+.kb-type-tag.history_issue { background-color: #fef0f0; color: #f56c6c; }
+.kb-type-tag.typical_case { background-color: #f0f9eb; color: #67c23a; }
+.kb-type-tag.checklist { background-color: #f4f0ff; color: #8e44ad; }
 
 .kb-type-badge {
     position: absolute;
@@ -928,6 +952,10 @@ header {
 .kb-type-badge.rule { color: #409eff; }
 .kb-type-badge.issue { color: #f56c6c; }
 .kb-type-badge.align { color: #67c23a; }
+.kb-type-badge.coding_rule { color: #409eff; }
+.kb-type-badge.history_issue { color: #f56c6c; }
+.kb-type-badge.typical_case { color: #67c23a; }
+.kb-type-badge.checklist { color: #8e44ad; }
 
 .empty-kb-state {
     display: flex;
