@@ -667,7 +667,11 @@ const app = createApp({
             let list = kbList.value.slice();
             
             if (kbFilter.value !== 'all') {
-                list = list.filter(kb => kb.type === kbFilter.value);
+                if (kbFilter.value === 'align') {
+                    list = list.filter(kb => ['align', 'history_align'].includes(kb.type));
+                } else {
+                    list = list.filter(kb => kb.type === kbFilter.value);
+                }
             }
             
             list.sort((a, b) => {
@@ -686,7 +690,8 @@ const app = createApp({
         const mapKbTypeToPreviewDocType = (kbType) => {
             const type = (kbType || '').trim();
             if (['coding_rule', 'checklist', 'rule'].includes(type)) return 'rule';
-            if (['history_issue', 'issue', 'history_align', 'align'].includes(type)) return 'issue';
+            if (['history_issue', 'issue'].includes(type)) return 'issue';
+            if (['history_align', 'align'].includes(type)) return 'history_align';
             return 'rule';
         };
 
@@ -814,14 +819,14 @@ const app = createApp({
             const map = {
                 'coding_rule': '编码规则',
                 'history_issue': '历史问题',
+                'align': '对齐知识库',
                 'typical_case': '典型案例',
                 'checklist': '必查清单',
                 'other': '其他',
                 // 兼容旧类型
                 'rule': '编码规则',
                 'issue': '历史问题',
-                'align': '历史问题',
-                'history_align': '历史问题'
+                'history_align': '对齐知识库'
             };
             return map[type] || type || '未知';
         };

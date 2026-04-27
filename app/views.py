@@ -3487,8 +3487,8 @@ def build_rag_db():
         mapping = {
             "rule": "coding_rule",
             "issue": "history_issue",
-            "history_align": "history_issue",
-            "align": "history_issue",
+            "history_align": "align",
+            "align": "align",
             "case": "typical_case",
             "coding_rule": "coding_rule",
             "history_issue": "history_issue",
@@ -3504,6 +3504,8 @@ def build_rag_db():
             return "rule"
         if normalized == "history_issue":
             return "issue"
+        if normalized == "align":
+            return "align"
         return "other"
 
     def save_kb_metadata(k_type, k_name, total_count=0):
@@ -3703,8 +3705,8 @@ def add_items_to_kb():
         target_type_map = {
             "rule": "coding_rule",
             "issue": "history_issue",
-            "history_align": "history_issue",
-            "align": "history_issue",
+            "history_align": "align",
+            "align": "align",
             "case": "typical_case",
             "coding_rule": "coding_rule",
             "history_issue": "history_issue",
@@ -3753,8 +3755,8 @@ def add_items_to_kb():
 KB_TYPE_NORMALIZE_MAP = {
     "rule": "coding_rule",
     "issue": "history_issue",
-    "history_align": "history_issue",
-    "align": "history_issue",
+    "history_align": "align",
+    "align": "align",
     "case": "typical_case",
     "coding_rule": "coding_rule",
     "history_issue": "history_issue",

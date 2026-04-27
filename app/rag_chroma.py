@@ -268,6 +268,17 @@ class RAGEngine:
         documents = [] 
         metadatas = []
 
+        def _normalize_source_name(name: str) -> str:
+            s = str(name or "").strip()
+            if not s:
+                return ""
+            # 统一为仅文件名，避免完整路径导致同一上传被分裂成多个“文档”
+            s = s.replace("\\", "/")
+            s = s.split("/")[-1].strip()
+            return s
+
+        normalized_upload_source = _normalize_source_name(source_file)
+
         annotations = js.get("annotations", [])
         doc_files = js.get("docFiles", [])
         code_files = js.get("codeFiles", [])
@@ -328,27 +339,28 @@ class RAGEngine:
                 if not code_segments: code_segments = [""]
                 if not query_text and all(not c for c in code_segments): continue
 
-                source_name = ""
-                for dr in ann.get("docRanges", []) or []:
-                    if not isinstance(dr, dict):
-                        continue
-                    source_name = (
-                        dr.get("source_file")
-                        or dr.get("source")
-                        or dr.get("filename")
-                        or dr.get("file")
-                        or dr.get("document")
-                        or dr.get("doc_name")
-                        or ""
-                    )
-                    # 仅当 documentId 看起来像文件名时才使用，避免 rules_doc / issue_doc 之类占位符污染分组
-                    if not source_name:
-                        did = dr.get("documentId")
-                        if isinstance(did, str) and ('.' in did or '/' in did or '\\' in did):
-                            source_name = did
-                    if source_name:
-                        break
-                source_name = str(source_name or source_file or "").strip()
+                source_name = normalized_upload_source
+                if not source_name:
+                    for dr in ann.get("docRanges", []) or []:
+                        if not isinstance(dr, dict):
+                            continue
+                        source_name = (
+                            dr.get("source_file")
+                            or dr.get("source")
+                            or dr.get("filename")
+                            or dr.get("file")
+                            or dr.get("document")
+                            or dr.get("doc_name")
+                            or ""
+                        )
+                        # 仅当 documentId 看起来像文件名时才使用，避免 rules_doc / issue_doc 之类占位符污染分组
+                        if not source_name:
+                            did = dr.get("documentId")
+                            if isinstance(did, str) and ('.' in did or '/' in did or '\\' in did):
+                                source_name = did
+                        if source_name:
+                            break
+                source_name = _normalize_source_name(source_name)
 
                 for code_idx, code_text in enumerate(code_segments):
                     if len(code_segments) == 1:
@@ -386,7 +398,7 @@ class RAGEngine:
                     "source": d.get("name", ""),
                     "code_text": "",
                     "source_type": "raw_doc",
-                    "source_file": str(d.get("name") or source_file or "").strip()
+                    "source_file": normalized_upload_source or _normalize_source_name(d.get("name", ""))
                 })
                 count += 1
 

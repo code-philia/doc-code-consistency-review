@@ -256,6 +256,7 @@
                             <el-radio-button label="all">全部</el-radio-button>
                             <el-radio-button label="coding_rule">编码规则</el-radio-button>
                             <el-radio-button label="history_issue">历史问题</el-radio-button>
+                            <el-radio-button label="align">对齐知识库</el-radio-button>
                             <el-radio-button label="typical_case">典型案例</el-radio-button>
                             <el-radio-button label="checklist">必查清单</el-radio-button>
                             <el-radio-button label="other">其他</el-radio-button>
@@ -280,7 +281,8 @@
                     <div v-for="kb in filteredKBs" :key="kb.name" class="kb-card" @click="handleKbAction('view', kb)">
                         <div class="kb-icon" :class="kb.type">
                             <i v-if="kb.type === 'coding_rule' || kb.type === 'rule'" class="fas fa-code"></i>
-                            <i v-else-if="kb.type === 'history_issue' || kb.type === 'issue' || kb.type === 'align'" class="fas fa-bug"></i>
+                            <i v-else-if="kb.type === 'align' || kb.type === 'history_align'" class="fas fa-link"></i>
+                            <i v-else-if="kb.type === 'history_issue' || kb.type === 'issue'" class="fas fa-bug"></i>
                             <i v-else-if="kb.type === 'typical_case'" class="fas fa-book-open"></i>
                             <i v-else-if="kb.type === 'checklist'" class="fas fa-list-check"></i>
                             <i v-else class="fas fa-database"></i>
@@ -399,6 +401,7 @@
                                 <el-select v-model="createKbForm.type" style="width: 100%;">
                                     <el-option label="编码规则" value="coding_rule"></el-option>
                                     <el-option label="历史问题" value="history_issue"></el-option>
+                                    <el-option label="对齐知识库" value="align"></el-option>
                                     <el-option label="典型案例" value="typical_case"></el-option>
                                     <el-option label="必查清单" value="checklist"></el-option>
                                     <el-option label="其他" value="other"></el-option>
