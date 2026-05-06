@@ -16,3 +16,7 @@ flask-login
 supervisor
 waitress
 pymysql
+pandas
+chromadb
+torch
+transformers
