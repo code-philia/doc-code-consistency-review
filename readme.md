@@ -14,71 +14,166 @@
     - **一致性审查**: 基于对齐的需求和代码，调用大模型进行一致性分析，并生成问题报告。
 - **数据标注**: 提供一个独立的标注界面，用于创建需求与代码之间细粒度的关联数据集。
 
-## 项目结构
-
-```
-.
-├── app.py                  # Flask 主应用，处理后端逻辑和路由
-├── agent.py                # 与大模型交互的代理模块
-├── prompt.py               # 存储和格式化发送给大模型的提示词
-├── utils.py                # 工具函数（文件处理、文本解析等）
-├── doc2md/                 # docx格式转markdown模块
-├── history.json            # 存储最近打开的项目历史
-├── requirements.txt        # Python 依赖库
-├── static/                 # 静态资源
-│   ├── css/                # CSS 样式文件
-│   ├── js/                 # JavaScript 脚本
-│   │   ├── annotation.js   # 标注页面的 Vue.js 逻辑
-│   │   ├── project.js      # 项目管理页面的 Vue.js 逻辑
-│   │   ├── welcome.js      # 欢迎页面的 Vue.js 逻辑
-│   │   └── thirdParty/     # 第三方前端库 (Vue, ElementPlus, etc.)
-│   └── fontawesome/        # Font Awesome 图标库
-└── templates/              # Flask 模板
-    ├── welcome.html        # 欢迎和项目创建/导入页面
-    ├── project.html        # 项目主页（文件管理、统计视图）
-    └── annotation.html     # 数据标注页面（手动生成需求-代码对齐数据，用于模型训练或测试）
-```
-
 ## 环境与启动
 
-#### 配置环境
-1.  **克隆仓库**:
-    ```bash
-    git clone https://github.com/code-philia/doc-code-consistency-review.git
-    cd doc-code-consistency-review
-    ```
+下面按“从零到可运行”给出一套可直接执行的启动步骤，包含虚拟环境、MySQL、Redis、Celery 和 Web 服务。
 
-2.  **安装 Python 依赖**:
-    建议使用 Python 3.8 或更高版本。
-    ```bash
-    pip install -r requirements.txt
-    ```
+### 1. 获取代码
 
-3.  **前端依赖**:
-    本项目所需的前端库（如 Vue.js, ElementPlus）已包含在 `static/js/thirdParty` 目录下，无需额外安装 `Node.js` 或运行 `npm install`（在某些用户场景下无法连接外网，因此采用本地下载库的方式）。
+```bash
+git clone https://github.com/code-philia/doc-code-consistency-review.git
+cd doc-code-consistency-review
+```
 
-4.  **配置大模型 API (可选)**:
-    如果需要使用智能审查功能，请在 `agent.py` 文件中配置您的大模型 API Key 和 endpoint。
+### 2. 创建并激活 Python 虚拟环境
 
-#### 启动项目
+建议 Python 3.10（3.8+ 也可）。
 
-1.  **运行 Flask 应用**:
-    ```bash
-    python app.py
-    ```
+#### 方式 A：`venv`
 
-2.  **访问应用**:
-    打开浏览器，访问 `http://127.0.0.1:5055`。
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
 
+#### 方式 B：`conda`
 
-## 简单使用指南
+```bash
+conda create -n doc-code-env python=3.10 -y
+conda activate doc-code-env
+pip install -r requirements.txt
+```
 
-1.  **创建或导入项目**:
-    - 在欢迎页面，您可以选择“新建项目”来创建一个空的标准项目结构，或“从文件夹创建”来基于现有包含 `code_repo` 和 `doc_repo` 的文件夹创建项目。
-    - 您也可以“导入项目”来打开一个之前创建过的项目（一个包含`metadata.json`的目录）。
-    - 点击历史打开过的某个项目，进入项目页面。
+### 3. 配置大模型参数（可选但推荐）
 
-2.  **智能对齐与审查**:
-    - 开发中...✈️
+```bash
+cp .env.example .env
+```
 
-![主界面](images/interface.png)
+在 `.env` 中填写：
+- `API_BASE_URL`
+- `API_KEY`
+- `MODEL_NAME`
+
+### 4. 检查并启动 MySQL
+
+项目默认 MySQL 配置在 `app/db.py`：
+- host: `localhost`
+- port: `3306`
+- user: `root`
+- password: `123456`
+- database: `doc_code`
+
+请按你的环境修改 `app/db.py` 的 `DB_CONFIG`。
+
+#### 4.1 检查 MySQL 是否运行
+
+```bash
+mysqladmin -h 127.0.0.1 -P 3306 -u root -p ping
+```
+
+若返回 `mysqld is alive` 表示正常。
+
+#### 4.2 启动 MySQL（常见 Linux）
+
+```bash
+sudo systemctl status mysql
+sudo systemctl start mysql
+sudo systemctl enable mysql
+```
+
+部分发行版服务名是 `mysqld`，可改为：
+
+```bash
+sudo systemctl status mysqld
+sudo systemctl start mysqld
+sudo systemctl enable mysqld
+```
+
+#### 4.3 初始化数据库与表结构
+
+```bash
+mysql -h 127.0.0.1 -P 3306 -u root -p -e "CREATE DATABASE IF NOT EXISTS doc_code DEFAULT CHARACTER SET utf8mb4;"
+mysql -h 127.0.0.1 -P 3306 -u root -p doc_code < schema.sql
+```
+
+### 5. 检查并启动 Redis
+
+Celery 使用的 Redis 地址在 `tasks.py`：
+- broker: `redis://localhost:6379/0`
+- backend: `redis://localhost:6379/0`
+
+#### 5.1 检查 Redis 是否运行
+
+```bash
+redis-cli -h 127.0.0.1 -p 6379 ping
+```
+
+若返回 `PONG` 表示正常。
+
+#### 5.2 启动 Redis（常见 Linux）
+
+```bash
+sudo systemctl status redis
+sudo systemctl start redis
+sudo systemctl enable redis
+```
+
+部分发行版服务名是 `redis-server`，可改为：
+
+```bash
+sudo systemctl status redis-server
+sudo systemctl start redis-server
+sudo systemctl enable redis-server
+```
+
+### 6. 启动 Celery Worker（新终端）
+
+先进入项目目录并激活同一个虚拟环境，然后启动：
+
+```bash
+celery -A tasks.celery worker --loglevel=info
+```
+
+如果你希望更高并发，可按需设置：
+
+```bash
+celery -A tasks.celery worker --loglevel=info --concurrency=4
+```
+
+### 7. 启动 Flask Web 服务（另一个新终端）
+
+同样先激活虚拟环境，然后执行：
+
+```bash
+python run.py
+```
+
+默认监听：`http://127.0.0.1:5000`（`run.py` 配置为 `0.0.0.0:5000`）。
+
+### 8. 启动后快速自检
+
+#### 8.1 检查端口
+
+```bash
+ss -lntp | grep -E "5000|6379|3306"
+```
+
+#### 8.2 检查 Celery 是否连上 Redis
+
+```bash
+celery -A tasks.celery inspect ping
+```
+
+若返回 `pong`，说明 worker 正常。
+
+### 9. 推荐启动顺序
+
+1. 激活虚拟环境  
+2. 启动 MySQL  
+3. 启动 Redis  
+4. 启动 Celery worker  
+5. 启动 Flask (`python run.py`)  
+6. 浏览器访问 `http://127.0.0.1:5000`
