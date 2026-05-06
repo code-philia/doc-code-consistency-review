@@ -874,48 +874,98 @@
           :close-on-click-modal="false"
         >
           <!-- 标签页 -->
-          <el-tabs v-model="activeSetPromptTab" type="border-card" style="margin-bottom: 15px;">
-            <!-- 需求->代码对齐页 -->
-            <el-tab-pane label="需求-代码对齐" name="req-code-align">
-              <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
-                <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化需求->代码的对齐质量。
-              </div>
-              <el-input
-                v-model="currentReq2CodeAlignPrompt"
-                type="textarea"
-                :rows="10"
-                placeholder="请输入提示词..."
-                style="margin-bottom: 15px;"
-              ></el-input>
+          <el-tabs v-model="outerActive" type="border-card" style="margin-bottom: 15px;">
+            <el-tab-pane label="标准版" name="moduleA">
+                <el-tabs v-model="innerActiveA">
+                    <!-- 需求->代码对齐页 -->
+                    <el-tab-pane label="需求-代码对齐" name="req-code-align">
+                      <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                        <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化需求->代码的对齐质量。
+                      </div>
+                      <el-input
+                        v-model="currentReq2CodeAlignPrompt"
+                        type="textarea"
+                        :rows="10"
+                        placeholder="请输入提示词..."
+                        style="margin-bottom: 15px;"
+                      ></el-input>
+                    </el-tab-pane>
+
+                    <!-- 代码->需求对齐页 -->
+                    <el-tab-pane label="代码-需求对齐" name="code-req-align">
+                      <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                        <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化代码->需求的对齐质量。
+                      </div>
+                      <el-input
+                        v-model="currentCode2ReqAlignPrompt"
+                        type="textarea"
+                        :rows="10"
+                        placeholder="请输入提示词..."
+                        style="margin-bottom: 15px;"
+                      ></el-input>
+                    </el-tab-pane>
+
+                    <!-- 审查页 -->
+                    <el-tab-pane label="审查" name="review">
+                      <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                        <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化审查质量。
+                      </div>
+                      <el-input
+                        v-model="currentReviewPrompt"
+                        type="textarea"
+                        :rows="10"
+                        placeholder="请输入提示词..."
+                        style="margin-bottom: 15px;"
+                      ></el-input>
+                    </el-tab-pane>
+                </el-tabs>
             </el-tab-pane>
-            
-            <!-- 代码->需求对齐页 -->
-            <el-tab-pane label="代码-需求对齐" name="code-req-align">
-              <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
-                <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化代码->需求的对齐质量。
-              </div>
-              <el-input
-                v-model="currentCode2ReqAlignPrompt"
-                type="textarea"
-                :rows="10"
-                placeholder="请输入提示词..."
-                style="margin-bottom: 15px;"
-              ></el-input>
+            <el-tab-pane label="知识库版" name="moduleB">
+                <el-tabs v-model="innerActiveB">
+                    <!-- 需求->代码对齐页 -->
+                    <el-tab-pane label="需求-代码对齐" name="req-code-align-kbs">
+                      <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                        <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化需求->代码的对齐质量。
+                      </div>
+                      <el-input
+                        v-model="currentReq2CodeAlignPromptKbs"
+                        type="textarea"
+                        :rows="10"
+                        placeholder="请输入提示词..."
+                        style="margin-bottom: 15px;"
+                      ></el-input>
+                    </el-tab-pane>
+
+                    <!-- 代码->需求对齐页 -->
+                    <el-tab-pane label="代码-需求对齐" name="code-req-align-kbs">
+                      <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                        <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化代码->需求的对齐质量。
+                      </div>
+                      <el-input
+                        v-model="currentCode2ReqAlignPromptKbs"
+                        type="textarea"
+                        :rows="10"
+                        placeholder="请输入提示词..."
+                        style="margin-bottom: 15px;"
+                      ></el-input>
+                    </el-tab-pane>
+
+                    <!-- 审查页 -->
+                    <el-tab-pane label="审查" name="review-kbs">
+                      <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                        <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化审查质量。
+                      </div>
+                      <el-input
+                        v-model="currentReviewPromptKbs"
+                        type="textarea"
+                        :rows="10"
+                        placeholder="请输入提示词..."
+                        style="margin-bottom: 15px;"
+                      ></el-input>
+                    </el-tab-pane>
+                </el-tabs>
             </el-tab-pane>
 
-            <!-- 审查页 -->
-            <el-tab-pane label="审查" name="review">
-              <div style="margin-bottom: 15px; font-size: 14px; color: #666;">
-                <i class="fas fa-info-circle"></i> 可编辑提示词，用于优化审查质量。
-              </div>
-              <el-input
-                v-model="currentReviewPrompt"
-                type="textarea"
-                :rows="10"
-                placeholder="请输入提示词..."
-                style="margin-bottom: 15px;"
-              ></el-input>
-            </el-tab-pane>
           </el-tabs>
 
           <!-- 底部按钮 -->

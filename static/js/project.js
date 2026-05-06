@@ -86,17 +86,25 @@ const app = createApp({
         const issueContentBeforeEdit = ref('');
         // 控制提示词设置弹窗
         const showPromptDialog = ref(false)
-        const activeSetPromptTab = ref('req-code-align') // 默认对齐页
+        const outerActive = ref('moduleA')
+        const innerActiveA = ref('req-code-align') // 默认对齐页
+        const innerActiveB = ref('req-code-align-kbs') // 默认对齐页
         const showAlignPromptDialog = ref(false); // 控制对齐提示词设置弹窗
         const AddAlignPrompt = ref('');
         const currentReq2CodeAlignPrompt = ref('');
         const currentCode2ReqAlignPrompt = ref('');
         const defaultReq2CodeAlignPrompt = ref('');
         const defaultCode2ReqAlignPrompt = ref('');
+        const currentReq2CodeAlignPromptKbs = ref('');
+        const currentCode2ReqAlignPromptKbs = ref('');
+        const defaultReq2CodeAlignPromptKbs = ref('');
+        const defaultCode2ReqAlignPromptKbs = ref('');
         const showReviewPromptDialog = ref(false); // 控制审查提示词设置弹窗
         const AddReviewPrompt = ref('');
         const currentReviewPrompt = ref('');
         const defaultReviewPrompt = ref('');
+        const currentReviewPromptKbs = ref('');
+        const defaultReviewPromptKbs = ref('');
         // 筛选相关状态
         const filteredAlignments = ref(null);
         const isFiltered = ref(false);
@@ -4030,7 +4038,8 @@ const app = createApp({
         // 可选：在组件挂载时自动恢复
         onMounted(() => {
           // 如果需要默认页是“对齐”，可以设置
-          activeSetPromptTab.value = 'req-code-align'
+          innerActiveA.value = 'req-code-align'
+          innerActiveB.value = 'req-code-align-kbs'
           loadDefaultPrompt()
         })
 
@@ -4043,16 +4052,27 @@ const app = createApp({
             currentReq2CodeAlignPrompt.value = data.Req2CodeAlign || defaultReq2CodeAlignPrompt
             currentCode2ReqAlignPrompt.value = data.Code2ReqAlign || defaultCode2ReqAlignPrompt
             currentReviewPrompt.value = data.review || defaultReviewPrompt
+            currentReq2CodeAlignPromptKbs.value = data.Req2CodeAlignKbs || defaultReq2CodeAlignPromptKbs
+            currentCode2ReqAlignPromptKbs.value = data.Code2ReqAlignKbs || defaultCode2ReqAlignPromptKbs
+            currentReviewPromptKbs.value = data.reviewKbs || defaultReviewPromptKbs
           } catch (err) {
             console.error('Error loading prompts:', err)
             currentReq2CodeAlignPrompt.value = defaultReq2CodeAlignPrompt
             currentReviewPrompt.value = defaultReviewPrompt
+            currentReq2CodeAlignPromptKbs.value = defaultReq2CodeAlignPromptKbs
+            currentReviewPromptKbs.value = defaultReviewPromptKbs
           }
         }
 
         // 恢复默认（调用后端 API）
         const restorePromptDefault = async () => {
-          const tab = activeSetPromptTab.value
+          const outerTab = outerActive.value
+          let tab = ''
+          if (outerTab === 'moduleA') {
+            tab = innerActiveA.value
+          } else {
+            tab = innerActiveB.value
+          }
           try {
             const res = await fetch('/restore_default', {
               method: 'POST',
@@ -4068,8 +4088,17 @@ const app = createApp({
             else if (tab === 'code-req-align'){
               currentCode2ReqAlignPrompt.value = data.default_prompt
             }
-            else {
+            else if (tab === 'review') {
               currentReviewPrompt.value = data.default_prompt
+            }
+            else if (tab === 'req-code-align-kbs'){
+              currentReq2CodeAlignPromptKbs.value = data.default_prompt
+            }
+            else if (tab === 'code-req-align-kbs'){
+              currentCode2ReqAlignPromptKbs.value = data.default_prompt
+            }
+            else if (tab === 'review-kbs'){
+              currentReviewPromptKbs.value = data.default_prompt
             }
 
             ElMessage.success('已恢复默认提示词')
@@ -4080,7 +4109,13 @@ const app = createApp({
         
         // 保存
         const savePrompt = async () => {
-          const tab = activeSetPromptTab.value
+          const outerTab = outerActive.value
+          let tab = ''
+          if (outerTab === 'moduleA') {
+            tab = innerActiveA.value
+          } else {
+            tab = innerActiveB.value
+          }
           //const content = tab === 'req-code-align' ? currentReq2CodeAlignPrompt.value : currentCode2ReqAlignPrompt : currentReviewPrompt.value
           let content = ''
           if (tab === 'req-code-align') {
@@ -4089,15 +4124,24 @@ const app = createApp({
             else if (tab === 'code-req-align'){
               content = currentCode2ReqAlignPrompt.value
             }
-            else {
+            else if (tab === 'review'){
               content = currentReviewPrompt.value
+            }
+            else if (tab === 'req-code-align-kbs'){
+              content = currentReq2CodeAlignPromptKbs.value
+            }
+            else if (tab === 'code-req-align-kbs'){
+              content = currentCode2ReqAlignPromptKbs.value
+            }
+            else if (tab === 'review-kbs'){
+              content = currentReviewPromptKbs.value
             }
 
           try {
             const res = await fetch('/save_prompt', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ tab, content })
+              body: JSON.stringify({ outerTab, tab, content })
             })
             
             
@@ -5647,10 +5691,15 @@ const app = createApp({
             // 审查结果弹窗
             SetPrompt,
             showPromptDialog,
-            activeSetPromptTab,
+            outerActive,
+            innerActiveA,
+            innerActiveB,
             currentReq2CodeAlignPrompt,
             currentCode2ReqAlignPrompt,
             currentReviewPrompt,
+            currentReq2CodeAlignPromptKbs,
+            currentCode2ReqAlignPromptKbs,
+            currentReviewPromptKbs,
             restorePromptDefault,
             savePrompt,
             openPromptDialog,

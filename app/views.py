@@ -46,12 +46,13 @@ import pymysql
 from .utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
 from .agent import smart_parse_doc
 # 配置日志
-logging.basicConfig(
-    level = logging.INFO,
-    format='%(message)s'
-    )
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
 
 logger = logging.getLogger(__name__)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'app/history.json'
@@ -963,15 +964,15 @@ def upload_folder():
             file.save(target_file_path)
 
         sql = f"""
-        insert into project(user_id,last_opened,name,path,create_time,update_time) 
-        values({current_user.user_id}, "{datetime.now().isoformat()}", "{project_name}", 
-        "{target_folder_path}", "{datetime.now().isoformat()}", "{datetime.now().isoformat()}");
-        """
+                insert into project(user_id,last_opened,name,path,create_time,update_time) 
+                values(%s, %s, %s, %s, %s, %s);
+                """
         # print('sql:', sql)
-
+        params = (current_user.user_id, datetime.now().isoformat(), project_name, target_folder_path,
+                  datetime.now().isoformat(), datetime.now().isoformat())
         db = get_db()
         c = db.cursor()
-        c.execute(sql)
+        c.execute(sql, params)
         new_id = c.lastrowid
 
         return jsonify({
@@ -4316,7 +4317,10 @@ def export_project_results():
 # 提示词设置对话框
 
 # 保存用户自定义提示词的文件
-from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
+from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, \
+    THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, \
+    ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE, TAB_MAP, DEFAULTS, \
+    ALIGN_REQ_PROMPT_TEMPLATE_KBS, ALIGN_PROMPT_TEMPLATE_KBS
 
 # def load_user_prompt():
     # if os.path.exists(PROMPT_FILE):
@@ -4335,7 +4339,8 @@ from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PRO
 
 # 存储提示词（内存中，可替换为数据库或文件）
 prompts = {
-    'align': 'You are an expert in aligning AI responses to user intent...',
+    'req-code-align': 'You are an expert in aligning AI responses to user intent...',
+    'code-req-align': 'You are an expert in aligning AI responses to user intent...',
     'review': 'You are an expert in reviewing AI responses...'
 }
 
@@ -4343,7 +4348,10 @@ prompts = {
 default_prompts = {
     'req-code-align': ALIGN_PROMPT_TEMPLATE,
     'code-req-align': ALIGN_REQ_PROMPT_TEMPLATE,
-    'review': THINKING_PROMPT_TEMPLATE
+    'review': THINKING_PROMPT_TEMPLATE,
+    'req-code-align-kbs': ALIGN_PROMPT_TEMPLATE_KBS,
+    'code-req-align-kbs': ALIGN_REQ_PROMPT_TEMPLATE_KBS,
+    'review-kbs': THINKING_PROMPT_TEMPLATE
 }
 
 # 从文件加载
@@ -4365,62 +4373,57 @@ default_prompts = {
 @login_required
 @bp.route('/get_prompts', methods=['GET'])
 def get_prompts():
-    sql = f"select Req2CodeAlign, Code2ReqAlign, review from prompt where user_id={current_user.user_id}"
+    sql = f"select Req2CodeAlign, Code2ReqAlign, review, Req2CodeAlignKbs, Code2ReqAlignKbs, reviewKbs from prompt " \
+          f"where user_id={current_user.user_id}"
     db = get_db()
     c = db.cursor()
     c.execute(sql)
     row = c.fetchone()
 
     if row:
-        return jsonify({'Req2CodeAlign': row['Req2CodeAlign'], 'Code2ReqAlign': row['Code2ReqAlign'], 'review': row['review']})
+        return jsonify({'Req2CodeAlign': row['Req2CodeAlign'],
+                        'Code2ReqAlign': row['Code2ReqAlign'],
+                        'review': row['review'],
+                        'Req2CodeAlignKbs': row['Req2CodeAlignKbs'],
+                        'Code2ReqAlignKbs': row['Code2ReqAlignKbs'],
+                        'reviewKbs': row['reviewKbs']
+                        })
     else:
-        return jsonify({'Req2CodeAlign': default_prompts['req-code-align'], 'Code2ReqAlign': default_prompts['code-req-align'], 'review': default_prompts['review']})
-
+        return jsonify({'Req2CodeAlign': default_prompts['req-code-align'],
+                        'Code2ReqAlign': default_prompts['code-req-align'],
+                        'review': default_prompts['review'],
+                        'Req2CodeAlignKbs': default_prompts['req-code-align-kbs'],
+                        'Code2ReqAlignKbs': default_prompts['code-req-align-kbs'],
+                        'reviewKbs': default_prompts['review-kbs'],
+                        })
 
 # 保存提示词（根据 tab 和 content）
 @login_required
 @bp.route('/save_prompt', methods=['POST'])
 def save_prompt():
     data = request.get_json()
+    outer_tab = data.get('outerTab')
     tab = data.get('tab')
     content = data.get('content')
 
-    if tab not in ['req-code-align', 'code-req-align', 'review']:
+    field = TAB_MAP.get((outer_tab, tab))
+
+    if not field:
         return jsonify({'success': False, 'message': 'Invalid tab'})
 
-    select_sql = f"select * from prompt where user_id={current_user.user_id};"
+    data = {**DEFAULTS, field: content, 'user_id': current_user.user_id}
+    columns = ['user_id'] + list(DEFAULTS.keys())
+    placeholders = ['%s'] * len(columns)
+
+    sql = f"""insert into prompt ({', '.join(columns)}) values ({', '.join(placeholders)})
+            on duplicate key update {field} = values({field})"""
+    params = [data[c] for c in columns]
+    # print(sql)
     db = get_db()
     c = db.cursor()
-    c.execute(select_sql)
-    row = c.fetchone()
-    
-    if row:
-        condition = f" where user_id={current_user.user_id}"
-        if tab == 'req-code-align':
-            sql = f"update prompt set Req2CodeAlign=%s"
-        elif tab == 'code-req-align':
-            sql = f"update prompt set Code2ReqAlign=%s"
-        else:
-            sql = f"update prompt set review=%s"
-        
-        #sql = f"update prompt set alignment=%s" if tab == 'req-code-align' else f"update prompt set review=%s"
-        sql += condition
-        params = (content,)
-    else:
-        if tab == 'req-code-align':
-            sql = "insert into prompt(user_id,Req2CodeAlign,Code2ReqAlign,review) values(%s,%s,%s,%s)"
-            params = (current_user.user_id, content, default_prompts['code-req-align'], default_prompts['review'])
-        elif tab == 'code-req-align':
-            sql = "insert into prompt(user_id,Req2CodeAlign,Code2ReqAlign,review) values(%s,%s,%s,%s)"
-            params = (current_user.user_id, default_prompts['req-code-align'], content, default_prompts['review'])
-        else:
-            sql = "insert into prompt(user_id,Req2CodeAlign,Code2ReqAlign,review) values(%s,%s,%s,%s)"
-            params = (current_user.user_id, default_prompts['req-code-align'], default_prompts['code-req-align'],content)
-
-    # print('sql:', sql)
     c.execute(sql, params)
 
-    return jsonify({'success': True, 'message': f'{tab} prompt saved'})
+    return jsonify({'success': True, 'message': 'prompt saved'})
 
 
 # 恢复默认（根据 tab）
@@ -4429,7 +4432,8 @@ def restore_default():
     data = request.get_json()
     tab = data.get('tab')
 
-    if tab not in ['req-code-align', 'code-req-align', 'review']:
+    if tab not in ['req-code-align', 'code-req-align', 'review',
+                   'req-code-align-kbs', 'code-req-align-kbs', 'review-kbs']:
         return jsonify({'success': False, 'message': 'Invalid tab'})
 
     # 恢复默认
