@@ -134,6 +134,9 @@ CREATE TABLE `prompt` (
   `Code2ReqAlign` text,
   `Req2CodeAlign` text,
   `review` text COMMENT '审查',
+  `Req2CodeAlignKbs` text COMMENT '需求找代码-知识库提示词',
+  `Code2ReqAlignKbs` text COMMENT '代码找需求-知识库提示词',
+  `reviewKbs` text COMMENT '审查-知识库提示词',
   PRIMARY KEY (`prompt_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='提示词表';
 /*!40101 SET character_set_client = @saved_cs_client */;

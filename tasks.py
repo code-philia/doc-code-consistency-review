@@ -41,6 +41,16 @@ class ContextTask(celery.Task):
 
 celery.Task = ContextTask
 
+def _normalize_kb_type_for_use(raw_type):
+    kb_type = (raw_type or "other").strip()
+    if kb_type in ("rule", "coding_rule", "checklist"):
+        return "rule"
+    if kb_type in ("issue", "history_issue"):
+        return "issue"
+    if kb_type in ("align", "history_align"):
+        return "align"
+    return "other"
+
 
 @celery.task(name="user_bp.task.add")
 def add(x, y):
@@ -134,8 +144,8 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
                     with open(metadata_file, 'r', encoding='utf-8') as f:
                         metadata = json.load(f)
                         selected_kbs = metadata.get('selected_kbs', [])
-                        selected_rule_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'rule']
-                        selected_issue_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'issue']
+                        selected_rule_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'rule']
+                        selected_issue_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'issue']
             except Exception as e:
                 logger.error(str(e), exc_info=True)
             # 检索上下文
@@ -275,8 +285,8 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
             with open(metadata_file, 'r', encoding='utf-8') as f:
                 metadata = json.load(f)
                 selected_kbs = metadata.get('selected_kbs', [])
-                selected_rule_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'rule']
-                selected_issue_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'issue']
+                selected_rule_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'rule']
+                selected_issue_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'issue']
     except Exception as e:
         logger.error(str(e), exc_info=True)
 
@@ -536,7 +546,7 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
                     with open(metadata_file, 'r', encoding='utf-8') as f:
                         metadata = json.load(f)
                         selected_kbs = metadata.get('selected_kbs', [])
-                        selected_align_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'align']
+                        selected_align_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'align']
             except Exception:
                 pass
 

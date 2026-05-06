@@ -121,11 +121,14 @@
                     style="width: 300px;"
                 ></el-input>
                 
-                <el-select v-model="kbAppFilterType" placeholder="类型筛选" style="width: 150px;">
+                <el-select v-model="kbAppFilterType" placeholder="类型筛选" style="width: 160px;">
                     <el-option label="全部类型" value="all"></el-option>
-                    <el-option label="编程规则" value="rule"></el-option>
-                    <el-option label="问题单" value="issue"></el-option>
+                    <el-option label="编码规则" value="coding_rule"></el-option>
+                    <el-option label="历史问题" value="history_issue"></el-option>
                     <el-option label="历史对齐" value="align"></el-option>
+                    <el-option label="典型案例" value="typical_case"></el-option>
+                    <el-option label="必查清单" value="checklist"></el-option>
+                    <el-option label="其他" value="other"></el-option>
                 </el-select>
             </div>
 
@@ -147,9 +150,11 @@
                     <div style="display: flex; align-items: center; margin-bottom: 10px;">
                         <div class="kb-icon" style="width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; color: white;" 
                              :style="{ backgroundColor: getKbColor(kb.type) }">
-                            <i v-if="kb.type === 'rule'" class="fas fa-gavel"></i>
-                            <i v-else-if="kb.type === 'issue'" class="fas fa-bug"></i>
+                            <i v-if="kb.type === 'coding_rule' || kb.type === 'rule'" class="fas fa-gavel"></i>
+                            <i v-else-if="kb.type === 'history_issue' || kb.type === 'issue'" class="fas fa-bug"></i>
                             <i v-else-if="kb.type === 'align'" class="fas fa-link"></i>
+                            <i v-else-if="kb.type === 'typical_case'" class="fas fa-book-open"></i>
+                            <i v-else-if="kb.type === 'checklist'" class="fas fa-list-check"></i>
                             <i v-else class="fas fa-database"></i>
                         </div>
                         <div style="overflow: hidden;">
@@ -461,22 +466,21 @@
                                     </div>
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel right-sidebar" collapsible>
-                                    <div class="panel-title">
-                                        <div class="view-mode-toggle" style="display: flex; gap: 5px; flex: 1;">
+                                    <div class="panel-title right-sidebar-header">
+                                        <div class="view-mode-toggle">
                                             <el-radio-group v-model="rightSidebarMode" size="small" class="custom-segmented-control">
                                                 <el-radio-button label="alignment">对齐视图</el-radio-button>
                                                 <el-radio-button label="block">块视图</el-radio-button>
                                             </el-radio-group>
                                         </div>
-                                       <div style="align-items: center;" v-if="rightSidebarMode === 'alignment'"> 
-                                        <!-- <div style="display: flex; align-items: center;"> -->
+                                       <div class="right-toolbar-actions" v-if="rightSidebarMode === 'alignment'"> 
                                         <el-button 
                                             @click="cancelSelection" 
                                             size="small" 
                                             text
                                             plain
                                             type="primary"
-                                            style="margin-right: 2px;"  
+                                            class="right-toolbar-btn"
                                         >
                                              取消选中
                                         </el-button>
@@ -486,7 +490,7 @@
                                             text
                                             plain
                                             type="primary"
-                                            style="margin-right: 2px;" 
+                                            class="right-toolbar-btn"
                                         >
                                              刷新列表
                                         </el-button>
@@ -496,6 +500,7 @@
                                             text
                                             plain
                                             type="primary"
+                                            class="right-toolbar-btn"
                                         >
                                              导出结果
                                         </el-button>
@@ -505,20 +510,19 @@
                                             text
                                             plain
                                             type="primary"
+                                            class="right-toolbar-btn"
                                         >
                                              提示词设置
                                         </el-button>
-                                        
-                                        
                                         </div>
-                                       <div style="align-items: center;" v-if="rightSidebarMode === 'block'"> 
+                                       <div class="right-toolbar-actions" v-if="rightSidebarMode === 'block'"> 
                                         <el-button 
                                             @click="cancelSelection" 
                                             size="small" 
                                             text
                                             plain
                                             type="primary"
-                                            style="margin-right: 2px;"  
+                                            class="right-toolbar-btn"
                                         >
                                              取消选中
                                         </el-button>
@@ -528,6 +532,7 @@
                                             text
                                             plain
                                             type="primary"
+                                            class="right-toolbar-btn"
                                         >
                                              刷新列表
                                         </el-button>
@@ -536,13 +541,13 @@
                                     
                                     <div class="content-card sidebar-list-container" v-if="rightSidebarMode === 'alignment'">
                                         <div class="sidebar-controls">
-                                            <div class="filter-row">
+                                            <div class="filter-row sidebar-controls-group">
                                                  <el-radio-group v-model="viewMode" size="small" class="custom-segmented-control">
                                                     <el-radio-button label="all">全部数据</el-radio-button>
                                                     <el-radio-button label="current">当前文件</el-radio-button>
                                                 </el-radio-group>
                                             </div>
-                                            <div class="filter-row">
+                                            <div class="filter-row sidebar-controls-group sidebar-controls-group--status">
                                                 <el-checkbox-group v-model="statusFilters" class="status-checkbox-group">
                                                     <el-checkbox label="unaligned">未对齐</el-checkbox>
                                                     <el-checkbox label="unreviewed">未审查</el-checkbox>
@@ -618,13 +623,13 @@
                                     <!-- 块视图 -->
                                     <div class="content-card sidebar-list-container" v-if="rightSidebarMode === 'block'">
                                         <div class="sidebar-controls">
-                                            <div class="filter-row">
+                                            <div class="filter-row sidebar-controls-group">
                                                  <el-radio-group v-model="viewMode" size="small" class="custom-segmented-control">
                                                     <el-radio-button label="all">全部数据</el-radio-button>
                                                     <el-radio-button label="current">当前文件</el-radio-button>
                                                 </el-radio-group>
                                             </div>
-                                            <div class="filter-row">
+                                            <div class="filter-row sidebar-controls-group">
                                                 <el-radio-group v-model="blockType" size="small" class="custom-segmented-control">
                                                     <el-radio-button label="doc">需求块</el-radio-button>
                                                     <el-radio-button label="code">代码块</el-radio-button>

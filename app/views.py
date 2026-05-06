@@ -757,17 +757,37 @@ def get_project_metadata():
         with open(metadata_file, 'r', encoding='utf-8') as f:
             metadata = json.load(f)
 
+        def normalize_kb_type_for_storage(raw_type):
+            """统一 selected_kbs 中的类型到系统内部类型。"""
+            kb_type = (raw_type or "other").strip()
+            if kb_type in ["rule", "coding_rule", "checklist"]:
+                return "rule"
+            if kb_type in ["issue", "history_issue"]:
+                return "issue"
+            if kb_type in ["align", "history_align"]:
+                return "align"
+            return "other"
+
+        def kb_exists(kb_root, kb_name, kb_type):
+            # 兼容当前展平结构：rag_database/<kb_name>
+            flat_path = os.path.join(kb_root, kb_name)
+            if os.path.exists(flat_path):
+                return True
+            # 兼容历史分类型目录结构
+            legacy_folder_map = {
+                'rule': 'rule_knowledge_base',
+                'issue': 'issue_knowledge_base',
+                'align': 'align_knowledge_base',
+                'other': 'other_knowledge_base'
+            }
+            legacy_folder = legacy_folder_map.get(kb_type, 'other_knowledge_base')
+            legacy_path = os.path.join(kb_root, legacy_folder, kb_name)
+            return os.path.exists(legacy_path)
+
         # 校验 selected_kbs 是否有效
         if 'selected_kbs' in metadata and metadata['selected_kbs']:
             kb_root = os.path.join(PROJECT_ROOT, "../rag_database")
             valid_kbs = []
-
-            # Map types to folders to check existence
-            type_map = {
-                'rule': 'rule_knowledge_base',
-                'issue': 'issue_knowledge_base',
-                'align': 'align_knowledge_base'
-            }
 
             has_changes = False
             for kb in metadata['selected_kbs']:
@@ -779,11 +799,13 @@ def get_project_metadata():
                     has_changes = True
                     continue
 
-                folder = type_map.get(kb_type, 'other_knowledge_base')
-                kb_path = os.path.join(kb_root, folder, kb_name)
+                normalized_type = normalize_kb_type_for_storage(kb_type)
+                normalized_kb = {'name': kb_name, 'type': normalized_type}
+                if normalized_type != kb_type:
+                    has_changes = True
 
-                if os.path.exists(kb_path):
-                    valid_kbs.append(kb)
+                if kb_exists(kb_root, kb_name, normalized_type):
+                    valid_kbs.append(normalized_kb)
                 else:
                     has_changes = True
 
@@ -813,10 +835,33 @@ def save_project_kbs():
         return jsonify({"status": "error", "message": "metadata.json 不存在"}), 404
 
     try:
+        def normalize_kb_type_for_storage(raw_type):
+            kb_type = (raw_type or "other").strip()
+            if kb_type in ["rule", "coding_rule", "checklist"]:
+                return "rule"
+            if kb_type in ["issue", "history_issue"]:
+                return "issue"
+            if kb_type in ["align", "history_align"]:
+                return "align"
+            return "other"
+
+        normalized_selected_kbs = []
+        seen = set()
+        for kb in (selected_kbs or []):
+            kb_name = (kb or {}).get('name')
+            kb_type = normalize_kb_type_for_storage((kb or {}).get('type'))
+            if not kb_name:
+                continue
+            key = (kb_name, kb_type)
+            if key in seen:
+                continue
+            seen.add(key)
+            normalized_selected_kbs.append({'name': kb_name, 'type': kb_type})
+
         with open(metadata_file, 'r', encoding='utf-8') as f:
             metadata = json.load(f)
 
-        metadata['selected_kbs'] = selected_kbs
+        metadata['selected_kbs'] = normalized_selected_kbs
 
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
@@ -3071,7 +3116,7 @@ def align_code_to_requirement():
                 with open(metadata_file, 'r', encoding='utf-8') as f:
                     metadata = json.load(f)
                     selected_kbs = metadata.get('selected_kbs', [])
-                    selected_align_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'align']
+                    selected_align_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') in ('align', 'history_align')]
         except Exception:
             pass
 
@@ -3260,7 +3305,7 @@ def align_code_to_requirement_addprompt():
                 with open(metadata_file, 'r', encoding='utf-8') as f:
                     metadata = json.load(f)
                     selected_kbs = metadata.get('selected_kbs', [])
-                    selected_align_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') == 'align']
+                    selected_align_kbs = [kb['name'] for kb in selected_kbs if kb.get('type') in ('align', 'history_align')]
         except Exception:
             pass
 
@@ -4370,32 +4415,50 @@ default_prompts = {
 
 
 # 加载提示词（用于 /get_prompts）
+def _get_prompt_table_columns(db):
+    c = db.cursor()
+    c.execute("SHOW COLUMNS FROM prompt")
+    rows = c.fetchall() or []
+    return {row.get('Field') for row in rows if row and row.get('Field')}
+
+
 @login_required
 @bp.route('/get_prompts', methods=['GET'])
 def get_prompts():
-    sql = f"select Req2CodeAlign, Code2ReqAlign, review, Req2CodeAlignKbs, Code2ReqAlignKbs, reviewKbs from prompt " \
-          f"where user_id={current_user.user_id}"
     db = get_db()
     c = db.cursor()
-    c.execute(sql)
-    row = c.fetchone()
+    existing_columns = _get_prompt_table_columns(db)
 
+    requested_fields = ['Req2CodeAlign', 'Code2ReqAlign', 'review', 'Req2CodeAlignKbs', 'Code2ReqAlignKbs', 'reviewKbs']
+    available_fields = [f for f in requested_fields if f in existing_columns]
+    row = None
+    if available_fields:
+        sql = f"select {', '.join(available_fields)} from prompt where user_id=%s"
+        c.execute(sql, (current_user.user_id,))
+        row = c.fetchone()
+
+    result = {
+        'Req2CodeAlign': default_prompts['req-code-align'],
+        'Code2ReqAlign': default_prompts['code-req-align'],
+        'review': default_prompts['review'],
+        'Req2CodeAlignKbs': default_prompts['req-code-align-kbs'],
+        'Code2ReqAlignKbs': default_prompts['code-req-align-kbs'],
+        'reviewKbs': default_prompts['review-kbs'],
+    }
     if row:
-        return jsonify({'Req2CodeAlign': row['Req2CodeAlign'],
-                        'Code2ReqAlign': row['Code2ReqAlign'],
-                        'review': row['review'],
-                        'Req2CodeAlignKbs': row['Req2CodeAlignKbs'],
-                        'Code2ReqAlignKbs': row['Code2ReqAlignKbs'],
-                        'reviewKbs': row['reviewKbs']
-                        })
-    else:
-        return jsonify({'Req2CodeAlign': default_prompts['req-code-align'],
-                        'Code2ReqAlign': default_prompts['code-req-align'],
-                        'review': default_prompts['review'],
-                        'Req2CodeAlignKbs': default_prompts['req-code-align-kbs'],
-                        'Code2ReqAlignKbs': default_prompts['code-req-align-kbs'],
-                        'reviewKbs': default_prompts['review-kbs'],
-                        })
+        for k in requested_fields:
+            if k in row and row.get(k):
+                result[k] = row.get(k)
+
+    # 兼容旧表结构（没有 KBS 字段时，前端也能拿到可展示值）
+    if 'Req2CodeAlignKbs' not in existing_columns:
+        result['Req2CodeAlignKbs'] = result['Req2CodeAlign']
+    if 'Code2ReqAlignKbs' not in existing_columns:
+        result['Code2ReqAlignKbs'] = result['Code2ReqAlign']
+    if 'reviewKbs' not in existing_columns:
+        result['reviewKbs'] = result['review']
+
+    return jsonify(result)
 
 # 保存提示词（根据 tab 和 content）
 @login_required
@@ -4411,18 +4474,38 @@ def save_prompt():
     if not field:
         return jsonify({'success': False, 'message': 'Invalid tab'})
 
-    data = {**DEFAULTS, field: content, 'user_id': current_user.user_id}
-    columns = ['user_id'] + list(DEFAULTS.keys())
-    placeholders = ['%s'] * len(columns)
-
-    sql = f"""insert into prompt ({', '.join(columns)}) values ({', '.join(placeholders)})
-            on duplicate key update {field} = values({field})"""
-    params = [data[c] for c in columns]
-    # print(sql)
     db = get_db()
     c = db.cursor()
-    c.execute(sql, params)
+    existing_columns = _get_prompt_table_columns(db)
 
+    if 'user_id' not in existing_columns:
+        return jsonify({'success': False, 'message': 'prompt表缺少user_id字段'}), 500
+
+    fallback_field_map = {
+        'Req2CodeAlignKbs': 'Req2CodeAlign',
+        'Code2ReqAlignKbs': 'Code2ReqAlign',
+        'reviewKbs': 'review'
+    }
+    effective_field = field
+    if effective_field not in existing_columns:
+        effective_field = fallback_field_map.get(field, field)
+
+    if effective_field not in existing_columns:
+        return jsonify({'success': False, 'message': f'prompt表缺少字段: {field}'}), 500
+
+    supported_prompt_columns = [col for col in DEFAULTS.keys() if col in existing_columns]
+    data = {'user_id': current_user.user_id}
+    for col in supported_prompt_columns:
+        data[col] = DEFAULTS[col]
+    data[effective_field] = content
+
+    columns = ['user_id'] + supported_prompt_columns
+    placeholders = ['%s'] * len(columns)
+    sql = f"""insert into prompt ({', '.join(columns)}) values ({', '.join(placeholders)})
+            on duplicate key update {effective_field} = values({effective_field})"""
+    params = [data[c] for c in columns]
+
+    c.execute(sql, params)
     return jsonify({'success': True, 'message': 'prompt saved'})
 
 

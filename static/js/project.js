@@ -160,6 +160,16 @@ const app = createApp({
             }
         };
 
+        const normalizeKbType = (type) => {
+            const typeMap = {
+                'rule': 'coding_rule',
+                'issue': 'history_issue',
+                'history_align': 'align',
+                'case': 'typical_case',
+            };
+            return typeMap[type] || type || 'other';
+        };
+
         const filteredKbAppList = computed(() => {
             let list = kbAppList.value;
             
@@ -171,18 +181,20 @@ const app = createApp({
             
             // Type filter
             if (kbAppFilterType.value !== 'all') {
-                list = list.filter(kb => kb.type === kbAppFilterType.value);
+                list = list.filter(kb => normalizeKbType(kb.type) === kbAppFilterType.value);
             }
             
             return list;
         });
 
         const isKbSelected = (kb) => {
-            return selectedKbAppItems.value.some(item => item.name === kb.name && item.type === kb.type);
+            const currentType = normalizeKbType(kb.type);
+            return selectedKbAppItems.value.some(item => item.name === kb.name && normalizeKbType(item.type) === currentType);
         };
 
         const toggleKbSelection = (kb) => {
-            const index = selectedKbAppItems.value.findIndex(item => item.name === kb.name && item.type === kb.type);
+            const currentType = normalizeKbType(kb.type);
+            const index = selectedKbAppItems.value.findIndex(item => item.name === kb.name && normalizeKbType(item.type) === currentType);
             if (index > -1) {
                 selectedKbAppItems.value.splice(index, 1);
             } else {
@@ -215,17 +227,27 @@ const app = createApp({
         // Helper for UI
         const getKbColor = (type) => {
             const map = {
-                'rule': '#409EFF',
-                'issue': '#E6A23C',
+                'coding_rule': '#409EFF',
+                'history_issue': '#E6A23C',
                 'align': '#67C23A',
+                'typical_case': '#9B59B6',
+                'checklist': '#F39C12',
                 'other': '#909399'
             };
-            return map[type] || '#909399';
+            return map[normalizeKbType(type)] || '#909399';
         };
         
         const getKbTypeName = (type) => {
-            const map = { 'rule': '编程规则', 'issue': '问题单', 'align': '历史对齐', 'other': '其他' };
-            return map[type] || type || '未知';
+            const map = {
+                'coding_rule': '编码规则',
+                'history_issue': '历史问题',
+                'align': '历史对齐',
+                'typical_case': '典型案例',
+                'checklist': '必查清单',
+                'other': '其他'
+            };
+            const normalizedType = normalizeKbType(type);
+            return map[normalizedType] || normalizedType || '未知';
         };
         
         // Format time helper (duplicate from welcome.js but needed here)
@@ -4045,22 +4067,39 @@ const app = createApp({
 
         // 从后端加载
          const loadDefaultPrompt = async () => {
+          const normalizePrompt = (value) => (typeof value === 'string' ? value : '')
           try {
             const res = await axios.get('/get_prompts')
             //console.log(res)
             const data = await res.data
-            currentReq2CodeAlignPrompt.value = data.Req2CodeAlign || defaultReq2CodeAlignPrompt
-            currentCode2ReqAlignPrompt.value = data.Code2ReqAlign || defaultCode2ReqAlignPrompt
-            currentReviewPrompt.value = data.review || defaultReviewPrompt
-            currentReq2CodeAlignPromptKbs.value = data.Req2CodeAlignKbs || defaultReq2CodeAlignPromptKbs
-            currentCode2ReqAlignPromptKbs.value = data.Code2ReqAlignKbs || defaultCode2ReqAlignPromptKbs
-            currentReviewPromptKbs.value = data.reviewKbs || defaultReviewPromptKbs
+            const req2Code = normalizePrompt(data.Req2CodeAlign)
+            const code2Req = normalizePrompt(data.Code2ReqAlign)
+            const review = normalizePrompt(data.review)
+            const req2CodeKbs = normalizePrompt(data.Req2CodeAlignKbs)
+            const code2ReqKbs = normalizePrompt(data.Code2ReqAlignKbs)
+            const reviewKbs = normalizePrompt(data.reviewKbs)
+
+            if (req2Code) defaultReq2CodeAlignPrompt.value = req2Code
+            if (code2Req) defaultCode2ReqAlignPrompt.value = code2Req
+            if (review) defaultReviewPrompt.value = review
+            if (req2CodeKbs) defaultReq2CodeAlignPromptKbs.value = req2CodeKbs
+            if (code2ReqKbs) defaultCode2ReqAlignPromptKbs.value = code2ReqKbs
+            if (reviewKbs) defaultReviewPromptKbs.value = reviewKbs
+
+            currentReq2CodeAlignPrompt.value = req2Code || defaultReq2CodeAlignPrompt.value
+            currentCode2ReqAlignPrompt.value = code2Req || defaultCode2ReqAlignPrompt.value
+            currentReviewPrompt.value = review || defaultReviewPrompt.value
+            currentReq2CodeAlignPromptKbs.value = req2CodeKbs || defaultReq2CodeAlignPromptKbs.value
+            currentCode2ReqAlignPromptKbs.value = code2ReqKbs || defaultCode2ReqAlignPromptKbs.value
+            currentReviewPromptKbs.value = reviewKbs || defaultReviewPromptKbs.value
           } catch (err) {
             console.error('Error loading prompts:', err)
-            currentReq2CodeAlignPrompt.value = defaultReq2CodeAlignPrompt
-            currentReviewPrompt.value = defaultReviewPrompt
-            currentReq2CodeAlignPromptKbs.value = defaultReq2CodeAlignPromptKbs
-            currentReviewPromptKbs.value = defaultReviewPromptKbs
+            currentReq2CodeAlignPrompt.value = defaultReq2CodeAlignPrompt.value
+            currentCode2ReqAlignPrompt.value = defaultCode2ReqAlignPrompt.value
+            currentReviewPrompt.value = defaultReviewPrompt.value
+            currentReq2CodeAlignPromptKbs.value = defaultReq2CodeAlignPromptKbs.value
+            currentCode2ReqAlignPromptKbs.value = defaultCode2ReqAlignPromptKbs.value
+            currentReviewPromptKbs.value = defaultReviewPromptKbs.value
           }
         }
 
@@ -4146,7 +4185,7 @@ const app = createApp({
             
             
             // 检查响应是否成功
-            if (!res) {
+            if (!res.ok) {
               throw new Error(`请求失败! status: ${res.status}`)
             }
             

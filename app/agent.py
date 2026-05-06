@@ -7,7 +7,7 @@ from flask_login import current_user
 from dotenv import load_dotenv
 
 # from app.views import logger
-from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE
+from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_KBS, ALIGN_REQ_PROMPT_TEMPLATE_KBS
 from .prompt import Combine_Req2Code_Align_UserPrompt, Combine_Code2Req_Align_UserPrompt, Combine_Review_UserPrompt
 from openai import OpenAI
 from .utils import chunk_list
@@ -71,8 +71,17 @@ def _resolve_user_id(user_id=None):
     except Exception:
         return None
 
+def _normalize_kb_type_for_use(raw_type: str) -> str:
+    kb_type = (raw_type or "other").strip()
+    if kb_type in ("rule", "coding_rule", "checklist"):
+        return "rule"
+    if kb_type in ("issue", "history_issue"):
+        return "issue"
+    if kb_type in ("align", "history_align"):
+        return "align"
+    return "other"
 
-def _load_selected_kbs(project_path: str, kb_type: str) -> List[str]:
+def _load_selected_kb_entries(project_path: str) -> List[Dict[str, str]]:
     if not project_path:
         return []
     metadata_file = os.path.join(project_path, "metadata.json")
@@ -81,10 +90,68 @@ def _load_selected_kbs(project_path: str, kb_type: str) -> List[str]:
     try:
         with open(metadata_file, "r", encoding="utf-8") as f:
             metadata = json.load(f)
-        selected_kbs = metadata.get("selected_kbs", [])
-        return [kb.get("name", "") for kb in selected_kbs if kb.get("type") == kb_type and kb.get("name")]
+        entries = []
+        for kb in metadata.get("selected_kbs", []):
+            name = (kb or {}).get("name")
+            if not name:
+                continue
+            entries.append({
+                "name": name,
+                "type": _normalize_kb_type_for_use((kb or {}).get("type"))
+            })
+        return entries
     except Exception:
         return []
+
+def _has_any_selected_kb(project_path: str) -> bool:
+    return len(_load_selected_kb_entries(project_path)) > 0
+
+def _pick_template(
+    row: Optional[Dict[str, Any]],
+    use_kbs_template: bool,
+    normal_key: str,
+    kbs_key: str,
+    normal_default: str,
+    kbs_default: str
+) -> str:
+    if use_kbs_template:
+        if row and row.get(kbs_key):
+            return row.get(kbs_key)
+        return kbs_default
+    if row and row.get(normal_key):
+        return row.get(normal_key)
+    return normal_default
+
+def _load_user_prompt_row(user_id: Optional[int], requested_fields: List[str]) -> Dict[str, Any]:
+    if user_id is None:
+        return {}
+    db = None
+    try:
+        db = get_db_celery()
+        c = db.cursor()
+        c.execute("SHOW COLUMNS FROM prompt")
+        columns_rows = c.fetchall() or []
+        existing_columns = {row.get("Field") for row in columns_rows if row and row.get("Field")}
+        available_fields = [f for f in requested_fields if f in existing_columns]
+        if not available_fields:
+            return {}
+        sql = f"select {', '.join(available_fields)} from prompt where user_id=%s"
+        c.execute(sql, (user_id,))
+        row = c.fetchone() or {}
+        return row if isinstance(row, dict) else {}
+    except Exception:
+        return {}
+    finally:
+        if db is not None:
+            try:
+                db.close()
+            except Exception:
+                pass
+
+
+def _load_selected_kbs(project_path: str, kb_type: str) -> List[str]:
+    entries = _load_selected_kb_entries(project_path)
+    return [kb["name"] for kb in entries if kb.get("type") == kb_type and kb.get("name")]
 
 
 def _query_kb_items(
@@ -367,15 +434,17 @@ def query_related_code_block(
             reference_alignments = "无可用知识库参考"
 
         # 构造提示词
-        row = None
-        if resolved_user_id is not None:
-            db = get_db_celery()
-            c = db.cursor()
-            c.execute(f'select Req2CodeAlign from prompt where user_id={resolved_user_id}')
-            row = c.fetchone()
-            db.close()
-        
-        template = ALIGN_PROMPT_TEMPLATE if row is None else row['Req2CodeAlign']
+        use_kbs_template = _has_any_selected_kb(project_path)
+        row = _load_user_prompt_row(resolved_user_id, ['Req2CodeAlign', 'Req2CodeAlignKbs'])
+
+        template = _pick_template(
+            row=row,
+            use_kbs_template=use_kbs_template,
+            normal_key='Req2CodeAlign',
+            kbs_key='Req2CodeAlignKbs',
+            normal_default=ALIGN_PROMPT_TEMPLATE,
+            kbs_default=ALIGN_PROMPT_TEMPLATE_KBS
+        )
         prompt = template.format(
             req_content=requirement,
             code_content=code_blocks,
@@ -486,13 +555,8 @@ def query_related_code_block_by_feedback(
 
     # 构造提示词
     resolved_user_id = _resolve_user_id(user_id)
-    row = None
-    if resolved_user_id is not None:
-        db = get_db_celery()
-        c = db.cursor()
-        c.execute(f'select Req2CodeAlign from prompt where user_id={resolved_user_id}')
-        row = c.fetchone()
-        db.close()
+    use_kbs_template = _has_any_selected_kb(project_path)
+    row = _load_user_prompt_row(resolved_user_id, ['Req2CodeAlign', 'Req2CodeAlignKbs'])
     
     #将用户输入的提示词结合到已有的结果中，形成新的提示词
     #准备加到已有提示词的前面，用于优化大模型的输出
@@ -503,7 +567,14 @@ def query_related_code_block_by_feedback(
     elif reference_alignments is None:
         reference_alignments = "无可用知识库参考"
     
-    original_template = ALIGN_PROMPT_TEMPLATE if row is None else row['Req2CodeAlign']
+    original_template = _pick_template(
+        row=row,
+        use_kbs_template=use_kbs_template,
+        normal_key='Req2CodeAlign',
+        kbs_key='Req2CodeAlignKbs',
+        normal_default=ALIGN_PROMPT_TEMPLATE,
+        kbs_default=ALIGN_PROMPT_TEMPLATE_KBS
+    )
     original_prompt = original_template.format(
         req_content=requirement,
         code_content=code_blocks,
@@ -623,15 +694,17 @@ def query_related_requirement_block(
 
     # 构造提示词
     # template = ALIGN_REQ_PROMPT_TEMPLATE
-    row = None
-    if resolved_user_id is not None:
-        db = get_db_celery()
-        c = db.cursor()
-        c.execute(f'select Code2ReqAlign from prompt where user_id={resolved_user_id}')
-        row = c.fetchone()
-        db.close()
-    
-    template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
+    use_kbs_template = _has_any_selected_kb(project_path)
+    row = _load_user_prompt_row(resolved_user_id, ['Code2ReqAlign', 'Code2ReqAlignKbs'])
+
+    template = _pick_template(
+        row=row,
+        use_kbs_template=use_kbs_template,
+        normal_key='Code2ReqAlign',
+        kbs_key='Code2ReqAlignKbs',
+        normal_default=ALIGN_REQ_PROMPT_TEMPLATE,
+        kbs_default=ALIGN_REQ_PROMPT_TEMPLATE_KBS
+    )
     
     prompt = template.format(
         code_content=code,
@@ -739,13 +812,8 @@ def query_related_requirement_block_by_feedback(
 
     # 构造提示词
     # template = ALIGN_REQ_PROMPT_TEMPLATE
-    row = None
-    if resolved_user_id is not None:
-        db = get_db_celery()
-        c = db.cursor()
-        c.execute(f'select Code2ReqAlign from prompt where user_id={resolved_user_id}')
-        row = c.fetchone()
-        db.close()
+    use_kbs_template = _has_any_selected_kb(project_path)
+    row = _load_user_prompt_row(resolved_user_id, ['Code2ReqAlign', 'Code2ReqAlignKbs'])
     
     # template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
     # prompt = template.format(
@@ -758,7 +826,14 @@ def query_related_requirement_block_by_feedback(
     #将用户输入的提示词结合到已有的结果中，形成新的提示词
     #准备加到已有提示词的前面，用于优化大模型的输出
 
-    original_template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
+    original_template = _pick_template(
+        row=row,
+        use_kbs_template=use_kbs_template,
+        normal_key='Code2ReqAlign',
+        kbs_key='Code2ReqAlignKbs',
+        normal_default=ALIGN_REQ_PROMPT_TEMPLATE,
+        kbs_default=ALIGN_REQ_PROMPT_TEMPLATE_KBS
+    )
     original_prompt = original_template.format(
         code_content=code,
         req_content=req_blocks,
@@ -981,15 +1056,17 @@ def query_review_result_by_feedback(
     # template = REVIEW_PROMPT_TEMPLATE
     # original_template = THINKING_PROMPT_TEMPLATE
     resolved_user_id = _resolve_user_id(user_id)
-    row = None
-    if resolved_user_id is not None:
-        db = get_db_celery()
-        c = db.cursor()
-        c.execute(f'select review from prompt where user_id={resolved_user_id}')
-        row = c.fetchone()
-        db.close()
-    
-    original_template = THINKING_PROMPT_TEMPLATE if row is None else row['review']
+    use_kbs_template = _has_any_selected_kb(project_path)
+    row = _load_user_prompt_row(resolved_user_id, ['review', 'reviewKbs'])
+
+    original_template = _pick_template(
+        row=row,
+        use_kbs_template=use_kbs_template,
+        normal_key='review',
+        kbs_key='reviewKbs',
+        normal_default=THINKING_PROMPT_TEMPLATE,
+        kbs_default=THINKING_PROMPT_TEMPLATE
+    )
     original_prompt = original_template.format(
         requirement=requirement_context,
         related_code=code_context,
@@ -1088,14 +1165,16 @@ def query_review_result(
     # template = REVIEW_PROMPT_TEMPLATE
     # template = THINKING_PROMPT_TEMPLATE
     resolved_user_id = _resolve_user_id(user_id)
-    row = None
-    if resolved_user_id is not None:
-        db = get_db_celery()
-        c = db.cursor()
-        c.execute(f'select review from prompt where user_id={resolved_user_id}')
-        row = c.fetchone()
-        db.close()
-    template = THINKING_PROMPT_TEMPLATE if row is None else row['review']
+    use_kbs_template = _has_any_selected_kb(project_path)
+    row = _load_user_prompt_row(resolved_user_id, ['review', 'reviewKbs'])
+    template = _pick_template(
+        row=row,
+        use_kbs_template=use_kbs_template,
+        normal_key='review',
+        kbs_key='reviewKbs',
+        normal_default=THINKING_PROMPT_TEMPLATE,
+        kbs_default=THINKING_PROMPT_TEMPLATE
+    )
 
     prompt = template.format(
         requirement=requirement_context,
