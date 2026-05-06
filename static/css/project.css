@@ -540,6 +540,73 @@
     justify-content: space-between;
 }
 
+.right-sidebar-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.right-sidebar-header .view-mode-toggle {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.right-toolbar-actions {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    padding-top: 2px;
+}
+
+.right-toolbar-btn {
+    margin: 0 !important;
+    height: 26px;
+    line-height: 26px;
+    border-radius: 8px;
+    padding: 0 10px;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.right-toolbar-actions .el-button.right-toolbar-btn.is-text.is-plain {
+    background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+    border: 1px solid #d9e7ff;
+    color: #2f6bdc;
+    box-shadow: 0 1px 2px rgba(47, 107, 220, 0.08);
+}
+
+.right-toolbar-actions .el-button.right-toolbar-btn.is-text.is-plain:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #eef5ff 100%);
+    border-color: #b7d0ff;
+    color: #1f56bf;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(47, 107, 220, 0.15);
+}
+
+.right-toolbar-actions .el-button.right-toolbar-btn.is-text.is-plain:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(47, 107, 220, 0.18);
+}
+
+.right-toolbar-actions .el-button.right-toolbar-btn + .el-button {
+    margin-left: 0 !important;
+}
+
+.right-toolbar-actions .el-button.right-toolbar-btn i {
+    margin-right: 4px;
+}
+
+.right-sidebar .panel-title {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+}
+
 .panel-title i {
     margin-right: 8px;
     color: var(--accent-color);
@@ -2258,14 +2325,14 @@
 
 /* Sidebar Filter Controls */
 .sidebar-controls {
-    padding: 15px;
+    padding: 10px;
     border-bottom: 1px solid #ebeef5;
-    background-color: #fff;
+    background-color: #fbfcfd;
     flex-shrink: 0;
 }
 
 .filter-row {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
     width: 100%;
 }
 
@@ -2277,10 +2344,10 @@
 .custom-segmented-control {
     display: flex !important;
     width: 100%;
-    background-color: #f2f3f5;
+    background-color: #f3f5f7;
     padding: 3px;
     border-radius: 6px;
-    border: 1px solid transparent; /* Optional */
+    border: 1px solid #e7ebf0;
 }
 
 .custom-segmented-control .el-radio-button {
@@ -2299,8 +2366,8 @@
     border-radius: 4px !important;
     box-shadow: none !important;
     color: #606266;
-    padding: 5px 0 !important;
-    height: 28px; /* Fixed height for consistency */
+    padding: 5px 4px !important;
+    min-height: 28px;
     line-height: 1;
     font-size: 12px;
     transition: all 0.2s ease;
@@ -2322,8 +2389,9 @@
 .status-checkbox-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    justify-content: space-between;
+    gap: 8px 10px;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 .status-checkbox-group .el-checkbox {
@@ -2333,6 +2401,24 @@
 .status-checkbox-group .el-checkbox__label {
     padding-left: 6px;
     font-size: 12px;
+}
+
+.sidebar-controls-group {
+    width: 100%;
+}
+
+.sidebar-controls-group--status {
+    padding: 2px 2px 0;
+}
+
+.right-sidebar .sidebar-list-container {
+    border-radius: 8px;
+}
+
+@media (max-width: 1360px) {
+    .right-sidebar-header .view-mode-toggle {
+        flex-basis: 100%;
+    }
 }
 
 /* Full Width Select - Deprecated but kept for compatibility */
