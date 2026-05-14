@@ -211,6 +211,9 @@ def create_project():
     project_name = data.get('projectName')
     project_location = data.get('projectLocation')
     project_id = data.get('project_id')
+    parseDocMethod = data.get('parseDocMethod')
+    #print(f'parseDocMethod=======:{parseDocMethod}')
+    
     code = project_location.split('_')[-1]
     #project_name += code
     # print(f'project_name=======:{project_name}')
@@ -219,14 +222,14 @@ def create_project():
         return jsonify({"status": "error", "message": "项目名称和路径不能为空。"}), 400
 
     if creation_type == 'blank':
-        return create_blank_project(project_name, project_location)
+        return create_blank_project(project_name, project_location, parseDocMethod)
     elif creation_type == 'folder':
-        return create_project_from_folder(project_name, project_location)
+        return create_project_from_folder(project_name, project_location, parseDocMethod)
     else:
         return jsonify({"status": "error", "message": "无效的创建类型。"}), 400
 
 
-def create_blank_project(project_name, project_location):
+def create_blank_project(project_name, project_location, parseDocMethod):
     """处理创建空白项目的逻辑"""
     project_path = os.path.join(project_location, project_name)
     if os.path.exists(project_path):
@@ -274,7 +277,7 @@ def create_blank_project(project_name, project_location):
         return jsonify({"status": "error", "message": f"创建目录或文件时出错: {e}"}), 500
 
 
-def create_project_from_folder(project_name, folder_path):
+def create_project_from_folder(project_name, folder_path, parseDocMethod):
     """处理从现有文件夹创建项目的逻辑"""
     project_path = folder_path # 项目路径就是用户选择的文件夹
     if not os.path.isdir(project_path):
@@ -304,7 +307,7 @@ def create_project_from_folder(project_name, folder_path):
                 break
 
         if has_docx:
-            convert_doc_to_markdown(doc_repo_path)
+            convert_doc_to_markdown(doc_repo_path, parseDocMethod)
             # 转换后重新获取文档文件列表
             doc_files = get_all_files_with_relative_paths(doc_repo_path, type ='doc')
 
@@ -876,6 +879,8 @@ def upload_files():
         project_path = request.form.get('path')
         file_type = request.form.get('fileType')  # 'doc' or 'code'
         files = request.files.getlist('files')
+        parseDocMethod = request.form.get('parseDocMethod')
+        #print(f'parseDocMethod=======:{parseDocMethod}')
 
         if not all([project_path, file_type, files]):
             return jsonify({"status": "error", "message": "请求参数不完整。"}), 400
@@ -941,7 +946,7 @@ def upload_files():
                         has_docx = True
 
             if has_docx:
-                convert_doc_to_markdown(doc_repo_path)
+                convert_doc_to_markdown(doc_repo_path, parseDocMethod)
 
             metadata['doc_files'] = get_all_files_with_relative_paths(doc_repo_path, type='doc')
 
@@ -1033,13 +1038,119 @@ def upload_folder():
         return jsonify({"status": "error", "message": f"文件夹上传失败: {str(e)}"}), 500
 
 
+@bp.route('/project/file-remove', methods=['GET'])
+def remove_file_content():
+    """根据项目路径、文件名和文件类型，删除该文件"""
+    project_path = request.args.get('path')
+    filename = request.args.get('filename')
+    file_type = request.args.get('type') # 'doc' or 'code'    
+    #print(project_path, filename, file_type)
+    
+    try:
+        if (file_type == 'doc'):
+            project_path_repo = os.path.join(project_path, 'doc_repo')
+            # 1、在 project_path_repo 文件夹下递归查找名为 filename 的文件、删除文件
+            file_path = None
+            for root, dirs, files in os.walk(project_path_repo):
+                if filename in files:
+                    file_path = os.path.join(root, filename)
+                    os.remove(file_path)
+                    #print(f"已删除: {file_path}")
+                    break
+                        
+            project_path_convert = os.path.join(project_path, 'doc_repo_converted')
+            if os.path.exists(project_path_convert):
+                filefoldername = os.path.splitext(filename)[0]
+                # 2、在 project_path_convert 文件夹下递归查找名为 filefoldername 的文件夹、删除文件夹  
+                for root, dirs, files in os.walk(project_path_convert, topdown=False):
+                    if filefoldername in dirs:
+                        folder_path = os.path.join(root, filefoldername)
+                        try:
+                            shutil.rmtree(folder_path)
+                            #print(f"已删除: {folder_path}")
+                        except Exception as e:
+                            print(f"删除失败: {folder_path}，错误: {e}")
+            
+            
+            # 3、在 project_path_block 文件夹下查找 文档分块后 的文件、删除文件
+            project_path_block = os.path.join(project_path, 'doc_block_repo')
+            if os.path.exists(project_path_block):
+                file_block = 'doc_blocks.jsonl'
+                for root, dirs, files in os.walk(project_path_block):
+                    if file_block in files:
+                        file_path = os.path.join(root, file_block)
+                        os.remove(file_path)
+                        #print(f"已删除: {file_path}")
+                        break    
+            
+            # 4、从meta文件删除该文件信息
+            metadata_file = os.path.join(project_path, 'metadata.json')
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+            # 过滤掉要删除的文件
+            if "doc_files" in metadata:
+                metadata["doc_files"] = [f for f in metadata["doc_files"] if f != filename]
+            # 写回meta文件
+            with open(metadata_file, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, indent=4, ensure_ascii=False)
+            
+            return jsonify({"status": "success", "message": '文件已删除'}), 200
+        
+        elif (file_type == 'code'):
+        
+            project_path_repo = os.path.join(project_path, 'code_repo')
+            # 1、在 project_path_repo 文件夹下递归查找名为 filename 的文件、删除文件
+            file_path = None
+            for root, dirs, files in os.walk(project_path_repo):
+                if filename in files:
+                    file_path = os.path.join(root, filename)
+                    os.remove(file_path)
+                    #print(f"已删除: {file_path}")
+                    break
+                    
+            # 2、在 project_path_block 文件夹下查找 代码分块后 的文件、删除文件
+            project_path_block = os.path.join(project_path, 'code_block_repo')
+            if os.path.exists(project_path_block):
+                file_block = filename + '_code_blocks.jsonl'
+                for root, dirs, files in os.walk(project_path_block):
+                    if file_block in files:
+                        file_path = os.path.join(root, file_block)
+                        os.remove(file_path)
+                        #print(f"已删除: {file_path}")
+                        break    
+            
+            # 3、从meta文件删除该文件信息
+            metadata_file = os.path.join(project_path, 'metadata.json')
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+            # 过滤掉要删除的文件
+            if "code_files" in metadata:
+                metadata["code_files"] = [f for f in metadata["code_files"] if f != filename]
+            if "code_file_lines" in metadata:
+                metadata["code_file_lines"] = [f for f in metadata["code_file_lines"] if f != filename]
+            # 写回meta文件
+            with open(metadata_file, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, indent=4, ensure_ascii=False)      
+            
+            return jsonify({"status": "success", "message": '文件已删除'}), 200            
+
+        else:
+            return jsonify({"status": "error", "message": "文件未找到"}), 404
+    
+    except Exception as e:
+        print(f"删除失败: {folder_path}，错误: {e}")
+        return jsonify({"status": "error", "message": "文件未找到"}), 404
+
+        
+        
+        
 @bp.route('/project/file-content', methods=['GET'])
 def get_file_content():
     """根据项目路径、文件名和文件类型获取文件内容"""
     project_path = request.args.get('path')
     filename = request.args.get('filename')
     file_type = request.args.get('type') # 'doc' or 'code'
-    #print(111,project_path,filename,file_type)
+    # print(111,project_path,filename,file_type)
 
     if not project_path or not filename or not file_type:
         return jsonify({"status": "error", "message": "缺少必要的参数"}), 400
@@ -1062,12 +1173,16 @@ def get_file_content():
             repo_path = metadata.get(repo_map[file_type])
             file_path = os.path.join(repo_path, filename)
         else: # 'doc'
+            file_name_prefix = filename.split('.')[0]
             if filename.endswith('.md'):
                 repo_path = metadata.get(repo_map[file_type])
                 file_path = os.path.join(repo_path, filename)
+                if not os.path.exists(file_path):
+                    file_path = os.path.join(project_path, 'doc_repo_converted', file_name_prefix, file_name_prefix + '.md')
+                # print(222, repo_path, file_path)
             else: # docx类型，读取转换后的md文件
-                file_name_prefix = filename.split('.')[0]
                 file_path = os.path.join(project_path, 'doc_repo_converted', file_name_prefix, file_name_prefix + '.md')
+                # print(333, file_name_prefix, file_path)
 
         if not os.path.exists(file_path):
             print(file_path)
@@ -1199,9 +1314,22 @@ def auto_markdown_split():
             for file in files:
                 if file.lower().endswith('.md'):
                     md_files.append(os.path.join(root, file))
-
+        
+        # 如果用户上传的不是markdown文件，就去格式转换后的文件夹中找对应的markdown文件
         if not md_files:
-            return jsonify({'status':'error', 'message': '未找到Markdown文档'})
+            # 获取项目中格式转换后的文档文件
+            doc_repo_path = os.path.join(project_path, 'doc_repo_converted')
+            if not os.path.exists(doc_repo_path):
+                return jsonify({'status':'error', 'message': '文档目录不存在'})
+
+            # 查找所有markdown文件
+            md_files = []
+            for root, dirs, files in os.walk(doc_repo_path):
+                for file in files:
+                    if file.lower().endswith('.md'):
+                        md_files.append(os.path.join(root, file))
+            if not md_files:
+                return jsonify({'status':'error', 'message': '未找到Markdown文档'})
 
         processed_count = 0
         req_blocks = []
@@ -1577,7 +1705,7 @@ def abstract_code_from_project():
         # else:
             # 从SQLite读取数据
         df = get_abstracts_from_sqlite(project_id)
-
+        
         # 排除无关文件夹/目录
         exclude_folders = ['.git', '.idea']
         # 基于文件名后缀，指定文件类型
@@ -1593,7 +1721,7 @@ def abstract_code_from_project():
 
                     if not df.empty:
                         # 先看数据库里有没有已经生成好的代码摘要
-                        row_data = df[df['filename'] == file]
+                        row_data = df[df['filename'] == rel_path]
 
                         # 数据库有该代码文件的摘要
                         if not row_data.empty:
@@ -1650,12 +1778,14 @@ def abstract_code_from_project_post():
     if not os.path.exists(code_file_path):
         return jsonify({'status': 'success', 'data': []})
     from tasks import abstract_code_from_project_task, align_requirement_to_project_task
-    task_chain = chain(
-        abstract_code_from_project_task.s(data, code_file_path, current_user.user_id),
-        align_requirement_to_project_task.s(data, current_user.user_id)
-    )
-    async_result = task_chain()
-    return jsonify({'status': 'success', 'message':'链式任务已启动', 'task_id': async_result.id})
+    sig2 = align_requirement_to_project_task.s(data, current_user.user_id)
+    sig2.freeze()
+    task2_id = sig2.id
+    sig1 = abstract_code_from_project_task.s(data, code_file_path, current_user.user_id)
+    sig1.freeze()
+    task1_id = sig1.id
+    chain(sig1, sig2).apply_async()
+    return jsonify({'status': 'success', 'message': '链式任务已启动', 'task1_id': task1_id, 'task2_id': task2_id})
 
 
 def get_project_abstract(project_id):
@@ -1760,41 +1890,45 @@ def align_requirement_to_project_addprompt():
                 block_limit=50,
                 project_path=project_path
             )
+            
+            try:
+                # 检查并添加 related_id 对应的代码块
+                related_code = include_related_blocks(related_code, all_code_blocks)
 
-            # 检查并添加 related_id 对应的代码块
-            related_code = include_related_blocks(related_code, all_code_blocks)
+                # 转换为codeRanges格式
+                for code_block in related_code:
+                    # 获取原始代码内容（不带行号）
+                    file_path = os.path.join(code_repo_path, code_block['file'])
+                    if os.path.exists(file_path):
+                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            original_content = f.read()
+                            lines = original_content.splitlines(keepends=True)  # 保留换行符
 
-            # 转换为codeRanges格式
-            for code_block in related_code:
-                # 获取原始代码内容（不带行号）
-                file_path = os.path.join(code_repo_path, code_block['file'])
-                if os.path.exists(file_path):
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        original_content = f.read()
-                        lines = original_content.splitlines(keepends=True)  # 保留换行符
+                            # 提取指定行范围的内容
+                            start_line = max(1, code_block['range'][0])
+                            end_line = min(len(lines), code_block['range'][1])
 
-                        # 提取指定行范围的内容
-                        start_line = max(1, code_block['range'][0])
-                        end_line = min(len(lines), code_block['range'][1])
+                            if start_line <= end_line:
+                                # 计算字符偏移量
+                                char_start = sum(len(line) for line in lines[:start_line-1])
+                                char_end = sum(len(line) for line in lines[:end_line])
 
-                        if start_line <= end_line:
-                            # 计算字符偏移量
-                            char_start = sum(len(line) for line in lines[:start_line-1])
-                            char_end = sum(len(line) for line in lines[:end_line])
+                                # 提取内容（不保留换行符用于显示）
+                                range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
 
-                            # 提取内容（不保留换行符用于显示）
-                            range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
-
-                            code_ranges.append({
-                                'filename': code_block['file'],
-                                'start': char_start,  # 字符偏移量
-                                'end': char_end,      # 字符偏移量
-                                'content': range_content,
-                                'documentId': code_block['file'],
-                                'startLine': start_line,
-                                'endLine': end_line
-                            })
-
+                                code_ranges.append({
+                                    'filename': code_block['file'],
+                                    'start': char_start,  # 字符偏移量
+                                    'end': char_end,      # 字符偏移量
+                                    'content': range_content,
+                                    'documentId': code_block['file'],
+                                    'startLine': start_line,
+                                    'endLine': end_line
+                                })
+                                
+            except Exception as e:
+                print(f"add related_code failed: {e}")
+                
         #logger.info("对齐结果...................")
         #logger.info(code_ranges)
         #sys.exit()
@@ -1917,6 +2051,7 @@ def review_alignment():
 # 需要异步处理
 @bp.route('/api/review-alignment-addprompt', methods=['POST'])
 def review_alignment_addprompt():
+    from tasks import _normalize_kb_type_for_use, gen_requirement
     data = request.json
     project_path = data.get('projectPath')
     doc_file = data.get('docFile')
@@ -1933,10 +2068,143 @@ def review_alignment_addprompt():
     # except Exception as e:
         # print(f"[Review] RAG initialize failed: {e}")
 
-    from tasks import review_alignment_addprompt_task
-    task = review_alignment_addprompt_task.delay(project_path, alignment, project_id, current_user.user_id, doc_file, userPrompt)
+    # 获取选定的 knowledge base
+    selected_rule_kbs = []
+    selected_issue_kbs = []
+    try:
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        if os.path.exists(metadata_file):
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+                selected_kbs = metadata.get('selected_kbs', [])
+                selected_rule_kbs = [kb['name'] for kb in selected_kbs if
+                                     _normalize_kb_type_for_use(kb.get('type')) == 'rule']
+                selected_issue_kbs = [kb['name'] for kb in selected_kbs if
+                                      _normalize_kb_type_for_use(kb.get('type')) == 'issue']
+    except Exception as e:
+        logger.error(str(e), exc_info=True)
 
-    return jsonify({"status": "success", "task_id": task.id})
+    # 检索上下文
+    retrieved_rules = []
+    retrieved_issues = []
+
+    doc_ranges = alignment.get('docRanges', [])
+    code_ranges = alignment.get('codeRanges', [])
+    reviewThoughts = alignment.get('reviewThoughts', [])
+
+    # 构造查询文本
+    query_text = ""
+    if doc_ranges:
+        query_text += doc_ranges[0].get('content', '') + "\n"
+    if code_ranges:
+        query_text += code_ranges[0].get('content', '')
+
+    # 检索规则
+    for kb_name in selected_rule_kbs:
+        collection = rag_engine.get_collection('rule', kb_name)
+        if collection:
+            results = collection.query(query_texts=[query_text], n_results=3)
+            if results and results['documents']:
+                for doc in results['documents'][0]:
+                    retrieved_rules.append(doc)
+
+    # 检索问题单
+    for kb_name in selected_issue_kbs:
+        collection = rag_engine.get_collection('issue', kb_name)
+        if collection:
+            results = collection.query(query_texts=[query_text], n_results=3)
+            if results and results['documents']:
+                for doc in results['documents'][0]:
+                    retrieved_issues.append(doc)
+
+    # 1. 调用 agent 获取审查结果
+    review_process, issue = query_review_result_by_feedback(
+        doc_ranges,
+        code_ranges,
+        reviewThoughts,
+        userPrompt,
+        rules=retrieved_rules,
+        issues=retrieved_issues,
+        user_id=current_user.user_id,
+        project_path=project_path
+    )
+
+    # 2. 更新对齐关系
+    alignment['isReviewed'] = True
+    alignment['reviewThoughts'] = review_process
+
+    if isinstance(issue, list):
+        issues_list = [x for x in issue if isinstance(x, dict)]
+    elif isinstance(issue, dict):
+        issues_list = [issue]
+    else:
+        issues_list = []
+
+    # 需求反生成
+    generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    try:
+        cur.execute(
+            'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP '
+            'WHERE id=%s and project_id=%s',
+            (alignment.get('reviewThoughts') or '', generated_requirement or '', mermaid_code or '',
+             alignment.get('id'), project_id)
+        )
+
+        if issues_list:
+            cur.execute(f"SELECT displayId FROM issues WHERE displayId LIKE 'ISSUE-%' and project_id={project_id}")
+            used = set()
+            for r in cur.fetchall():
+                disp = r['displayId']
+                if disp and disp.startswith('ISSUE-'):
+                    try:
+                        used.add(int(disp.split('-')[1]))
+                    except Exception as e:
+                        logger.error(str(e), exc_info=True)
+
+            next_number = (max(used) + 1) if used else 1
+
+            brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
+            brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
+
+            for one in issues_list:
+                display_id = f"ISSUE-{next_number:03d}"
+                next_number += 1
+
+                severity = one.get('level') or one.get('severity')
+                title = one.get('summary') or one.get('title') or ''
+                content = one.get('description') or one.get('content') or ''
+                status = one.get('status') or 'unconfirmed'
+
+                cur.execute(
+                    'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
+                    'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
+                    'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                    (
+                        current_user.user_id,
+                        project_id,
+                        display_id,
+                        alignment.get('id'),
+                        severity,
+                        title,
+                        content,
+                        status,
+                        doc_file,
+                        alignment.get('id'),
+                        brief_req,
+                        brief_code
+                    )
+                )
+
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"审查失败 user_prompt2: {str(e)}", exc_info=True)
+        return {"status": "error", "message": f"Failed to save review result: {str(e)}"}
+
+    return {"status": "success", "createdIssues": len(issues_list)}
 
 
 @bp.route('/api/clear-alignment-review', methods=['POST'])
@@ -1971,12 +2239,14 @@ def get_filename_without_extension(filename):
 
 @bp.route('/project/alignments', methods=['GET'])
 def get_alignments():
+    #print("request.args:", request.args)
     """按文件筛选获取对齐关系，支持 doc 或 code 文件"""
     project_path = request.args.get('path')
     file_path = request.args.get('file')
     kind = request.args.get('kind', 'doc')
     project_id = request.args.get('project_id')
     print('get(`/project/alignments, project_id:', project_id)
+    
     if not project_path:
         return jsonify({"status": "error", "message": "缺少项目路径参数。"}), 400
 
@@ -1984,24 +2254,28 @@ def get_alignments():
         conn = get_db()
         cur = conn.cursor()
 
-        if file_path:
-            target = file_path
-            col = 'docRanges' if kind == 'doc' else 'codeRanges'
+        # if file_path:
+            # target = file_path
+            # col = 'docRanges' if kind == 'doc' else 'codeRanges'
 
-            query = '''
-            SELECT id, name, isReviewed, reviewThoughts, docRanges, codeRanges 
-            FROM alignments 
-            WHERE JSON_SEARCH(alignments.`{col}`, 'one', %s, NULL, '$[*].documentId') IS NOT NULL  
-            '''.format(col=col)
-
-            cur.execute(query, (target,))
-            #cur.execute(query, (target,))
-        else:
-            query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments where project_id={project_id}"
-            cur.execute(query)
+            # query = '''
+                # SELECT id, name, isReviewed, reviewThoughts, docRanges, codeRanges 
+                # FROM alignments 
+                # WHERE project_id = %s 
+                  # AND JSON_SEARCH(alignments.`{col}`, 'one', %s, NULL, '$[*].documentId') IS NOT NULL
+            # '''.format(col=col)
+            # cur.execute(query, (project_id, file_path))
+        
+        # else:
+            # query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments where project_id={project_id}"
+            # cur.execute(query)
+        
+        query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments where project_id={project_id}"
+        cur.execute(query)
 
         rows = cur.fetchall()
         result = {}
+        
         for r in rows:
             alignment = {
                 'id': r['id'],
@@ -2012,7 +2286,7 @@ def get_alignments():
                 'codeRanges': pyjson.loads(r['codeRanges'] or '[]')
             }
             result[alignment['id']] = alignment
-            
+
         return jsonify({"status": "success", "data": result}), 200
     except Exception as e:
 
@@ -2372,6 +2646,7 @@ def clear_project_results():
         # init_project_db(project_path)
         # conn = get_db_conn(project_path)
         conn = get_db()
+        conn = conn.cursor()
         conn.execute(f'DELETE FROM issues where project_id={project_id}')
         conn.execute(f'DELETE FROM alignments where project_id={project_id}')
         # conn.commit()
@@ -2428,10 +2703,15 @@ def clear_review_results():
         if not os.path.exists(project_path):
             return jsonify({'status': 'error', 'message': '项目路径不存在'})
 
-        conn = get_db_conn(project_path)
+        #conn = get_db_conn(project_path)
+        
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(f'DELETE FROM issues where project_id={project_id}')
+        cur.execute(f'UPDATE alignments SET isReviewed=0, reviewThoughts="" where project_id={project_id}')
         # try:
-        conn.execute(f'DELETE FROM issues where project_id={project_id}')
-        conn.execute(f'UPDATE alignments SET isReviewed=0, reviewThoughts="" where project_id={project_id}')
+        #conn.execute(f'DELETE FROM issues where project_id={project_id}')
+        #conn.execute(f'UPDATE alignments SET isReviewed=0, reviewThoughts="" where project_id={project_id}')
             # conn.commit()
         # finally:
         #     conn.close()
@@ -2442,6 +2722,7 @@ def clear_review_results():
         })
 
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)})
 
 
@@ -4247,15 +4528,23 @@ def export_project_results():
             # 测试项标识
             replacements["T_FUNC"] = "T_FUNC" + str(number)
             # 追踪关系
-            replacements["BBBBB"] = "需求说明：" + str(category_id)
+            # replacements["BBBBB"] = "需求说明：" + str(category_id)
+            pattern = r'^(\d+(?:\.\d+)*)\s*' # 匹配以数字开头，由数字和点组成，后接可选空格的字符串
+            match = re.match(pattern, df.loc[number, "name"])
+            if match:
+                replacements["BBBBB"] = match.group(1)  # 返回编号，如 "3.2.1"
+            else:
+                replacements["BBBBB"] = "需求说明：" + str(category_id)
+            
             # 需求描述
             replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
             # 生成需求
-            replacements["DDDDD"] = df.loc[number, "GenReq"]
+            replacements["DDDDD"] = df.loc[number, "GenReq"] if df.loc[number, "GenReq"] is not None else ""
             # 对齐代码
             replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
+            replacements["EEEEE"] = replacements["EEEEE"] if replacements["EEEEE"] is not None else ""
             # 流程图
-            replacements["FFFFF"] = df.loc[number, "GenMermaid"]
+            replacements["FFFFF"] = df.loc[number, "GenMermaid"] if df.loc[number, "GenMermaid"] is not None else ""
 
             number += 1
             category_id += 1
@@ -4279,15 +4568,22 @@ def export_project_results():
                 # 测试项标识
                 replacements["T_FUNC"] = "T_FUNC" + str(number)
                 # 追踪关系
-                replacements["BBBBB"] = "需求说明：" + str(category_id)
+                # replacements["BBBBB"] = "需求说明：" + str(category_id)
+                pattern = r'^(\d+(?:\.\d+)*)\s*' # 匹配以数字开头，由数字和点组成，后接可选空格的字符串
+                match = re.match(pattern, df.loc[number, "name"])
+                if match:
+                    replacements["BBBBB"] = match.group(1)  # 返回编号，如 "3.2.1"
+                else:
+                    replacements["BBBBB"] = "需求说明：" + str(category_id)
                 # 需求描述
                 replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
                 # 生成需求
-                replacements["DDDDD"] = df.loc[number, "GenReq"]
+                replacements["DDDDD"] = df.loc[number, "GenReq"] if df.loc[number, "GenReq"] is not None else ""
                 # 对齐代码
                 replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
+                replacements["EEEEE"] = replacements["EEEEE"] if replacements["EEEEE"] is not None else ""
                 # 流程图
-                replacements["FFFFF"] = df.loc[number, "GenMermaid"]
+                replacements["FFFFF"] = df.loc[number, "GenMermaid"] if df.loc[number, "GenMermaid"] is not None else ""
 
                 number += 1
                 category_id += 1
@@ -4313,15 +4609,16 @@ def export_project_results():
             #                logger.info(paragraph.text)
 
             # 保存合并后的文档
-            merged_doc.save(docx_path)
+            #merged_doc.save(docx_path)
             try:
                 merged_doc.save(docx_path)
-                logger.info(f"文档保存成功：{docx_path}")
+                logger.info(f"文档可以被导出：{docx_path}")
+                
             except Exception as e:
-                logger.info(f"导出结果失败：{str(e)}")
                 # 打印详细错误（方便排查）
-                import traceback
                 logger.info(traceback.format_exc())
+                logger.info(f"导出结果失败：{str(e)}")
+                
 
 
             return send_file(
@@ -4356,9 +4653,32 @@ def export_project_results():
 
 
     except Exception as e:
+        logger.info(traceback.format_exc())
         logger.info(f"导出结果失败：{e}")
         return jsonify({"status": "error", "message": f"导出失败: {str(e)}"}), 500
 
+# ========== 将生成的临时word文件删除 ==========
+@bp.route('/project/delete-export-files', methods=['POST'])
+def delete_export_project_results():
+    try:        
+        data = request.json
+        filename = data.get('filename', [])
+        # 删除文件（从文件系统中删除）
+        temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
+        docx_path = os.path.join(temp_dir, filename)
+        if os.path.exists(docx_path):
+            os.remove(docx_path)
+            #print(f'临时文件{filename}已删除')
+            return jsonify({"status": "success", "message": f"已删除临时文件"}), 200    
+            
+        else:
+            return jsonify({"status": "success", "message": f"临时文件不存在"}), 200  
+        
+    except Exception as e:
+        logger.info(traceback.format_exc())
+        logger.info(f"删除临时文件失败：{e}")
+        return jsonify({"status": "error", "message": f"删除临时文件失败: {str(e)}"}), 500    
+        
 # 提示词设置对话框
 
 # 保存用户自定义提示词的文件
@@ -4422,6 +4742,7 @@ def _get_prompt_table_columns(db):
     return {row.get('Field') for row in rows if row and row.get('Field')}
 
 
+# 加载提示词（用于 /get_prompts）
 @login_required
 @bp.route('/get_prompts', methods=['GET'])
 def get_prompts():

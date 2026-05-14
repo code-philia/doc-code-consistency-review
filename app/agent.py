@@ -18,8 +18,11 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 API_KEY = os.environ.get("API_KEY", "0")
-MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
+# MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+MODEL_NAME = "Qwen3-32B"
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -62,15 +65,6 @@ def query_llm(message, history=None):
     return r
 
 
-def _resolve_user_id(user_id=None):
-    """优先使用显式 user_id；在请求上下文中再回退到 current_user。"""
-    if user_id is not None:
-        return user_id
-    try:
-        return current_user.user_id
-    except Exception:
-        return None
-
 def _normalize_kb_type_for_use(raw_type: str) -> str:
     kb_type = (raw_type or "other").strip()
     if kb_type in ("rule", "coding_rule", "checklist"):
@@ -80,7 +74,19 @@ def _normalize_kb_type_for_use(raw_type: str) -> str:
     if kb_type in ("align", "history_align"):
         return "align"
     return "other"
+    
+    
+def _resolve_user_id(user_id=None):
+    """优先使用显式 user_id；在请求上下文中再回退到 current_user。"""
+    if user_id is not None:
+        return user_id
+    try:
+        return current_user.user_id
+    except Exception:
+        return None
 
+
+#def _load_selected_kbs(project_path: str, kb_type: str) -> List[str]:
 def _load_selected_kb_entries(project_path: str) -> List[Dict[str, str]]:
     if not project_path:
         return []
@@ -90,6 +96,7 @@ def _load_selected_kb_entries(project_path: str) -> List[Dict[str, str]]:
     try:
         with open(metadata_file, "r", encoding="utf-8") as f:
             metadata = json.load(f)
+            
         entries = []
         for kb in metadata.get("selected_kbs", []):
             name = (kb or {}).get("name")
@@ -100,6 +107,7 @@ def _load_selected_kb_entries(project_path: str) -> List[Dict[str, str]]:
                 "type": _normalize_kb_type_for_use((kb or {}).get("type"))
             })
         return entries
+        
     except Exception:
         return []
 
@@ -151,8 +159,7 @@ def _load_user_prompt_row(user_id: Optional[int], requested_fields: List[str]) -
 
 def _load_selected_kbs(project_path: str, kb_type: str) -> List[str]:
     entries = _load_selected_kb_entries(project_path)
-    return [kb["name"] for kb in entries if kb.get("type") == kb_type and kb.get("name")]
-
+    return [kb["name"] for kb in entries if kb.get("type") == kb_type and kb.get("name")]    
 
 def _query_kb_items(
     query_text: str,
@@ -301,7 +308,7 @@ def query_codefile_from_abstract(requirement, file_abstract):
     #print("original llm output: ", llm_output)
     parsed_output = parse_abstract_output(llm_output)
     #print("requirement: ", requirement)
-    print("parse output: ", parsed_output)
+    # print("parse output: ", parsed_output)
     
     file_list = []
     similarity_results = []
@@ -328,8 +335,8 @@ def query_codefile_from_abstract(requirement, file_abstract):
                file_list.append(max_sim_results[0]['file'])
     
     
-    print("************")   
-    print(similarity_results)   
+    #print("************")   
+    #print(similarity_results)   
     #print(file_list)
     
     return file_list        
@@ -445,13 +452,14 @@ def query_related_code_block(
             normal_default=ALIGN_PROMPT_TEMPLATE,
             kbs_default=ALIGN_PROMPT_TEMPLATE_KBS
         )
+        
         prompt = template.format(
             req_content=requirement,
             code_content=code_blocks,
             reference_alignments=reference_alignments
         )
 
-    # 解析回复
+    # 多次解析回复
     max_req = 5
     parsed_output = ""
     for attempt in range(max_req):
@@ -493,7 +501,7 @@ def query_related_code(
             )
             related_code_blocks.extend(res)
         
-        print(related_code_blocks)
+        #print(related_code_blocks)
         similarity_results = []
         if (len(related_code_blocks) == 1):
             similarity_results = related_code_blocks
@@ -514,8 +522,8 @@ def query_related_code(
                similarity_results = max_sim_results  
         
         
-        print("************")   
-        print(similarity_results)   
+        #print("************")   
+        #print(similarity_results)   
         return similarity_results
     else:
         return query_related_code_block(
@@ -590,12 +598,24 @@ def query_related_code_block_by_feedback(
     )
     #print(prompt)
     
-    # 解析回复
-    response = query_llm(prompt)
-    llm_output = response.content
-    # print("original llm output: ", llm_output)
-    parsed_output = parse_output(llm_output)
-    # print("parsed llm output: ", parsed_output)
+
+    # 多次解析回复
+    max_req = 5
+    parsed_output = ""
+    for attempt in range(max_req):
+        response = query_llm(prompt)
+        llm_output = response.content
+        #print("original llm output: ", llm_output)
+        parsed_output = parse_alignment_output(llm_output)
+
+        try:
+            parsed_output = parse_alignment_output(llm_output)
+            # print("parsed llm output: ", parsed_output)
+            return parsed_output
+        except Exception as e:
+            print(f"第{attempt+1}次调用大模型输出解析失败")
+            print(e)
+    print('已尝试多次，无法正确输出和解析结果')        
     
     return parsed_output    
     
@@ -627,7 +647,7 @@ def query_related_code_by_feedback(
             )
             related_code_blocks.extend(res)
         
-        print(related_code_blocks)
+        #print(related_code_blocks)
         similarity_results = []
         if (len(related_code_blocks) == 1):
             similarity_results = related_code_blocks
@@ -648,8 +668,8 @@ def query_related_code_by_feedback(
                similarity_results = max_sim_results  
         
         
-        print("************")   
-        print(similarity_results)   
+        #print("************")   
+        #print(similarity_results)   
         return similarity_results
     else:
         return query_related_code_block_by_feedback(
@@ -715,9 +735,9 @@ def query_related_requirement_block(
     # 解析回复
     response = query_llm(prompt)
     llm_output = response.content
-    print("original llm output (req): ", llm_output)
+    #print("original llm output (req): ", llm_output)
     parsed_output = parse_output(llm_output)
-    print("parsed llm output (req): ", parsed_output)
+    #print("parsed llm output (req): ", parsed_output)
     
     return parsed_output
 
@@ -765,8 +785,8 @@ def query_related_requirement(
             if len(similarity_results) == 0:
                similarity_results = max_sim_results  
         
-        print("************")   
-        print(similarity_results)   
+        #print("************")   
+        #print(similarity_results)   
         return similarity_results
     else:
         return query_related_requirement_block(
@@ -812,20 +832,12 @@ def query_related_requirement_block_by_feedback(
 
     # 构造提示词
     # template = ALIGN_REQ_PROMPT_TEMPLATE
-    use_kbs_template = _has_any_selected_kb(project_path)
-    row = _load_user_prompt_row(resolved_user_id, ['Code2ReqAlign', 'Code2ReqAlignKbs'])
-    
-    # template = ALIGN_REQ_PROMPT_TEMPLATE if row is None else row['Code2ReqAlign']
-    # prompt = template.format(
-        # code_content=code,
-        # req_content=req_blocks
-    # )
-    
-    # 构造提示词
-    
+
     #将用户输入的提示词结合到已有的结果中，形成新的提示词
     #准备加到已有提示词的前面，用于优化大模型的输出
 
+    use_kbs_template = _has_any_selected_kb(project_path)
+    row = _load_user_prompt_row(resolved_user_id, ['Code2ReqAlign', 'Code2ReqAlignKbs'])
     original_template = _pick_template(
         row=row,
         use_kbs_template=use_kbs_template,
@@ -834,6 +846,7 @@ def query_related_requirement_block_by_feedback(
         normal_default=ALIGN_REQ_PROMPT_TEMPLATE,
         kbs_default=ALIGN_REQ_PROMPT_TEMPLATE_KBS
     )
+    
     original_prompt = original_template.format(
         code_content=code,
         req_content=req_blocks,
@@ -849,14 +862,24 @@ def query_related_requirement_block_by_feedback(
     )
     #print(prompt)
     
-    
+ 
+    # 多次解析回复
+    max_req = 5
+    parsed_output = ""
+    for attempt in range(max_req):
+        response = query_llm(prompt)
+        llm_output = response.content
+        #print("original llm output: ", llm_output)
+        parsed_output = parse_alignment_output(llm_output)
 
-    # 解析回复
-    response = query_llm(prompt)
-    llm_output = response.content
-    #print("original llm output (req): ", llm_output)
-    parsed_output = parse_output(llm_output)
-    print("parsed llm output (req): ", parsed_output)
+        try:
+            parsed_output = parse_alignment_output(llm_output)
+            # print("parsed llm output: ", parsed_output)
+            return parsed_output
+        except Exception as e:
+            print(f"第{attempt+1}次调用大模型输出解析失败")
+            print(e)
+    print('已尝试多次，无法正确输出和解析结果')        
     
     return parsed_output
 
@@ -909,8 +932,8 @@ def query_related_requirement_by_feedback(
             if len(similarity_results) == 0:
                similarity_results = max_sim_results  
         
-        print("************")   
-        print(similarity_results)   
+        #print("************")   
+        #print(similarity_results)   
         return similarity_results
     else:
         return query_related_requirement_block_by_feedback(
@@ -1056,6 +1079,7 @@ def query_review_result_by_feedback(
     # template = REVIEW_PROMPT_TEMPLATE
     # original_template = THINKING_PROMPT_TEMPLATE
     resolved_user_id = _resolve_user_id(user_id)
+    
     use_kbs_template = _has_any_selected_kb(project_path)
     row = _load_user_prompt_row(resolved_user_id, ['review', 'reviewKbs'])
 
@@ -1067,6 +1091,7 @@ def query_review_result_by_feedback(
         normal_default=THINKING_PROMPT_TEMPLATE,
         kbs_default=THINKING_PROMPT_TEMPLATE
     )
+    
     original_prompt = original_template.format(
         requirement=requirement_context,
         related_code=code_context,
@@ -1085,9 +1110,23 @@ def query_review_result_by_feedback(
     
     # 4. 调用LLM
     try:
-        response = query_llm(prompt)
-        print("LLM response for review:", response.content)
-        parsed_output = parse_review_output(response.content)
+        #response = query_llm(prompt)
+        #print("LLM response for review:", response.content)
+        #parsed_output = parse_review_output(response.content)
+        
+        # 多次解析回复
+        max_req = 5
+        parsed_output = ""
+        for attempt in range(max_req):
+            response = query_llm(prompt)
+            try:
+                parsed_output = parse_review_output(response.content)
+                # print("parsed llm output: ", parsed_output)
+                return parsed_output.get('review_process'), parsed_output.get('issue')
+            except Exception as e:
+                print(f"第{attempt+1}次调用大模型输出解析失败")
+                print(e)
+        print('已尝试多次，无法正确输出和解析结果')
         
         return parsed_output.get('review_process'), parsed_output.get('issue')
         
@@ -1186,15 +1225,63 @@ def query_review_result(
     
     # 4. 调用LLM
     try:
-        response = query_llm(prompt)
-        print("LLM response for review:", response.content)
-        parsed_output = parse_review_output(response.content)
+        #response = query_llm(prompt)
+        #print("LLM response for review:", response.content)
+        #parsed_output = parse_review_output(response.content)
         
+        # 多次解析回复
+        max_req = 5
+        parsed_output = ""
+        for attempt in range(max_req):
+            response = query_llm(prompt)
+            try:
+                parsed_output = parse_review_output(response.content)
+                # print("parsed llm output: ", parsed_output)
+                return parsed_output.get('review_process'), parsed_output.get('issue')
+            except Exception as e:
+                print(f"第{attempt+1}次调用大模型输出解析失败")
+                print(e)
+        print('已尝试多次，无法正确输出和解析结果')       
+ 
         return parsed_output.get('review_process'), parsed_output.get('issue')
         
     except Exception as e:
         print(f"审查过程中出错: {str(e)}")
         return f"审查过程中发生错误: {e}", None
+
+# def parse_review_output(response):
+    # """
+    # 解析审查输出的JSON
+    
+    # 参数:
+        # response: LLM的完整响应文本
+        
+    # 返回:
+        # 包含 "review_process" 和 "issue" 的字典
+    # """
+    # try:
+        # # 提取Markdown代码块中的JSON
+        # json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', response, re.DOTALL)
+        # if json_match:
+            # json_str = json_match.group(1)
+        # else:
+            # json_match = re.search(r'({.*})', response, re.DOTALL)
+            # if json_match:
+                # json_str = json_match.group(1)
+            # else:
+                # json_str = response
+
+        # data = _safe_json_loads(json_str)
+        # return {
+            # "review_process": data.get("review_process", "未能解析出审查过程。"),
+            # "issue": data.get("issue")
+        # }
+    # except (json.JSONDecodeError, AttributeError) as e:
+        # print(f"解析审查输出失败: {e}")
+        # return {
+            # "review_process": response,
+            # "issue": None
+        # }
 
 def parse_review_output(response):
     """
@@ -1206,30 +1293,23 @@ def parse_review_output(response):
     返回:
         包含 "review_process" 和 "issue" 的字典
     """
-    try:
-        # 提取Markdown代码块中的JSON
-        json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', response, re.DOTALL)
+    # 提取Markdown代码块中的JSON
+    json_match = re.search(r'```(?:json)?\s*({.*?})\s*```', response, re.DOTALL)
+    if json_match:
+        json_str = json_match.group(1)
+    else:
+        json_match = re.search(r'({.*})', response, re.DOTALL)
         if json_match:
             json_str = json_match.group(1)
         else:
-            json_match = re.search(r'({.*})', response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                json_str = response
+            json_str = response
 
-        data = _safe_json_loads(json_str)
-        return {
-            "review_process": data.get("review_process", "未能解析出审查过程。"),
-            "issue": data.get("issue")
-        }
-    except (json.JSONDecodeError, AttributeError) as e:
-        print(f"解析审查输出失败: {e}")
-        return {
-            "review_process": response,
-            "issue": None
-        }
-
+    data = _safe_json_loads(json_str)
+    return {
+        "review_process": data.get("review_process", "未能解析出审查过程。"),
+        "issue": data.get("issue")
+    }
+ 
 
 def _repair_json_text(text: str) -> str:
     s = text or ""
