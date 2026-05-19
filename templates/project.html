@@ -229,24 +229,22 @@
                                 :expand-on-click-node="false"
                                 node-key="path"
                                 empty-text="">
-                                <!-- <template #default="{ node, data }">
-                                    <span class="file-item req-file" :class="{ 'selected': data.path === selectedDocFile && data.type === 'file' }">
-                                        <i :class="data.icon"></i>
-                                        <span class="file-name">${ node.label }</span>
-                                    </span>
-                                </template>  -->
-								
-								<template #default="{ node, data }">
-                                    <span class="file-item req-file" :class="{ 'selected': data.path === selectedDocFile && data.type === 'file' }" @mouseenter="handleMouseEnter(data)" @mouseleave="handleMouseLeave(data)">
-                                        <i :class="data.icon"></i>
-                                        <span class="file-name">${ node.label }</span>
-										<!-- 删除按钮 -->
-										<div class="file-actions" v-show="showDeleteIcon && data.type === 'file'">
-										  <el-button size="small"  link @click.stop="removeFile(data.path, data.label, data.fileType)" class="delete-btn">×</el-button>
-										</div>
-                                    </span>
-                                </template> 
-                                
+                                <template #default="{ node, data }">
+                                    <div class="tree-node" :class="{ 'is-selected': data.path === selectedDocFile && data.type === 'file' }">
+                                        <div class="tree-node-main">
+                                            <i :class="[data.icon, 'tree-node-icon', data.type === 'directory' ? 'is-folder' : 'is-doc']"></i>
+                                            <span class="tree-node-label" :title="node.label">${ node.label }</span>
+                                        </div>
+                                        <el-button
+                                            v-if="data.type === 'file' || data.type === 'directory'"
+                                            link
+                                            class="tree-node-action"
+                                            @click.stop="removeFile(data.path, data.label, data.fileType, data.type)"
+                                        >
+                                            ×
+                                        </el-button>
+                                    </div>
+                                </template>
                             </el-tree>
                         </div>
                         </div>
@@ -269,14 +267,20 @@
                                 node-key="path"
                                 empty-text="">
                                 <template #default="{ node, data }">
-                                    <span class="file-item code-file" :class="{ 'selected': data.path === selectedCodeFile && data.type === 'file' }" @mouseenter="handleMouseEnter(data)" @mouseleave="handleMouseLeave(data)">
-                                        <i :class="data.icon"></i>
-                                        <span class="file-name">${ node.label }</span>
-                                        <!-- 删除按钮 -->
-										<div class="file-actions" v-show="showDeleteIcon && data.type === 'file'">
-										  <el-button size="small"  link @click.stop="removeFile(data.path, data.label, data.fileType)" class="delete-btn">×</el-button>
-										</div>
-                                    </span>
+                                    <div class="tree-node" :class="{ 'is-selected': data.path === selectedCodeFile && data.type === 'file' }">
+                                        <div class="tree-node-main">
+                                            <i :class="[data.icon, 'tree-node-icon', data.type === 'directory' ? 'is-folder' : 'is-code']"></i>
+                                            <span class="tree-node-label" :title="node.label">${ node.label }</span>
+                                        </div>
+                                        <el-button
+                                            v-if="data.type === 'file' || data.type === 'directory'"
+                                            link
+                                            class="tree-node-action"
+                                            @click.stop="removeFile(data.path, data.label, data.fileType, data.type)"
+                                        >
+                                            ×
+                                        </el-button>
+                                    </div>
                                 </template>
                             </el-tree>
                         </div>

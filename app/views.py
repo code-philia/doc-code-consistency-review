@@ -1040,106 +1040,94 @@ def upload_folder():
 
 @bp.route('/project/file-remove', methods=['GET'])
 def remove_file_content():
-    """根据项目路径、文件名和文件类型，删除该文件"""
+    """根据项目路径、相对路径和文件类型，删除文件或目录"""
     project_path = request.args.get('path')
     filename = request.args.get('filename')
-    file_type = request.args.get('type') # 'doc' or 'code'    
-    #print(project_path, filename, file_type)
-    
+    file_type = request.args.get('type') # 'doc' or 'code'
+    node_type = request.args.get('node_type', 'file')
+
+    if not project_path or not filename or file_type not in ('doc', 'code') or node_type not in ('file', 'directory'):
+        return jsonify({"status": "error", "message": "参数错误"}), 400
+
     try:
-        if (file_type == 'doc'):
-            project_path_repo = os.path.join(project_path, 'doc_repo')
-            # 1、在 project_path_repo 文件夹下递归查找名为 filename 的文件、删除文件
-            file_path = None
-            for root, dirs, files in os.walk(project_path_repo):
-                if filename in files:
-                    file_path = os.path.join(root, filename)
-                    os.remove(file_path)
-                    #print(f"已删除: {file_path}")
-                    break
-                        
+        repo_name = 'doc_repo' if file_type == 'doc' else 'code_repo'
+        repo_root = os.path.abspath(os.path.join(project_path, repo_name))
+        target_rel_path = filename.replace('\\', '/').strip('/')
+        target_abs_path = os.path.abspath(os.path.join(repo_root, target_rel_path))
+
+        if os.path.commonpath([repo_root, target_abs_path]) != repo_root:
+            return jsonify({"status": "error", "message": "非法路径"}), 400
+
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+
+        metadata_key = 'doc_files' if file_type == 'doc' else 'code_files'
+        matched_files = []
+        if node_type == 'file':
+            matched_files = [target_rel_path]
+        else:
+            prefix = f"{target_rel_path}/"
+            matched_files = [item for item in metadata.get(metadata_key, []) if item == target_rel_path or item.startswith(prefix)]
+
+        if node_type == 'directory' and not matched_files:
+            return jsonify({"status": "error", "message": "目录下没有可删除文件"}), 404
+
+        if not os.path.exists(target_abs_path):
+            return jsonify({"status": "error", "message": "目标不存在"}), 404
+
+        if node_type == 'directory':
+            shutil.rmtree(target_abs_path)
+        else:
+            os.remove(target_abs_path)
+
+        if file_type == 'doc':
             project_path_convert = os.path.join(project_path, 'doc_repo_converted')
             if os.path.exists(project_path_convert):
-                filefoldername = os.path.splitext(filename)[0]
-                # 2、在 project_path_convert 文件夹下递归查找名为 filefoldername 的文件夹、删除文件夹  
-                for root, dirs, files in os.walk(project_path_convert, topdown=False):
-                    if filefoldername in dirs:
-                        folder_path = os.path.join(root, filefoldername)
-                        try:
-                            shutil.rmtree(folder_path)
-                            #print(f"已删除: {folder_path}")
-                        except Exception as e:
-                            print(f"删除失败: {folder_path}，错误: {e}")
-            
-            
-            # 3、在 project_path_block 文件夹下查找 文档分块后 的文件、删除文件
+                for file_path in matched_files:
+                    filefoldername = os.path.splitext(os.path.basename(file_path))[0]
+                    for root, dirs, files in os.walk(project_path_convert, topdown=False):
+                        if filefoldername in dirs:
+                            folder_path = os.path.join(root, filefoldername)
+                            try:
+                                shutil.rmtree(folder_path)
+                            except Exception as e:
+                                print(f"删除失败: {folder_path}，错误: {e}")
+
             project_path_block = os.path.join(project_path, 'doc_block_repo')
-            if os.path.exists(project_path_block):
-                file_block = 'doc_blocks.jsonl'
-                for root, dirs, files in os.walk(project_path_block):
-                    if file_block in files:
-                        file_path = os.path.join(root, file_block)
-                        os.remove(file_path)
-                        #print(f"已删除: {file_path}")
-                        break    
-            
-            # 4、从meta文件删除该文件信息
-            metadata_file = os.path.join(project_path, 'metadata.json')
-            with open(metadata_file, 'r', encoding='utf-8') as f:
-                metadata = json.load(f)
-            # 过滤掉要删除的文件
+            if matched_files and os.path.exists(project_path_block):
+                file_block = os.path.join(project_path_block, 'doc_blocks.jsonl')
+                if os.path.exists(file_block):
+                    os.remove(file_block)
+
             if "doc_files" in metadata:
-                metadata["doc_files"] = [f for f in metadata["doc_files"] if f != filename]
-            # 写回meta文件
-            with open(metadata_file, 'w', encoding='utf-8') as f:
-                json.dump(metadata, f, indent=4, ensure_ascii=False)
-            
-            return jsonify({"status": "success", "message": '文件已删除'}), 200
-        
-        elif (file_type == 'code'):
-        
-            project_path_repo = os.path.join(project_path, 'code_repo')
-            # 1、在 project_path_repo 文件夹下递归查找名为 filename 的文件、删除文件
-            file_path = None
-            for root, dirs, files in os.walk(project_path_repo):
-                if filename in files:
-                    file_path = os.path.join(root, filename)
-                    os.remove(file_path)
-                    #print(f"已删除: {file_path}")
-                    break
-                    
-            # 2、在 project_path_block 文件夹下查找 代码分块后 的文件、删除文件
+                metadata["doc_files"] = [f for f in metadata["doc_files"] if f not in matched_files]
+        else:
             project_path_block = os.path.join(project_path, 'code_block_repo')
             if os.path.exists(project_path_block):
-                file_block = filename + '_code_blocks.jsonl'
-                for root, dirs, files in os.walk(project_path_block):
-                    if file_block in files:
-                        file_path = os.path.join(root, file_block)
-                        os.remove(file_path)
-                        #print(f"已删除: {file_path}")
-                        break    
-            
-            # 3、从meta文件删除该文件信息
-            metadata_file = os.path.join(project_path, 'metadata.json')
-            with open(metadata_file, 'r', encoding='utf-8') as f:
-                metadata = json.load(f)
-            # 过滤掉要删除的文件
-            if "code_files" in metadata:
-                metadata["code_files"] = [f for f in metadata["code_files"] if f != filename]
-            if "code_file_lines" in metadata:
-                metadata["code_file_lines"] = [f for f in metadata["code_file_lines"] if f != filename]
-            # 写回meta文件
-            with open(metadata_file, 'w', encoding='utf-8') as f:
-                json.dump(metadata, f, indent=4, ensure_ascii=False)      
-            
-            return jsonify({"status": "success", "message": '文件已删除'}), 200            
+                for file_path in matched_files:
+                    block_file_name = f"{file_path.replace('/', '_')}_code_blocks.jsonl"
+                    file_block = os.path.join(project_path_block, block_file_name)
+                    if os.path.exists(file_block):
+                        os.remove(file_block)
+                all_blocks_file = os.path.join(project_path_block, 'code_blocks.jsonl')
+                if matched_files and os.path.exists(all_blocks_file):
+                    os.remove(all_blocks_file)
 
-        else:
-            return jsonify({"status": "error", "message": "文件未找到"}), 404
-    
+            if "code_files" in metadata:
+                metadata["code_files"] = [f for f in metadata["code_files"] if f not in matched_files]
+            if isinstance(metadata.get("code_file_lines"), dict):
+                metadata["code_file_lines"] = {k: v for k, v in metadata["code_file_lines"].items() if k not in matched_files}
+
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=4, ensure_ascii=False)
+
+        message = '目录已递归删除' if node_type == 'directory' else '文件已删除'
+        return jsonify({"status": "success", "message": message, "removed_files": matched_files}), 200
+
     except Exception as e:
-        print(f"删除失败: {folder_path}，错误: {e}")
-        return jsonify({"status": "error", "message": "文件未找到"}), 404
+        print(f"删除失败: {filename}，错误: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 404
 
         
         

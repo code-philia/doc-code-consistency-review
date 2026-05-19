@@ -284,7 +284,7 @@
 }
 
 .file-items {
-    padding-left: 8px;
+    padding: 0 8px;
 }
 
 .file-item {
@@ -2089,8 +2089,8 @@
 
 .el-tree-node__content {
     background-color: transparent !important;
-    border-radius: 2px;
-    padding-left: 0;
+    border-radius: 6px;
+    padding-right: 8px;
     position: relative;
 }
 
@@ -2103,18 +2103,82 @@
     color: var(--text-primary);
 }
 
-.file-item.selected {
-    background-color: rgba(52, 152, 219, 0.1) !important;
-    border-left: 3px solid var(--accent-color);
+.tree-node {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    padding: 4px 0;
+    border-left: 3px solid transparent;
+}
+
+.tree-node-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.tree-node-icon {
+    width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+    color: #8c98a4;
+}
+
+.tree-node-icon.is-doc {
+    color: #1abc9c;
+}
+
+.tree-node-icon.is-code {
+    color: #3498db;
+}
+
+.tree-node-icon.is-folder {
+    color: #f1c40f;
+}
+
+.tree-node-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.tree-node.is-selected {
+    border-left-color: var(--accent-color);
+}
+
+.tree-node.is-selected .tree-node-label {
+    color: var(--accent-color);
     font-weight: 600;
 }
 
-.file-item.selected .file-name {
-    color: var(--accent-color);
+.tree-node-action {
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    min-width: 16px;
+    width: 16px;
+    height: 16px;
+    font-size: 12px;
+    line-height: 1;
+    color: #c4c9d4;
+    font-weight: 400;
 }
 
-.file-item:hover {
-    background-color: rgba(52, 152, 219, 0.05);
+.el-tree-node__content:hover .tree-node-action {
+    opacity: 1;
+}
+
+.tree-node-action:hover {
+    color: #aeb6c2;
 }
 
 .issue-level-selector {
@@ -2576,52 +2640,4 @@
 .alignment-list {
     flex: 1;
     overflow-y: auto;
-}
-
-/* 新增 */
-.file-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding-left: 20px; /* 为“×”预留空间 */
-}
-
-.file-actions {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  width: 30px;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px 0 0 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 悬停时显示 */
-.file-item:hover .file-actions {
-  opacity: 1;
-}
-
-.delete-btn {
-  padding: 0;
-  font-size: 16px;
-  color: #f56c6c;
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.delete-btn:hover {
-  color: #e63946;
-  background: rgba(255, 0, 0, 0.1);
 }

@@ -82,9 +82,6 @@ const app = createApp({
         
         const dialogParseDocMethodVisible = ref(false);
         const parseDocMethod = ref('default');
-		
-		const showDeleteIcon = ref(false);
-		const hoveredData = ref(null);
         const docFileTree = ref([]);
         const codeFileTree = ref([]);
 
@@ -313,82 +310,67 @@ const app = createApp({
             return blocks;
         });
         
-		
-		// 对左侧视图中，单个文件的删除
-		const handleMouseEnter = (data) => {
-		  if (data.type === 'file') {
-			showDeleteIcon.value = true;
-			hoveredData.value = data;
-		  }
-		};
+        
+        // 对左侧视图中，单个文件的删除
+        const removeFile = async (path, fileName, fileType, nodeType = 'file') => {
+            const isDirectory = nodeType === 'directory';
+            try {
+                await ElMessageBox.confirm(
+                    isDirectory
+                        ? `确定删除目录 "${fileName}" 吗？目录中的所有${fileType === 'doc' ? '需求文档' : '代码文件'}都会被递归删除。`
+                        : `确定删除${fileType === 'doc' ? '需求文档' : '代码文件'} "${fileName}" 吗？`,
+                    isDirectory ? '删除目录' : '删除文件',
+                    {
+                        confirmButtonText: '删除',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
+                    }
+                );
+            } catch (error) {
+                if (error === 'cancel' || error === 'close') return;
+                ElMessage.error("删除确认失败: " + error.message);
+                return;
+            }
 
-		const handleMouseLeave = (data) => {
-		  if (hoveredData.value === data) {
-			showDeleteIcon.value = false;
-		  }
-		};
-
-		const removeFile = async (path, fileName, fileType) => {
-		    try
-            {
-              const response = await axios.get(`/project/file-remove?path=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(fileName)}&type=${fileType}`);
-                if (response.data.status === 'success') {
-                  ElMessage.success(`文件 "${fileName}" 删除成功`);
-                  
-                  if (fileType === 'doc') {     
-                      // 深拷贝
-                      const treeCopy = JSON.parse(JSON.stringify(docFileTree.value));
-
-                      // 删除节点
-                      const removeNode = (tree, path) => {
-                        for (let i = 0; i < tree.length; i++) {
-                          if (tree[i].path === path) {
-                            tree.splice(i, 1);
-                            return;
-                          }
-                          if (tree[i].children && tree[i].children.length) {
-                            removeNode(tree[i].children, path);
-                          }
-                        }
-                      };
-                      removeNode(treeCopy, path);
-                      // 重新赋值，触发响应
-                      docFileTree.value = treeCopy;
-                      if (selectedDocFile.value === path) {
-                        selectedDocFile.value = null;
-                      }  
-                  }
-                  else if (fileType === 'code') {
-                      // 深拷贝
-                      const treeCopy = JSON.parse(JSON.stringify(codeFileTree.value));
-
-                      // 删除节点
-                      const removeNode = (tree, path) => {
-                        for (let i = 0; i < tree.length; i++) {
-                          if (tree[i].path === path) {
-                            tree.splice(i, 1);
-                            return;
-                          }
-                          if (tree[i].children && tree[i].children.length) {
-                            removeNode(tree[i].children, path);
-                          }
-                        }
-                      };
-                      removeNode(treeCopy, path);
-                      // 重新赋值，触发响应
-                      codeFileTree.value = treeCopy;
-                      if (selectedDocFile.value === path) {
-                        selectedDocFile.value = null;
-                      }  
-                  }
-                  
-                }else {
+            try {
+                const response = await axios.get(`/project/file-remove?path=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(path)}&type=${fileType}&node_type=${nodeType}`);
+                if (response.data.status !== 'success') {
                     ElMessage.warning(response.data.message);
+                    return;
                 }
+
+                const isSelectedDocAffected = fileType === 'doc' && selectedDocFile.value &&
+                    (selectedDocFile.value === path || selectedDocFile.value.startsWith(`${path}/`));
+                const isSelectedCodeAffected = fileType === 'code' && selectedCodeFile.value &&
+                    (selectedCodeFile.value === path || selectedCodeFile.value.startsWith(`${path}/`));
+
+                if (isSelectedDocAffected) {
+                    selectedDocFile.value = '';
+                    selectedDocContent.value = '';
+                    selectedDocRawContent.value = '';
+                    docPages.value = [];
+                    currentDocPage.value = 1;
+                }
+
+                if (isSelectedCodeAffected) {
+                    selectedCodeFile.value = '';
+                    selectedCodeContent.value = '';
+                    selectedCodeRawContent.value = '';
+                }
+
+                await fetchProjectMetadata();
+                if (fileType === 'doc') {
+                    await loadAndRenderDocBlocks(true);
+                } else {
+                    await loadAndRenderCodeBlocks(true);
+                }
+
+                ElMessage.success(`${isDirectory ? '目录' : '文件'} "${fileName}" 删除成功`);
             } catch (error) {
                 ElMessage.error("删除失败: " + error.message);
             }
-		};
+        };
 		
         const codeFileLines = ref({});
         const codeScale = ref(0);
@@ -1724,6 +1706,7 @@ const app = createApp({
                             label: key,
                             path: currentPath,
                             type: 'directory',
+                            fileType: fileType,
                             icon: 'fas fa-folder',
                             children: convertToTreeNodes(childNode, currentPath).filter(n => n)
                         };
@@ -6567,12 +6550,7 @@ const app = createApp({
             showCodeSelectionDialog,
             manualAlignFromBlock,
             resetManualAlignFromBlock,
-			
-			showDeleteIcon,
-			hoveredData,
-			handleMouseEnter,
-			handleMouseLeave,
-			removeFile,
+            removeFile,
             
             dialogParseDocMethodVisible, 
             parseDocMethod,
