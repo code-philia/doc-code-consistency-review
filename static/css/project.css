@@ -518,6 +518,8 @@
     overflow: hidden;
     padding: 16px;
     position: relative;
+    flex: 1;
+    min-height: 0;
 }
 
 .el-splitter-panel .split-panel .right-sidebar {
@@ -613,7 +615,6 @@
 }
 
 .content-card {
-    height: calc(100% - 10px);
     background-color: white;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -641,12 +642,17 @@
 
 .content-text-doc {
     position: relative;
-    height: 100%;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
     flex: 1;
     min-height: 0;
+}
+
+.doc-content-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .content-text-code {
@@ -664,24 +670,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 10px 12px 8px;
+    gap: 8px;
+    padding: 5px 10px 4px;
     border-top: 1px solid #edf1f7;
     background: linear-gradient(180deg, rgba(250, 252, 255, 0.96), rgba(245, 248, 252, 0.98));
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .doc-pagination-info {
-    font-size: 12px;
+    font-size: 11px;
     color: #667085;
     white-space: nowrap;
+    line-height: 1.2;
 }
 
 .doc-pagination-actions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     flex-wrap: wrap;
+}
+
+.doc-pagination-actions .el-button {
+    min-height: 22px;
+    padding: 3px 6px;
+    font-size: 11px;
 }
 
 .content-text-code code {
@@ -1378,7 +1392,7 @@
     margin-bottom: 4px;
 }
 
-.content-text-doc,
+.doc-content-scroll,
 .markdown-content-rendered,
 .doc-content-rendered,
 .review-thoughts-rendered {
@@ -1754,7 +1768,11 @@
     transition: background-color 0.3s;
 }
 
-.content-text-doc,
+.doc-content-scroll {
+    position: relative;
+    width: 100%;
+}
+
 .content-text-code {
     position: relative;
     width: 100%;
@@ -1767,7 +1785,7 @@
 }
 
 /* 确保文本内容层始终位于高亮覆盖层上方，避免影响文本选中 */
-.content-text-doc > *:not(.highlight-block),
+.doc-content-scroll > *:not(.highlight-block),
 .content-text-code > *:not(.highlight-block) {
     position: relative;
     z-index: 2;

@@ -1043,6 +1043,111 @@ const app = createApp({
             await renderDocPage(totalDocPages.value);
         };
 
+        const getDocRangeFile = (docRange) => {
+            return docRange?.documentId || docRange?.filename || '';
+        };
+
+        const getCodeRangeFile = (codeRange) => {
+            return codeRange?.documentId || codeRange?.filename || '';
+        };
+
+        const getDocPageIndicesForRange = (start, end) => {
+            const pages = docPages.value || [];
+            if (!pages.length) return [0];
+
+            const rangeStart = Number(start);
+            const rangeEnd = Number(end);
+            const effectiveStart = Number.isFinite(rangeStart) ? rangeStart : 0;
+            const effectiveEnd = Number.isFinite(rangeEnd) && rangeEnd > effectiveStart ? rangeEnd : effectiveStart + 1;
+
+            const matches = [];
+            pages.forEach((page, index) => {
+                if (effectiveStart < page.end && effectiveEnd > page.start) {
+                    matches.push(index);
+                }
+            });
+
+            if (matches.length > 0) return matches;
+
+            const containingIndex = pages.findIndex(page => effectiveStart >= page.start && effectiveStart < page.end);
+            if (containingIndex !== -1) return [containingIndex];
+
+            if (effectiveStart <= pages[0].start) return [0];
+            return [pages.length - 1];
+        };
+
+        const getDocElementsInCurrentPageForRange = (docRange) => {
+            if (!docRange) return [];
+            const start = Number(docRange.start);
+            const end = Number(docRange.end);
+            if (!Number.isFinite(start) || !Number.isFinite(end)) return [];
+
+            const docPanel = document.querySelector('.content-text-doc');
+            const blockElements = docPanel
+                ? Array.from(docPanel.querySelectorAll('.highlight-block[data-type="doc"]'))
+                    .filter(el => parseInt(el.getAttribute('data-range-start')) <= end && parseInt(el.getAttribute('data-range-end')) >= start)
+                : [];
+            const highlightElements = findIntersectingHighlightElements(start, end);
+            const parseElements = findIntersectingParseElements(start, end);
+            return [...new Set([...blockElements, ...highlightElements, ...parseElements])];
+        };
+
+        const ensureDocFileAndPageForRange = async (docRange) => {
+            const fileName = getDocRangeFile(docRange);
+            if (!fileName) return [];
+
+            if (selectedDocFile.value !== fileName) {
+                await fetchFileContent(fileName, 'doc');
+            }
+
+            const candidatePages = getDocPageIndicesForRange(docRange.start, docRange.end);
+            const currentIndex = currentDocPage.value - 1;
+            const orderedPages = candidatePages.includes(currentIndex)
+                ? [currentIndex, ...candidatePages.filter(index => index !== currentIndex)]
+                : candidatePages;
+
+            for (const pageIndex of orderedPages) {
+                if (currentDocPage.value !== pageIndex + 1) {
+                    await renderDocPage(pageIndex + 1);
+                } else {
+                    await nextTick();
+                }
+
+                const elements = getDocElementsInCurrentPageForRange(docRange);
+                if (elements.length > 0) {
+                    return elements;
+                }
+            }
+
+            await nextTick();
+            return getDocElementsInCurrentPageForRange(docRange);
+        };
+
+        const getCodeElementsInCurrentFileForRange = (codeRange) => {
+            if (!codeRange) return [];
+            const start = Number(codeRange.start);
+            const end = Number(codeRange.end);
+            if (!Number.isFinite(start) || !Number.isFinite(end)) return [];
+            const codePanel = document.querySelector('.content-text-code');
+            const blockElements = codePanel
+                ? Array.from(codePanel.querySelectorAll('.highlight-block[data-type="code"]'))
+                    .filter(el => parseInt(el.getAttribute('data-range-start')) <= end && parseInt(el.getAttribute('data-range-end')) >= start)
+                : [];
+            const highlightElements = findIntersectingCodeHighlightElements(start, end);
+            return [...new Set([...blockElements, ...highlightElements])];
+        };
+
+        const ensureCodeFileForRange = async (codeRange) => {
+            const fileName = getCodeRangeFile(codeRange);
+            if (!fileName) return [];
+            if (selectedCodeFile.value !== fileName) {
+                await fetchFileContent(fileName, 'code');
+            } else {
+                await nextTick();
+            }
+            return getCodeElementsInCurrentFileForRange(codeRange);
+        };
+
         // 进度管理辅助函数
         const startProgress = (title, total) => {
             showProgress.value = true;
@@ -3192,45 +3297,91 @@ const app = createApp({
             });
         };
 
+        const getAlignmentIndicesForBlock = (alignment, block, type) => {
+            let docIndex = 0;
+            let codeIndex = 0;
+            if (!alignment || !block) return { docIndex, codeIndex };
+
+            if (type === 'doc' && alignment.docRanges) {
+                const blockFile = block.filename || block.documentId;
+                const blockStart = Number(block.start);
+                const blockEnd = Number(block.end);
+                const matchedDocIndex = alignment.docRanges.findIndex(range =>
+                    getDocRangeFile(range) === blockFile &&
+                    Number(range.start) < blockEnd &&
+                    Number(range.end) > blockStart
+                );
+                if (matchedDocIndex !== -1) docIndex = matchedDocIndex;
+            }
+
+            if (type === 'code' && alignment.codeRanges) {
+                const blockFile = block.file || block.filename;
+                const blockStartLine = Array.isArray(block.range) ? Number(block.range[0]) : NaN;
+                const blockEndLine = Array.isArray(block.range) ? Number(block.range[1]) : NaN;
+                const matchedCodeIndex = alignment.codeRanges.findIndex(range => {
+                    const rangeFile = getCodeRangeFile(range);
+                    if (rangeFile !== blockFile) return false;
+
+                    const rangeStartLine = Number(range.startLine);
+                    const rangeEndLine = Number(range.endLine);
+                    if (Number.isFinite(blockStartLine) && Number.isFinite(blockEndLine) &&
+                        Number.isFinite(rangeStartLine) && Number.isFinite(rangeEndLine)) {
+                        return Math.max(rangeStartLine, blockStartLine) <= Math.min(rangeEndLine, blockEndLine);
+                    }
+
+                    return false;
+                });
+                if (matchedCodeIndex !== -1) codeIndex = matchedCodeIndex;
+            }
+
+            return { docIndex, codeIndex };
+        };
+
         // 处理块列表点击
         const handleBlockItemClick = async (block, index) => {
             currentSelectedBlockIndex.value = index;
-            
+
+            const matchedAlignment = findAlignmentForSidebarBlock(block, blockType.value);
+            if (matchedAlignment) {
+                const { docIndex, codeIndex } = getAlignmentIndicesForBlock(matchedAlignment, block, blockType.value);
+                await selectAlignment(matchedAlignment, docIndex, codeIndex);
+                scrollToBlockInSidebar(index);
+                return;
+            }
+
             if (blockType.value === 'doc') {
-                if (selectedDocFile.value !== block.filename) {
-                     await fetchFileContent(block.filename, 'doc');
-                }
-                await nextTick();
-                
                 const range = {
                     documentId: block.filename,
+                    filename: block.filename,
                     start: block.start,
                     end: block.end
                 };
-                
-                clearLinkedAll(); 
-                await applyDocYellowRange(range);
-                
-            } else {
-                if (selectedCodeFile.value !== block.file) {
-                    await fetchFileContent(block.file, 'code');
-                }
-                await nextTick();
-                
-                const content = selectedCodeRawContent.value;
-                if (!content) return;
-                
-                const offsets = getOffsetsFromLineRange(content, block.range[0], block.range[1]);
-                
-                const range = {
-                    documentId: block.file,
-                    start: offsets.start,
-                    end: offsets.end
-                };
-                
+
                 clearLinkedAll();
-                await applyCodeYellowRange(range);
+                await applyDocYellowRange(range);
+                return;
             }
+
+            if (selectedCodeFile.value !== block.file) {
+                await fetchFileContent(block.file, 'code');
+            }
+            await nextTick();
+
+            const content = selectedCodeRawContent.value;
+            if (!content) return;
+
+            const offsets = getOffsetsFromLineRange(content, block.range[0], block.range[1]);
+            const range = {
+                documentId: block.file,
+                filename: block.file,
+                start: offsets.start,
+                end: offsets.end,
+                startLine: block.range[0],
+                endLine: block.range[1]
+            };
+
+            clearLinkedAll();
+            await applyCodeYellowRange(range);
         };
 
         const getCodeBlockText = (block) => {
@@ -3371,6 +3522,7 @@ const app = createApp({
             const type = target.getAttribute('data-type');
             const rangeStart = parseInt(target.getAttribute('data-range-start'));
             const rangeEnd = parseInt(target.getAttribute('data-range-end'));
+            let matchedBlockSidebarIndex = -1;
 
             // 块视图联动逻辑
             if (rightSidebarMode.value === 'block') {
@@ -3407,7 +3559,7 @@ const app = createApp({
                  
                  if (index !== -1) {
                      scrollToBlockInSidebar(index);
-                     return; // 在块视图模式下，优先处理块联动，不进行对齐跳转
+                    matchedBlockSidebarIndex = index;
                  }
             }
 
@@ -3437,7 +3589,7 @@ const app = createApp({
             if (type === 'doc' && alignment.docRanges) {
                 // Find index of the clicked range in alignment.docRanges
                 const idx = alignment.docRanges.findIndex(r => 
-                    r.documentId === selectedDocFile.value && 
+                    getDocRangeFile(r) === selectedDocFile.value &&
                     Math.max(r.start, rangeStart) < Math.min(r.end, rangeEnd)
                 );
                 if (idx !== -1) docIndex = idx;
@@ -3446,7 +3598,7 @@ const app = createApp({
                  const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, rangeStart, rangeEnd);
                  
                  const idx = alignment.codeRanges.findIndex(r => {
-                    if (r.documentId !== selectedCodeFile.value) return false;
+                    if (getCodeRangeFile(r) !== selectedCodeFile.value) return false;
                     
                     // Prioritize line number intersection check
                     if (r.startLine !== undefined && r.endLine !== undefined) {
@@ -3459,7 +3611,10 @@ const app = createApp({
                 if (idx !== -1) codeIndex = idx;
             }
 
-            selectAlignment(alignment, docIndex, codeIndex);
+            await selectAlignment(alignment, docIndex, codeIndex);
+            if (rightSidebarMode.value === 'block' && matchedBlockSidebarIndex !== -1) {
+                scrollToBlockInSidebar(matchedBlockSidebarIndex);
+            }
         };
 
         // 选中对齐关系的核心逻辑
@@ -3492,8 +3647,8 @@ const app = createApp({
         };
 
         // 侧边栏点击处理
-        const handleAlignmentItemClick = (alignment) => {
-            selectAlignment(alignment);
+        const handleAlignmentItemClick = async (alignment) => {
+            await selectAlignment(alignment);
         };
 
         // 滚动侧边栏到指定对齐项
@@ -3647,15 +3802,9 @@ const app = createApp({
 
         const applyDocYellowRange = async (docRange) => {
             if (!docRange) return;
-            if (selectedDocFile.value !== docRange.documentId) {
-                await fetchFileContent(docRange.documentId, 'doc');
-            }
-            await nextTick();
-            const docPanel = document.querySelector('.content-text-doc');
-            if (!docPanel) return;
-            const candidates = Array.from(docPanel.querySelectorAll('.highlight-block[data-type="doc"]'))
-                .filter(el => parseInt(el.getAttribute('data-range-start')) <= docRange.end && parseInt(el.getAttribute('data-range-end')) >= docRange.start);
-            const target = candidates[0] || null;
+            clearDocYellow();
+            const candidates = await ensureDocFileAndPageForRange(docRange);
+            const target = candidates.find(el => el.classList.contains('highlight-block')) || candidates[0] || null;
             if (target) {
                 target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'start' });
                 target.classList.add('linked-yellow');
@@ -3665,14 +3814,8 @@ const app = createApp({
 
         const applyCodeYellowRange = async (codeRange) => {
             if (!codeRange) return;
-            if (selectedCodeFile.value !== codeRange.documentId) {
-                await fetchFileContent(codeRange.documentId, 'code');
-            }
-            await nextTick();
-            const codePanel = document.querySelector('.content-text-code');
-            if (!codePanel) return;
-            const candidates = Array.from(codePanel.querySelectorAll('.highlight-block[data-type="code"]'))
-                .filter(el => parseInt(el.getAttribute('data-range-start')) <= codeRange.end && parseInt(el.getAttribute('data-range-end')) >= codeRange.start);
+            clearCodeYellow();
+            const candidates = await ensureCodeFileForRange(codeRange);
             const target = candidates[0] || null;
             if (target) {
                 target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'start' });
@@ -3976,65 +4119,19 @@ const app = createApp({
         };
 
         // 处理对齐结果中代码片段的点击事件（反向映射）
-        const handleAlignmentCodeRangeClick = (codeRange) => {
-            // 确保当前显示的是对应的代码文件
-            if (selectedCodeFile.value !== codeRange.documentId) {
-                // 如果不是当前代码文件，先切换到对应文件
-                fetchFileContent(codeRange.documentId, 'code').then(() => {
-                    // 文件加载完成后再查找和高亮
-                    setTimeout(() => {
-                        // 查找所有有交集的高亮元素
-                        const highlightElements = findIntersectingCodeHighlightElements(codeRange.start, codeRange.end);
-                        
-                        scrollToFirstAndHighlightAllCode(highlightElements);
-                    }, 100);
-                });
-            } else {
-                // 如果是当前代码文件，直接查找和高亮
-                const highlightElements = findIntersectingCodeHighlightElements(codeRange.start, codeRange.end);
-                
-                scrollToFirstAndHighlightAllCode(highlightElements);
-            }
+        const handleAlignmentCodeRangeClick = async (codeRange) => {
+            const highlightElements = await ensureCodeFileForRange(codeRange);
+            scrollToFirstAndHighlightAllCode(highlightElements);
         };
 
         // 处理对齐结果中需求片段的点击事件（反向映射）
-        const handleAlignmentDocRangeClick = (docRange) => {
-            // 确保当前显示的是对应的文档
-            if (selectedDocFile.value !== docRange.documentId) {
-                // 如果不是当前文档，先切换到对应文档
-                fetchFileContent(docRange.documentId, 'doc').then(() => {
-                    // 文档加载完成后再查找和高亮
-                    setTimeout(() => {
-                        // 查找所有有交集的高亮元素和parse元素
-                        const highlightElements = findIntersectingHighlightElements(docRange.start, docRange.end);
-                        const parseElements = findIntersectingParseElements(docRange.start, docRange.end);
-                        
-                        // 合并所有相关元素
-                        const allElements = [...highlightElements, ...parseElements];
-                        
-                        // 去重（可能有重复的元素）
-                        const uniqueElements = [...new Set(allElements)];
-                        
-                        scrollToFirstAndHighlightAll(uniqueElements);
-                    }, 100);
-                });
-            } else {
-                // 如果是当前文档，直接查找和高亮
-                const highlightElements = findIntersectingHighlightElements(docRange.start, docRange.end);
-                const parseElements = findIntersectingParseElements(docRange.start, docRange.end);
-                
-                // 合并所有相关元素
-                const allElements = [...highlightElements, ...parseElements];
-                
-                // 去重（可能有重复的元素）
-                const uniqueElements = [...new Set(allElements)];
-                
-                scrollToFirstAndHighlightAll(uniqueElements);
-            }
+        const handleAlignmentDocRangeClick = async (docRange) => {
+            const elements = await ensureDocFileAndPageForRange(docRange);
+            scrollToFirstAndHighlightAll(elements);
         };
 
         // 滚动到第一个筛选结果的代码区域
-        const scrollToFirstFilteredCodeRange = () => {
+        const scrollToFirstFilteredCodeRange = async () => {
             if (!filteredAlignments.value || filteredAlignments.value.length === 0) return;
             
             const firstAlignment = filteredAlignments.value[0];
@@ -4042,25 +4139,12 @@ const app = createApp({
             
             const firstCodeRange = firstAlignment.codeRanges[0];
             
-            // 确保当前显示的是对应的代码文件
-            if (selectedCodeFile.value !== firstCodeRange.documentId) {
-                // 如果不是当前代码文件，先切换到对应文件
-                fetchFileContent(firstCodeRange.documentId, 'code').then(() => {
-                    // 文件加载完成后再查找和高亮
-                    setTimeout(() => {
-                        const highlightElements = findIntersectingCodeHighlightElements(firstCodeRange.start, firstCodeRange.end);
-                        scrollToFirstAndHighlightAllCode(highlightElements);
-                    }, 100);
-                });
-            } else {
-                // 如果是当前代码文件，直接查找和高亮
-                const highlightElements = findIntersectingCodeHighlightElements(firstCodeRange.start, firstCodeRange.end);
-                scrollToFirstAndHighlightAllCode(highlightElements);
-            }
+            const highlightElements = await ensureCodeFileForRange(firstCodeRange);
+            scrollToFirstAndHighlightAllCode(highlightElements);
         };
 
         // 滚动到第一个筛选结果的文档区域
-        const scrollToFirstFilteredDocRange = () => {
+        const scrollToFirstFilteredDocRange = async () => {
             if (!filteredAlignments.value || filteredAlignments.value.length === 0) return;
             
             const firstAlignment = filteredAlignments.value[0];
@@ -4068,37 +4152,8 @@ const app = createApp({
             
             const firstDocRange = firstAlignment.docRanges[0];
             
-            // 确保当前显示的是对应的文档
-            if (selectedDocFile.value !== firstDocRange.documentId) {
-                // 如果不是当前文档，先切换到对应文档
-                fetchFileContent(firstDocRange.documentId, 'doc').then(() => {
-                    // 文档加载完成后再查找和高亮
-                    setTimeout(() => {
-                        const highlightElements = findIntersectingHighlightElements(firstDocRange.start, firstDocRange.end);
-                        const parseElements = findIntersectingParseElements(firstDocRange.start, firstDocRange.end);
-                        
-                        // 合并所有相关元素
-                        const allElements = [...highlightElements, ...parseElements];
-                        
-                        // 去重（可能有重复的元素）
-                        const uniqueElements = [...new Set(allElements)];
-                        
-                        scrollToFirstAndHighlightAll(uniqueElements);
-                    }, 100);
-                });
-            } else {
-                // 如果是当前文档，直接查找和高亮
-                const highlightElements = findIntersectingHighlightElements(firstDocRange.start, firstDocRange.end);
-                const parseElements = findIntersectingParseElements(firstDocRange.start, firstDocRange.end);
-                
-                // 合并所有相关元素
-                const allElements = [...highlightElements, ...parseElements];
-                
-                // 去重（可能有重复的元素）
-                const uniqueElements = [...new Set(allElements)];
-                
-                scrollToFirstAndHighlightAll(uniqueElements);
-            }
+            const elements = await ensureDocFileAndPageForRange(firstDocRange);
+            scrollToFirstAndHighlightAll(elements);
         };
 
         // 处理代码选择
