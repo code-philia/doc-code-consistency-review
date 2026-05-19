@@ -74,6 +74,11 @@ const app = createApp({
         const selectedCodeContent = ref('');
         const selectedDocRawContent = ref('');
         const selectedCodeRawContent = ref('');
+        const docPages = ref([]);
+        const currentDocPage = ref(1);
+        const DOC_PAGE_TARGET_CHARS = 12000;
+        const DOC_PAGE_MIN_CHARS = 8000;
+        const DOC_PAGE_MAX_CHARS = 18000;
         
         const dialogParseDocMethodVisible = ref(false);
         const parseDocMethod = ref('default');
@@ -918,6 +923,143 @@ const app = createApp({
             }
         };
 
+        const totalDocPages = computed(() => docPages.value.length || 1);
+
+        const buildDocPages = (content) => {
+            if (!content) return [];
+
+            const pages = [];
+            let start = 0;
+            const markers = ['\n# ', '\n## ', '\n### ', '\n#### ', '\n\n'];
+            const countOccurrences = (text, token) => {
+                if (!text || !token) return 0;
+                let count = 0;
+                let fromIndex = 0;
+                while (true) {
+                    const foundIndex = text.indexOf(token, fromIndex);
+                    if (foundIndex === -1) break;
+                    count += 1;
+                    fromIndex = foundIndex + token.length;
+                }
+                return count;
+            };
+
+            const normalizeBreakPoint = (segmentStart, candidateEnd) => {
+                let safeEnd = candidateEnd;
+                const segment = content.slice(segmentStart, safeEnd);
+                const fenceCount = countOccurrences(segment, '```');
+                if (fenceCount % 2 !== 0) {
+                    const closingFence = content.indexOf('```', safeEnd);
+                    if (closingFence !== -1) {
+                        safeEnd = closingFence + 3;
+                    }
+                }
+
+                const blockMathCount = countOccurrences(content.slice(segmentStart, safeEnd), '$$');
+                if (blockMathCount % 2 !== 0) {
+                    const closingMath = content.indexOf('$$', safeEnd);
+                    if (closingMath !== -1) {
+                        safeEnd = closingMath + 2;
+                    }
+                }
+
+                return Math.min(safeEnd, content.length);
+            };
+
+            const pickBreakPoint = (segmentStart) => {
+                const remaining = content.length - segmentStart;
+                if (remaining <= DOC_PAGE_MAX_CHARS) {
+                    return content.length;
+                }
+
+                const minEnd = Math.min(content.length, segmentStart + DOC_PAGE_MIN_CHARS);
+                const idealEnd = Math.min(content.length, segmentStart + DOC_PAGE_TARGET_CHARS);
+                const maxEnd = Math.min(content.length, segmentStart + DOC_PAGE_MAX_CHARS);
+
+                const resolveBreak = (index, marker) => {
+                    if (index < minEnd) return null;
+                    return index + (marker === '\n\n' ? 2 : 1);
+                };
+
+                for (const marker of markers) {
+                    const backwardIndex = content.lastIndexOf(marker, idealEnd);
+                    const breakPoint = resolveBreak(backwardIndex, marker);
+                    if (breakPoint !== null) {
+                        return normalizeBreakPoint(segmentStart, breakPoint);
+                    }
+                }
+
+                for (const marker of markers) {
+                    const forwardIndex = content.indexOf(marker, idealEnd);
+                    if (forwardIndex !== -1 && forwardIndex <= maxEnd) {
+                        return normalizeBreakPoint(segmentStart, forwardIndex + (marker === '\n\n' ? 2 : 1));
+                    }
+                }
+
+                return normalizeBreakPoint(segmentStart, maxEnd);
+            };
+
+            while (start < content.length) {
+                const end = pickBreakPoint(start);
+                pages.push({
+                    start,
+                    end,
+                    content: content.slice(start, end)
+                });
+
+                if (end <= start) break;
+                start = end;
+            }
+
+            return pages;
+        };
+
+        const shiftMarkdownParseOffsets = (html, offsetBase) => {
+            if (!html || !offsetBase) return html;
+            return html.replace(/(parse-(?:start|end)=")(\d+)(")/g, (_, prefix, value, suffix) => {
+                return `${prefix}${Number(value) + offsetBase}${suffix}`;
+            });
+        };
+
+        const renderDocPage = async (pageNumber = 1) => {
+            const pages = docPages.value;
+            if (!pages || pages.length === 0) {
+                currentDocPage.value = 1;
+                selectedDocContent.value = '';
+                return;
+            }
+
+            const safePage = Math.min(Math.max(pageNumber, 1), pages.length);
+            const page = pages[safePage - 1];
+            const renderedHtml = await renderMarkdown(page.content);
+
+            currentDocPage.value = safePage;
+            selectedDocContent.value = shiftMarkdownParseOffsets(renderedHtml, page.start);
+
+            await nextTick();
+            await loadAndRenderDocBlocks(false);
+        };
+
+        const goToDocFirstPage = async () => {
+            if (currentDocPage.value === 1) return;
+            await renderDocPage(1);
+        };
+
+        const goToDocPrevPage = async () => {
+            if (currentDocPage.value <= 1) return;
+            await renderDocPage(currentDocPage.value - 1);
+        };
+
+        const goToDocNextPage = async () => {
+            if (currentDocPage.value >= totalDocPages.value) return;
+            await renderDocPage(currentDocPage.value + 1);
+        };
+
+        const goToDocLastPage = async () => {
+            if (currentDocPage.value === totalDocPages.value) return;
+            await renderDocPage(totalDocPages.value);
+        };
+
         // 进度管理辅助函数
         const startProgress = (title, total) => {
             showProgress.value = true;
@@ -1422,7 +1564,8 @@ const app = createApp({
                         if (fileType === 'doc') {
                             selectedDocFile.value = fileName;
                             selectedDocRawContent.value = content;
-                            selectedDocContent.value = await renderMarkdown(content);
+                            docPages.value = buildDocPages(content);
+                            await renderDocPage(1);
                             
                             // 切换文档时自动退出筛选模式
                             if (isFiltered.value) {
@@ -1430,9 +1573,6 @@ const app = createApp({
                                 isFiltered.value = false;
                             }
                             
-                            // Load and render decomposition blocks
-                            await loadAndRenderDocBlocks();
-
                             // 当选择文档时，获取该文档的对齐结果
                             await fetchAlignments();
                         } else if (fileType === 'code') {
@@ -5560,6 +5700,8 @@ const app = createApp({
             selectedCodeContent.value = '';
             selectedDocRawContent.value = '';
             selectedCodeRawContent.value = '';
+            docPages.value = [];
+            currentDocPage.value = 1;
 
             // 对齐与审查状态
             alignmentResults.value = [];
@@ -6265,6 +6407,12 @@ const app = createApp({
             selectedDocContent,
             selectedCodeContent,
             selectedDocRawContent,
+            currentDocPage,
+            totalDocPages,
+            goToDocFirstPage,
+            goToDocPrevPage,
+            goToDocNextPage,
+            goToDocLastPage,
             handleDocSelection,
             showAlignmentDialog,
             showAlignmentDirectionDialog,

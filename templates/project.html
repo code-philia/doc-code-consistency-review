@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -461,6 +461,17 @@
                                     </div>
                                     <div class="content-card">
                                         <div class="content-text-doc" v-html="selectedDocContent" @mouseup="handleDocSelection"></div>
+                                        <div class="doc-pagination-bar" v-if="selectedDocFile">
+                                            <div class="doc-pagination-info">
+                                                第 ${ currentDocPage } / ${ totalDocPages } 页
+                                            </div>
+                                            <div class="doc-pagination-actions">
+                                                <el-button size="small" text :disabled="currentDocPage <= 1" @click="goToDocFirstPage">首页</el-button>
+                                                <el-button size="small" text :disabled="currentDocPage <= 1" @click="goToDocPrevPage">上一页</el-button>
+                                                <el-button size="small" text :disabled="currentDocPage >= totalDocPages" @click="goToDocNextPage">下一页</el-button>
+                                                <el-button size="small" text :disabled="currentDocPage >= totalDocPages" @click="goToDocLastPage">尾页</el-button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel code-panel" :min="200" size="40%">
