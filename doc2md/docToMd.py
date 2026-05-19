@@ -6,8 +6,10 @@ from lxml import etree
 import shutil
 import os
 import xml.etree.ElementTree as ET
+from .docx2tex.mathtype_docx2latex import convert_docx
+from pathlib import Path
 
-def convertDocToMarkdown(filePath, targetFolder):
+def convertDocToMarkdown(filePath, targetFolder, parseDocMethod):
     fileName = os.path.basename(filePath)
     fileNamePrefix = fileName.split('.')[0]
     savedDir = os.path.join(targetFolder, fileNamePrefix)
@@ -15,14 +17,38 @@ def convertDocToMarkdown(filePath, targetFolder):
         os.makedirs(savedDir, exist_ok=True)
         
     # Step 1: parse math formulas in the docx file
-    parseMathtype(filePath, savedDir)
+    if parseDocMethod == 'enhanced':
+        convert_docx(filePath, filePath)
+    else:
+        parseMathtype(filePath, savedDir)
+    
     
     # Step 2: convert the docx file to markdown
     savedName = f"{fileNamePrefix}.md"
     savedFilePath = os.path.join(savedDir, savedName)
-    do_convert(filePath, target_dir=savedDir, use_md_table=True, savedMdName=savedFilePath)
+    do_convert(filePath, parseDocMethod, target_dir=savedDir, use_md_table=True, savedMdName=savedFilePath)
+    
+    # 清除转换过程中产生的临时文件及log，debug时请注释
+    repo_root = Path(__file__).resolve().parent
+    output_workspace = os.path.join(repo_root, 'docx2tex', 'output_workspace')
+    if os.path.exists(output_workspace):
+        clear_folder(output_workspace)
 
-
+def clear_folder(folder_path):
+    """
+    清空指定文件夹中的所有内容（文件和子文件夹），但保留文件夹本身。
+    """
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print(f"删除 {file_path} 时出错: {e}")
+    
+    
 def parseMathtype(file_path, saved_dir):
     # 确保输出目录存在
     # 判断导入的文件是否为docx
@@ -51,7 +77,7 @@ def parseMathtype(file_path, saved_dir):
             with zipfile.ZipFile(file_path, 'r') as docx:
                 # 创建一个字典来存储文件内容
                 file_dict = {file_info.filename: docx.read(file_info) for file_info in docx.infolist()}
-
+            #print('*******Step 1*******')
             rels_object_map = {}
             # '{http://schemas.openxmlformats.org/package/2006/relationships}Relationships'
             rels_file = 'word/_rels/document.xml.rels'
@@ -129,3 +155,7 @@ def parseMathtype(file_path, saved_dir):
     except Exception as e:
         print(f"word文档 mathtype提取失败！，错误原因是：{str(e)}")
 
+if __name__ == '__main__':
+    filePath = '相机重构软核功能说明.docx'
+    targetFolder = './test_convert'
+    convertDocToMarkdown(filePath, targetFolder)

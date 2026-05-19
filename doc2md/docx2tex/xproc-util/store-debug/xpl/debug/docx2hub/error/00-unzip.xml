@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:files xmlns:c="http://www.w3.org/ns/xproc-step"
+         xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx.tmp/">
+   <c:file name="[Content_Types].xml"/>
+   <c:file name="_rels/.rels"/>
+   <c:file name="word/document.xml"/>
+   <c:file name="word/_rels/document.xml.rels"/>
+   <c:file name="word/footnotes.xml"/>
+   <c:file name="word/endnotes.xml"/>
+   <c:file name="word/media/image1.wmf"/>
+   <c:file name="word/embeddings/oleObject1.bin"/>
+   <c:file name="word/embeddings/oleObject2.bin"/>
+   <c:file name="word/media/image2.wmf"/>
+   <c:file name="word/embeddings/oleObject3.bin"/>
+   <c:file name="word/media/image3.wmf"/>
+   <c:file name="word/embeddings/oleObject4.bin"/>
+   <c:file name="word/media/image4.wmf"/>
+   <c:file name="word/embeddings/oleObject5.bin"/>
+   <c:file name="word/theme/theme1.xml"/>
+   <c:file name="word/settings.xml"/>
+   <c:file name="word/styles.xml"/>
+   <c:file name="word/webSettings.xml"/>
+   <c:file name="word/fontTable.xml"/>
+   <c:file name="docProps/core.xml"/>
+   <c:file name="docProps/app.xml"/>
+</c:files>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathsize="100%" mathvariant="italic">r</mi>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mfrac>
+         <mrow>
+            <mi mathsize="100%" mathvariant="italic">α</mi>
+            <msub>
+               <mi mathvariant="italic">w</mi>
+            </msub>
+            <mo mathsize="100%" mathvariant="normal">(</mo>
+            <mi mathsize="100%" mathvariant="italic">k</mi>
+            <mo mathsize="100%" mathvariant="normal">)</mo>
+         </mrow>
+         <mrow>
+            <mn mathsize="100%" mathvariant="normal">2</mn>
+            <mi mathsize="100%" mathvariant="italic">α</mi>
+            <msub>
+               <mi mathvariant="italic">n</mi>
+            </msub>
+            <mo mathsize="100%" mathvariant="normal">(</mo>
+            <mi mathsize="100%" mathvariant="italic">k</mi>
+            <mo mathsize="100%" mathvariant="normal">)</mo>
+         </mrow>
+      </mfrac>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+      <msup>
+         <mn mathvariant="normal">2</mn>
+      </msup>
+   </mrow>
+</math>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <msub>
+         <mi mathsize="100%" mathvariant="italic">μ</mi>
+         <mi mathvariant="italic">h</mi>
+      </msub>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mi mathsize="100%" mathvariant="italic">h</mi>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mfenced close="" open="{" separators="">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mn mathsize="100%" mathvariant="normal">1</mn>
+                        <mtable>
+                           <mtr>
+                              <mtd>
+                                 <mrow/>
+                              </mtd>
+                              <mtd>
+                                 <mrow/>
+                              </mtd>
+                           </mtr>
+                        </mtable>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <msup>
+                           <mi mathsize="100%" mathvariant="italic">e</mi>
+                           <mrow>
+                              <mo mathvariant="normal">−</mo>
+                              <mi mathvariant="italic">k</mi>
+                              <mo mathvariant="normal">(</mo>
+                              <mi mathvariant="italic">h</mi>
+                              <mo mathvariant="normal">−</mo>
+                              <mi mathvariant="italic">α</mi>
+                              <msup>
+                                 <mo mathvariant="normal">)</mo>
+                                 <mn mathvariant="normal">2</mn>
+                              </msup>
+                           </mrow>
+                        </msup>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+   </mrow>
+</math>

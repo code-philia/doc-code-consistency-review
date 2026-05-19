@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+   <mover xmlns:tr="http://transpect.io" accent="true">
+      <mi>S</mi>
+      <mo>˙</mo>
+   </mover>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <mover xmlns:tr="http://transpect.io" accent="true">
+      <mi>P</mi>
+      <mo>˙</mo>
+   </mover>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">+</mo>
+   <mi xmlns:tr="http://transpect.io">β</mi>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">[</mo>
+   <mi xmlns:tr="http://transpect.io">Z</mi>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">−</mo>
+   <mi xmlns:tr="http://transpect.io">P</mi>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">]</mo>
+   <mo xmlns:tr="http://transpect.io">/</mo>
+   <mi xmlns:tr="http://transpect.io">T</mi>
+</math>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mtable>
+         <mtr>
+            <mtd>
+               <mrow>
+                  <mn mathsize="100%" mathvariant="normal">0</mn>
+                  <mo mathsize="100%" mathvariant="normal">≤</mo>
+                  <mi mathsize="100%" mathvariant="italic">h</mi>
+                  <mo mathsize="100%" mathvariant="normal">≤</mo>
+                  <mn mathsize="100%" mathvariant="normal">500</mn>
+               </mrow>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <mrow>
+                  <mn mathsize="100%" mathvariant="normal">500</mn>
+                  <mo mathsize="100%" mathvariant="normal">&lt;</mo>
+                  <mi mathsize="100%" mathvariant="italic">h</mi>
+               </mrow>
+            </mtd>
+         </mtr>
+      </mtable>
+   </mrow>
+</math>

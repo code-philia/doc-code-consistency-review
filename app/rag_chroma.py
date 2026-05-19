@@ -207,6 +207,7 @@ class RAGEngine:
         try:
             # 获取前 N 条
             results = collection.get(limit=limit, include=["metadatas", "documents"])
+            # print("results['metadatas']=======================", results['metadatas'])
             items = []
             if results and results['ids']:
                 for i in range(len(results['ids'])):
@@ -227,6 +228,17 @@ class RAGEngine:
         collection = col_info['collection']
         try:
             collection.delete(ids=[item_id])
+            return {"status": "success", "message": "删除成功", "remaining": collection.count()}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def delete_file(self, kb_type: str, kb_name: str, source_file: str):
+        col_info = self._get_or_create_collection(kb_type, kb_name)
+        if not col_info:
+            return {"status": "error", "message": "知识库不存在"}
+        collection = col_info['collection']
+        try:
+            collection.delete(where={"source_file": source_file})
             return {"status": "success", "message": "删除成功", "remaining": collection.count()}
         except Exception as e:
             return {"status": "error", "message": str(e)}

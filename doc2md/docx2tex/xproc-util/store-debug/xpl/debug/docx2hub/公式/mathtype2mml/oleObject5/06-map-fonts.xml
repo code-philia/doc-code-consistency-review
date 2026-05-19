@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi mathvariant="italic" mathsize="100%">S</mi>
+      <mn mathvariant="normal" mathsize="100%">(</mn>
+      <mi mathvariant="italic" mathsize="100%">k</mi>
+      <mn mathvariant="normal" mathsize="100%">)</mn>
+      <mo mathvariant="normal" mathsize="100%">=</mo>
+      <mfenced close="]" open="[" separators="">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic" mathsize="100%">R</mi>
+                        <mi mathvariant="italic" mathsize="100%">(</mi>
+                        <mi mathvariant="italic" mathsize="100%">k</mi>
+                        <mi mathvariant="italic" mathsize="100%">/</mi>
+                        <mi mathvariant="italic" mathsize="100%">k</mi>
+                        <mi mathvariant="italic" mathsize="100%">)</mi>
+                     </mrow>
+                  </mtd>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic" mathsize="100%">A</mi>
+                        <mi mathvariant="italic" mathsize="100%">(</mi>
+                        <mi mathvariant="italic" mathsize="100%">k</mi>
+                        <mi mathvariant="italic" mathsize="100%">/</mi>
+                        <mi mathvariant="italic" mathsize="100%">k</mi>
+                        <mi mathvariant="italic" mathsize="100%">)</mi>
+                     </mrow>
+                  </mtd>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic" mathsize="100%">E</mi>
+                        <mi mathvariant="italic" mathsize="100%">(</mi>
+                        <mi mathvariant="italic" mathsize="100%">k</mi>
+                        <mi mathvariant="italic" mathsize="100%">/</mi>
+                        <mi mathvariant="italic" mathsize="100%">k</mi>
+                        <mi mathvariant="italic" mathsize="100%">)</mi>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+      <msup>
+         <mrow>
+            <mtext mathvariant="normal">T</mtext>
+         </mrow>
+      </msup>
+   </mrow>
+</math>

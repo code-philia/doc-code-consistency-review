@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols>
+  <!--  *
+        * Euclid Math Two: http://www.dessci.com/en/products/mathtype/misc/euclid_math1_plain.gif
+        * -->
+  <!-- SPACE -->
+   <symbol number="0009" entity="&#x9;" char=" "/>
+   <symbol number="002C" entity="," char="□"/>
+   <symbol number="F02C" entity="" char="□"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL A -->
+   <symbol number="0041" entity="A" char="𝒜"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL C -->
+   <symbol number="0043" entity="C" char="𝒞"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL D -->
+   <symbol number="0044" entity="D" char="𝒟"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL F -->
+   <symbol number="F046" entity="" char="ℱ"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL G -->
+   <symbol number="0047" entity="G" char="𝒢"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL K -->
+   <symbol number="004B" entity="K" char="𝒦"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL N -->
+   <symbol number="004E" entity="N" char="𝒩"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL O -->
+   <symbol number="004F" entity="O" char="𝒪"/>
+   <symbol number="F04F" entity="" char="𝒪"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL P -->
+   <symbol number="0050" entity="P" char="𝒫"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL Q -->
+   <symbol number="0051" entity="Q" char="𝒬"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL R -->
+   <symbol number="0052" entity="R" char="ℛ"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL S -->
+   <symbol number="0053" entity="S" char="𝒮"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL T -->
+   <symbol number="0054" entity="T" char="𝒯"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL U -->
+   <symbol number="0055" entity="U" char="𝒰"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL V -->
+   <symbol number="0056" entity="V" char="𝒱"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL W -->
+   <symbol number="0057" entity="W" char="𝒲"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL X -->
+   <symbol number="0058" entity="X" char="𝒳"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL Y -->
+   <symbol number="0059" entity="Y" char="𝒴"/>
+   <!-- MATHEMATICAL SCRIPT CAPITAL Z -->
+   <symbol number="005A" entity="Z" char="𝒵"/>
+   <!-- THINSPACE -->
+   <symbol number="0069" entity="i" char=" "/>
+</symbols>

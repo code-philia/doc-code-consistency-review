@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols>
+  
+  <!-- Please check/edit also MT_Symbol.xml for any change. -->
+
+  <!--SPACE-->
+   <symbol number="F020" entity="" char=" "/>
+   <symbol number="0020" entity=" " char=" "/>
+   <!--EXCLAMATION MARK-->
+   <symbol number="F021" entity="" char="!"/>
+   <symbol number="0021" entity="!" char="!"/>
+   <!--NUMBER SIGN-->
+   <symbol number="F023" entity="" char="#"/>
+   <symbol number="0023" entity="#" char="#"/>
+   <!--PERCENT SIGN-->
+   <symbol number="F025" entity="" char="%"/>
+   <symbol number="0025" entity="%" char="%"/>
+   <!--AMPERSAND-->
+   <symbol number="F026" entity="" char="&amp;"/>
+   <symbol number="0026" entity="&amp;" char="&amp;"/>
+   <!--LEFT PARENTHESIS-->
+   <symbol number="F028" entity="" char="("/>
+   <symbol number="0028" entity="(" char="("/>
+   <!--RIGHT PARENTHESIS-->
+   <symbol number="F029" entity="" char=")"/>
+   <symbol number="0029" entity=")" char=")"/>
+   <!--PLUS SIGN-->
+   <symbol number="F02B" entity="" char="+"/>
+   <symbol number="002B" entity="+" char="+"/>
+   <!--COMMA-->
+   <symbol number="F02C" entity="" char=","/>
+   <symbol number="002C" entity="," char=","/>
+   <!--FULL STOP-->
+   <symbol number="F02E" entity="" char="."/>
+   <symbol number="002E" entity="." char="."/>
+   <!--SOLIDUS-->
+   <symbol number="F02F" entity="" char="/"/>
+   <symbol number="002F" entity="/" char="/"/>
+   <!--DIGIT ZERO-->
+   <symbol number="F030" entity="" char="0"/>
+   <symbol number="0030" entity="0" char="0"/>
+   <!--DIGIT ONE-->
+   <symbol number="F031" entity="" char="1"/>
+   <symbol number="0031" entity="1" char="1"/>
+   <!--DIGIT TWO-->
+   <symbol number="F032" entity="" char="2"/>
+   <symbol number="0032" entity="2" char="2"/>
+   <!--DIGIT THREE-->
+   <symbol number="F033" entity="" char="3"/>
+   <symbol number="0033" entity="3" char="3"/>
+   <!--DIGIT FOUR-->
+   <symbol number="F034" entity="" char="4"/>
+   <symbol number="0034" entity="4" char="4"/>
+   <!--DIGIT FIVE-->
+   <symbol number="F035" entity="" char="5"/>
+   <symbol number="0035" entity="5" char="5"/>
+   <!--DIGIT SIX-->
+   <symbol number="F036" entity="" char="6"/>
+   <symbol number="0036" entity="6" char="6"/>
+   <!--DIGIT SEVEN-->
+   <symbol number="F037" entity="" char="7"/>
+   <symbol number="0037" entity="7" char="7"/>
+   <!--DIGIT EIGHT-->
+   <symbol number="F038" entity="" char="8"/>
+   <symbol number="0038" entity="8" char="8"/>
+   <!--DIGIT NINE-->
+   <symbol number="F039" entity="" char="9"/>
+   <symbol number="0039" entity="9" char="9"/>
+   <!--COLON-->
+   <symbol number="F03A" entity="" char=":"/>
+   <symbol number="003A" entity=":" char=":"/>
+   <!--SEMICOLON-->
+   <symbol number="F03B" entity="" char=";"/>
+   <symbol number="003B" entity=";" char=";"/>
+   <!--LESS-THAN SIGN-->
+   <symbol number="F03C" entity="" char="&lt;"/>
+   <symbol number="003C" entity="&lt;" char="&lt;"/>
+   <!--EQUALS SIGN-->
+   <symbol number="F03D" entity="" char="="/>
+   <symbol number="003D" entity="=" char="="/>
+   <!--GREATER-THAN SIGN-->
+   <symbol number="F03E" entity="" char="&gt;"/>
+   <symbol number="003E" entity="&gt;" char="&gt;"/>
+   <!--QUESTION MARK-->
+   <symbol number="F03F" entity="" char="?"/>
+   <symbol number="003F" entity="?" char="?"/>
+   <!--LEFT SQUARE BRACKET-->
+   <symbol number="F05B" entity="" char="["/>
+   <symbol number="005B" entity="[" char="["/>
+   <!--RIGHT SQUARE BRACKET-->
+   <symbol number="F05D" entity="" char="]"/>
+   <symbol number="005D" entity="]" char="]"/>
+   <!--LOW LINE-->
+   <symbol number="F05F" entity="" char="_"/>
+   <symbol number="005F" entity="_" char="_"/>
+   <!--LEFT CURLY BRACKET-->
+   <symbol number="F07B" entity="" char="{"/>
+   <symbol number="007B" entity="{" char="{"/>
+   <!--VERTICAL LINE-->
+   <symbol number="F07C" entity="" char="|"/>
+   <symbol number="007C" entity="|" char="|"/>
+   <!--RIGHT CURLY BRACKET-->
+   <symbol number="F07D" entity="" char="}"/>
+   <symbol number="007D" entity="}" char="}"/>
+   <!--DEGREE SIGN-->
+   <symbol number="F0B0" entity="" char="°"/>
+   <symbol number="00B0" entity="°" char="°"/>
+   <!--PLUS-MINUS SIGN-->
+   <symbol number="F0B1" entity="" char="±"/>
+   <symbol number="00B1" entity="±" char="±"/>
+   <!--MULTIPLICATION SIGN-->
+   <symbol number="F0B4" entity="" char="×"/>
+   <symbol number="00B4" entity="´" char="×"/>
+   <!--DIVISION SIGN-->
+   <symbol number="F0B8" entity="" char="÷"/>
+   <symbol number="00B8" entity="¸" char="÷"/>
+   <!--REGISTERED SIGN (SERIF)-->
+   <symbol number="F0D2" entity="" char="®"/>
+   <symbol number="00D2" entity="Ò" char="®"/>
+   <!--COPYRIGHT SIGN (SERIF)-->
+   <symbol number="F0D3" entity="" char="©"/>
+   <symbol number="00D3" entity="Ó" char="©"/>
+   <!--NOT SIGN-->
+   <symbol number="F0D8" entity="" char="¬"/>
+   <symbol number="00D8" entity="Ø" char="¬"/>
+   <!--REGISTERED SIGN (SANS-SERIF)-->
+   <symbol number="F0E2" entity="" char="®"/>
+   <symbol number="00E2" entity="â" char="®"/>
+   <!--COPYRIGHT SIGN (SANS-SERIF)-->
+   <symbol number="F0E3" entity="" char="©"/>
+   <symbol number="00E3" entity="ã" char="©"/>
+   <!--LATIN SMALL LETTER F WITH HOOK-->
+   <symbol number="F0A6" entity="" char="ƒ"/>
+   <symbol number="00A6" entity="¦" char="ƒ"/>
+   <!--GREEK CAPITAL LETTER ALPHA-->
+   <symbol number="F041" entity="" char="Α"/>
+   <symbol number="0041" entity="A" char="Α"/>
+   <!--GREEK CAPITAL LETTER BETA-->
+   <symbol number="F042" entity="" char="Β"/>
+   <symbol number="0042" entity="B" char="Β"/>
+   <!--GREEK CAPITAL LETTER GAMMA-->
+   <symbol number="F047" entity="" char="Γ"/>
+   <symbol number="0047" entity="G" char="Γ"/>
+   <!--GREEK CAPITAL LETTER DELTA-->
+   <symbol number="F044" entity="" char="Δ"/>
+   <symbol number="0044" entity="D" char="Δ"/>
+   <!--GREEK CAPITAL LETTER EPSILON-->
+   <symbol number="F045" entity="" char="Ε"/>
+   <symbol number="0045" entity="E" char="Ε"/>
+   <!--GREEK CAPITAL LETTER ZETA-->
+   <symbol number="F05A" entity="" char="Ζ"/>
+   <symbol number="005A" entity="Z" char="Ζ"/>
+   <!--GREEK CAPITAL LETTER ETA-->
+   <symbol number="F048" entity="" char="Η"/>
+   <symbol number="0048" entity="H" char="Η"/>
+   <!--GREEK CAPITAL LETTER THETA-->
+   <symbol number="F051" entity="" char="Θ"/>
+   <symbol number="0051" entity="Q" char="Θ"/>
+   <!--GREEK CAPITAL LETTER IOTA-->
+   <symbol number="F049" entity="" char="Ι"/>
+   <symbol number="0049" entity="I" char="Ι"/>
+   <!--GREEK CAPITAL LETTER KAPPA-->
+   <symbol number="F04B" entity="" char="Κ"/>
+   <symbol number="004B" entity="K" char="Κ"/>
+   <!--GREEK CAPITAL LETTER LAMDA-->
+   <symbol number="F04C" entity="" char="Λ"/>
+   <symbol number="004C" entity="L" char="Λ"/>
+   <!--GREEK CAPITAL LETTER MU-->
+   <symbol number="F04D" entity="" char="Μ"/>
+   <symbol number="004D" entity="M" char="Μ"/>
+   <!--GREEK CAPITAL LETTER NU-->
+   <symbol number="F04E" entity="" char="Ν"/>
+   <symbol number="004E" entity="N" char="Ν"/>
+   <!--GREEK CAPITAL LETTER XI-->
+   <symbol number="F058" entity="" char="Ξ"/>
+   <symbol number="0058" entity="X" char="Ξ"/>
+   <!--GREEK CAPITAL LETTER OMICRON-->
+   <symbol number="F04F" entity="" char="Ο"/>
+   <symbol number="004F" entity="O" char="Ο"/>
+   <!--GREEK CAPITAL LETTER PI-->
+   <symbol number="F050" entity="" char="Π"/>
+   <symbol number="0050" entity="P" char="Π"/>
+   <!--GREEK CAPITAL LETTER RHO-->
+   <symbol number="F052" entity="" char="Ρ"/>
+   <symbol number="0052" entity="R" char="Ρ"/>
+   <!--GREEK CAPITAL LETTER SIGMA-->
+   <symbol number="F053" entity="" char="Σ"/>
+   <symbol number="0053" entity="S" char="Σ"/>
+   <!--GREEK CAPITAL LETTER TAU-->
+   <symbol number="F054" entity="" char="Τ"/>
+   <symbol number="0054" entity="T" char="Τ"/>
+   <!--GREEK CAPITAL LETTER UPSILON-->
+   <symbol number="F055" entity="" char="Υ"/>
+   <symbol number="0055" entity="U" char="Υ"/>
+   <!--GREEK CAPITAL LETTER PHI-->
+   <symbol number="F046" entity="" char="Φ"/>
+   <symbol number="0046" entity="F" char="Φ"/>
+   <!--GREEK CAPITAL LETTER CHI-->
+   <symbol number="F043" entity="" char="Χ"/>
+   <symbol number="0043" entity="C" char="Χ"/>
+   <!--GREEK CAPITAL LETTER PSI-->
+   <symbol number="F059" entity="" char="Ψ"/>
+   <symbol number="0059" entity="Y" char="Ψ"/>
+   <!--GREEK CAPITAL LETTER OMEGA-->
+   <symbol number="F057" entity="" char="Ω"/>
+   <symbol number="0057" entity="W" char="Ω"/>
+   <!--RADICAL EXTENDER, NO UNICODE EQUIVALENT-->
+   <!--<symbol number="F060" entity="&#xf060;" char=""/>
+  <symbol number="0060" entity="&#x0060;" char=""/>-->
+   <!--GREEK SMALL LETTER ALPHA-->
+   <symbol number="F061" entity="" char="α"/>
+   <symbol number="0061" entity="a" char="α"/>
+   <!--GREEK SMALL LETTER BETA-->
+   <symbol number="F062" entity="" char="β"/>
+   <symbol number="0062" entity="b" char="β"/>
+   <!--GREEK SMALL LETTER GAMMA-->
+   <symbol number="F067" entity="" char="γ"/>
+   <symbol number="0067" entity="g" char="γ"/>
+   <!--GREEK SMALL LETTER DELTA-->
+   <symbol number="F064" entity="" char="δ"/>
+   <symbol number="0064" entity="d" char="δ"/>
+   <!--GREEK SMALL LETTER EPSILON-->
+   <symbol number="F065" entity="" char="ε"/>
+   <symbol number="0065" entity="e" char="ε"/>
+   <!--GREEK SMALL LETTER ZETA-->
+   <symbol number="F07A" entity="" char="ζ"/>
+   <symbol number="007A" entity="z" char="ζ"/>
+   <!--GREEK SMALL LETTER ETA-->
+   <symbol number="F068" entity="" char="η"/>
+   <symbol number="0068" entity="h" char="η"/>
+   <!--GREEK SMALL LETTER THETA-->
+   <symbol number="F071" entity="" char="θ"/>
+   <symbol number="0071" entity="q" char="θ"/>
+   <!--GREEK SMALL LETTER IOTA-->
+   <symbol number="F069" entity="" char="ι"/>
+   <symbol number="0069" entity="i" char="ι"/>
+   <!--GREEK SMALL LETTER KAPPA-->
+   <symbol number="F06B" entity="" char="κ"/>
+   <symbol number="006B" entity="k" char="κ"/>
+   <!--GREEK SMALL LETTER LAMDA-->
+   <symbol number="F06C" entity="" char="λ"/>
+   <symbol number="006C" entity="l" char="λ"/>
+   <!--GREEK SMALL LETTER MU-->
+   <symbol number="F06D" entity="" char="μ"/>
+   <symbol number="006D" entity="m" char="μ"/>
+   <!--GREEK SMALL LETTER NU-->
+   <symbol number="F06E" entity="" char="ν"/>
+   <symbol number="006E" entity="n" char="ν"/>
+   <!--GREEK SMALL LETTER XI-->
+   <symbol number="F078" entity="" char="ξ"/>
+   <symbol number="0078" entity="x" char="ξ"/>
+   <!--GREEK SMALL LETTER OMICRON-->
+   <symbol number="F06F" entity="" char="ο"/>
+   <symbol number="006F" entity="o" char="ο"/>
+   <!--GREEK SMALL LETTER PI-->
+   <symbol number="F070" entity="" char="π"/>
+   <symbol number="0070" entity="p" char="π"/>
+   <!--GREEK SMALL LETTER RHO-->
+   <symbol number="F072" entity="" char="ρ"/>
+   <symbol number="0072" entity="r" char="ρ"/>
+   <!--GREEK SMALL LETTER FINAL SIGMA-->
+   <symbol number="F056" entity="" char="ς"/>
+   <symbol number="0056" entity="V" char="ς"/>
+   <!--GREEK SMALL LETTER SIGMA-->
+   <symbol number="F073" entity="" char="σ"/>
+   <symbol number="0073" entity="s" char="σ"/>
+   <!--GREEK SMALL LETTER TAU-->
+   <symbol number="F074" entity="" char="τ"/>
+   <symbol number="0074" entity="t" char="τ"/>
+   <!--GREEK SMALL LETTER UPSILON-->
+   <symbol number="F075" entity="" char="υ"/>
+   <symbol number="0075" entity="u" char="υ"/>
+   <!--GREEK SMALL LETTER PHI-->
+   <symbol number="F066" entity="" char="ϕ"/>
+   <symbol number="0066" entity="f" char="ϕ"/>
+   <!--GREEK SMALL LETTER CHI-->
+   <symbol number="F063" entity="" char="χ"/>
+   <symbol number="0063" entity="c" char="χ"/>
+   <!--GREEK SMALL LETTER OMEGA-->
+   <symbol number="F077" entity="" char="ω"/>
+   <symbol number="0077" entity="w" char="ω"/>
+   <!--GREEK SMALL LETTER PSI-->
+   <symbol number="F079" entity="" char="ψ"/>
+   <symbol number="0079" entity="y" char="ψ"/>
+   <!--BALLOT BOX-->
+   <symbol number="F080" entity="" char="☐"/>
+   <symbol number="0080" entity="&#x80;" char="☐"/>
+   <!--GREEK THETA SYMBOL-->
+   <symbol number="F04A" entity="" char="ϑ"/>
+   <symbol number="004A" entity="J" char="ϑ"/>
+   <!--GREEK PHI SYMBOL-->
+   <symbol number="F06A" entity="" char="φ"/>
+   <symbol number="006A" entity="j" char="φ"/>
+   <!--GREEK PI SYMBOL-->
+   <symbol number="F076" entity="" char="ϖ"/>
+   <symbol number="0076" entity="v" char="ϖ"/>
+   <!-- WHITE SQUARE -->
+   <symbol number="F0A0" entity="" char="□"/>
+   <symbol number="00A0" entity=" " char="□"/>
+   <!--GREEK UPSILON WITH HOOK SYMBOL-->
+   <symbol number="F0A1" entity="" char="ϒ"/>
+   <symbol number="00A1" entity="¡" char="ϒ"/>
+   <!--PRIME-->
+   <symbol number="F0A2" entity="" char="′"/>
+   <symbol number="00A2" entity="¢" char="′"/>
+   <!--FRACTION SLASH-->
+   <symbol number="F0A4" entity="" char="⁄"/>
+   <symbol number="00A4" entity="¤" char="⁄"/>
+   <!--DOUBLE PRIME-->
+   <symbol number="F0B2" entity="" char="″"/>
+   <symbol number="00B2" entity="²" char="″"/>
+   <!--HORIZONTAL ELLIPSIS-->
+   <symbol number="F0BC" entity="" char="…"/>
+   <symbol number="00BC" entity="¼" char="…"/>
+   <!--ALEF SYMBOL-->
+   <symbol number="F0C0" entity="" char="ℵ"/>
+   <symbol number="00C0" entity="À" char="ℵ"/>
+   <!--BLACK-LETTER CAPITAL I-->
+   <symbol number="F0C1" entity="" char="ℑ"/>
+   <symbol number="00C1" entity="Á" char="ℑ"/>
+   <!--BLACK-LETTER CAPITAL R-->
+   <symbol number="F0C2" entity="" char="ℜ"/>
+   <symbol number="00C2" entity="Â" char="ℜ"/>
+   <!--SCRIPT CAPITAL P-->
+   <symbol number="F0C3" entity="" char="℘"/>
+   <symbol number="00C3" entity="Ã" char="℘"/>
+   <!--TRADE MARK SIGN (SERIF)-->
+   <symbol number="F0D4" entity="" char="™"/>
+   <symbol number="00D4" entity="Ô" char="™"/>
+   <!--TRADE MARK SIGN (SANS-SERIF)-->
+   <symbol number="F0E4" entity="" char="™"/>
+   <symbol number="00E4" entity="ä" char="™"/>
+   <!--EURO SIGN-->
+   <symbol number="F0F0" entity="" char="€"/>
+   <symbol number="00F0" entity="ð" char="€"/>
+   <!--LEFT RIGHT ARROW-->
+   <symbol number="F0AB" entity="" char="↔"/>
+   <symbol number="00AB" entity="«" char="↔"/>
+   <!--LEFTWARDS ARROW-->
+   <symbol number="F0AC" entity="" char="←"/>
+   <symbol number="00AC" entity="¬" char="←"/>
+   <!--UPWARDS ARROW-->
+   <symbol number="F0AD" entity="" char="↑"/>
+   <symbol number="00AD" entity="­" char="↑"/>
+   <!--RIGHTWARDS ARROW-->
+   <symbol number="F0AE" entity="" char="→"/>
+   <symbol number="00AE" entity="®" char="→"/>
+   <!--DOWNWARDS ARROW-->
+   <symbol number="F0AF" entity="" char="↓"/>
+   <symbol number="00AF" entity="¯" char="↓"/>
+   <!--DOWNWARDS ARROW WITH CORNER LEFTWARDS-->
+   <symbol number="F0BF" entity="" char="↵"/>
+   <symbol number="00BF" entity="¿" char="↵"/>
+   <!--LEFT RIGHT DOUBLE ARROW-->
+   <symbol number="F0DB" entity="" char="⇔"/>
+   <symbol number="00DB" entity="Û" char="⇔"/>
+   <!--LEFTWARDS DOUBLE ARROW-->
+   <symbol number="F0DC" entity="" char="⇐"/>
+   <symbol number="00DC" entity="Ü" char="⇐"/>
+   <!--UPWARDS DOUBLE ARROW-->
+   <symbol number="F0DD" entity="" char="⇑"/>
+   <symbol number="00DD" entity="Ý" char="⇑"/>
+   <!--RIGHTWARDS DOUBLE ARROW-->
+   <symbol number="F0DE" entity="" char="⇒"/>
+   <symbol number="00DE" entity="Þ" char="⇒"/>
+   <!--DOWNWARDS DOUBLE ARROW-->
+   <symbol number="F0DF" entity="" char="⇓"/>
+   <symbol number="00DF" entity="ß" char="⇓"/>
+   <!--FOR ALL-->
+   <symbol number="F022" entity="" char="∀"/>
+   <symbol number="0022" entity="&#34;" char="∀"/>
+   <!--THERE EXISTS-->
+   <symbol number="F024" entity="" char="∃"/>
+   <symbol number="0024" entity="$" char="∃"/>
+   <!--SMALL CONTAINS AS MEMBER-->
+   <symbol number="F027" entity="" char="∍"/>
+   <symbol number="0027" entity="'" char="∍"/>
+   <!--ASTERISK OPERATOR-->
+   <symbol number="F02A" entity="" char="∗"/>
+   <symbol number="002A" entity="*" char="∗"/>
+   <!--MINUS SIGN-->
+   <symbol number="F02D" entity="" char="−"/>
+   <symbol number="002D" entity="-" char="−"/>
+   <!--APPROXIMATELY EQUAL TO-->
+   <symbol number="F040" entity="" char="≅"/>
+   <symbol number="0040" entity="@" char="≅"/>
+   <!--THEREFORE-->
+   <symbol number="F05C" entity="" char="∴"/>
+   <symbol number="005C" entity="\" char="∴"/>
+   <!--UP TACK-->
+   <symbol number="F05E" entity="" char="⊥"/>
+   <symbol number="005E" entity="^" char="⊥"/>
+   <!--TILDE OPERATOR-->
+   <symbol number="F07E" entity="" char="∼"/>
+   <symbol number="007E" entity="~" char="∼"/>
+   <!--LESS-THAN OR EQUAL TO-->
+   <symbol number="F0A3" entity="" char="≤"/>
+   <symbol number="00A3" entity="£" char="≤"/>
+   <!--INFINITY-->
+   <symbol number="F0A5" entity="" char="∞"/>
+   <symbol number="00A5" entity="¥" char="∞"/>
+   <!--GREATER-THAN OR EQUAL TO-->
+   <symbol number="F0B3" entity="" char="≥"/>
+   <symbol number="00B3" entity="³" char="≥"/>
+   <!--PROPORTIONAL TO-->
+   <symbol number="F0B5" entity="" char="∝"/>
+   <symbol number="00B5" entity="µ" char="∝"/>
+   <!--PARTIAL DIFFERENTIAL-->
+   <symbol number="F0B6" entity="" char="∂"/>
+   <symbol number="00B6" entity="¶" char="∂"/>
+   <!--BULLET-->
+   <symbol number="F0B7" entity="" char="•"/>
+   <symbol number="00B7" entity="·" char="•"/>
+   <!--NOT EQUAL TO-->
+   <symbol number="F0B9" entity="" char="≠"/>
+   <symbol number="00B9" entity="¹" char="≠"/>
+   <!--IDENTICAL TO-->
+   <symbol number="F0BA" entity="" char="≡"/>
+   <symbol number="00BA" entity="º" char="≡"/>
+   <!--ALMOST EQUAL TO-->
+   <symbol number="F0BB" entity="" char="≈"/>
+   <symbol number="00BB" entity="»" char="≈"/>
+   <!--CIRCLED TIMES-->
+   <symbol number="F0C4" entity="" char="⊗"/>
+   <symbol number="00C4" entity="Ä" char="⊗"/>
+   <!--CIRCLED PLUS-->
+   <symbol number="F0C5" entity="" char="⊕"/>
+   <symbol number="00C5" entity="Å" char="⊕"/>
+   <!--EMPTY SET-->
+   <symbol number="F0C6" entity="" char="∅"/>
+   <symbol number="00C6" entity="Æ" char="∅"/>
+   <!--INTERSECTION-->
+   <symbol number="F0C7" entity="" char="∩"/>
+   <symbol number="00C7" entity="Ç" char="∩"/>
+   <!--UNION-->
+   <symbol number="F0C8" entity="" char="∪"/>
+   <symbol number="00C8" entity="È" char="∪"/>
+   <!--SUPERSET OF-->
+   <symbol number="F0C9" entity="" char="⊃"/>
+   <symbol number="00C9" entity="É" char="⊃"/>
+   <!--SUPERSET OF OR EQUAL TO-->
+   <symbol number="F0CA" entity="" char="⊇"/>
+   <symbol number="00CA" entity="Ê" char="⊇"/>
+   <!--NOT A SUBSET OF-->
+   <symbol number="F0CB" entity="" char="⊄"/>
+   <symbol number="00CB" entity="Ë" char="⊄"/>
+   <!--SUBSET OF-->
+   <symbol number="F0CC" entity="" char="⊂"/>
+   <symbol number="00CC" entity="Ì" char="⊂"/>
+   <!--SUBSET OF OR EQUAL TO-->
+   <symbol number="F0CD" entity="" char="⊆"/>
+   <symbol number="00CD" entity="Í" char="⊆"/>
+   <!--ELEMENT OF-->
+   <symbol number="F0CE" entity="" char="∈"/>
+   <symbol number="00CE" entity="Î" char="∈"/>
+   <!--NOT AN ELEMENT OF-->
+   <symbol number="F0CF" entity="" char="∉"/>
+   <symbol number="00CF" entity="Ï" char="∉"/>
+   <!--ANGLE-->
+   <symbol number="F0D0" entity="" char="∠"/>
+   <symbol number="00D0" entity="Ð" char="∠"/>
+   <!--NABLA-->
+   <symbol number="F0D1" entity="" char="∇"/>
+   <symbol number="00D1" entity="Ñ" char="∇"/>
+   <!--N-ARY PRODUCT-->
+   <symbol number="F0D5" entity="" char="∏"/>
+   <symbol number="00D5" entity="Õ" char="∏"/>
+   <!--SQUARE ROOT-->
+   <symbol number="F0D6" entity="" char="√"/>
+   <symbol number="00D6" entity="Ö" char="√"/>
+   <!--DOT OPERATOR-->
+   <symbol number="F0D7" entity="" char="⋅"/>
+   <symbol number="00D7" entity="×" char="⋅"/>
+   <!--LOGICAL AND-->
+   <symbol number="F0D9" entity="" char="∧"/>
+   <symbol number="00D9" entity="Ù" char="∧"/>
+   <!--LOGICAL OR-->
+   <symbol number="F0DA" entity="" char="∨"/>
+   <symbol number="00DA" entity="Ú" char="∨"/>
+   <!--N-ARY SUMMATION-->
+   <symbol number="F0E5" entity="" char="∑"/>
+   <symbol number="00E5" entity="å" char="∑"/>
+   <!--INTEGRAL-->
+   <symbol number="F0F2" entity="" char="∫"/>
+   <symbol number="00F2" entity="ò" char="∫"/>
+   <!--VERTICAL LINE EXTENSION-->
+   <symbol number="F0BD" entity="" char="⏐"/>
+   <symbol number="00BD" entity="½" char="⏐"/>
+   <!--HORIZONTAL LINE EXTENSION-->
+   <symbol number="F0BE" entity="" char="⎯"/>
+   <symbol number="00BE" entity="¾" char="⎯"/>
+   <!--LEFT-POINTING ANGLE BRACKET-->
+   <symbol number="F0E1" entity="" char="〈"/>
+   <symbol number="00E1" entity="á" char="〈"/>
+   <!--LEFT PARENTHESIS UPPER HOOK-->
+   <symbol number="F0E6" entity="" char="⎛"/>
+   <symbol number="00E6" entity="æ" char="⎛"/>
+   <!--LEFT PARENTHESIS EXTENSION-->
+   <symbol number="F0E7" entity="" char="⎜"/>
+   <symbol number="00E7" entity="ç" char="⎜"/>
+   <!--LEFT PARENTHESIS LOWER HOOK-->
+   <symbol number="F0E8" entity="" char="⎝"/>
+   <symbol number="00E8" entity="è" char="⎝"/>
+   <!--LEFT SQUARE BRACKET UPPER CORNER-->
+   <symbol number="F0E9" entity="" char="⎡"/>
+   <symbol number="00E9" entity="é" char="⎡"/>
+   <!--LEFT SQUARE BRACKET EXTENSION-->
+   <symbol number="F0EA" entity="" char="⎢"/>
+   <symbol number="00EA" entity="ê" char="⎢"/>
+   <!--LEFT SQUARE BRACKET LOWER CORNER-->
+   <symbol number="F0EB" entity="" char="⎣"/>
+   <symbol number="00EB" entity="ë" char="⎣"/>
+   <!--LEFT CURLY BRACKET UPPER HOOK-->
+   <symbol number="F0EC" entity="" char="⎧"/>
+   <symbol number="00EC" entity="ì" char="⎧"/>
+   <!--LEFT CURLY BRACKET MIDDLE PIECE-->
+   <symbol number="F0ED" entity="" char="⎨"/>
+   <symbol number="00ED" entity="í" char="⎨"/>
+   <!--LEFT CURLY BRACKET LOWER HOOK-->
+   <symbol number="F0EE" entity="" char="⎩"/>
+   <symbol number="00EE" entity="î" char="⎩"/>
+   <!--CURLY BRACKET EXTENSION-->
+   <symbol number="F0EF" entity="" char="⎪"/>
+   <symbol number="00EF" entity="ï" char="⎪"/>
+   <!--RIGHT-POINTING ANGLE BRACKET-->
+   <symbol number="F0F1" entity="" char="〉"/>
+   <symbol number="00F1" entity="ñ" char="〉"/>
+   <!--TOP HALF INTEGRAL-->
+   <symbol number="F0F3" entity="" char="⌠"/>
+   <symbol number="00F3" entity="ó" char="⌠"/>
+   <!--INTEGRAL EXTENSION-->
+   <symbol number="F0F4" entity="" char="⎮"/>
+   <symbol number="00F4" entity="ô" char="⎮"/>
+   <!--BOTTOM HALF INTEGRAL-->
+   <symbol number="F0F5" entity="" char="⌡"/>
+   <symbol number="00F5" entity="õ" char="⌡"/>
+   <!--RIGHT PARENTHESIS UPPER HOOK-->
+   <symbol number="F0F6" entity="" char="⎞"/>
+   <symbol number="00F6" entity="ö" char="⎞"/>
+   <!--RIGHT PARENTHESIS EXTENSION-->
+   <symbol number="F0F7" entity="" char="⎟"/>
+   <symbol number="00F7" entity="÷" char="⎟"/>
+   <!--RIGHT PARENTHESIS LOWER HOOK-->
+   <symbol number="F0F8" entity="" char="⎠"/>
+   <symbol number="00F8" entity="ø" char="⎠"/>
+   <!--RIGHT SQUARE BRACKET UPPER CORNER-->
+   <symbol number="F0F9" entity="" char="⎤"/>
+   <symbol number="00F9" entity="ù" char="⎤"/>
+   <!--RIGHT SQUARE BRACKET EXTENSION-->
+   <symbol number="F0FA" entity="" char="⎥"/>
+   <symbol number="00FA" entity="ú" char="⎥"/>
+   <!--RIGHT SQUARE BRACKET LOWER CORNER-->
+   <symbol number="F0FB" entity="" char="⎦"/>
+   <symbol number="00FB" entity="û" char="⎦"/>
+   <!--RIGHT CURLY BRACKET UPPER HOOK-->
+   <symbol number="F0FC" entity="" char="⎫"/>
+   <symbol number="00FC" entity="ü" char="⎫"/>
+   <!--RIGHT CURLY BRACKET MIDDLE PIECE-->
+   <symbol number="F0FD" entity="" char="⎬"/>
+   <symbol number="00FD" entity="ý" char="⎬"/>
+   <!--RIGHT CURLY BRACKET LOWER HOOK-->
+   <symbol number="F0FE" entity="" char="⎭"/>
+   <symbol number="00FE" entity="þ" char="⎭"/>
+   <!--LOZENGE, DIAMOND OPERATOR-->
+   <symbol number="F0E0" entity="" char="⋄" char-msoffice="◊"/>
+   <symbol number="00E0" entity="à" char="⋄" char-msoffice="◊"/>
+   <!--BLACK CLUB SUIT-->
+   <symbol number="F0A7" entity="" char="♣"/>
+   <symbol number="00A7" entity="§" char="♣"/>
+   <!--BLACK DIAMOND SUIT-->
+   <symbol number="F0A8" entity="" char="♦"/>
+   <symbol number="00A8" entity="¨" char="♦"/>
+   <!--BLACK HEART SUIT-->
+   <symbol number="F0A9" entity="" char="♥"/>
+   <symbol number="00A9" entity="©" char="♥"/>
+   <!--BLACK SPADE SUIT-->
+   <symbol number="F0AA" entity="" char="♠"/>
+   <symbol number="00AA" entity="ª" char="♠"/>
+   <!-- BALLOT BOX -->
+   <symbol number="F0FF" entity="" char="☐" font="Segoe UI Symbol"/>
+   <symbol number="00FF" entity="ÿ" char="☐" font="Segoe UI Symbol"/>
+</symbols>

@@ -8,13 +8,14 @@ from . import utils
 from ..dwml import omml
 
 class Converter:
-    def __init__(self, xml_text, media, use_md_table):
+    def __init__(self, xml_text, media, use_md_table, parseDocMethod):
         self.tree = etree.fromstring(xml_text)
         utils.strip_ns_prefix(self.tree)
         self.media = media
         self.image_counter = self.counter()
         self.table_counter = self.counter()
         self.use_md_table = use_md_table
+        self.parseDocMethod = parseDocMethod
 
     def counter(self, start=1):
         count = start - 1
@@ -114,8 +115,13 @@ class Converter:
             print("", file=of)
             print(text, file=of)
             print("", file=of)
-
-        sub_text = self.parse_p_text(node).lstrip()
+        
+        if self.parseDocMethod == 'enhanced':
+            sub_text = self.parse_p_text_new(node).lstrip()
+        else: 
+            sub_text = self.parse_p_text(node).lstrip()
+        
+        
         subtextsum = str(sub_text).count('$')
         if subtextsum and subtextsum % 2 != 0 and self.isMathText == False:
             self.mathText.clear()
@@ -223,7 +229,41 @@ class Converter:
                 self.parse_r(of, r)
 
         return of.getvalue()
-
+    
+    def parse_p_text_new(self, node):
+        of = io.StringIO()
+        xml_string = etree.tostring(node, encoding="unicode", pretty_print=True)
+        #支持数学公式过滤
+        runs = node.xpath(".//r|.//ins/r|.//oMathPara|.//oMath")
+        for r in runs:
+            if r.tag == 'oMath':
+                # 保证段落里面的公式只会被处理一次
+                OMML_NS = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
+                xml_string = etree.tostring(r, encoding="unicode", pretty_print=True)
+                xml_string =f'''
+                <root xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+                {xml_string}
+                </root>
+                '''
+                # 解析并转换
+                xml_string = self.convert_omml_namespaces(xml_string)
+                # print(xml_string)
+                from dwml import omml
+                xml_string = xml_string.lstrip('')
+                # tmpInfo = omml.load_string(xml_string)
+                try:
+                    for omath in omml.load_string(xml_string):
+                        if omath and omath.latex:
+                            text = omath.latex
+                    print('$' + text + '$', end="", file=of)
+                except:
+                    continue
+                # ss = 0
+            else:
+                self.parse_r(of, r)
+        return of.getvalue()
+    
+    
     R_IGNORE = [
         # "pict", "t", "br", "drawing",
         "tab",

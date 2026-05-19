@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi mathsize="100%" mathvariant="italic">β</mi>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mfenced close="]" open="[" separators="">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">β</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic">R</mi>
+                           </mrow>
+                        </msub>
+                        <mo mathsize="100%" mathvariant="normal">(</mo>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mo mathsize="100%" mathvariant="normal">)</mo>
+                     </mrow>
+                  </mtd>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">β</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic">A</mi>
+                           </mrow>
+                        </msub>
+                        <mo mathsize="100%" mathvariant="normal">(</mo>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mo mathsize="100%" mathvariant="normal">)</mo>
+                     </mrow>
+                  </mtd>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">β</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic">E</mi>
+                           </mrow>
+                        </msub>
+                        <mo mathsize="100%" mathvariant="normal">(</mo>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mo mathsize="100%" mathvariant="normal">)</mo>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+      <msup>
+         <mrow>
+            <mi mathvariant="italic">T</mi>
+         </mrow>
+      </msup>
+   </mrow>
+</math>

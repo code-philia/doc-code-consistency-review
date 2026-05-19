@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathsize="100%" mathvariant="italic">β</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">C</mi>
+         </mrow>
+      </msub>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mi mathsize="100%" mathvariant="italic">α</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">C</mi>
+         </mrow>
+      </msub>
+      <msup>
+         <mrow>
+            <mn mathvariant="normal">2</mn>
+         </mrow>
+      </msup>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+      <mo mathsize="100%" mathvariant="normal">/</mo>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mn mathsize="100%" mathvariant="normal">2</mn>
+      <mo mathsize="100%" mathvariant="normal">−</mo>
+      <mi mathsize="100%" mathvariant="italic">α</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">C</mi>
+         </mrow>
+      </msub>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+   </mrow>
+</math>

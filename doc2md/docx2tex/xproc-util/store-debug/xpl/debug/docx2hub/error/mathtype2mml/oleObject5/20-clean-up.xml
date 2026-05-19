@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+   <mtable xmlns:tr="http://transpect.io">
+      <mtr>
+         <mtd>
+            <mn>0</mn>
+            <mo>≤</mo>
+            <mi>h</mi>
+            <mo>≤</mo>
+            <mn>500</mn>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mn>500</mn>
+            <mo>&lt;</mo>
+            <mi>h</mi>
+         </mtd>
+      </mtr>
+   </mtable>
+</math>

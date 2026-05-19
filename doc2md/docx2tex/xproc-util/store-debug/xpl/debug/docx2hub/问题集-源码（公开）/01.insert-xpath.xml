@@ -1,0 +1,2175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<w:root xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+        xmlns:ct="http://schemas.openxmlformats.org/package/2006/content-types"
+        xmlns:extendedProps="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+        xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+        xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:rel="http://schemas.openxmlformats.org/package/2006/relationships"
+        xmlns:v="urn:schemas-microsoft-com:vml"
+        xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        xmlns:w10="urn:schemas-microsoft-com:office:word"
+        xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+        xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"
+        xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid"
+        xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex"
+        xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+        xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+        xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+        xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+        xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+        xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+        xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/"
+        extract-dir-uri="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/问题集-源码（公开）_20260506T195926_1918f0/问题集-源码（公开）_temp_23657/问题集-源码（公开）.docx.tmp/"
+        local-href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx">
+   <w:styles xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+             xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/word/styles.xml"
+             mc:Ignorable="w14">
+      <w:docDefaults>
+         <w:rPrDefault>
+            <w:rPr>
+               <w:rFonts w:asciiTheme="minorHAnsi"
+                         w:eastAsiaTheme="minorEastAsia"
+                         w:hAnsiTheme="minorHAnsi"
+                         w:cstheme="minorBidi"/>
+               <w:kern w:val="2"/>
+               <w:sz w:val="21"/>
+               <w:szCs w:val="22"/>
+               <w:lang w:val="en-US" w:eastAsia="zh-CN" w:bidi="ar-SA"/>
+            </w:rPr>
+         </w:rPrDefault>
+         <w:pPrDefault/>
+      </w:docDefaults>
+      <w:latentStyles w:defLockedState="0"
+                      w:defUIPriority="99"
+                      w:defSemiHidden="1"
+                      w:defUnhideWhenUsed="1"
+                      w:defQFormat="0"
+                      w:count="267">
+         <w:lsdException w:name="Normal"
+                         w:semiHidden="0"
+                         w:uiPriority="0"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="heading 1"
+                         w:semiHidden="0"
+                         w:uiPriority="9"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="heading 2" w:uiPriority="9" w:qFormat="1"/>
+         <w:lsdException w:name="heading 3" w:uiPriority="9" w:qFormat="1"/>
+         <w:lsdException w:name="heading 4" w:uiPriority="9" w:qFormat="1"/>
+         <w:lsdException w:name="heading 5" w:uiPriority="9" w:qFormat="1"/>
+         <w:lsdException w:name="heading 6" w:uiPriority="9" w:qFormat="1"/>
+         <w:lsdException w:name="heading 7" w:uiPriority="9" w:qFormat="1"/>
+         <w:lsdException w:name="heading 8" w:uiPriority="9" w:qFormat="1"/>
+         <w:lsdException w:name="heading 9" w:uiPriority="9" w:qFormat="1"/>
+         <w:lsdException w:name="toc 1" w:uiPriority="39"/>
+         <w:lsdException w:name="toc 2" w:uiPriority="39"/>
+         <w:lsdException w:name="toc 3" w:uiPriority="39"/>
+         <w:lsdException w:name="toc 4" w:uiPriority="39"/>
+         <w:lsdException w:name="toc 5" w:uiPriority="39"/>
+         <w:lsdException w:name="toc 6" w:uiPriority="39"/>
+         <w:lsdException w:name="toc 7" w:uiPriority="39"/>
+         <w:lsdException w:name="toc 8" w:uiPriority="39"/>
+         <w:lsdException w:name="toc 9" w:uiPriority="39"/>
+         <w:lsdException w:name="caption" w:uiPriority="35" w:qFormat="1"/>
+         <w:lsdException w:name="Title"
+                         w:semiHidden="0"
+                         w:uiPriority="10"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Default Paragraph Font" w:uiPriority="1"/>
+         <w:lsdException w:name="Subtitle"
+                         w:semiHidden="0"
+                         w:uiPriority="11"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Strong"
+                         w:semiHidden="0"
+                         w:uiPriority="22"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Emphasis"
+                         w:semiHidden="0"
+                         w:uiPriority="20"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Table Grid"
+                         w:semiHidden="0"
+                         w:uiPriority="39"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Placeholder Text" w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="No Spacing"
+                         w:semiHidden="0"
+                         w:uiPriority="1"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Light Shading"
+                         w:semiHidden="0"
+                         w:uiPriority="60"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light List"
+                         w:semiHidden="0"
+                         w:uiPriority="61"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Grid"
+                         w:semiHidden="0"
+                         w:uiPriority="62"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 1"
+                         w:semiHidden="0"
+                         w:uiPriority="63"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 2"
+                         w:semiHidden="0"
+                         w:uiPriority="64"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 1"
+                         w:semiHidden="0"
+                         w:uiPriority="65"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 2"
+                         w:semiHidden="0"
+                         w:uiPriority="66"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 1"
+                         w:semiHidden="0"
+                         w:uiPriority="67"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 2"
+                         w:semiHidden="0"
+                         w:uiPriority="68"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 3"
+                         w:semiHidden="0"
+                         w:uiPriority="69"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Dark List"
+                         w:semiHidden="0"
+                         w:uiPriority="70"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Shading"
+                         w:semiHidden="0"
+                         w:uiPriority="71"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful List"
+                         w:semiHidden="0"
+                         w:uiPriority="72"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Grid"
+                         w:semiHidden="0"
+                         w:uiPriority="73"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Shading Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="60"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light List Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="61"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Grid Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="62"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 1 Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="63"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 2 Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="64"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 1 Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="65"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Revision" w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="List Paragraph"
+                         w:semiHidden="0"
+                         w:uiPriority="34"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Quote"
+                         w:semiHidden="0"
+                         w:uiPriority="29"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Intense Quote"
+                         w:semiHidden="0"
+                         w:uiPriority="30"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Medium List 2 Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="66"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 1 Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="67"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 2 Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="68"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 3 Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="69"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Dark List Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="70"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Shading Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="71"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful List Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="72"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Grid Accent 1"
+                         w:semiHidden="0"
+                         w:uiPriority="73"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Shading Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="60"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light List Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="61"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Grid Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="62"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 1 Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="63"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 2 Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="64"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 1 Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="65"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 2 Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="66"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 1 Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="67"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 2 Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="68"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 3 Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="69"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Dark List Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="70"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Shading Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="71"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful List Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="72"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Grid Accent 2"
+                         w:semiHidden="0"
+                         w:uiPriority="73"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Shading Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="60"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light List Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="61"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Grid Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="62"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 1 Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="63"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 2 Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="64"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 1 Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="65"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 2 Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="66"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 1 Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="67"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 2 Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="68"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 3 Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="69"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Dark List Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="70"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Shading Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="71"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful List Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="72"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Grid Accent 3"
+                         w:semiHidden="0"
+                         w:uiPriority="73"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Shading Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="60"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light List Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="61"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Grid Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="62"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 1 Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="63"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 2 Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="64"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 1 Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="65"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 2 Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="66"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 1 Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="67"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 2 Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="68"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 3 Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="69"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Dark List Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="70"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Shading Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="71"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful List Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="72"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Grid Accent 4"
+                         w:semiHidden="0"
+                         w:uiPriority="73"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Shading Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="60"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light List Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="61"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Grid Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="62"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 1 Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="63"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 2 Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="64"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 1 Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="65"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 2 Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="66"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 1 Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="67"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 2 Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="68"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 3 Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="69"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Dark List Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="70"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Shading Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="71"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful List Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="72"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Grid Accent 5"
+                         w:semiHidden="0"
+                         w:uiPriority="73"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Shading Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="60"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light List Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="61"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Light Grid Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="62"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 1 Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="63"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Shading 2 Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="64"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 1 Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="65"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium List 2 Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="66"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 1 Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="67"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 2 Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="68"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Medium Grid 3 Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="69"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Dark List Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="70"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Shading Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="71"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful List Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="72"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Colorful Grid Accent 6"
+                         w:semiHidden="0"
+                         w:uiPriority="73"
+                         w:unhideWhenUsed="0"/>
+         <w:lsdException w:name="Subtle Emphasis"
+                         w:semiHidden="0"
+                         w:uiPriority="19"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Intense Emphasis"
+                         w:semiHidden="0"
+                         w:uiPriority="21"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Subtle Reference"
+                         w:semiHidden="0"
+                         w:uiPriority="31"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Intense Reference"
+                         w:semiHidden="0"
+                         w:uiPriority="32"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Book Title"
+                         w:semiHidden="0"
+                         w:uiPriority="33"
+                         w:unhideWhenUsed="0"
+                         w:qFormat="1"/>
+         <w:lsdException w:name="Bibliography" w:uiPriority="37"/>
+         <w:lsdException w:name="TOC Heading" w:uiPriority="39" w:qFormat="1"/>
+      </w:latentStyles>
+      <w:style w:type="paragraph" w:default="1" w:styleId="a">
+         <w:name w:val="Normal"/>
+         <w:qFormat/>
+         <w:pPr>
+            <w:widowControl w:val="0"/>
+            <w:jc w:val="both"/>
+         </w:pPr>
+      </w:style>
+      <w:style w:type="character" w:default="1" w:styleId="a0">
+         <w:name w:val="Default Paragraph Font"/>
+         <w:uiPriority w:val="1"/>
+         <w:semiHidden/>
+         <w:unhideWhenUsed/>
+      </w:style>
+      <w:style w:type="table" w:default="1" w:styleId="a1">
+         <w:name w:val="Normal Table"/>
+         <w:uiPriority w:val="99"/>
+         <w:semiHidden/>
+         <w:unhideWhenUsed/>
+         <w:tblPr>
+            <w:tblInd w:w="0" w:type="dxa"/>
+            <w:tblCellMar>
+               <w:top w:w="0" w:type="dxa"/>
+               <w:left w:w="108" w:type="dxa"/>
+               <w:bottom w:w="0" w:type="dxa"/>
+               <w:right w:w="108" w:type="dxa"/>
+            </w:tblCellMar>
+         </w:tblPr>
+      </w:style>
+      <w:style w:type="numbering" w:default="1" w:styleId="a2">
+         <w:name w:val="No List"/>
+         <w:uiPriority w:val="99"/>
+         <w:semiHidden/>
+         <w:unhideWhenUsed/>
+      </w:style>
+      <w:style w:type="paragraph" w:customStyle="1" w:styleId="a3">
+         <w:name w:val="正文首行无缩进"/>
+         <w:next w:val="a"/>
+         <w:qFormat/>
+         <w:rsid w:val="00686166"/>
+         <w:pPr>
+            <w:spacing w:line="360" w:lineRule="auto"/>
+            <w:jc w:val="both"/>
+         </w:pPr>
+         <w:rPr>
+            <w:rFonts w:ascii="Times New Roman"
+                      w:eastAsia="宋体"
+                      w:hAnsi="Times New Roman"
+                      w:cs="Times New Roman"/>
+            <w:sz w:val="28"/>
+         </w:rPr>
+      </w:style>
+   </w:styles>
+   <w:settings xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+               xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+               xmlns:sl="http://schemas.openxmlformats.org/schemaLibrary/2006/main"
+               xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/word/settings.xml"
+               mc:Ignorable="w14">
+      <w:zoom w:percent="100"/>
+      <w:doNotDisplayPageBoundaries/>
+      <w:bordersDoNotSurroundHeader/>
+      <w:bordersDoNotSurroundFooter/>
+      <w:proofState w:spelling="clean" w:grammar="clean"/>
+      <w:defaultTabStop w:val="420"/>
+      <w:drawingGridVerticalSpacing w:val="156"/>
+      <w:displayHorizontalDrawingGridEvery w:val="0"/>
+      <w:displayVerticalDrawingGridEvery w:val="2"/>
+      <w:characterSpacingControl w:val="compressPunctuation"/>
+      <w:compat>
+         <w:spaceForUL/>
+         <w:balanceSingleByteDoubleByteWidth/>
+         <w:doNotLeaveBackslashAlone/>
+         <w:ulTrailSpace/>
+         <w:doNotExpandShiftReturn/>
+         <w:adjustLineHeightInTable/>
+         <w:useFELayout/>
+         <w:compatSetting w:name="compatibilityMode"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="14"/>
+         <w:compatSetting w:name="overrideTableStyleFontSizeAndJustification"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="1"/>
+         <w:compatSetting w:name="enableOpenTypeFeatures"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="1"/>
+         <w:compatSetting w:name="doNotFlipMirrorIndents"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="1"/>
+      </w:compat>
+      <w:rsids>
+         <w:rsidRoot w:val="00686166"/>
+         <w:rsid w:val="00173D1B"/>
+         <w:rsid w:val="0017716F"/>
+         <w:rsid w:val="00455F41"/>
+         <w:rsid w:val="00686166"/>
+         <w:rsid w:val="00953D74"/>
+         <w:rsid w:val="00A45304"/>
+         <w:rsid w:val="00D903E1"/>
+         <w:rsid w:val="00E21B53"/>
+         <w:rsid w:val="00E32C55"/>
+      </w:rsids>
+      <m:mathPr>
+         <m:mathFont m:val="Cambria Math"/>
+         <m:brkBin m:val="before"/>
+         <m:brkBinSub m:val="--"/>
+         <m:smallFrac m:val="0"/>
+         <m:dispDef/>
+         <m:lMargin m:val="0"/>
+         <m:rMargin m:val="0"/>
+         <m:defJc m:val="centerGroup"/>
+         <m:wrapIndent m:val="1440"/>
+         <m:intLim m:val="subSup"/>
+         <m:naryLim m:val="undOvr"/>
+      </m:mathPr>
+      <w:themeFontLang w:val="en-US" w:eastAsia="zh-CN"/>
+      <w:clrSchemeMapping w:bg1="light1"
+                          w:t1="dark1"
+                          w:bg2="light2"
+                          w:t2="dark2"
+                          w:accent1="accent1"
+                          w:accent2="accent2"
+                          w:accent3="accent3"
+                          w:accent4="accent4"
+                          w:accent5="accent5"
+                          w:accent6="accent6"
+                          w:hyperlink="hyperlink"
+                          w:followedHyperlink="followedHyperlink"/>
+      <w:shapeDefaults>
+         <o:shapedefaults v:ext="edit" spidmax="1026"/>
+         <o:shapelayout v:ext="edit">
+            <o:idmap v:ext="edit" data="1"/>
+         </o:shapelayout>
+      </w:shapeDefaults>
+      <w:decimalSymbol w:val="."/>
+      <w:listSeparator w:val=","/>
+   </w:settings>
+   <w:fonts xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/word/fontTable.xml"
+            mc:Ignorable="w14">
+      <w:font w:name="等线">
+         <w:altName w:val="DengXian"/>
+         <w:panose1 w:val="02010600030101010101"/>
+         <w:charset w:val="86"/>
+         <w:family w:val="auto"/>
+         <w:pitch w:val="variable"/>
+         <w:sig w:usb0="A00002BF"
+                w:usb1="38CF7CFA"
+                w:usb2="00000016"
+                w:usb3="00000000"
+                w:csb0="0004000F"
+                w:csb1="00000000"/>
+      </w:font>
+      <w:font w:name="Times New Roman">
+         <w:panose1 w:val="02020603050405020304"/>
+         <w:charset w:val="00"/>
+         <w:family w:val="roman"/>
+         <w:pitch w:val="variable"/>
+         <w:sig w:usb0="E0002AFF"
+                w:usb1="C0007841"
+                w:usb2="00000009"
+                w:usb3="00000000"
+                w:csb0="000001FF"
+                w:csb1="00000000"/>
+      </w:font>
+      <w:font w:name="宋体">
+         <w:altName w:val="SimSun"/>
+         <w:panose1 w:val="02010600030101010101"/>
+         <w:charset w:val="86"/>
+         <w:family w:val="auto"/>
+         <w:pitch w:val="variable"/>
+         <w:sig w:usb0="00000003"
+                w:usb1="288F0000"
+                w:usb2="00000016"
+                w:usb3="00000000"
+                w:csb0="00040001"
+                w:csb1="00000000"/>
+      </w:font>
+      <w:font w:name="等线 Light">
+         <w:panose1 w:val="02010600030101010101"/>
+         <w:charset w:val="86"/>
+         <w:family w:val="auto"/>
+         <w:pitch w:val="variable"/>
+         <w:sig w:usb0="A00002BF"
+                w:usb1="38CF7CFA"
+                w:usb2="00000016"
+                w:usb3="00000000"
+                w:csb0="0004000F"
+                w:csb1="00000000"/>
+      </w:font>
+   </w:fonts>
+   <w:docTypes>
+      <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"
+             xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/%5BContent_Types%5D.xml">
+         <Default Extension="bin"
+                  ContentType="application/vnd.openxmlformats-officedocument.oleObject"/>
+         <Default Extension="wmf" ContentType="image/x-wmf"/>
+         <Default Extension="rels"
+                  ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+         <Default Extension="xml" ContentType="application/xml"/>
+         <Override PartName="/word/document.xml"
+                   ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+         <Override PartName="/word/styles.xml"
+                   ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+         <Override PartName="/word/stylesWithEffects.xml"
+                   ContentType="application/vnd.ms-word.stylesWithEffects+xml"/>
+         <Override PartName="/word/settings.xml"
+                   ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
+         <Override PartName="/word/webSettings.xml"
+                   ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.webSettings+xml"/>
+         <Override PartName="/word/fontTable.xml"
+                   ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/>
+         <Override PartName="/word/theme/theme1.xml"
+                   ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
+         <Override PartName="/docProps/core.xml"
+                   ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+         <Override PartName="/docProps/app.xml"
+                   ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+      </Types>
+   </w:docTypes>
+   <w:containerRels>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"
+                     xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/_rels/.rels">
+         <Relationship Id="rId3"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"
+                       Target="docProps/app.xml"/>
+         <Relationship Id="rId2"
+                       Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties"
+                       Target="docProps/core.xml"/>
+         <Relationship Id="rId1"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+                       Target="word/document.xml"/>
+      </Relationships>
+   </w:containerRels>
+   <w:containerProps>
+      <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+                  xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"
+                  xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/docProps/app.xml">
+         <Template>Normal.dotm</Template>
+         <TotalTime>3</TotalTime>
+         <Pages>5</Pages>
+         <Words>165</Words>
+         <Characters>942</Characters>
+         <Application>Microsoft Office Word</Application>
+         <DocSecurity>0</DocSecurity>
+         <Lines>7</Lines>
+         <Paragraphs>2</Paragraphs>
+         <ScaleCrop>false</ScaleCrop>
+         <Company/>
+         <LinksUpToDate>false</LinksUpToDate>
+         <CharactersWithSpaces>1105</CharactersWithSpaces>
+         <SharedDoc>false</SharedDoc>
+         <HyperlinksChanged>false</HyperlinksChanged>
+         <AppVersion>14.0000</AppVersion>
+      </Properties>
+      <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+                         xmlns:dc="http://purl.org/dc/elements/1.1/"
+                         xmlns:dcmitype="http://purl.org/dc/dcmitype/"
+                         xmlns:dcterms="http://purl.org/dc/terms/"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/docProps/core.xml">
+         <dc:creator>HT804</dc:creator>
+         <cp:lastModifiedBy>HT804</cp:lastModifiedBy>
+         <cp:revision>5</cp:revision>
+         <dcterms:created xsi:type="dcterms:W3CDTF">2025-04-25T05:45:00Z</dcterms:created>
+         <dcterms:modified xsi:type="dcterms:W3CDTF">2025-04-25T06:11:00Z</dcterms:modified>
+      </cp:coreProperties>
+   </w:containerProps>
+   <w:docRels>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"
+                     xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/word/_rels/document.xml.rels">
+         <Relationship Id="rId8"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject2.bin"/>
+         <Relationship Id="rId13"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image5.wmf"/>
+         <Relationship Id="rId18"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject7.bin"/>
+         <Relationship Id="rId26"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject11.bin"/>
+         <Relationship Id="rId39"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image16.wmf"/>
+         <Relationship Id="rId3"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings"
+                       Target="settings.xml"/>
+         <Relationship Id="rId21"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image9.wmf"/>
+         <Relationship Id="rId34"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject17.bin"/>
+         <Relationship Id="rId42"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject21.bin"/>
+         <Relationship Id="rId7"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image2.wmf"/>
+         <Relationship Id="rId12"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject4.bin"/>
+         <Relationship Id="rId17"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image7.wmf"/>
+         <Relationship Id="rId25"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image11.wmf"/>
+         <Relationship Id="rId33"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image13.wmf"/>
+         <Relationship Id="rId38"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject19.bin"/>
+         <Relationship Id="rId46"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
+                       Target="theme/theme1.xml"/>
+         <Relationship Id="rId2"
+                       Type="http://schemas.microsoft.com/office/2007/relationships/stylesWithEffects"
+                       Target="stylesWithEffects.xml"/>
+         <Relationship Id="rId16"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject6.bin"/>
+         <Relationship Id="rId20"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject8.bin"/>
+         <Relationship Id="rId29"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject14.bin"/>
+         <Relationship Id="rId41"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image17.wmf"/>
+         <Relationship Id="rId1"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"
+                       Target="styles.xml"/>
+         <Relationship Id="rId6"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject1.bin"/>
+         <Relationship Id="rId11"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image4.wmf"/>
+         <Relationship Id="rId24"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject10.bin"/>
+         <Relationship Id="rId32"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject16.bin"/>
+         <Relationship Id="rId37"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image15.wmf"/>
+         <Relationship Id="rId40"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject20.bin"/>
+         <Relationship Id="rId45"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable"
+                       Target="fontTable.xml"/>
+         <Relationship Id="rId5"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image1.wmf"/>
+         <Relationship Id="rId15"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image6.wmf"/>
+         <Relationship Id="rId23"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image10.wmf"/>
+         <Relationship Id="rId28"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject13.bin"/>
+         <Relationship Id="rId36"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject18.bin"/>
+         <Relationship Id="rId10"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject3.bin"/>
+         <Relationship Id="rId19"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image8.wmf"/>
+         <Relationship Id="rId31"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image12.wmf"/>
+         <Relationship Id="rId44"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject22.bin"/>
+         <Relationship Id="rId4"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings"
+                       Target="webSettings.xml"/>
+         <Relationship Id="rId9"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image3.wmf"/>
+         <Relationship Id="rId14"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject5.bin"/>
+         <Relationship Id="rId22"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject9.bin"/>
+         <Relationship Id="rId27"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject12.bin"/>
+         <Relationship Id="rId30"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/oleObject"
+                       Target="embeddings/oleObject15.bin"/>
+         <Relationship Id="rId35"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image14.wmf"/>
+         <Relationship Id="rId43"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+                       Target="media/image18.wmf"/>
+      </Relationships>
+   </w:docRels>
+   <w:header/>
+   <w:footer/>
+   <w:document xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+               xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+               xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx.tmp/word/document.xml"
+               mc:Ignorable="w14 wp14">
+      <w:body>
+         <w:p w:rsidR="0017716F" w:rsidRDefault="00686166">
+            <w:pPr>
+               <w:rPr>
+                  <w:position w:val="-50"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-50"/>
+               </w:rPr>
+               <w:object w:dxaOrig="8020" w:dyaOrig="1120">
+                  <v:shapetype id="_x0000_t75"
+                               coordsize="21600,21600"
+                               o:spt="75"
+                               o:preferrelative="t"
+                               path="m@4@5l@4@11@9@11@9@5xe"
+                               filled="f"
+                               stroked="f">
+                     <v:stroke joinstyle="miter"/>
+                     <v:formulas>
+                        <v:f eqn="if lineDrawn pixelLineWidth 0"/>
+                        <v:f eqn="sum @0 1 0"/>
+                        <v:f eqn="sum 0 0 @1"/>
+                        <v:f eqn="prod @2 1 2"/>
+                        <v:f eqn="prod @3 21600 pixelWidth"/>
+                        <v:f eqn="prod @3 21600 pixelHeight"/>
+                        <v:f eqn="sum @0 0 1"/>
+                        <v:f eqn="prod @6 1 2"/>
+                        <v:f eqn="prod @7 21600 pixelWidth"/>
+                        <v:f eqn="sum @8 21600 0"/>
+                        <v:f eqn="prod @7 21600 pixelHeight"/>
+                        <v:f eqn="sum @10 21600 0"/>
+                     </v:formulas>
+                     <v:path o:extrusionok="f" gradientshapeok="t" o:connecttype="rect"/>
+                     <o:lock v:ext="edit" aspectratio="t"/>
+                  </v:shapetype>
+                  <v:shape id="_x0000_i1025"
+                           type="#_x0000_t75"
+                           style="width:401.25pt;height:55.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId5" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1025"
+                               DrawAspect="Content"
+                               ObjectID="_1807095485"
+                               r:id="rId6"/>
+               </w:object>
+            </w:r>
+            <w:r>
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:position w:val="-50"/>
+               </w:rPr>
+               <w:t xml:space="preserve"> </w:t>
+            </w:r>
+            <w:r w:rsidRPr="00686166">
+               <w:rPr>
+                  <w:position w:val="-50"/>
+               </w:rPr>
+               <w:t>(1-1)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166" w:rsidRDefault="00686166"/>
+         <w:p w:rsidR="00686166" w:rsidRDefault="00686166"/>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-152"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="3780" w:dyaOrig="3159">
+                  <v:shape id="_x0000_i1026"
+                           type="#_x0000_t75"
+                           style="width:189pt;height:160.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId7" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1026"
+                               DrawAspect="Content"
+                               ObjectID="_1807095486"
+                               r:id="rId8"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                     (1-5)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">         </w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-14"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="1700" w:dyaOrig="400">
+                  <v:shape id="_x0000_i1027"
+                           type="#_x0000_t75"
+                           style="width:85.5pt;height:19.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId9" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1027"
+                               DrawAspect="Content"
+                               ObjectID="_1807095487"
+                               r:id="rId10"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                       </w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">          (1-6)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-56"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="3640" w:dyaOrig="1240">
+                  <v:shape id="_x0000_i1028"
+                           type="#_x0000_t75"
+                           style="width:181.5pt;height:62.25pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId11" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1028"
+                               DrawAspect="Content"
+                               ObjectID="_1807095488"
+                               r:id="rId12"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                    </w:t>
+            </w:r>
+            <w:r>
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>(1-7</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:right="120" w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                   </w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-14"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="1680" w:dyaOrig="400">
+                  <v:shape id="_x0000_i1029"
+                           type="#_x0000_t75"
+                           style="width:84pt;height:19.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId13" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1029"
+                               DrawAspect="Content"
+                               ObjectID="_1807095489"
+                               r:id="rId14"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">    </w:t>
+            </w:r>
+            <w:bookmarkStart w:id="0" w:name="OLE_LINK1"/>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                        (1-8)</w:t>
+            </w:r>
+            <w:bookmarkEnd w:id="0"/>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:right="120" w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:position w:val="-14"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">   </w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-14"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="740" w:dyaOrig="380">
+                  <v:shape id="_x0000_i1030"
+                           type="#_x0000_t75"
+                           style="width:36.75pt;height:18.75pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId15" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1030"
+                               DrawAspect="Content"
+                               ObjectID="_1807095490"
+                               r:id="rId16"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                               (1-9)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166" w:rsidRDefault="00686166" w:rsidP="00686166">
+            <w:pPr>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLine="425"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:rFonts w:hAnsi="宋体"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-140"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="6759" w:dyaOrig="8040">
+                  <v:shape id="_x0000_i1031"
+                           type="#_x0000_t75"
+                           style="width:337.5pt;height:402pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId17" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1031"
+                               DrawAspect="Content"
+                               ObjectID="_1807095491"
+                               r:id="rId18"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve"> </w:t>
+            </w:r>
+            <w:r>
+               <w:rPr>
+                  <w:rFonts w:hAnsi="宋体" w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>(</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>1-10</w:t>
+            </w:r>
+            <w:r>
+               <w:rPr>
+                  <w:rFonts w:hAnsi="宋体" w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-90"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="2820" w:dyaOrig="1939">
+                  <v:shape id="_x0000_i1032"
+                           type="#_x0000_t75"
+                           style="width:141pt;height:96pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId19" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1032"
+                               DrawAspect="Content"
+                               ObjectID="_1807095492"
+                               r:id="rId20"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                        (1-14)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-50"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="6080" w:dyaOrig="1120">
+                  <v:shape id="_x0000_i1033"
+                           type="#_x0000_t75"
+                           style="width:305.25pt;height:55.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId21" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1033"
+                               DrawAspect="Content"
+                               ObjectID="_1807095493"
+                               r:id="rId22"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">    (1-15)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-90"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="2760" w:dyaOrig="1939">
+                  <v:shape id="_x0000_i1034"
+                           type="#_x0000_t75"
+                           style="width:138.75pt;height:96pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId23" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1034"
+                               DrawAspect="Content"
+                               ObjectID="_1807095494"
+                               r:id="rId24"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                         (1-16)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166" w:rsidRDefault="00686166" w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-54"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="5940" w:dyaOrig="1900">
+                  <v:shape id="_x0000_i1035"
+                           type="#_x0000_t75"
+                           style="width:297pt;height:95.25pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId25" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1035"
+                               DrawAspect="Content"
+                               ObjectID="_1807095495"
+                               r:id="rId26"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">   (1-17)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-90"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="2820" w:dyaOrig="1939">
+                  <v:shape id="_x0000_i1036"
+                           type="#_x0000_t75"
+                           style="width:141pt;height:96pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId19" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1036"
+                               DrawAspect="Content"
+                               ObjectID="_1807095496"
+                               r:id="rId27"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                        (1-14)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-50"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="6080" w:dyaOrig="1120">
+                  <v:shape id="_x0000_i1037"
+                           type="#_x0000_t75"
+                           style="width:305.25pt;height:55.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId21" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1037"
+                               DrawAspect="Content"
+                               ObjectID="_1807095497"
+                               r:id="rId28"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">    (1-15)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-90"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="2760" w:dyaOrig="1939">
+                  <v:shape id="_x0000_i1038"
+                           type="#_x0000_t75"
+                           style="width:138.75pt;height:96pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId23" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1038"
+                               DrawAspect="Content"
+                               ObjectID="_1807095498"
+                               r:id="rId29"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                         (1-16)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166" w:rsidRDefault="00686166" w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="8820"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:ind w:firstLineChars="200" w:firstLine="480"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-54"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="5940" w:dyaOrig="1900">
+                  <v:shape id="_x0000_i1039"
+                           type="#_x0000_t75"
+                           style="width:297pt;height:95.25pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId25" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1039"
+                               DrawAspect="Content"
+                               ObjectID="_1807095499"
+                               r:id="rId30"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">   (1-17)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="009F5142"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="9525"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:rFonts w:ascii="宋体" w:hAnsi="宋体"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-66"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="2480" w:dyaOrig="1480">
+                  <v:shape id="_x0000_i1040"
+                           type="#_x0000_t75"
+                           style="width:123.75pt;height:74.25pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId31" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1040"
+                               DrawAspect="Content"
+                               ObjectID="_1807095500"
+                               r:id="rId32"/>
+               </w:object>
+            </w:r>
+            <w:r>
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                     (1-32</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="009F5142"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="9525"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:rFonts w:ascii="宋体" w:hAnsi="宋体"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-52"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="1640" w:dyaOrig="1160">
+                  <v:shape id="_x0000_i1041"
+                           type="#_x0000_t75"
+                           style="width:82.5pt;height:58.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId33" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1041"
+                               DrawAspect="Content"
+                               ObjectID="_1807095501"
+                               r:id="rId34"/>
+               </w:object>
+            </w:r>
+            <w:r>
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                        (1-33</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="009F5142"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="9525"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:rFonts w:ascii="宋体" w:hAnsi="宋体"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-42"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="2980" w:dyaOrig="960">
+                  <v:shape id="_x0000_i1042"
+                           type="#_x0000_t75"
+                           style="width:149.25pt;height:47.25pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId35" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1042"
+                               DrawAspect="Content"
+                               ObjectID="_1807095502"
+                               r:id="rId36"/>
+               </w:object>
+            </w:r>
+            <w:r>
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                  (1-34</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="009F5142"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="5040"/>
+                  <w:tab w:val="right" w:pos="9525"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:rFonts w:ascii="宋体" w:hAnsi="宋体"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-52"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="1640" w:dyaOrig="1160">
+                  <v:shape id="_x0000_i1043"
+                           type="#_x0000_t75"
+                           style="width:82.5pt;height:58.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId37" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1043"
+                               DrawAspect="Content"
+                               ObjectID="_1807095503"
+                               r:id="rId38"/>
+               </w:object>
+            </w:r>
+            <w:r>
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">                       (1-35</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="4830"/>
+                  <w:tab w:val="right" w:pos="9356"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="002B2F24">
+               <w:rPr>
+                  <w:position w:val="-220"/>
+                  <w:highlight w:val="yellow"/>
+               </w:rPr>
+               <w:object w:dxaOrig="6920" w:dyaOrig="8600">
+                  <v:shape id="_x0000_i1044"
+                           type="#_x0000_t75"
+                           style="width:345.75pt;height:429.75pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId39" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1044"
+                               DrawAspect="Content"
+                               ObjectID="_1807095504"
+                               r:id="rId40"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+               </w:rPr>
+               <w:t xml:space="preserve">  </w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>(2-1)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00686166">
+            <w:pPr>
+               <w:tabs>
+                  <w:tab w:val="center" w:pos="4830"/>
+                  <w:tab w:val="right" w:pos="9356"/>
+               </w:tabs>
+               <w:wordWrap w:val="0"/>
+               <w:spacing w:line="360" w:lineRule="auto"/>
+               <w:jc w:val="right"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-178"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="5100" w:dyaOrig="4000">
+                  <v:shape id="_x0000_i1045"
+                           type="#_x0000_t75"
+                           style="width:256.5pt;height:200.25pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId41" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1045"
+                               DrawAspect="Content"
+                               ObjectID="_1807095505"
+                               r:id="rId42"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t xml:space="preserve">             (2-2)</w:t>
+            </w:r>
+         </w:p>
+         <w:p w:rsidR="00686166"
+              w:rsidRPr="00294F25"
+              w:rsidRDefault="00686166"
+              w:rsidP="00173D1B">
+            <w:pPr>
+               <w:pStyle w:val="a3"/>
+               <w:rPr>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hAnsi="宋体" w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>公式中</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:position w:val="-12"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:object w:dxaOrig="1860" w:dyaOrig="400">
+                  <v:shape id="_x0000_i1046"
+                           type="#_x0000_t75"
+                           style="width:93pt;height:19.5pt"
+                           o:ole="">
+                     <v:imagedata r:id="rId43" o:title=""/>
+                  </v:shape>
+                  <o:OLEObject Type="Embed"
+                               ProgID="Equation.DSMT4"
+                               ShapeID="_x0000_i1046"
+                               DrawAspect="Content"
+                               ObjectID="_1807095506"
+                               r:id="rId44"/>
+               </w:object>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hAnsi="宋体" w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>参数计算见</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00294F25">
+               <w:rPr>
+                  <w:rFonts w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>1.3</w:t>
+            </w:r>
+            <w:r w:rsidR="00D903E1">
+               <w:rPr>
+                  <w:rFonts w:hAnsi="宋体" w:hint="eastAsia"/>
+                  <w:sz w:val="24"/>
+                  <w:szCs w:val="24"/>
+               </w:rPr>
+               <w:t>节。</w:t>
+            </w:r>
+            <w:bookmarkStart w:id="1" w:name="_GoBack"/>
+            <w:bookmarkEnd w:id="1"/>
+         </w:p>
+         <w:p w:rsidR="00686166" w:rsidRPr="00686166" w:rsidRDefault="00686166"/>
+         <w:sectPr w:rsidR="00686166" w:rsidRPr="00686166">
+            <w:pgSz w:w="11906" w:h="16838"/>
+            <w:pgMar w:top="1440"
+                     w:right="1800"
+                     w:bottom="1440"
+                     w:left="1800"
+                     w:header="851"
+                     w:footer="992"
+                     w:gutter="0"/>
+            <w:cols w:space="425"/>
+            <w:docGrid w:type="lines" w:linePitch="312"/>
+         </w:sectPr>
+      </w:body>
+   </w:document>
+</w:root>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <mn xmlns:tr="http://transpect.io">0</mn>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mi xmlns:tr="http://transpect.io">m</mi>
+   <mo xmlns:tr="http://transpect.io">&lt;</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mi>R</mi>
+      <mtext>t</mtext>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">&lt;</mo>
+   <mn xmlns:tr="http://transpect.io">00</mn>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mi xmlns:tr="http://transpect.io">m</mi>
+</math>

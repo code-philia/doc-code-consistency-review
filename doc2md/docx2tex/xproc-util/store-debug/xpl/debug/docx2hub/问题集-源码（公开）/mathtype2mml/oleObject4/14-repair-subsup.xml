@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mfenced close="" open="{" separators="">
+         <mtable columnalign="left">
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">t</mi>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                           <mi mathvariant="italic">o</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">=</mo>
+                     <mn mathsize="100%" mathvariant="normal">12</mn>
+                     <mtext mathsize="100%">                         </mtext>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">t</mi>
+                        <mrow>
+                           <mtext mathvariant="normal">go</mtext>
+                           <mi mathvariant="italic">t</mi>
+                           <mi mathvariant="italic">e</mi>
+                           <mi mathvariant="italic">m</mi>
+                           <mi mathvariant="italic">p</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">≤</mo>
+                     <mn mathsize="100%" mathvariant="normal">12</mn>
+                  </mrow>
+               </mtd>
+            </mtr>
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">t</mi>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                           <mi mathvariant="italic">o</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">=</mo>
+                     <mn mathsize="100%" mathvariant="normal">800</mn>
+                     <mtext mathsize="100%">                       </mtext>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">t</mi>
+                        <mrow>
+                           <mtext mathvariant="normal">go</mtext>
+                           <mi mathvariant="italic">t</mi>
+                           <mi mathvariant="italic">e</mi>
+                           <mi mathvariant="italic">m</mi>
+                           <mi mathvariant="italic">p</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">≥</mo>
+                     <mn mathsize="100%" mathvariant="normal">800</mn>
+                  </mrow>
+               </mtd>
+            </mtr>
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">t</mi>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                           <mi mathvariant="italic">o</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">=</mo>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">t</mi>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                           <mi mathvariant="italic">o</mi>
+                           <mi mathvariant="italic">t</mi>
+                           <mi mathvariant="italic">e</mi>
+                           <mi mathvariant="italic">m</mi>
+                           <mi mathvariant="italic">p</mi>
+                        </mrow>
+                     </msub>
+                     <mtext mathsize="100%">                     其他</mtext>
+                  </mrow>
+               </mtd>
+            </mtr>
+         </mtable>
+      </mfenced>
+   </mrow>
+</math>

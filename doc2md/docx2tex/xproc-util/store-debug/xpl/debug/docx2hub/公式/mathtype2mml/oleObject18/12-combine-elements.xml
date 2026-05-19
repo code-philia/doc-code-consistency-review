@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathsize="100%" mathvariant="italic">α</mi>
+      <msub>
+         <mi mathvariant="italic">C</mi>
+      </msub>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mfrac>
+         <mrow>
+            <mi mathsize="100%" mathvariant="italic">r</mi>
+         </mrow>
+         <mrow>
+            <mn mathsize="100%" mathvariant="normal">2</mn>
+         </mrow>
+      </mfrac>
+      <mo mathsize="100%" mathvariant="normal">+</mo>
+      <mn mathsize="100%" mathvariant="normal">2</mn>
+      <msqrt>
+         <mrow>
+            <mi mathsize="100%" mathvariant="italic">r</mi>
+         </mrow>
+      </msqrt>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <msqrt>
+         <mrow>
+            <mn mathsize="100%" mathvariant="normal">1</mn>
+            <mo mathsize="100%" mathvariant="normal">+</mo>
+            <mfrac>
+               <mrow>
+                  <mn mathsize="100%" mathvariant="normal">4</mn>
+               </mrow>
+               <mrow>
+                  <mi mathsize="100%" mathvariant="italic">r</mi>
+                  <mo mathsize="100%" mathvariant="normal">+</mo>
+                  <mn mathsize="100%" mathvariant="normal">4</mn>
+                  <msqrt>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">r</mi>
+                     </mrow>
+                  </msqrt>
+               </mrow>
+            </mfrac>
+         </mrow>
+      </msqrt>
+      <mo mathsize="100%" mathvariant="normal">−</mo>
+      <mn mathsize="100%" mathvariant="normal">1</mn>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+   </mrow>
+</math>

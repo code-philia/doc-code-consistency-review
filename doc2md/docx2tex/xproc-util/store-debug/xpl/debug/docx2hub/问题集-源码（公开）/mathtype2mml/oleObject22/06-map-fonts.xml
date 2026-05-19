@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathvariant="italic" mathsize="100%">ε</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">s</mi>
+         </mrow>
+      </msub>
+      <mn mathvariant="normal" mathsize="100%">,</mn>
+      <mi mathvariant="italic" mathsize="100%">ε</mi>
+      <msubsup>
+         <mrow>
+            <mi mathvariant="italic">s</mi>
+         </mrow>
+         <mrow>
+            <mi mathvariant="italic">n</mi>
+         </mrow>
+      </msubsup>
+      <mn mathvariant="normal" mathsize="100%">,</mn>
+      <mover accent="true">
+         <mi mathvariant="italic" mathsize="100%">ε</mi>
+         <mo>˙</mo>
+      </mover>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">s</mi>
+         </mrow>
+      </msub>
+      <mn mathvariant="normal" mathsize="100%">,</mn>
+      <mover accent="true">
+         <mi mathvariant="italic" mathsize="100%">ε</mi>
+         <mo>˙</mo>
+      </mover>
+      <msubsup>
+         <mrow>
+            <mi mathvariant="italic">s</mi>
+         </mrow>
+         <mrow>
+            <mi mathvariant="italic">n</mi>
+         </mrow>
+      </msubsup>
+      <mn mathvariant="normal" mathsize="100%">,</mn>
+      <mover accent="true">
+         <mi mathvariant="italic" mathsize="100%">β</mi>
+         <mo>˙</mo>
+      </mover>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">s</mi>
+         </mrow>
+      </msub>
+      <mn mathvariant="normal" mathsize="100%">,</mn>
+      <mover accent="true">
+         <mi mathvariant="italic" mathsize="100%">β</mi>
+         <mo>˙</mo>
+      </mover>
+      <msubsup>
+         <mrow>
+            <mi mathvariant="italic">s</mi>
+         </mrow>
+         <mrow>
+            <mi mathvariant="italic">n</mi>
+         </mrow>
+      </msubsup>
+   </mrow>
+</math>

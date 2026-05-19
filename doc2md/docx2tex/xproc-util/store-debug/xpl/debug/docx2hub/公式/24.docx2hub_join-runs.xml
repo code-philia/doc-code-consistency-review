@@ -1,0 +1,1574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.le-tex.de/resource/schema/hub/1.2/hub.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="http://www.le-tex.de/resource/schema/hub/1.2/hub.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<hub xmlns="http://docbook.org/ns/docbook"
+     xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+     xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+     xmlns:css="http://www.w3.org/1996/css"
+     xmlns:ct="http://schemas.openxmlformats.org/package/2006/content-types"
+     xmlns:customProps="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties"
+     xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex"
+     xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex"
+     xmlns:docx2hub="http://transpect.io/docx2hub"
+     xmlns:extendedProps="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+     xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+     xmlns:mml="http://www.w3.org/1998/Math/MathML"
+     xmlns:o="urn:schemas-microsoft-com:office:office"
+     xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage"
+     xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+     xmlns:rel="http://schemas.openxmlformats.org/package/2006/relationships"
+     xmlns:tr="http://transpect.io"
+     xmlns:v="urn:schemas-microsoft-com:vml"
+     xmlns:ve="http://schemas.openxmlformats.org/markup-compatibility/2006"
+     xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+     xmlns:w10="urn:schemas-microsoft-com:office:word"
+     xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+     xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"
+     xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid"
+     xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex"
+     xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+     xmlns:word200x="http://schemas.microsoft.com/office/word/2003/wordml"
+     xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+     xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+     xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+     xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+     xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+     xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+     xmlns:wx="http://schemas.microsoft.com/office/word/2003/auxHint"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xml:lang="en-US"
+     version="5.1-variant le-tex_Hub-1.2"
+     css:version="3.0-variant le-tex_Hub-1.2"
+     css:rule-selection-attribute="role">
+   <info>
+      <keywordset role="hub">
+         <keyword role="formatting-deviations-only">true</keyword>
+         <keyword role="source-type">docx</keyword>
+         <keyword role="source-dir-uri">file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/公式_20260508T035925_648697/公式_temp_20445/公式.docx.tmp/</keyword>
+         <keyword role="archive-dir-uri">file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/公式_20260508T035925_648697/公式_temp_20445/</keyword>
+         <keyword role="archive-uri">file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E5%85%AC%E5%BC%8F_20260508T035925_648697/%E5%85%AC%E5%BC%8F_temp_20445/%E5%85%AC%E5%BC%8F.docx</keyword>
+         <keyword role="archive-uri-local">file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E5%85%AC%E5%BC%8F_20260508T035925_648697/%E5%85%AC%E5%BC%8F_temp_20445/%E5%85%AC%E5%BC%8F.docx</keyword>
+         <keyword role="source-basename">公式</keyword>
+         <keyword role="source-application">Microsoft Office Word</keyword>
+         <keyword role="mathtype2mml">ole</keyword>
+      </keywordset>
+      <keywordset role="docProps">
+         <keyword role="dc:creator">itsj</keyword>
+         <keyword role="cp:lastModifiedBy">mia mia</keyword>
+         <keyword role="cp:revision">4</keyword>
+         <keyword role="dcterms:created">2026-04-21T09:37:00Z</keyword>
+         <keyword role="dcterms:modified">2026-04-30T00:35:00Z</keyword>
+         <keyword role="extendedProps:Template">Normal.dotm</keyword>
+         <keyword role="extendedProps:TotalTime">6</keyword>
+         <keyword role="extendedProps:Pages">2</keyword>
+         <keyword role="extendedProps:Words">211</keyword>
+         <keyword role="extendedProps:Characters">1204</keyword>
+         <keyword role="extendedProps:Application">Microsoft Office Word</keyword>
+         <keyword role="extendedProps:DocSecurity">0</keyword>
+         <keyword role="extendedProps:Lines">10</keyword>
+         <keyword role="extendedProps:Paragraphs">2</keyword>
+         <keyword role="extendedProps:ScaleCrop">false</keyword>
+         <keyword role="extendedProps:Company">HT804</keyword>
+         <keyword role="extendedProps:LinksUpToDate">false</keyword>
+         <keyword role="extendedProps:CharactersWithSpaces">1413</keyword>
+         <keyword role="extendedProps:SharedDoc">false</keyword>
+         <keyword role="extendedProps:HyperlinksChanged">false</keyword>
+         <keyword role="extendedProps:AppVersion">16.0000</keyword>
+      </keywordset>
+      <keywordset role="custom-meta">
+         <keyword role="KSOProductBuildVer">2052-11.8.2.11023</keyword>
+         <keyword role="ICV">BB0C6AA08A81483DA1DA2710FEEE32A1</keyword>
+      </keywordset>
+      <css:rules>
+         <css:rule layout-type="para"
+                   native-name="heading 3"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="justify"
+                   css:font-size="16pt"
+                   css:font-family="Calibri"
+                   css:page-break-after="avoid"
+                   css:margin-top="13pt"
+                   css:margin-bottom="13pt"
+                   css:line-height="1.7333333333333334"
+                   remap="h3"
+                   css:font-weight="bold"
+                   name="Heading3"/>
+         <css:rule layout-type="para"
+                   native-name="caption"
+                   css:orphans="2"
+                   css:widows="2"
+                   css:text-align="center"
+                   css:font-size="10.5pt"
+                   css:font-family="黑体"
+                   name="a3"/>
+         <css:rule layout-type="table"
+                   native-name="Table Grid"
+                   css:font-family="Times New Roman"
+                   name="a4"/>
+      </css:rules>
+   </info>
+   <para>需求表格</para>
+   <para role="Heading3"
+         css:margin-left="28.35pt"
+         css:text-indent="-28.35pt">
+      <phrase role="hub:identifier"
+              css:font-family="Calibri"
+              css:font-size="16pt">1.5.1</phrase>
+      <tab role="docx2hub:generated"/>
+      <phrase css:font-family="楷体" css:font-size="15pt" css:font-weight="normal">公式</phrase>
+   </para>
+   <para role="a3" css:margin-top="7.8pt" css:margin-bottom="7.8pt">表 19<phrase css:font-family="Times New Roman">公式</phrase>
+   </para>
+   <informaltable role="a4"
+                  css:border-collapse="collapse"
+                  css:margin-left="0pt"
+                  css:padding-top="0pt"
+                  css:padding-left="5.4pt"
+                  css:padding-bottom="0pt"
+                  css:padding-right="5.4pt"
+                  css:border-top-style="none"
+                  css:border-top-width="0.5pt"
+                  css:border-top-color="#000000"
+                  css:border-left-style="none"
+                  css:border-left-width="0.5pt"
+                  css:border-left-color="#000000"
+                  css:border-bottom-style="none"
+                  css:border-bottom-width="0.5pt"
+                  css:border-bottom-color="#000000"
+                  css:border-right-style="none"
+                  css:border-right-width="0.5pt"
+                  css:border-right-color="#000000">
+      <tgroup cols="6" rowsep="1" colsep="1">
+         <colspec colnum="1" colname="col1" colwidth="23.44208481mm"/>
+         <colspec colnum="2" colname="col2" colwidth="46.19625291mm"/>
+         <colspec colnum="3" colname="col3" colwidth="24.81791823mm"/>
+         <colspec colnum="4" colname="col4" colwidth="21.5194458mm"/>
+         <colspec colnum="5" colname="col5" colwidth="17.18027886mm"/>
+         <colspec colnum="6" colname="col6" colwidth="17.16263997mm"/>
+         <tbody>
+            <row>
+               <entry css:width="66.45pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="1.5pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="1.5pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.75pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.75pt"
+                      css:border-right-color="#000000"
+                      colname="col1">
+                  <para css:line-height="1.5">
+                     <phrase css:font-family="黑体">测试项名称</phrase>
+                  </para>
+               </entry>
+               <entry css:width="130.95pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="1.5pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.75pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.75pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.75pt"
+                      css:border-right-color="#000000"
+                      colname="col2">
+                  <para css:line-height="1.5">公式</para>
+               </entry>
+               <entry css:width="70.35pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="1.5pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.75pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.75pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.75pt"
+                      css:border-right-color="#000000"
+                      colname="col3">
+                  <para css:line-height="1.5">
+                     <phrase css:font-family="黑体">测试项标识</phrase>
+                  </para>
+               </entry>
+               <entry css:width="61pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="1.5pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.75pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.75pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.75pt"
+                      css:border-right-color="#000000"
+                      colname="col4">
+                  <para css:line-height="1.5">T_FUNC19</para>
+               </entry>
+               <entry css:width="48.7pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="1.5pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.75pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.75pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.75pt"
+                      css:border-right-color="#000000"
+                      colname="col5">
+                  <para>
+                     <phrase css:font-size="10pt">优先级</phrase>
+                  </para>
+               </entry>
+               <entry css:width="48.65pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="1.5pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.75pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.75pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="1.5pt"
+                      css:border-right-color="#000000"
+                      colname="col6">
+                  <para>
+                     <phrase css:letter-spacing="0.1pt" css:font-size="10pt">高</phrase>
+                  </para>
+               </entry>
+            </row>
+            <row>
+               <entry css:width="66.45pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.75pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="1.5pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.75pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.75pt"
+                      css:border-right-color="#000000"
+                      colname="col1">
+                  <para css:line-height="1.5">
+                     <phrase css:font-family="黑体">追踪关系</phrase>
+                  </para>
+               </entry>
+               <entry css:width="359.65pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.75pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.75pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.75pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="1.5pt"
+                      css:border-right-color="#000000"
+                      namest="col2"
+                      nameend="col6">
+                  <para css:line-height="1.5">3.2.5.4节</para>
+               </entry>
+            </row>
+            <row css:min-height="131.35pt">
+               <entry css:width="66.45pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.75pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="1.5pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="1.5pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.75pt"
+                      css:border-right-color="#000000"
+                      colname="col1">
+                  <para css:line-height="1.5">
+                     <phrase css:font-family="黑体">需求描述</phrase>
+                  </para>
+               </entry>
+               <entry css:width="359.65pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.75pt"
+                      css:border-top-color="#000000"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.75pt"
+                      css:border-left-color="#000000"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="1.5pt"
+                      css:border-bottom-color="#000000"
+                      css:border-right-style="solid"
+                      css:border-right-width="1.5pt"
+                      css:border-right-color="#000000"
+                      namest="col2"
+                      nameend="col6">
+                  <para css:background-color="#FFFFFF">
+                     <tabs>
+                        <tab align="left" horizontal-position="15.6pt"/>
+                     </tabs>
+                     <phrase css:color="#000000" css:font-size="12pt">的<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                              <mml:mi>β</mml:mi>
+                           </mml:math>
+                        </inlineequation>的<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                              <mml:mi>β</mml:mi>
+                           </mml:math>
+                        </inlineequation>的；</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <equation css:color="#000000"
+                               css:font-size="12pt"
+                               role="mtef"
+                               condition="ole">
+                        <mml:math>
+                           <mml:mi>S</mml:mi>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>=</mml:mo>
+                           <mml:mi>P</mml:mi>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>+</mml:mo>
+                           <mml:mi>α</mml:mi>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>[</mml:mo>
+                           <mml:mi>Z</mml:mi>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>−</mml:mo>
+                           <mml:mi>P</mml:mi>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>]</mml:mo>
+                        </mml:math>
+                     </equation>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <equation css:color="#000000"
+                               css:font-size="12pt"
+                               role="mtef"
+                               condition="ole">
+                        <mml:math>
+                           <mml:mover accent="true">
+                              <mml:mi>S</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>=</mml:mo>
+                           <mml:mover accent="true">
+                              <mml:mi>P</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>+</mml:mo>
+                           <mml:mi>β</mml:mi>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>[</mml:mo>
+                           <mml:mi>Z</mml:mi>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>−</mml:mo>
+                           <mml:mi>P</mml:mi>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>]</mml:mo>
+                           <mml:mo>/</mml:mo>
+                           <mml:mi>T</mml:mi>
+                        </mml:math>
+                     </equation>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">k数；<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>S</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                              <mml:mo>=</mml:mo>
+                              <mml:msup>
+                                 <mml:mfenced close="]" open="[" separators="">
+                                    <mml:mtable>
+                                       <mml:mtr>
+                                          <mml:mtd>
+                                             <mml:mi>R</mml:mi>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:mi>A</mml:mi>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:mi>E</mml:mi>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                       </mml:mtr>
+                                    </mml:mtable>
+                                 </mml:mfenced>
+                                 <mml:mtext>T</mml:mtext>
+                              </mml:msup>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>P</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                              <mml:mo>=</mml:mo>
+                              <mml:msup>
+                                 <mml:mfenced close="]" open="[" separators="">
+                                    <mml:mtable>
+                                       <mml:mtr>
+                                          <mml:mtd>
+                                             <mml:mi>R</mml:mi>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>−</mml:mo>
+                                             <mml:mtext>1</mml:mtext>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:mi>A</mml:mi>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>−</mml:mo>
+                                             <mml:mtext>1</mml:mtext>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:mi>E</mml:mi>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>−</mml:mo>
+                                             <mml:mtext>1</mml:mtext>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                       </mml:mtr>
+                                    </mml:mtable>
+                                 </mml:mfenced>
+                                 <mml:mtext>T</mml:mtext>
+                              </mml:msup>
+                           </mml:math>
+                        </inlineequation>；</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>Z</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                              <mml:mo>=</mml:mo>
+                              <mml:msup>
+                                 <mml:mfenced close="]" open="[" separators="">
+                                    <mml:mtable>
+                                       <mml:mtr>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>R</mml:mi>
+                                                <mml:mtext>m</mml:mtext>
+                                             </mml:msub>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>A</mml:mi>
+                                                <mml:mtext>m</mml:mtext>
+                                             </mml:msub>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>E</mml:mi>
+                                                <mml:mtext>m</mml:mtext>
+                                             </mml:msub>
+                                             <mml:mo mathvariant="italic">(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">/</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo mathvariant="italic">)</mml:mo>
+                                          </mml:mtd>
+                                       </mml:mtr>
+                                    </mml:mtable>
+                                 </mml:mfenced>
+                                 <mml:mtext>T</mml:mtext>
+                              </mml:msup>
+                           </mml:math>
+                        </inlineequation>；</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mover accent="true">
+                                 <mml:mi>S</mml:mi>
+                                 <mml:mo>˙</mml:mo>
+                              </mml:mover>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>和<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mover accent="true">
+                                 <mml:mi>P</mml:mi>
+                                 <mml:mo>˙</mml:mo>
+                              </mml:mover>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>表示<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>S</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>和<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>P</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>；</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>和<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>：</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                              <mml:mo>=</mml:mo>
+                              <mml:msup>
+                                 <mml:mfenced close="]" open="[" separators="">
+                                    <mml:mtable>
+                                       <mml:mtr>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>α</mml:mi>
+                                                <mml:mi>R</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>α</mml:mi>
+                                                <mml:mi>A</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>α</mml:mi>
+                                                <mml:mi>E</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>)</mml:mo>
+                                          </mml:mtd>
+                                       </mml:mtr>
+                                    </mml:mtable>
+                                 </mml:mfenced>
+                                 <mml:mi>T</mml:mi>
+                              </mml:msup>
+                           </mml:math>
+                        </inlineequation>，<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                              <mml:mo>=</mml:mo>
+                              <mml:msup>
+                                 <mml:mfenced close="]" open="[" separators="">
+                                    <mml:mtable>
+                                       <mml:mtr>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>β</mml:mi>
+                                                <mml:mi>R</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>β</mml:mi>
+                                                <mml:mi>A</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>)</mml:mo>
+                                          </mml:mtd>
+                                          <mml:mtd>
+                                             <mml:msub>
+                                                <mml:mi>β</mml:mi>
+                                                <mml:mi>E</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>(</mml:mo>
+                                             <mml:mi>k</mml:mi>
+                                             <mml:mo>)</mml:mo>
+                                          </mml:mtd>
+                                       </mml:mtr>
+                                    </mml:mtable>
+                                 </mml:mfenced>
+                                 <mml:mi>T</mml:mi>
+                              </mml:msup>
+                           </mml:math>
+                        </inlineequation>。</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>、<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>：</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <equation css:color="#000000"
+                               css:font-size="12pt"
+                               role="mtef"
+                               condition="ole">
+                        <mml:math>
+                           <mml:msub>
+                              <mml:mi>α</mml:mi>
+                              <mml:mi>C</mml:mi>
+                           </mml:msub>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>=</mml:mo>
+                           <mml:mo>(</mml:mo>
+                           <mml:mfrac>
+                              <mml:mi>r</mml:mi>
+                              <mml:mn>2</mml:mn>
+                           </mml:mfrac>
+                           <mml:mo>+</mml:mo>
+                           <mml:mn>2</mml:mn>
+                           <mml:msqrt>
+                              <mml:mi>r</mml:mi>
+                           </mml:msqrt>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>(</mml:mo>
+                           <mml:msqrt>
+                              <mml:mn>1</mml:mn>
+                              <mml:mo>+</mml:mo>
+                              <mml:mfrac>
+                                 <mml:mn>4</mml:mn>
+                                 <mml:mrow>
+                                    <mml:mi>r</mml:mi>
+                                    <mml:mo>+</mml:mo>
+                                    <mml:mn>4</mml:mn>
+                                    <mml:msqrt>
+                                       <mml:mi>r</mml:mi>
+                                    </mml:msqrt>
+                                 </mml:mrow>
+                              </mml:mfrac>
+                           </mml:msqrt>
+                           <mml:mo>−</mml:mo>
+                           <mml:mn>1</mml:mn>
+                           <mml:mo>)</mml:mo>
+                        </mml:math>
+                     </equation>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <equation css:color="#000000"
+                               css:font-size="12pt"
+                               role="mtef"
+                               condition="ole">
+                        <mml:math>
+                           <mml:msub>
+                              <mml:mi>β</mml:mi>
+                              <mml:mi>C</mml:mi>
+                           </mml:msub>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>=</mml:mo>
+                           <mml:msup>
+                              <mml:msub>
+                                 <mml:mi>α</mml:mi>
+                                 <mml:mi>C</mml:mi>
+                              </mml:msub>
+                              <mml:mn>2</mml:mn>
+                           </mml:msup>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>/</mml:mo>
+                           <mml:mo>(</mml:mo>
+                           <mml:mn>2</mml:mn>
+                           <mml:mo>−</mml:mo>
+                           <mml:msub>
+                              <mml:mi>α</mml:mi>
+                              <mml:mi>C</mml:mi>
+                           </mml:msub>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>)</mml:mo>
+                        </mml:math>
+                     </equation>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>r</mml:mi>
+                              <mml:mo>=</mml:mo>
+                              <mml:mo>(</mml:mo>
+                              <mml:mfrac>
+                                 <mml:mrow>
+                                    <mml:msub>
+                                       <mml:mi>α</mml:mi>
+                                       <mml:mi>w</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mo>)</mml:mo>
+                                 </mml:mrow>
+                                 <mml:mrow>
+                                    <mml:mn>2</mml:mn>
+                                    <mml:msub>
+                                       <mml:mi>α</mml:mi>
+                                       <mml:mi>n</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mo>)</mml:mo>
+                                 </mml:mrow>
+                              </mml:mfrac>
+                              <mml:msup>
+                                 <mml:mo>)</mml:mo>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                           </mml:math>
+                        </inlineequation>。</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">（2）<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>α</mml:mi>
+                                    <mml:mi>w</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>的</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>V</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                              <mml:mo>=</mml:mo>
+                              <mml:mi>Z</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                              <mml:mo>−</mml:mo>
+                              <mml:mi>P</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>，的<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>V</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>的<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>α</mml:mi>
+                                    <mml:mi>w</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>的</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <equation css:color="#000000"
+                               css:font-size="12pt"
+                               role="mtef"
+                               condition="ole">
+                        <mml:math>
+                           <mml:msup>
+                              <mml:msub>
+                                 <mml:mi>α</mml:mi>
+                                 <mml:mi>w</mml:mi>
+                              </mml:msub>
+                              <mml:mn>2</mml:mn>
+                           </mml:msup>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>=</mml:mo>
+                           <mml:mo>(</mml:mo>
+                           <mml:mstyle displaystyle="true">
+                              <mml:munderover>
+                                 <mml:mo>∑</mml:mo>
+                                 <mml:mrow>
+                                    <mml:mi>i</mml:mi>
+                                    <mml:mo>=</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mrow>
+                                 <mml:mrow>
+                                    <mml:mi>N</mml:mi>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                 </mml:mrow>
+                              </mml:munderover>
+                              <mml:msup>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                           </mml:mstyle>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi>k</mml:mi>
+                           <mml:mo>−</mml:mo>
+                           <mml:mi>i</mml:mi>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>)</mml:mo>
+                           <mml:mo>/</mml:mo>
+                           <mml:mi>N</mml:mi>
+                        </mml:math>
+                     </equation>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">N 3~5。</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">的<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>和<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>/T的</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">的<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mfrac>
+                                 <mml:mrow>
+                                    <mml:msup>
+                                       <mml:msub>
+                                          <mml:mi>α</mml:mi>
+                                          <mml:mi>w</mml:mi>
+                                       </mml:msub>
+                                       <mml:mn>2</mml:mn>
+                                    </mml:msup>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mo>)</mml:mo>
+                                 </mml:mrow>
+                                 <mml:mrow>
+                                    <mml:msup>
+                                       <mml:msub>
+                                          <mml:mi>α</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:msub>
+                                       <mml:mn>2</mml:mn>
+                                    </mml:msup>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mo>)</mml:mo>
+                                 </mml:mrow>
+                              </mml:mfrac>
+                           </mml:math>
+                        </inlineequation>的的<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mfrac>
+                                 <mml:mrow>
+                                    <mml:msup>
+                                       <mml:msub>
+                                          <mml:mi>α</mml:mi>
+                                          <mml:mi>w</mml:mi>
+                                       </mml:msub>
+                                       <mml:mn>2</mml:mn>
+                                    </mml:msup>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mo>)</mml:mo>
+                                 </mml:mrow>
+                                 <mml:mrow>
+                                    <mml:msup>
+                                       <mml:msub>
+                                          <mml:mi>α</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:msub>
+                                       <mml:mn>2</mml:mn>
+                                    </mml:msup>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mo>)</mml:mo>
+                                 </mml:mrow>
+                              </mml:mfrac>
+                           </mml:math>
+                        </inlineequation>，按<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>和<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>k</mml:mi>
+                              <mml:mo>)</mml:mo>
+                           </mml:math>
+                        </inlineequation>/T， <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                           </mml:math>
+                        </inlineequation>-<inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>β</mml:mi>
+                           </mml:math>
+                        </inlineequation>。</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:text-indent="24pt"
+                        css:vertical-align="middle">
+                     <phrase css:color="#000000" css:font-size="12pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mi>α</mml:mi>
+                              <mml:mo>−</mml:mo>
+                              <mml:mi>β</mml:mi>
+                           </mml:math>
+                        </inlineequation>。</phrase>
+                  </para>
+               </entry>
+            </row>
+         </tbody>
+      </tgroup>
+   </informaltable>
+   <para/>
+   <para role="Heading3">6.1.3<phrase css:font-family="宋体" css:font-size="9pt">测试</phrase>
+   </para>
+   <informaltable css:border-collapse="collapse"
+                  css:margin-left="auto"
+                  css:margin-right="auto"
+                  css:border-top-style="none"
+                  css:border-left-style="none"
+                  css:border-bottom-style="none"
+                  css:border-right-style="none"
+                  css:table-layout="fixed">
+      <tgroup cols="6">
+         <colspec colnum="1" colname="col1" colwidth="27.5166684mm"/>
+         <colspec colnum="2" colname="col2" colwidth="27.5166684mm"/>
+         <colspec colnum="3" colname="col3" colwidth="27.5166684mm"/>
+         <colspec colnum="4" colname="col4" colwidth="27.5166684mm"/>
+         <colspec colnum="5" colname="col5" colwidth="27.5166684mm"/>
+         <colspec colnum="6" colname="col6" colwidth="27.5166684mm"/>
+         <tbody>
+            <row>
+               <entry css:text-align="center"
+                      css:width="78pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <para css:line-height="18pt" css:text-align="center">
+                     <phrase css:font-family="宋体" css:font-size="9pt" css:font-weight="bold">测试项名称</phrase>
+                  </para>
+               </entry>
+               <entry css:width="78pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:line-height="12pt">
+                     <phrase css:font-family="宋体" css:font-size="9pt">测试</phrase>
+                  </para>
+               </entry>
+               <entry css:text-align="center"
+                      css:width="78pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <para css:line-height="18pt" css:text-align="center">
+                     <phrase css:font-family="宋体" css:font-size="9pt" css:font-weight="bold">测试项标识</phrase>
+                  </para>
+               </entry>
+               <entry css:width="78pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:line-height="12pt">
+                     <phrase css:font-family="宋体" css:font-size="9pt">T_FUNC1</phrase>
+                  </para>
+               </entry>
+               <entry css:text-align="center"
+                      css:width="78pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col5">
+                  <para css:line-height="18pt" css:text-align="center">
+                     <phrase css:font-family="宋体" css:font-size="9pt" css:font-weight="bold">测试项名称</phrase>
+                  </para>
+               </entry>
+               <entry css:width="78pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col6">
+                  <para css:line-height="12pt">
+                     <phrase css:font-family="宋体" css:font-size="9pt">测试</phrase>
+                  </para>
+               </entry>
+            </row>
+            <row>
+               <entry css:text-align="center"
+                      css:width="78pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <para css:line-height="18pt" css:text-align="center">
+                     <phrase css:font-family="宋体" css:font-size="9pt" css:font-weight="bold">追踪关系</phrase>
+                  </para>
+               </entry>
+               <entry css:width="390pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      namest="col2"
+                      nameend="col6">
+                  <para css:line-height="12pt">
+                     <phrase css:font-family="宋体" css:font-size="9pt">需求规格说明3.2.10</phrase>
+                  </para>
+               </entry>
+            </row>
+            <row>
+               <entry css:text-align="center"
+                      css:width="78pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <para css:line-height="18pt" css:text-align="center">
+                     <phrase css:font-family="宋体" css:font-size="9pt" css:font-weight="bold">需求描述</phrase>
+                  </para>
+               </entry>
+               <entry css:width="390pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      namest="col2"
+                      nameend="col6">
+                  <para css:line-height="1.5">
+                     <phrase css:font-family="宋体" css:font-size="9pt">需求说明：</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>P</mml:mtext>
+                                 <mml:mtext>t</mml:mtext>
+                              </mml:msub>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">、</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>P</mml:mtext>
+                                 <mml:mtext>Max</mml:mtext>
+                              </mml:msub>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">、</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mi mathvariant="normal">R</mml:mi>
+                                 <mml:mi mathvariant="normal">t</mml:mi>
+                              </mml:msub>
+                              <mml:mo>=</mml:mo>
+                              <mml:msub>
+                                 <mml:mi mathvariant="normal">R</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi mathvariant="normal">t</mml:mi>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mi>out</mml:mi>
+                                 </mml:mrow>
+                              </mml:msub>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">，</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>X</mml:mtext>
+                                 <mml:mtext>L</mml:mtext>
+                              </mml:msub>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">、</phrase>
+                  </para>
+                  <para css:line-height="1.5" css:margin-left="63pt" css:text-indent="0pt">
+                     <phrase role="hub:identifier">1)</phrase>
+                     <tab role="docx2hub:generated"/>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>P</mml:mtext>
+                                 <mml:mtext>Max</mml:mtext>
+                              </mml:msub>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">与</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>P</mml:mtext>
+                                 <mml:mtext>t</mml:mtext>
+                              </mml:msub>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">进，</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>P</mml:mtext>
+                                 <mml:mtext>t</mml:mtext>
+                              </mml:msub>
+                              <mml:mo>&lt;</mml:mo>
+                              <mml:msub>
+                                 <mml:mtext>P</mml:mtext>
+                                 <mml:mtext>Max</mml:mtext>
+                              </mml:msub>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">且</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>R</mml:mtext>
+                                 <mml:mtext>t</mml:mtext>
+                              </mml:msub>
+                              <mml:mo>&gt;</mml:mo>
+                              <mml:mn>00</mml:mn>
+                              <mml:mtext>km</mml:mtext>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">且</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>X</mml:mtext>
+                                 <mml:mtext>L</mml:mtext>
+                              </mml:msub>
+                              <mml:mo>&gt;</mml:mo>
+                              <mml:mtext>0m</mml:mtext>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">。</phrase>
+                  </para>
+                  <para css:line-height="1.5"
+                        css:margin-left="63pt"
+                        css:text-indent="0.45pt">
+                     <phrase role="hub:identifier">2)</phrase>
+                     <tab role="docx2hub:generated"/>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">捷径</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>P</mml:mtext>
+                                 <mml:mtext>Max</mml:mtext>
+                              </mml:msub>
+                           </mml:math>
+                        </inlineequation>
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:mn>0</mml:mn>
+                              <mml:mi>k</mml:mi>
+                              <mml:mi>m</mml:mi>
+                              <mml:mo>&lt;</mml:mo>
+                              <mml:msub>
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mtext>t</mml:mtext>
+                              </mml:msub>
+                              <mml:mo>&lt;</mml:mo>
+                              <mml:mn>00</mml:mn>
+                              <mml:mi>k</mml:mi>
+                              <mml:mi>m</mml:mi>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase css:font-size="9pt">且</phrase>
+                     <phrase css:top="6pt" css:position="relative" css:font-size="9pt">
+                        <mediaobject>
+                           <imageobject>
+                              <imagedata role="hub:embedded"
+                                         fileref="container:word/media/image36.wmf"
+                                         css:width="45.5pt"
+                                         css:height="17.85pt"/>
+                           </imageobject>
+                        </mediaobject>
+                     </phrase>
+                     <phrase css:font-size="9pt">（</phrase>
+                     <phrase css:top="6pt" css:position="relative" css:font-size="9pt">
+                        <mediaobject>
+                           <imageobject>
+                              <imagedata role="hub:embedded"
+                                         fileref="container:word/media/image37.wmf"
+                                         css:width="17.85pt"
+                                         css:height="17.85pt"/>
+                           </imageobject>
+                        </mediaobject>
+                     </phrase>
+                     <phrase css:font-size="9pt">。</phrase>
+                  </para>
+                  <para css:line-height="1.5" css:margin-left="63.8pt">
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>R</mml:mtext>
+                                 <mml:mtext>min</mml:mtext>
+                              </mml:msub>
+                              <mml:mtext>=1km</mml:mtext>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">、</phrase>
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>R</mml:mtext>
+                                 <mml:mtext>max</mml:mtext>
+                              </mml:msub>
+                              <mml:mtext>=km</mml:mtext>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">。</phrase>
+                  </para>
+                  <para css:line-height="12pt">
+                     <phrase xml:lang="zh-CN"
+                             css:top="6pt"
+                             css:position="relative"
+                             css:font-size="9pt"
+                             css:font-weight="bold">
+                        <inlineequation role="mtef" condition="ole">
+                           <mml:math>
+                              <mml:msub>
+                                 <mml:mtext>P</mml:mtext>
+                                 <mml:mtext>t</mml:mtext>
+                              </mml:msub>
+                              <mml:mo>&lt;</mml:mo>
+                              <mml:mtext>90</mml:mtext>
+                           </mml:math>
+                        </inlineequation>
+                     </phrase>
+                     <phrase xml:lang="zh-CN" css:font-size="9pt">。</phrase>
+                  </para>
+               </entry>
+            </row>
+         </tbody>
+      </tgroup>
+   </informaltable>
+   <para/>
+</hub>

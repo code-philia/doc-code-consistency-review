@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathvariant="italic"
+          font-position="0061"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">α</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">w</mi>
+         </mrow>
+      </msub>
+      <msup>
+         <mrow>
+            <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">2</mn>
+         </mrow>
+      </msup>
+      <mn mathvariant="normal"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">(</mn>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">k</mi>
+      <mn mathvariant="normal"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">)</mn>
+   </mrow>
+</math>

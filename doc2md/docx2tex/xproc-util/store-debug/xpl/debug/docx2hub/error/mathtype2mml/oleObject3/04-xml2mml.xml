@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi fontfamily="Symbol"
+          default-font=""
+          mathvariant="italic"
+          mathsize="100%">μ</mi>
+      <msub>
+         <mrow>
+            <mi fontfamily="" default-font="" mathvariant="italic">t</mi>
+         </mrow>
+      </msub>
+      <mn fontfamily=""
+          default-font=""
+          mathvariant="normal"
+          mathsize="100%">(</mn>
+      <mi fontfamily=""
+          default-font=""
+          mathvariant="italic"
+          mathsize="100%">t</mi>
+      <mn fontfamily=""
+          default-font=""
+          mathvariant="normal"
+          mathsize="100%">)</mn>
+      <mo fontfamily="Symbol"
+          default-font=""
+          mathvariant="normal"
+          mathsize="100%">=</mo>
+      <mfenced separators="" open="{" close="">
+         <mtable columnalign="left">
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi fontfamily=""
+                         default-font=""
+                         mathvariant="italic"
+                         mathsize="100%">e</mi>
+                     <msup>
+                        <mrow>
+                           <mo fontfamily="Symbol" default-font="" mathvariant="normal">−</mo>
+                           <mi fontfamily="" default-font="" mathvariant="italic">k</mi>
+                           <msub>
+                              <mrow>
+                                 <mn fontfamily="" default-font="" mathvariant="normal">1</mn>
+                              </mrow>
+                           </msub>
+                           <mi fontfamily="" default-font="" mathvariant="italic">t</mi>
+                           <msub>
+                              <mrow/>
+                           </msub>
+                           <msup>
+                              <mrow>
+                                 <mn fontfamily="" default-font="" mathvariant="normal">2</mn>
+                              </mrow>
+                           </msup>
+                        </mrow>
+                     </msup>
+                     <mtable>
+                        <mtr>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow>
+                                 <mi fontfamily=""
+                                     default-font=""
+                                     mathvariant="italic"
+                                     mathsize="100%">t</mi>
+                                 <mo fontfamily="Symbol"
+                                     default-font=""
+                                     mathvariant="normal"
+                                     mathsize="100%">≥</mo>
+                                 <mn fontfamily=""
+                                     default-font=""
+                                     mathvariant="normal"
+                                     mathsize="100%">0</mn>
+                              </mrow>
+                           </mtd>
+                        </mtr>
+                     </mtable>
+                  </mrow>
+               </mtd>
+            </mtr>
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi fontfamily=""
+                         default-font=""
+                         mathvariant="italic"
+                         mathsize="100%">e</mi>
+                     <msup>
+                        <mrow>
+                           <mo fontfamily="Symbol" default-font="" mathvariant="normal">−</mo>
+                           <mi fontfamily="" default-font="" mathvariant="italic">k</mi>
+                           <msub>
+                              <mrow>
+                                 <mn fontfamily="" default-font="" mathvariant="normal">2</mn>
+                              </mrow>
+                           </msub>
+                           <mi fontfamily="" default-font="" mathvariant="italic">t</mi>
+                           <msub>
+                              <mrow/>
+                           </msub>
+                           <msup>
+                              <mrow>
+                                 <mn fontfamily="" default-font="" mathvariant="normal">2</mn>
+                              </mrow>
+                           </msup>
+                        </mrow>
+                     </msup>
+                     <mtable>
+                        <mtr>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow>
+                                 <mi fontfamily=""
+                                     default-font=""
+                                     mathvariant="italic"
+                                     mathsize="100%">t</mi>
+                                 <mo fontfamily="Symbol"
+                                     default-font=""
+                                     mathvariant="normal"
+                                     mathsize="100%">&lt;</mo>
+                                 <mn fontfamily=""
+                                     default-font=""
+                                     mathvariant="normal"
+                                     mathsize="100%">0</mn>
+                              </mrow>
+                           </mtd>
+                        </mtr>
+                     </mtable>
+                  </mrow>
+               </mtd>
+            </mtr>
+         </mtable>
+      </mfenced>
+   </mrow>
+</math>

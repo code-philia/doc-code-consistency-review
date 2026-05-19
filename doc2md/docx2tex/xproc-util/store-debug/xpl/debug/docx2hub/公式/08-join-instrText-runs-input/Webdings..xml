@@ -1,0 +1,680 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols>
+  <!--  *
+        * Thanks to Alan Wood for providing a comprehensive list with 
+        * Webdings character set and equivalent Unicode characters
+        * and allowing us to use it here.
+        *
+        * http://www.alanwood.net/demos/webdings.html
+        * 
+        * -->
+  <!--SPACE-->
+   <symbol number="F020" entity="" char=" "/>
+   <symbol number="0020" entity=" " char=" "/>
+   <!--SPIDER-->
+   <symbol number="F021" entity="" char="🕷"/>
+   <symbol number="0021" entity="!" char="🕷"/>
+   <!--SPIDER WEB-->
+   <symbol number="F022" entity="" char="🕸"/>
+   <symbol number="0022" entity="&#34;" char="🕸"/>
+   <!--NO PIRACY-->
+   <symbol number="F023" entity="" char="🕲"/>
+   <symbol number="0023" entity="#" char="🕲"/>
+   <!--DARK SUNGLASSES-->
+   <symbol number="F024" entity="" char="🕶"/>
+   <symbol number="0024" entity="$" char="🕶"/>
+   <!--TROPHY-->
+   <symbol number="F025" entity="" char="🏆"/>
+   <symbol number="0025" entity="%" char="🏆"/>
+   <!--MILITARY MEDAL-->
+   <symbol number="F026" entity="" char="🎖"/>
+   <symbol number="0026" entity="&amp;" char="🎖"/>
+   <!--LINKED PAPERCLIPS-->
+   <symbol number="F027" entity="" char="🖇"/>
+   <symbol number="0027" entity="'" char="🖇"/>
+   <!--LEFT SPEECH BUBBLE-->
+   <symbol number="F028" entity="" char="🗨"/>
+   <symbol number="0028" entity="(" char="🗨"/>
+   <!--RIGHT SPEECH BUBBLE-->
+   <symbol number="F029" entity="" char="🗩"/>
+   <symbol number="0029" entity=")" char="🗩"/>
+   <!--MOOD BUBBLE-->
+   <symbol number="F02A" entity="" char="🗰"/>
+   <symbol number="002A" entity="*" char="🗰"/>
+   <!--LIGHTNING MOOD BUBBLE-->
+   <symbol number="F02B" entity="" char="🗱"/>
+   <symbol number="002B" entity="+" char="🗱"/>
+   <!--HOT PEPPER-->
+   <symbol number="F02C" entity="" char="🌶"/>
+   <symbol number="002C" entity="," char="🌶"/>
+   <!--REMINDER RIBBON-->
+   <symbol number="F02D" entity="" char="🎗"/>
+   <symbol number="002D" entity="-" char="🎗"/>
+   <!--QUADRANT UPPER RIGHT AND LOWER LEFT-->
+   <symbol number="F02E" entity="" char="▞"/>
+   <symbol number="002E" entity="." char="▞"/>
+   <!--VERY HEAVY SOLIDUS-->
+   <symbol number="F02F" entity="" char="🙼"/>
+   <symbol number="002F" entity="/" char="🙼"/>
+   <!--MINIMIZE-->
+   <symbol number="F030" entity="" char="🗕"/>
+   <symbol number="0030" entity="0" char="🗕"/>
+   <!--MAXIMIZE-->
+   <symbol number="F031" entity="" char="🗖"/>
+   <symbol number="0031" entity="1" char="🗖"/>
+   <!--OVERLAP-->
+   <symbol number="F032" entity="" char="🗗"/>
+   <symbol number="0032" entity="2" char="🗗"/>
+   <!--BLACK MEDIUM LEFT-POINTING TRIANGLE-->
+   <symbol number="F033" entity="" char="⏴"/>
+   <symbol number="0033" entity="3" char="⏴"/>
+   <!--BLACK MEDIUM RIGHT-POINTING TRIANGLE-->
+   <symbol number="F034" entity="" char="⏵"/>
+   <symbol number="0034" entity="4" char="⏵"/>
+   <!--BLACK MEDIUM UP-POINTING TRIANGLE-->
+   <symbol number="F035" entity="" char="⏶"/>
+   <symbol number="0035" entity="5" char="⏶"/>
+   <!--BLACK MEDIUM DOWN-POINTING TRIANGLE-->
+   <symbol number="F036" entity="" char="⏷"/>
+   <symbol number="0036" entity="6" char="⏷"/>
+   <!--BLACK LEFT-POINTING DOUBLE TRIANGLE-->
+   <symbol number="F037" entity="" char="⏪"/>
+   <symbol number="0037" entity="7" char="⏪"/>
+   <!--BLACK RIGHT-POINTING DOUBLE TRIANGLE-->
+   <symbol number="F038" entity="" char="⏩"/>
+   <symbol number="0038" entity="8" char="⏩"/>
+   <!--BLACK LEFT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR-->
+   <symbol number="F039" entity="" char="⏮"/>
+   <symbol number="0039" entity="9" char="⏮"/>
+   <!--BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR-->
+   <symbol number="F03A" entity="" char="⏭"/>
+   <symbol number="003A" entity=":" char="⏭"/>
+   <!--DOUBLE VERTICAL BAR-->
+   <symbol number="F03B" entity="" char="⏸"/>
+   <symbol number="003B" entity=";" char="⏸"/>
+   <!--BLACK SQUARE FOR STOP-->
+   <symbol number="F03C" entity="" char="⏹"/>
+   <symbol number="003C" entity="&lt;" char="⏹"/>
+   <!--BLACK CIRCLE FOR RECORD-->
+   <symbol number="F03D" entity="" char="⏺"/>
+   <symbol number="003D" entity="=" char="⏺"/>
+   <!--INCREASE FONT SIZE SYMBOL-->
+   <symbol number="F03E" entity="" char="🗚"/>
+   <symbol number="003E" entity="&gt;" char="🗚"/>
+   <!--BALLOT BOX WITH BALLOT-->
+   <symbol number="F03F" entity="" char="🗳"/>
+   <symbol number="003F" entity="?" char="🗳"/>
+   <!--HAMMER AND WRENCH-->
+   <symbol number="F040" entity="" char="🛠"/>
+   <symbol number="0040" entity="@" char="🛠"/>
+   <!--BUILDING CONSTRUCTION-->
+   <symbol number="F041" entity="" char="🏗"/>
+   <symbol number="0041" entity="A" char="🏗"/>
+   <!--HOUSE BUILDINGS-->
+   <symbol number="F042" entity="" char="🏘"/>
+   <symbol number="0042" entity="B" char="🏘"/>
+   <!--CITYSCAPE-->
+   <symbol number="F043" entity="" char="🏙"/>
+   <symbol number="0043" entity="C" char="🏙"/>
+   <!--DERELICT HOUSE BUILDING-->
+   <symbol number="F044" entity="" char="🏚"/>
+   <symbol number="0044" entity="D" char="🏚"/>
+   <!--DESERT-->
+   <symbol number="F045" entity="" char="🏜"/>
+   <symbol number="0045" entity="E" char="🏜"/>
+   <!--FACTORY-->
+   <symbol number="F046" entity="" char="🏭"/>
+   <symbol number="0046" entity="F" char="🏭"/>
+   <!--CLASSICAL BUILDING-->
+   <symbol number="F047" entity="" char="🏛"/>
+   <symbol number="0047" entity="G" char="🏛"/>
+   <!--HOUSE BUILDING-->
+   <symbol number="F048" entity="" char="🏠"/>
+   <symbol number="0048" entity="H" char="🏠"/>
+   <!--BEACH WITH UMBRELLA-->
+   <symbol number="F049" entity="" char="🏖"/>
+   <symbol number="0049" entity="I" char="🏖"/>
+   <!--DESERT ISLAND-->
+   <symbol number="F04A" entity="" char="🏝"/>
+   <symbol number="004A" entity="J" char="🏝"/>
+   <!--MOTORWAY-->
+   <symbol number="F04B" entity="" char="🛣"/>
+   <symbol number="004B" entity="K" char="🛣"/>
+   <!--LEFT-POINTING MAGNIFYING GLASS-->
+   <symbol number="F04C" entity="" char="🔍"/>
+   <symbol number="004C" entity="L" char="🔍"/>
+   <!--SNOW CAPPED MOUNTAIN-->
+   <symbol number="F04D" entity="" char="🏔"/>
+   <symbol number="004D" entity="M" char="🏔"/>
+   <!--EYE-->
+   <symbol number="F04E" entity="" char="👁"/>
+   <symbol number="004E" entity="N" char="👁"/>
+   <!--EAR-->
+   <symbol number="F04F" entity="" char="👂"/>
+   <symbol number="004F" entity="O" char="👂"/>
+   <!--NATIONAL PARK-->
+   <symbol number="F050" entity="" char="🏞"/>
+   <symbol number="0050" entity="P" char="🏞"/>
+   <!--CAMPING-->
+   <symbol number="F051" entity="" char="🏕"/>
+   <symbol number="0051" entity="Q" char="🏕"/>
+   <!--RAILWAY TRACK-->
+   <symbol number="F052" entity="" char="🛤"/>
+   <symbol number="0052" entity="R" char="🛤"/>
+   <!--STADIUM-->
+   <symbol number="F053" entity="" char="🏟"/>
+   <symbol number="0053" entity="S" char="🏟"/>
+   <!--PASSENGER SHIP-->
+   <symbol number="F054" entity="" char="🛳"/>
+   <symbol number="0054" entity="T" char="🛳"/>
+   <!--BULLHORN WITH SOUND WAVES-->
+   <symbol number="F055" entity="" char="🕬"/>
+   <symbol number="0055" entity="U" char="🕬"/>
+   <!--BULLHORN-->
+   <symbol number="F056" entity="" char="🕫"/>
+   <symbol number="0056" entity="V" char="🕫"/>
+   <!--RIGHT SPEAKER-->
+   <symbol number="F057" entity="" char="🕨"/>
+   <symbol number="0057" entity="W" char="🕨"/>
+   <!--SPEAKER-->
+   <symbol number="F058" entity="" char="🔈"/>
+   <symbol number="0058" entity="X" char="🔈"/>
+   <!--HEART WITH TIP ON THE LEFT-->
+   <symbol number="F059" entity="" char="🎔"/>
+   <symbol number="0059" entity="Y" char="🎔"/>
+   <!--BOUQUET OF FLOWERS-->
+   <symbol number="F05A" entity="" char="🎕"/>
+   <symbol number="005A" entity="Z" char="🎕"/>
+   <!--LEFT THOUGHT BUBBLE-->
+   <symbol number="F05B" entity="" char="🗬"/>
+   <symbol number="005B" entity="[" char="🗬"/>
+   <!--VERY HEAVY REVERSE SOLIDUS-->
+   <symbol number="F05C" entity="" char="🙽"/>
+   <symbol number="005C" entity="\" char="🙽"/>
+   <!--RIGHT THOUGHT BUBBLE-->
+   <symbol number="F05D" entity="" char="🗭"/>
+   <symbol number="005D" entity="]" char="🗭"/>
+   <!--TWO SPEECH BUBBLES-->
+   <symbol number="F05E" entity="" char="🗪"/>
+   <symbol number="005E" entity="^" char="🗪"/>
+   <!--THREE SPEECH BUBBLES-->
+   <symbol number="F05F" entity="" char="🗫"/>
+   <symbol number="005F" entity="_" char="🗫"/>
+   <!--FOUR CORNER ARROWS CIRCLING ANTICLOCKWISE-->
+   <symbol number="F060" entity="" char="⮔"/>
+   <symbol number="0060" entity="`" char="⮔"/>
+   <!--HEAVY CHECK MARK-->
+   <symbol number="F061" entity="" char="✔"/>
+   <symbol number="0061" entity="a" char="✔"/>
+   <!--BICYCLE-->
+   <symbol number="F062" entity="" char="🚲"/>
+   <symbol number="0062" entity="b" char="🚲"/>
+   <!--WHITE SQUARE-->
+   <symbol number="F063" entity="" char="□"/>
+   <symbol number="0063" entity="c" char="□"/>
+   <!--SHIELD-->
+   <symbol number="F064" entity="" char="🛡"/>
+   <symbol number="0064" entity="d" char="🛡"/>
+   <!--PACKAGE-->
+   <symbol number="F065" entity="" char="📦"/>
+   <symbol number="0065" entity="e" char="📦"/>
+   <!--ONCOMING FIRE ENGINE-->
+   <symbol number="F066" entity="" char="🛱"/>
+   <symbol number="0066" entity="f" char="🛱"/>
+   <!--BLACK SQUARE-->
+   <symbol number="F067" entity="" char="■"/>
+   <symbol number="0067" entity="g" char="■"/>
+   <!--AMBULANCE-->
+   <symbol number="F068" entity="" char="🚑"/>
+   <symbol number="0068" entity="h" char="🚑"/>
+   <!--CIRCLED INFORMATION SOURCE-->
+   <symbol number="F069" entity="" char="🛈"/>
+   <symbol number="0069" entity="i" char="🛈"/>
+   <!--SMALL AIRPLANE-->
+   <symbol number="F06A" entity="" char="🛩"/>
+   <symbol number="006A" entity="j" char="🛩"/>
+   <!--SATELLITE-->
+   <symbol number="F06B" entity="" char="🛰"/>
+   <symbol number="006B" entity="k" char="🛰"/>
+   <!--REVERSE LIGHT FOUR POINTED PINWHEEL STAR-->
+   <symbol number="F06C" entity="" char="🟈"/>
+   <symbol number="006C" entity="l" char="🟈"/>
+   <!--MAN IN BUSINESS SUIT LEVITATING-->
+   <symbol number="F06D" entity="" char="🕴"/>
+   <symbol number="006D" entity="m" char="🕴"/>
+   <!--MEDIUM BLACK CIRCLE-->
+   <symbol number="F06E" entity="" char="⚫"/>
+   <symbol number="006E" entity="n" char="⚫"/>
+   <!--MOTOR BOAT-->
+   <symbol number="F06F" entity="" char="🛥"/>
+   <symbol number="006F" entity="o" char="🛥"/>
+   <!--ONCOMING POLICE CAR-->
+   <symbol number="F070" entity="" char="🚔"/>
+   <symbol number="0070" entity="p" char="🚔"/>
+   <!--CLOCKWISE RIGHT AND LEFT SEMICIRCLE ARROWS-->
+   <symbol number="F071" entity="" char="🗘"/>
+   <symbol number="0071" entity="q" char="🗘"/>
+   <!--CANCELLATION X-->
+   <symbol number="F072" entity="" char="🗙"/>
+   <symbol number="0072" entity="r" char="🗙"/>
+   <!--BLACK QUESTION MARK ORNAMENT-->
+   <symbol number="F073" entity="" char="❓"/>
+   <symbol number="0073" entity="s" char="❓"/>
+   <!--DIESEL LOCOMOTIVE-->
+   <symbol number="F074" entity="" char="🛲"/>
+   <symbol number="0074" entity="t" char="🛲"/>
+   <!--METRO-->
+   <symbol number="F075" entity="" char="🚇"/>
+   <symbol number="0075" entity="u" char="🚇"/>
+   <!--ONCOMING BUS-->
+   <symbol number="F076" entity="" char="🚍"/>
+   <symbol number="0076" entity="v" char="🚍"/>
+   <!--FLAG IN HOLE-->
+   <symbol number="F077" entity="" char="⛳"/>
+   <symbol number="0077" entity="w" char="⛳"/>
+   <!--PROHIBITED SIGN-->
+   <symbol number="F078" entity="" char="🛇"/>
+   <symbol number="0078" entity="x" char="🛇"/>
+   <!--CIRCLED MINUS-->
+   <symbol number="F079" entity="" char="⊖"/>
+   <symbol number="0079" entity="y" char="⊖"/>
+   <!--NO SMOKING SYMBOL-->
+   <symbol number="F07A" entity="" char="🚭"/>
+   <symbol number="007A" entity="z" char="🚭"/>
+   <!--LEFT ANGER BUBBLE-->
+   <symbol number="F07B" entity="" char="🗮"/>
+   <symbol number="007B" entity="{" char="🗮"/>
+   <!--VERTICAL LINE-->
+   <symbol number="F07C" entity="" char="|"/>
+   <symbol number="007C" entity="|" char="|"/>
+   <!--RIGHT ANGER BUBBLE-->
+   <symbol number="F07D" entity="" char="🗯"/>
+   <symbol number="007D" entity="}" char="🗯"/>
+   <!--LIGHTNING MOOD-->
+   <symbol number="F07E" entity="" char="🗲"/>
+   <symbol number="007E" entity="~" char="🗲"/>
+   <!--MENS SYMBOL-->
+   <symbol number="F080" entity="" char="🚹"/>
+   <symbol number="0080" entity="&#x80;" char="🚹"/>
+   <!--WOMENS SYMBOL-->
+   <symbol number="F081" entity="" char="🚺"/>
+   <symbol number="0081" entity="&#x81;" char="🚺"/>
+   <!--BOYS SYMBOL-->
+   <symbol number="F082" entity="" char="🛉"/>
+   <symbol number="0082" entity="&#x82;" char="🛉"/>
+   <!--GIRLS SYMBOL-->
+   <symbol number="F083" entity="" char="🛊"/>
+   <symbol number="0083" entity="&#x83;" char="🛊"/>
+   <!--BABY SYMBOL-->
+   <symbol number="F084" entity="" char="🚼"/>
+   <symbol number="0084" entity="&#x84;" char="🚼"/>
+   <!--EXTRATERRESTRIAL ALIEN-->
+   <symbol number="F085" entity="" char="👽"/>
+   <symbol number="0085" entity="&#x85;" char="👽"/>
+   <!--WEIGHT LIFTER-->
+   <symbol number="F086" entity="" char="🏋"/>
+   <symbol number="0086" entity="&#x86;" char="🏋"/>
+   <!--SKIER-->
+   <symbol number="F087" entity="" char="⛷"/>
+   <symbol number="0087" entity="&#x87;" char="⛷"/>
+   <!--SNOWBOARDER-->
+   <symbol number="F088" entity="" char="🏂"/>
+   <symbol number="0088" entity="&#x88;" char="🏂"/>
+   <!--GOLFER-->
+   <symbol number="F089" entity="" char="🏌"/>
+   <symbol number="0089" entity="&#x89;" char="🏌"/>
+   <!--SWIMMER-->
+   <symbol number="F08A" entity="" char="🏊"/>
+   <symbol number="008A" entity="&#x8a;" char="🏊"/>
+   <!--SURFER-->
+   <symbol number="F08B" entity="" char="🏄"/>
+   <symbol number="008B" entity="&#x8b;" char="🏄"/>
+   <!--RACING MOTORCYCLE-->
+   <symbol number="F08C" entity="" char="🏍"/>
+   <symbol number="008C" entity="&#x8c;" char="🏍"/>
+   <!--RACING CAR-->
+   <symbol number="F08D" entity="" char="🏎"/>
+   <symbol number="008D" entity="&#x8d;" char="🏎"/>
+   <!--ONCOMING AUTOMOBILE-->
+   <symbol number="F08E" entity="" char="🚘"/>
+   <symbol number="008E" entity="&#x8e;" char="🚘"/>
+   <!--STOCK CHART-->
+   <symbol number="F08F" entity="" char="🗠"/>
+   <symbol number="008F" entity="&#x8f;" char="🗠"/>
+   <!--OIL DRUM-->
+   <symbol number="F090" entity="" char="🛢"/>
+   <symbol number="0090" entity="&#x90;" char="🛢"/>
+   <!--MONEY BAG-->
+   <symbol number="F091" entity="" char="💰"/>
+   <symbol number="0091" entity="&#x91;" char="💰"/>
+   <!--LABEL-->
+   <symbol number="F092" entity="" char="🏷"/>
+   <symbol number="0092" entity="&#x92;" char="🏷"/>
+   <!--CREDIT CARD-->
+   <symbol number="F093" entity="" char="💳"/>
+   <symbol number="0093" entity="&#x93;" char="💳"/>
+   <!--FAMILY-->
+   <symbol number="F094" entity="" char="👪"/>
+   <symbol number="0094" entity="&#x94;" char="👪"/>
+   <!--DAGGER KNIFE-->
+   <symbol number="F095" entity="" char="🗡"/>
+   <symbol number="0095" entity="&#x95;" char="🗡"/>
+   <!--LIPS-->
+   <symbol number="F096" entity="" char="🗢"/>
+   <symbol number="0096" entity="&#x96;" char="🗢"/>
+   <!--SPEAKING HEAD IN SILHOUETTE-->
+   <symbol number="F097" entity="" char="🗣"/>
+   <symbol number="0097" entity="&#x97;" char="🗣"/>
+   <!--PINWHEEL STAR-->
+   <symbol number="F098" entity="" char="✯"/>
+   <symbol number="0098" entity="&#x98;" char="✯"/>
+   <!--ENVELOPE WITH LIGHTNING-->
+   <symbol number="F099" entity="" char="🖄"/>
+   <symbol number="0099" entity="&#x99;" char="🖄"/>
+   <!--FLYING ENVELOPE-->
+   <symbol number="F09A" entity="" char="🖅"/>
+   <symbol number="009A" entity="&#x9a;" char="🖅"/>
+   <!--STAMPED ENVELOPE-->
+   <symbol number="F09B" entity="" char="🖃"/>
+   <symbol number="009B" entity="&#x9b;" char="🖃"/>
+   <!--PEN OVER STAMPED ENVELOPE-->
+   <symbol number="F09B" entity="" char="🖆"/>
+   <symbol number="009B" entity="&#x9b;" char="🖆"/>
+   <!--DOCUMENT WITH TEXT-->
+   <symbol number="F09B" entity="" char="🖹"/>
+   <symbol number="009B" entity="&#x9b;" char="🖹"/>
+   <!--DOCUMENT WITH TEXT AND PICTURE-->
+   <symbol number="F09E" entity="" char="🖺"/>
+   <symbol number="009E" entity="&#x9e;" char="🖺"/>
+   <!--DOCUMENT WITH PICTURE-->
+   <symbol number="F09F" entity="" char="🖻"/>
+   <symbol number="009F" entity="&#x9f;" char="🖻"/>
+   <!--SLEUTH OR SPY-->
+   <symbol number="F0A0" entity="" char="🕵"/>
+   <symbol number="00A0" entity=" " char="🕵"/>
+   <!--MANTELPIECE CLOCK-->
+   <symbol number="F0A1" entity="" char="🕰"/>
+   <symbol number="00A1" entity="¡" char="🕰"/>
+   <!--FRAME WITH TILES-->
+   <symbol number="F0A2" entity="" char="🖽"/>
+   <symbol number="00A2" entity="¢" char="🖽"/>
+   <!--FRAME WITH AN X-->
+   <symbol number="F0A3" entity="" char="🖾"/>
+   <symbol number="00A3" entity="£" char="🖾"/>
+   <!--CLIPBOARD-->
+   <symbol number="F0A4" entity="" char="📋"/>
+   <symbol number="00A4" entity="¤" char="📋"/>
+   <!--SPIRAL NOTE PAD-->
+   <symbol number="F0A5" entity="" char="🗒"/>
+   <symbol number="00A5" entity="¥" char="🗒"/>
+   <!--SPIRAL CALENDAR PAD-->
+   <symbol number="F0A6" entity="" char="🗓"/>
+   <symbol number="00A6" entity="¦" char="🗓"/>
+   <!--OPEN BOOK-->
+   <symbol number="F0A7" entity="" char="📖"/>
+   <symbol number="00A7" entity="§" char="📖"/>
+   <!--BOOKS-->
+   <symbol number="F0A8" entity="" char="📚"/>
+   <symbol number="00A8" entity="¨" char="📚"/>
+   <!--ROLLED-UP NEWSPAPER-->
+   <symbol number="F0A9" entity="" char="🗞"/>
+   <symbol number="00A9" entity="©" char="🗞"/>
+   <!--PAGE WITH CIRCLED TEXT-->
+   <symbol number="F0AA" entity="" char="🗟"/>
+   <symbol number="00AA" entity="ª" char="🗟"/>
+   <!--CARD FILE BOX-->
+   <symbol number="F0AB" entity="" char="🗃"/>
+   <symbol number="00AB" entity="«" char="🗃"/>
+   <!--CARD INDEX DIVIDERS-->
+   <symbol number="F0AC" entity="" char="🗂"/>
+   <symbol number="00AC" entity="¬" char="🗂"/>
+   <!--FRAME WITH PICTURE-->
+   <symbol number="F0AD" entity="" char="🖼"/>
+   <symbol number="00AD" entity="­" char="🖼"/>
+   <!--PERFORMING ARTS-->
+   <symbol number="F0AE" entity="" char="🎭"/>
+   <symbol number="00AE" entity="®" char="🎭"/>
+   <!--BEAMED ASCENDING MUSICAL NOTES-->
+   <symbol number="F0AF" entity="" char="🎜"/>
+   <symbol number="00AF" entity="¯" char="🎜"/>
+   <!--MUSICAL KEYBOARD WITH JACKS-->
+   <symbol number="F0B0" entity="" char="🎘"/>
+   <symbol number="00B0" entity="°" char="🎘"/>
+   <!--STUDIO MICROPHONE-->
+   <symbol number="F0B1" entity="" char="🎙"/>
+   <symbol number="00B1" entity="±" char="🎙"/>
+   <!--HEADPHONE-->
+   <symbol number="F0B2" entity="" char="🎧"/>
+   <symbol number="00B2" entity="²" char="🎧"/>
+   <!--OPTICAL DISC-->
+   <symbol number="F0B3" entity="" char="💿"/>
+   <symbol number="00B3" entity="³" char="💿"/>
+   <!--FILM FRAMES-->
+   <symbol number="F0B4" entity="" char="🎞"/>
+   <symbol number="00B4" entity="´" char="🎞"/>
+   <!--CAMERA-->
+   <symbol number="F0B5" entity="" char="📷"/>
+   <symbol number="00B5" entity="µ" char="📷"/>
+   <!--ADMISSION TICKETS-->
+   <symbol number="F0B6" entity="" char="🎟"/>
+   <symbol number="00B6" entity="¶" char="🎟"/>
+   <!--CLAPPER BOARD-->
+   <symbol number="F0B7" entity="" char="🎬"/>
+   <symbol number="00B7" entity="·" char="🎬"/>
+   <!--FILM PROJECTOR-->
+   <symbol number="F0B8" entity="" char="📽"/>
+   <symbol number="00B8" entity="¸" char="📽"/>
+   <!--VIDEO CAMERA-->
+   <symbol number="F0B9" entity="" char="📹"/>
+   <symbol number="00B9" entity="¹" char="📹"/>
+   <!--PORTABLE STEREO-->
+   <symbol number="F0BA" entity="" char="📾"/>
+   <symbol number="00BA" entity="º" char="📾"/>
+   <!--RADIO-->
+   <symbol number="F0BB" entity="" char="📻"/>
+   <symbol number="00BB" entity="»" char="📻"/>
+   <!--LEVEL SLIDER-->
+   <symbol number="F0BC" entity="" char="🎚"/>
+   <symbol number="00BC" entity="¼" char="🎚"/>
+   <!--CONTROL KNOBS-->
+   <symbol number="F0BD" entity="" char="🎛"/>
+   <symbol number="00BD" entity="½" char="🎛"/>
+   <!--TELEVISION-->
+   <symbol number="F0BE" entity="" char="📺"/>
+   <symbol number="00BE" entity="¾" char="📺"/>
+   <!--PERSONAL COMPUTER-->
+   <symbol number="F0BF" entity="" char="💻"/>
+   <symbol number="00BF" entity="¿" char="💻"/>
+   <!--DESKTOP COMPUTER-->
+   <symbol number="F0C0" entity="" char="🖥"/>
+   <symbol number="00C0" entity="À" char="🖥"/>
+   <!--KEYBOARD AND MOUSE-->
+   <symbol number="F0C1" entity="" char="🖦"/>
+   <symbol number="00C1" entity="Á" char="🖦"/>
+   <!--THREE NETWORKED COMPUTERS-->
+   <symbol number="F0C2" entity="" char="🖧"/>
+   <symbol number="00C2" entity="Â" char="🖧"/>
+   <!--JOYSTICK-->
+   <symbol number="F0C3" entity="" char="🕹"/>
+   <symbol number="00C3" entity="Ã" char="🕹"/>
+   <!--VIDEO GAME-->
+   <symbol number="F0C4" entity="" char="🎮"/>
+   <symbol number="00C4" entity="Ä" char="🎮"/>
+   <!--LEFT HAND TELEPHONE RECEIVER-->
+   <symbol number="F0C5" entity="" char="🕻"/>
+   <symbol number="00C5" entity="Å" char="🕻"/>
+   <!--TELEPHONE RECEIVER WITH PAGE-->
+   <symbol number="F0C6" entity="" char="🕼"/>
+   <symbol number="00C6" entity="Æ" char="🕼"/>
+   <!--PAGER-->
+   <symbol number="F0C7" entity="" char="📟"/>
+   <symbol number="00C7" entity="Ç" char="📟"/>
+   <!--CLAMSHELL MOBILE PHONE-->
+   <symbol number="F0C8" entity="" char="🖁"/>
+   <symbol number="00C8" entity="È" char="🖁"/>
+   <!--TELEPHONE ON TOP OF MODEM-->
+   <symbol number="F0C9" entity="" char="🖀"/>
+   <symbol number="00C9" entity="É" char="🖀"/>
+   <!--PRINTER-->
+   <symbol number="F0CA" entity="" char="🖨"/>
+   <symbol number="00CA" entity="Ê" char="🖨"/>
+   <!--POCKET CALCULATOR-->
+   <symbol number="F0CB" entity="" char="🖩"/>
+   <symbol number="00CB" entity="Ë" char="🖩"/>
+   <!--BLACK FOLDER-->
+   <symbol number="F0CB" entity="" char="🖿"/>
+   <symbol number="00CB" entity="Ë" char="🖿"/>
+   <!--BLACK HARD SHELL FLOPPY DISK-->
+   <symbol number="F0CD" entity="" char="🖪"/>
+   <symbol number="00CD" entity="Í" char="🖪"/>
+   <!--COMPRESSION-->
+   <symbol number="F0CE" entity="" char="🗜"/>
+   <symbol number="00CE" entity="Î" char="🗜"/>
+   <!--LOCK-->
+   <symbol number="F0CF" entity="" char="🔒"/>
+   <symbol number="00CF" entity="Ï" char="🔒"/>
+   <!--OPEN LOCK-->
+   <symbol number="F0D0" entity="" char="🔓"/>
+   <symbol number="00D0" entity="Ð" char="🔓"/>
+   <!--OLD KEY-->
+   <symbol number="F0D1" entity="" char="🗝"/>
+   <symbol number="00D1" entity="Ñ" char="🗝"/>
+   <!--INBOX TRAY-->
+   <symbol number="F0D2" entity="" char="📥"/>
+   <symbol number="00D2" entity="Ò" char="📥"/>
+   <!--OUTBOX TRAY-->
+   <symbol number="F0D3" entity="" char="📤"/>
+   <symbol number="00D3" entity="Ó" char="📤"/>
+   <!--HOLE-->
+   <symbol number="F0D4" entity="" char="🕳"/>
+   <symbol number="00D4" entity="Ô" char="🕳"/>
+   <!--WHITE SUN-->
+   <symbol number="F0D5" entity="" char="🌣"/>
+   <symbol number="00D5" entity="Õ" char="🌣"/>
+   <!--WHITE SUN WITH SMALL CLOUD-->
+   <symbol number="F0D6" entity="" char="🌤"/>
+   <symbol number="00D6" entity="Ö" char="🌤"/>
+   <!--WHITE SUN BEHIND CLOUD-->
+   <symbol number="F0D7" entity="" char="🌥"/>
+   <symbol number="00D7" entity="×" char="🌥"/>
+   <!--WHITE SUN BEHIND CLOUD WITH RAIN-->
+   <symbol number="F0D8" entity="" char="🌦"/>
+   <symbol number="00D8" entity="Ø" char="🌦"/>
+   <!--CLOUD-->
+   <symbol number="F0D9" entity="" char="☁"/>
+   <symbol number="00D9" entity="Ù" char="☁"/>
+   <!--CLOUD WITH RAIN-->
+   <symbol number="F0DA" entity="" char="🌧"/>
+   <symbol number="00DA" entity="Ú" char="🌧"/>
+   <!--CLOUD WITH SNOW-->
+   <symbol number="F0DB" entity="" char="🌨"/>
+   <symbol number="00DB" entity="Û" char="🌨"/>
+   <!--CLOUD WITH LIGHTNING-->
+   <symbol number="F0DC" entity="" char="🌩"/>
+   <symbol number="00DC" entity="Ü" char="🌩"/>
+   <!--CLOUD WITH TORNADO-->
+   <symbol number="F0DD" entity="" char="🌪"/>
+   <symbol number="00DD" entity="Ý" char="🌪"/>
+   <!--WIND BLOWING FACE-->
+   <symbol number="F0DE" entity="" char="🌬"/>
+   <symbol number="00DE" entity="Þ" char="🌬"/>
+   <!--FOG-->
+   <symbol number="F0DF" entity="" char="🌫"/>
+   <symbol number="00DF" entity="ß" char="🌫"/>
+   <!--LAST QUARTER MOON WITH FACE-->
+   <symbol number="F0E0" entity="" char="🌜"/>
+   <symbol number="00E0" entity="à" char="🌜"/>
+   <!--THERMOMETER-->
+   <symbol number="F0E1" entity="" char="🌡"/>
+   <symbol number="00E1" entity="á" char="🌡"/>
+   <!--COUCH AND LAMP-->
+   <symbol number="F0E2" entity="" char="🛋"/>
+   <symbol number="00E2" entity="â" char="🛋"/>
+   <!--BED-->
+   <symbol number="F0E3" entity="" char="🛏"/>
+   <symbol number="00E3" entity="ã" char="🛏"/>
+   <!--FORK AND KNIFE WITH PLATE-->
+   <symbol number="F0E4" entity="" char="🍽"/>
+   <symbol number="00E4" entity="ä" char="🍽"/>
+   <!--COCKTAIL GLASS-->
+   <symbol number="F0E5" entity="" char="🍸"/>
+   <symbol number="00E5" entity="å" char="🍸"/>
+   <!--BELLHOP BELL-->
+   <symbol number="F0E6" entity="" char="🛎"/>
+   <symbol number="00E6" entity="æ" char="🛎"/>
+   <!--SHOPPING BAGS-->
+   <symbol number="F0E7" entity="" char="🛍"/>
+   <symbol number="00E7" entity="ç" char="🛍"/>
+   <!--CIRCLED LATIN CAPITAL LETTER P-->
+   <symbol number="F0E8" entity="" char="Ⓟ"/>
+   <symbol number="00E8" entity="è" char="Ⓟ"/>
+   <!--WHEELCHAIR SYMBOL-->
+   <symbol number="F0E9" entity="" char="♿"/>
+   <symbol number="00E9" entity="é" char="♿"/>
+   <!--TRIANGLE WITH ROUNDED CORNERS-->
+   <symbol number="F0EA" entity="" char="🛆"/>
+   <symbol number="00EA" entity="ê" char="🛆"/>
+   <!--BLACK PUSHPIN-->
+   <symbol number="F0EB" entity="" char="🖈"/>
+   <symbol number="00EB" entity="ë" char="🖈"/>
+   <!--GRADUATION CAP-->
+   <symbol number="F0EC" entity="" char="🎓"/>
+   <symbol number="00EC" entity="ì" char="🎓"/>
+   <!--THREE RAYS ABOVE-->
+   <symbol number="F0ED" entity="" char="🗤"/>
+   <symbol number="00ED" entity="í" char="🗤"/>
+   <!--THREE RAYS BELOW-->
+   <symbol number="F0EE" entity="" char="🗥"/>
+   <symbol number="00EE" entity="î" char="🗥"/>
+   <!--THREE RAYS LEFT-->
+   <symbol number="F0EF" entity="" char="🗦"/>
+   <symbol number="00EF" entity="ï" char="🗦"/>
+   <!--THREE RAYS RIGHT-->
+   <symbol number="F0F0" entity="" char="🗧"/>
+   <symbol number="00F0" entity="ð" char="🗧"/>
+   <!--NORTHEAST-POINTING AIRPLANE-->
+   <symbol number="F0F1" entity="" char="🛪"/>
+   <symbol number="00F1" entity="ñ" char="🛪"/>
+   <!--CHIPMUNK-->
+   <symbol number="F0F2" entity="" char="🐿"/>
+   <symbol number="00F2" entity="ò" char="🐿"/>
+   <!--BIRD-->
+   <symbol number="F0F3" entity="" char="🐦"/>
+   <symbol number="00F3" entity="ó" char="🐦"/>
+   <!--FISH-->
+   <symbol number="F0F4" entity="" char="🐟"/>
+   <symbol number="00F4" entity="ô" char="🐟"/>
+   <!--DOG-->
+   <symbol number="F0F5" entity="" char="🐕"/>
+   <symbol number="00F5" entity="õ" char="🐕"/>
+   <!--CAT-->
+   <symbol number="F0F6" entity="" char="🐈"/>
+   <symbol number="00F6" entity="ö" char="🐈"/>
+   <!--LEFTWARDS ROCKET-->
+   <symbol number="F0F7" entity="" char="🙬"/>
+   <symbol number="00F7" entity="÷" char="🙬"/>
+   <!--RIGHTWARDS ROCKET-->
+   <symbol number="F0F8" entity="" char="🙮"/>
+   <symbol number="00F8" entity="ø" char="🙮"/>
+   <!--UPWARDS ROCKET-->
+   <symbol number="F0F9" entity="" char="🙭"/>
+   <symbol number="00F9" entity="ù" char="🙭"/>
+   <!--DOWNWARDS ROCKET-->
+   <symbol number="F0FA" entity="" char="🙯"/>
+   <symbol number="00FA" entity="ú" char="🙯"/>
+   <!--WORLD MAP-->
+   <symbol number="F0FB" entity="" char="🗺"/>
+   <symbol number="00FB" entity="û" char="🗺"/>
+   <!--EARTH GLOBE EUROPE-AFRICA-->
+   <symbol number="F0FC" entity="" char="🌍"/>
+   <symbol number="00FC" entity="ü" char="🌍"/>
+   <!--EARTH GLOBE ASIA-AUSTRALIA-->
+   <symbol number="F0FD" entity="" char="🌏"/>
+   <symbol number="00FD" entity="ý" char="🌏"/>
+   <!--EARTH GLOBE AMERICAS-->
+   <symbol number="F0FE" entity="" char="🌎"/>
+   <symbol number="00FE" entity="þ" char="🌎"/>
+   <!--DOVE OF PEACE-->
+   <symbol number="F0FF" entity="" char="🕊"/>
+   <symbol number="00FF" entity="ÿ" char="🕊"/>
+</symbols>

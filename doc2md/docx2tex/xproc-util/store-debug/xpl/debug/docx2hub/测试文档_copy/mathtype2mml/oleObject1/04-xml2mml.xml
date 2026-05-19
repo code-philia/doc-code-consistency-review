@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">d</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">i</mi>
+         </mrow>
+      </msub>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">j</mi>
+      <mo mathvariant="normal"
+          font-position="003D"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">=</mo>
+      <mn mathvariant="normal"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">2</mn>
+      <msup>
+         <mrow>
+            <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">2</mn>
+         </mrow>
+      </msup>
+      <mn mathvariant="normal"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">*</mn>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">b</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">M</mi>
+         </mrow>
+      </msub>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">D</mi>
+      <msup>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">i</mi>
+         </mrow>
+      </msup>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">j</mi>
+      <mo mathvariant="normal"
+          font-position="002B"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">+</mo>
+      <mn mathvariant="normal"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">2</mn>
+      <mn mathvariant="normal"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">*</mn>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">b</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">M</mi>
+         </mrow>
+      </msub>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">S</mi>
+      <msup>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">i</mi>
+         </mrow>
+      </msup>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">j</mi>
+      <mo mathvariant="normal"
+          font-position="002B"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">+</mo>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">b</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">M</mi>
+         </mrow>
+      </msub>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">B</mi>
+      <msup>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">i</mi>
+         </mrow>
+      </msup>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">j</mi>
+   </mrow>
+</math>

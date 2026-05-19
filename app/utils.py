@@ -2,6 +2,8 @@ import os
 import markdown
 from bs4 import BeautifulSoup
 import re
+
+from app.docx_utils import freeze_numbering
 from doc2md import docToMd
 import random
 import sys
@@ -264,7 +266,7 @@ def get_all_files_with_relative_paths(base_path, type = 'code'):
             
     return all_files
 
-def convert_doc_to_markdown(doc_repo_path):
+def convert_doc_to_markdown(doc_repo_path, parseDocMethod):
     converted_repo_path = os.path.join(os.path.dirname(doc_repo_path), "doc_repo_converted")
     os.makedirs(converted_repo_path, exist_ok=True)
     
@@ -278,8 +280,8 @@ def convert_doc_to_markdown(doc_repo_path):
             
             if os.path.exists(converted_md_path):
                 continue
-
-            docToMd.convertDocToMarkdown(os.path.join(root, file), converted_repo_path)
+            #freeze_numbering(os.path.join(root, file))
+            docToMd.convertDocToMarkdown(os.path.join(root, file), converted_repo_path, parseDocMethod)
 
 def get_filename_without_extension(filepath):
     """获取不带扩展名的文件名"""

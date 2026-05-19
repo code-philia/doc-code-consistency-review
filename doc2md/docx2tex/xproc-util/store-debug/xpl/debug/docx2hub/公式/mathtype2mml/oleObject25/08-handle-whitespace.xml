@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathsize="100%" mathvariant="italic">α</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">w</mi>
+         </mrow>
+      </msub>
+      <msup>
+         <mrow>
+            <mn mathvariant="normal">2</mn>
+         </mrow>
+      </msup>
+      <mn mathsize="100%" mathvariant="normal">(</mn>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mn mathsize="100%" mathvariant="normal">)</mn>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mn mathsize="100%" mathvariant="normal">(</mn>
+      <mstyle displaystyle="true">
+         <munderover>
+            <mo mathvariant="normal">∑</mo>
+            <mrow>
+               <mi mathvariant="italic">i</mi>
+               <mo mathvariant="normal">=</mo>
+               <mn mathvariant="normal">0</mn>
+            </mrow>
+            <mrow>
+               <mi mathvariant="italic">N</mi>
+               <mo mathvariant="normal">−</mo>
+               <mn mathvariant="normal">1</mn>
+            </mrow>
+         </munderover>
+         <mrow>
+            <mi mathsize="100%" mathvariant="italic">V</mi>
+            <msup>
+               <mrow>
+                  <mn mathvariant="normal">2</mn>
+               </mrow>
+            </msup>
+         </mrow>
+      </mstyle>
+      <mn mathsize="100%" mathvariant="normal">(</mn>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mo mathsize="100%" mathvariant="normal">−</mo>
+      <mi mathsize="100%" mathvariant="italic">i</mi>
+      <mn mathsize="100%" mathvariant="normal">)</mn>
+      <mn mathsize="100%" mathvariant="normal">)</mn>
+      <mn mathsize="100%" mathvariant="normal">/</mn>
+      <mi mathsize="100%" mathvariant="italic">N</mi>
+   </mrow>
+</math>

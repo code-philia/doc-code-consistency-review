@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:result xmlns:c="http://www.w3.org/ns/xproc-step"
+          xmlns:cat="urn:oasis:names:tc:entity:xmlns:xml:catalog"
+          xmlns:cx="http://xmlcalabash.com/ns/extensions"
+          xmlns:pos="http://exproc.org/proposed/steps/os"
+          xmlns:tr="http://transpect.io"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+          href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx"
+          cwd="/home/lenovo/ubushare/cf/docx2tex/"
+          local-href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx"
+          os-path="/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx"
+          lastpath="error.docx"
+          lastpath-os="error.docx"
+          rel-path="output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx"/>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">t</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">e</mi>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">s</mi>
+         </mrow>
+      </msub>
+      <mo mathvariant="normal"
+          font-position="003D"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">=</mo>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">t</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">g</mi>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">o</mi>
+         </mrow>
+      </msub>
+   </mrow>
+</math>

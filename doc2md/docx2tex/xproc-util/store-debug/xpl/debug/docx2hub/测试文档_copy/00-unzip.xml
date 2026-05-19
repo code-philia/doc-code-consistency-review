@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:files xmlns:c="http://www.w3.org/ns/xproc-step"
+         xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/测试文档_copy_20260508T052008_27c0f6/测试文档_copy_temp_7234/测试文档_copy.docx.tmp/">
+   <c:file name="[Content_Types].xml"/>
+   <c:file name="_rels/.rels"/>
+   <c:file name="word/document.xml"/>
+   <c:file name="word/_rels/document.xml.rels"/>
+   <c:file name="word/footnotes.xml"/>
+   <c:file name="word/endnotes.xml"/>
+   <c:file name="word/footer1.xml"/>
+   <c:file name="word/footer2.xml"/>
+   <c:file name="word/footer3.xml"/>
+   <c:file name="word/media/image1.emf"/>
+   <c:file name="word/embeddings/Microsoft_Visio_Drawing.vsdx"/>
+   <c:file name="word/media/image2.wmf"/>
+   <c:file name="word/embeddings/oleObject1.bin"/>
+   <c:file name="word/theme/theme1.xml"/>
+   <c:file name="word/settings.xml"/>
+   <c:file name="customXml/item1.xml"/>
+   <c:file name="customXml/itemProps1.xml"/>
+   <c:file name="word/numbering.xml"/>
+   <c:file name="word/styles.xml"/>
+   <c:file name="word/webSettings.xml"/>
+   <c:file name="word/fontTable.xml"/>
+   <c:file name="docProps/core.xml"/>
+   <c:file name="docProps/app.xml"/>
+   <c:file name="docProps/custom.xml"/>
+   <c:file name="customXml/_rels/item1.xml.rels"/>
+</c:files>

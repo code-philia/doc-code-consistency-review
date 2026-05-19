@@ -11,3 +11,6 @@ rag_database/
 
 *.db
 .env
+
+.idea/
+.vscode/

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mover accent="true">
+         <mi mathsize="100%" mathvariant="italic" start-function="">S</mi>
+         <mo>˙</mo>
+      </mover>
+      <mo mathsize="100%" mathvariant="normal">(</mo>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mo mathsize="100%" mathvariant="normal">)</mo>
+   </mrow>
+</math>

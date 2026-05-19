@@ -1,0 +1,1 @@
+Apply xml2tex configuration and convert XML to LaTeX

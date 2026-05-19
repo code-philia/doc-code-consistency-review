@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <msub xmlns:tr="http://transpect.io">
+      <mi>β</mi>
+      <mi>C</mi>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <msup xmlns:tr="http://transpect.io">
+      <msub>
+         <mi>α</mi>
+         <mi>C</mi>
+      </msub>
+      <mn>2</mn>
+   </msup>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">/</mo>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mn xmlns:tr="http://transpect.io">2</mn>
+   <mo xmlns:tr="http://transpect.io">−</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mi>α</mi>
+      <mi>C</mi>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+</math>

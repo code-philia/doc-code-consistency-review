@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mtable columnalign="left">
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="normal">Δ</mi>
+               <mi mathsize="100%" mathvariant="italic">U</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">g</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mn mathsize="100%" mathvariant="normal">5</mn>
+               <mn mathsize="100%" mathvariant="normal">7</mn>
+               <mn mathsize="100%" mathvariant="normal">.</mn>
+               <mn mathsize="100%" mathvariant="normal">3</mn>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mn mathsize="100%" mathvariant="normal">(</mn>
+               <mn mathsize="100%" mathvariant="normal" start-function="">s</mn>
+               <mn mathsize="100%" mathvariant="normal">i</mn>
+               <mn mathsize="100%" mathvariant="normal">n</mn>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mn mathsize="100%" mathvariant="normal" start-function="">s</mn>
+               <mn mathsize="100%" mathvariant="normal">i</mn>
+               <mn mathsize="100%" mathvariant="normal">n</mn>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">k</mi>
+                  </mrow>
+               </msub>
+               <mn mathsize="100%" mathvariant="normal">)</mn>
+               <mn mathsize="100%" mathvariant="normal">/</mn>
+               <mn mathsize="100%" mathvariant="normal" start-function="">c</mn>
+               <mn mathsize="100%" mathvariant="normal">o</mn>
+               <mn mathsize="100%" mathvariant="normal">s</mn>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">k</mi>
+                  </mrow>
+               </msub>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">P</mi>
+               <mi mathsize="100%" mathvariant="italic">H</mi>
+               <mi mathsize="100%" mathvariant="italic">Y</mi>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mi mathsize="100%" mathvariant="italic">V</mi>
+               <mi mathsize="100%" mathvariant="italic">Z</mi>
+               <msubsup>
+                  <mrow>
+                     <mi mathvariant="italic">m</mi>
+                  </mrow>
+                  <mrow>
+                     <mi mathvariant="italic">n</mi>
+                     <mi mathvariant="italic">t</mi>
+                  </mrow>
+               </msubsup>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mi mathsize="100%" mathvariant="normal">Δ</mi>
+               <mi mathsize="100%" mathvariant="italic">P</mi>
+               <mi mathsize="100%" mathvariant="italic">X</mi>
+               <msubsup>
+                  <mrow>
+                     <mi mathvariant="italic">Z</mi>
+                  </mrow>
+                  <mrow>
+                     <mi mathvariant="italic">n</mi>
+                     <mi mathvariant="italic">t</mi>
+                  </mrow>
+               </msubsup>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mi mathsize="100%" mathvariant="italic">V</mi>
+               <mi mathsize="100%" mathvariant="italic">X</mi>
+               <msubsup>
+                  <mrow>
+                     <mi mathvariant="italic">m</mi>
+                  </mrow>
+                  <mrow>
+                     <mi mathvariant="italic">n</mi>
+                     <mi mathvariant="italic">t</mi>
+                  </mrow>
+               </msubsup>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mi mathsize="100%" mathvariant="normal">Δ</mi>
+               <mi mathsize="100%" mathvariant="italic">P</mi>
+               <mi mathsize="100%" mathvariant="italic">Z</mi>
+               <msubsup>
+                  <mrow>
+                     <mi mathvariant="italic">Z</mi>
+                  </mrow>
+                  <mrow>
+                     <mi mathvariant="italic">n</mi>
+                     <mi mathvariant="italic">t</mi>
+                  </mrow>
+               </msubsup>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">C</mi>
+               <mi mathsize="100%" mathvariant="italic">P</mi>
+               <mi mathsize="100%" mathvariant="italic">H</mi>
+               <mi mathsize="100%" mathvariant="italic">Y</mi>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mfrac>
+                  <mrow>
+                     <mn mathsize="100%" mathvariant="normal">(</mn>
+                     <mi mathsize="100%" mathvariant="italic">V</mi>
+                     <mi mathsize="100%" mathvariant="italic">X</mi>
+                     <msubsup>
+                        <mrow>
+                           <mi mathvariant="italic">m</mi>
+                        </mrow>
+                        <mrow>
+                           <mi mathvariant="italic">n</mi>
+                           <mi mathvariant="italic">t</mi>
+                        </mrow>
+                     </msubsup>
+                     <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                     <mi mathsize="100%" mathvariant="normal">Δ</mi>
+                     <mi mathsize="100%" mathvariant="italic">P</mi>
+                     <mi mathsize="100%" mathvariant="italic">X</mi>
+                     <msubsup>
+                        <mrow>
+                           <mi mathvariant="italic">Z</mi>
+                        </mrow>
+                        <mrow>
+                           <mi mathvariant="italic">n</mi>
+                           <mi mathvariant="italic">t</mi>
+                        </mrow>
+                     </msubsup>
+                     <mo mathsize="100%" mathvariant="normal">+</mo>
+                     <mi mathsize="100%" mathvariant="italic">V</mi>
+                     <mi mathsize="100%" mathvariant="italic">Z</mi>
+                     <msubsup>
+                        <mrow>
+                           <mi mathvariant="italic">m</mi>
+                        </mrow>
+                        <mrow>
+                           <mi mathvariant="italic">n</mi>
+                           <mi mathvariant="italic">t</mi>
+                        </mrow>
+                     </msubsup>
+                     <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                     <mi mathsize="100%" mathvariant="normal">Δ</mi>
+                     <mi mathsize="100%" mathvariant="italic">P</mi>
+                     <mi mathsize="100%" mathvariant="italic">Z</mi>
+                     <msubsup>
+                        <mrow>
+                           <mi mathvariant="italic">Z</mi>
+                        </mrow>
+                        <mrow>
+                           <mi mathvariant="italic">n</mi>
+                           <mi mathvariant="italic">t</mi>
+                        </mrow>
+                     </msubsup>
+                     <mn mathsize="100%" mathvariant="normal">)</mn>
+                  </mrow>
+                  <mrow>
+                     <msqrt>
+                        <mrow>
+                           <mn mathsize="100%" mathvariant="normal">(</mn>
+                           <mi mathsize="100%" mathvariant="italic">V</mi>
+                           <mi mathsize="100%" mathvariant="italic">X</mi>
+                           <msubsup>
+                              <mrow>
+                                 <mi mathvariant="italic">m</mi>
+                              </mrow>
+                              <mrow>
+                                 <mi mathvariant="italic">n</mi>
+                                 <mi mathvariant="italic">t</mi>
+                              </mrow>
+                           </msubsup>
+                           <mn mathsize="100%" mathvariant="normal">)</mn>
+                           <msup>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <mn mathsize="100%" mathvariant="normal">(</mn>
+                           <mi mathsize="100%" mathvariant="italic">V</mi>
+                           <mi mathsize="100%" mathvariant="italic">Z</mi>
+                           <msubsup>
+                              <mrow>
+                                 <mi mathvariant="italic">m</mi>
+                              </mrow>
+                              <mrow>
+                                 <mi mathvariant="italic">n</mi>
+                                 <mi mathvariant="italic">t</mi>
+                              </mrow>
+                           </msubsup>
+                           <mn mathsize="100%" mathvariant="normal">)</mn>
+                           <msup>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msup>
+                        </mrow>
+                     </msqrt>
+                     <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                     <msqrt>
+                        <mrow>
+                           <mn mathsize="100%" mathvariant="normal">(</mn>
+                           <mi mathsize="100%" mathvariant="normal">Δ</mi>
+                           <mi mathsize="100%" mathvariant="italic">P</mi>
+                           <mi mathsize="100%" mathvariant="italic">X</mi>
+                           <msubsup>
+                              <mrow>
+                                 <mi mathvariant="italic">Z</mi>
+                              </mrow>
+                              <mrow>
+                                 <mi mathvariant="italic">n</mi>
+                                 <mi mathvariant="italic">t</mi>
+                              </mrow>
+                           </msubsup>
+                           <mn mathsize="100%" mathvariant="normal">)</mn>
+                           <msup>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <mn mathsize="100%" mathvariant="normal">(</mn>
+                           <mi mathsize="100%" mathvariant="normal">Δ</mi>
+                           <mi mathsize="100%" mathvariant="italic">P</mi>
+                           <mi mathsize="100%" mathvariant="italic">Z</mi>
+                           <msubsup>
+                              <mrow>
+                                 <mi mathvariant="italic">Z</mi>
+                              </mrow>
+                              <mrow>
+                                 <mi mathvariant="italic">n</mi>
+                                 <mi mathvariant="italic">t</mi>
+                              </mrow>
+                           </msubsup>
+                           <mn mathsize="100%" mathvariant="normal">)</mn>
+                           <msup>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msup>
+                        </mrow>
+                     </msqrt>
+                  </mrow>
+               </mfrac>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="normal">Δ</mi>
+               <mi mathsize="100%" mathvariant="italic">U</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">f</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mfenced close="" open="{" separators="">
+                  <mtable columnalign="left">
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mi mathsize="100%" mathvariant="italic">C</mi>
+                              <mi mathsize="100%" mathvariant="italic">P</mi>
+                              <mi mathsize="100%" mathvariant="italic">H</mi>
+                              <mi mathsize="100%" mathvariant="italic">Y</mi>
+                              <mo mathsize="100%" mathvariant="normal">≥</mo>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">8</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mi mathsize="100%" mathvariant="italic">C</mi>
+                              <mi mathsize="100%" mathvariant="italic">P</mi>
+                              <mi mathsize="100%" mathvariant="italic">H</mi>
+                              <mi mathsize="100%" mathvariant="italic">Y</mi>
+                              <mo mathsize="100%" mathvariant="normal">≤</mo>
+                              <mo mathsize="100%" mathvariant="normal">−</mo>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">7</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mn mathsize="100%" mathvariant="normal" start-function="">a</mn>
+                              <mn mathsize="100%" mathvariant="normal">r</mn>
+                              <mn mathsize="100%" mathvariant="normal">c</mn>
+                              <mn mathsize="100%" mathvariant="normal">c</mn>
+                              <mn mathsize="100%" mathvariant="normal">o</mn>
+                              <mn mathsize="100%" mathvariant="normal">s</mn>
+                              <mn mathsize="100%" mathvariant="normal">(</mn>
+                              <mi mathsize="100%" mathvariant="italic">C</mi>
+                              <mi mathsize="100%" mathvariant="italic">P</mi>
+                              <mi mathsize="100%" mathvariant="italic">H</mi>
+                              <mi mathsize="100%" mathvariant="italic">Y</mi>
+                              <mn mathsize="100%" mathvariant="normal">)</mn>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal">其</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">他</mtext>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                  </mtable>
+               </mfenced>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">U</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">g</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mi mathsize="100%" mathvariant="normal">Δ</mi>
+               <mi mathsize="100%" mathvariant="italic">U</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">g</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">+</mo>
+               <mn mathsize="100%" mathvariant="normal" start-function="">c</mn>
+               <mn mathsize="100%" mathvariant="normal">o</mn>
+               <mn mathsize="100%" mathvariant="normal">s</mn>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <mn mathsize="100%" mathvariant="normal">;</mn>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">U</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">f</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">.</mn>
+               <mn mathsize="100%" mathvariant="normal">5</mn>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mtext mathsize="100%"> </mtext>
+               <mtext mathsize="100%"> </mtext>
+               <mi mathsize="100%" mathvariant="normal">Δ</mi>
+               <mi mathsize="100%" mathvariant="italic">U</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">f</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mi mathsize="100%" mathvariant="italic">s</mi>
+               <mi mathsize="100%" mathvariant="italic">i</mi>
+               <mi mathsize="100%" mathvariant="italic">g</mi>
+               <mi mathsize="100%" mathvariant="italic">n</mi>
+               <mn mathsize="100%" mathvariant="normal">(</mn>
+               <mi mathsize="100%" mathvariant="italic">P</mi>
+               <mi mathsize="100%" mathvariant="italic">H</mi>
+               <mi mathsize="100%" mathvariant="italic">Y</mi>
+               <mn mathsize="100%" mathvariant="normal">)</mn>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">σ</mi>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <msqrt>
+                  <mrow>
+                     <mn mathsize="100%" mathvariant="normal">(</mn>
+                     <mi mathsize="100%" mathvariant="normal">Δ</mi>
+                     <mi mathsize="100%" mathvariant="italic">U</mi>
+                     <msub>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                        </mrow>
+                     </msub>
+                     <mn mathsize="100%" mathvariant="normal">)</mn>
+                     <msup>
+                        <mrow>
+                           <mn mathvariant="normal">2</mn>
+                        </mrow>
+                     </msup>
+                     <mo mathsize="100%" mathvariant="normal">+</mo>
+                     <mn mathsize="100%" mathvariant="normal">(</mn>
+                     <mi mathsize="100%" mathvariant="normal">Δ</mi>
+                     <mi mathsize="100%" mathvariant="italic">U</mi>
+                     <msub>
+                        <mrow>
+                           <mi mathvariant="italic">f</mi>
+                        </mrow>
+                     </msub>
+                     <mn mathsize="100%" mathvariant="normal">)</mn>
+                     <msup>
+                        <mrow>
+                           <mn mathvariant="normal">2</mn>
+                        </mrow>
+                     </msup>
+                  </mrow>
+               </msqrt>
+            </mrow>
+         </mtd>
+      </mtr>
+   </mtable>
+</math>

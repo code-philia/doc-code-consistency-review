@@ -1,0 +1,3922 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.le-tex.de/resource/schema/hub/1.2/hub.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="http://www.le-tex.de/resource/schema/hub/1.2/hub.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<hub xmlns="http://docbook.org/ns/docbook"
+     xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+     xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+     xmlns:css="http://www.w3.org/1996/css"
+     xmlns:ct="http://schemas.openxmlformats.org/package/2006/content-types"
+     xmlns:customProps="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties"
+     xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex"
+     xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex"
+     xmlns:docx2hub="http://transpect.io/docx2hub"
+     xmlns:extendedProps="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+     xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+     xmlns:mml="http://www.w3.org/1998/Math/MathML"
+     xmlns:o="urn:schemas-microsoft-com:office:office"
+     xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage"
+     xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+     xmlns:rel="http://schemas.openxmlformats.org/package/2006/relationships"
+     xmlns:tr="http://transpect.io"
+     xmlns:v="urn:schemas-microsoft-com:vml"
+     xmlns:ve="http://schemas.openxmlformats.org/markup-compatibility/2006"
+     xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+     xmlns:w10="urn:schemas-microsoft-com:office:word"
+     xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+     xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"
+     xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid"
+     xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex"
+     xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+     xmlns:word200x="http://schemas.microsoft.com/office/word/2003/wordml"
+     xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+     xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+     xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+     xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+     xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+     xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+     xmlns:wx="http://schemas.microsoft.com/office/word/2003/auxHint"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xml:lang="en-US"
+     version="5.1-variant le-tex_Hub-1.2"
+     css:version="3.0-variant le-tex_Hub-1.2"
+     css:rule-selection-attribute="role">
+   <info>
+      <keywordset role="hub">
+         <keyword role="formatting-deviations-only">true</keyword>
+         <keyword role="source-type">docx</keyword>
+         <keyword role="source-dir-uri">file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/问题集-源码（公开）_20260506T195926_1918f0/问题集-源码（公开）_temp_23657/问题集-源码（公开）.docx.tmp/</keyword>
+         <keyword role="archive-dir-uri">file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/问题集-源码（公开）_20260506T195926_1918f0/问题集-源码（公开）_temp_23657/</keyword>
+         <keyword role="archive-uri">file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx</keyword>
+         <keyword role="archive-uri-local">file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx</keyword>
+         <keyword role="source-basename">问题集-源码（公开）</keyword>
+         <keyword role="source-application">Microsoft Office Word</keyword>
+         <keyword role="mathtype2mml">ole</keyword>
+      </keywordset>
+      <keywordset role="docProps">
+         <keyword role="dc:creator">HT804</keyword>
+         <keyword role="cp:lastModifiedBy">HT804</keyword>
+         <keyword role="cp:revision">5</keyword>
+         <keyword role="dcterms:created">2025-04-25T05:45:00Z</keyword>
+         <keyword role="dcterms:modified">2025-04-25T06:11:00Z</keyword>
+         <keyword role="extendedProps:Template">Normal.dotm</keyword>
+         <keyword role="extendedProps:TotalTime">3</keyword>
+         <keyword role="extendedProps:Pages">5</keyword>
+         <keyword role="extendedProps:Words">165</keyword>
+         <keyword role="extendedProps:Characters">942</keyword>
+         <keyword role="extendedProps:Application">Microsoft Office Word</keyword>
+         <keyword role="extendedProps:DocSecurity">0</keyword>
+         <keyword role="extendedProps:Lines">7</keyword>
+         <keyword role="extendedProps:Paragraphs">2</keyword>
+         <keyword role="extendedProps:ScaleCrop">false</keyword>
+         <keyword role="extendedProps:Company"/>
+         <keyword role="extendedProps:LinksUpToDate">false</keyword>
+         <keyword role="extendedProps:CharactersWithSpaces">1105</keyword>
+         <keyword role="extendedProps:SharedDoc">false</keyword>
+         <keyword role="extendedProps:HyperlinksChanged">false</keyword>
+         <keyword role="extendedProps:AppVersion">14.0000</keyword>
+      </keywordset>
+      <css:rules>
+         <css:rule layout-type="para"
+                   native-name="正文首行无缩进"
+                   css:line-height="1.5"
+                   css:text-align="justify"
+                   css:font-family="Times New Roman"
+                   css:font-size="14pt"
+                   name="a3"/>
+      </css:rules>
+   </info>
+   <para>
+      <phrase css:top="25pt" css:position="relative">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:msub>
+                  <mml:mi>T</mml:mi>
+                  <mml:mi>D</mml:mi>
+               </mml:msub>
+               <mml:mo>=</mml:mo>
+               <mml:mfenced close="]" open="[" separators="">
+                  <mml:mtable columnalign="left">
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mtext xml:space="preserve">         </mml:mtext>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                           <mml:mtext xml:space="preserve">                          </mml:mtext>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                           <mml:mtext>                         </mml:mtext>
+                           <mml:mo>−</mml:mo>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                           <mml:mo>−</mml:mo>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                           <mml:mtext>     </mml:mtext>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                           <mml:mtext>        </mml:mtext>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                           <mml:mo>+</mml:mo>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                           <mml:mo>+</mml:mo>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                           <mml:mtext>     </mml:mtext>
+                           <mml:mo>−</mml:mo>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                           <mml:mtext>      </mml:mtext>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>cos</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                           <mml:mo>−</mml:mo>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ψ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>ϑ</mml:mi>
+                           <mml:mi>sin</mml:mi>
+                           <mml:mi>γ</mml:mi>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+            </mml:math>
+         </inlineequation> (1-1)</phrase>
+   </para>
+   <para/>
+   <para/>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="76pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>x</mml:mi>
+                        <mml:mo>=</mml:mo>
+                        <mml:msubsup>
+                           <mml:mi>h</mml:mi>
+                           <mml:mi>m</mml:mi>
+                           <mml:mn>0</mml:mn>
+                        </mml:msubsup>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>1000</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>y</mml:mi>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>M</mml:mi>
+                        <mml:msub>
+                           <mml:mi>a</mml:mi>
+                           <mml:mn>0</mml:mn>
+                        </mml:msub>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>z</mml:mi>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mi>R</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>z</mml:mi>
+                              <mml:mn>0</mml:mn>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>1000</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>V</mml:mi>
+                        <mml:msub>
+                           <mml:mi>r</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>t</mml:mi>
+                              <mml:mi>e</mml:mi>
+                              <mml:mi>m</mml:mi>
+                              <mml:mi>p</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mn>985</mml:mn>
+                        <mml:mo>+</mml:mo>
+                        <mml:mtext>38.545</mml:mtext>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>x</mml:mi>
+                        <mml:mo>+</mml:mo>
+                        <mml:mtext>1.110</mml:mtext>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>z</mml:mi>
+                        <mml:mo>+</mml:mo>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mtext>          0.4983</mml:mtext>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>y</mml:mi>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>z</mml:mi>
+                        <mml:mo>−</mml:mo>
+                        <mml:mtext>0.001571</mml:mtext>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msup>
+                           <mml:mi>z</mml:mi>
+                           <mml:mn>2</mml:mn>
+                        </mml:msup>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>V</mml:mi>
+                        <mml:msub>
+                           <mml:mi>r</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>e</mml:mi>
+                              <mml:mi>s</mml:mi>
+                              <mml:mi>t</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>2700</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext xml:space="preserve">                </mml:mtext>
+                                    <mml:mi>V</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>r</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>t</mml:mi>
+                                          <mml:mi>e</mml:mi>
+                                          <mml:mi>m</mml:mi>
+                                          <mml:mi>p</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>&gt;</mml:mo>
+                                    <mml:mn>2700</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>1000</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext>                 </mml:mtext>
+                                    <mml:mi>V</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>r</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>t</mml:mi>
+                                          <mml:mi>e</mml:mi>
+                                          <mml:mi>m</mml:mi>
+                                          <mml:mi>p</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>1000</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mi>V</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>r</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>t</mml:mi>
+                                          <mml:mi>e</mml:mi>
+                                          <mml:mi>m</mml:mi>
+                                          <mml:mi>p</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mtext>                  其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                     (1-5)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:font-size="12pt">         </phrase>
+      <phrase css:top="7pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:msub>
+                  <mml:mi>t</mml:mi>
+                  <mml:mrow>
+                     <mml:mtext>go</mml:mtext>
+                     <mml:mi>t</mml:mi>
+                     <mml:mi>e</mml:mi>
+                     <mml:mi>m</mml:mi>
+                     <mml:mi>p</mml:mi>
+                  </mml:mrow>
+               </mml:msub>
+               <mml:mo>=</mml:mo>
+               <mml:mfenced close="|" open="|" separators="">
+                  <mml:msub>
+                     <mml:mi>R</mml:mi>
+                     <mml:mrow>
+                        <mml:mi>z</mml:mi>
+                        <mml:mn>0</mml:mn>
+                     </mml:mrow>
+                  </mml:msub>
+                  <mml:mo>/</mml:mo>
+                  <mml:mrow>
+                     <mml:mi>V</mml:mi>
+                     <mml:msub>
+                        <mml:mi>r</mml:mi>
+                        <mml:mrow>
+                           <mml:mi>e</mml:mi>
+                           <mml:mi>s</mml:mi>
+                           <mml:mi>t</mml:mi>
+                        </mml:mrow>
+                     </mml:msub>
+                  </mml:mrow>
+               </mml:mfenced>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">          (1-6)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="28pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mfenced close="" open="{" separators="">
+                  <mml:mtable columnalign="left">
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>t</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>g</mml:mi>
+                                 <mml:mi>o</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                           <mml:mo>=</mml:mo>
+                           <mml:mn>12</mml:mn>
+                           <mml:mtext>                         </mml:mtext>
+                           <mml:msub>
+                              <mml:mi>t</mml:mi>
+                              <mml:mrow>
+                                 <mml:mtext>go</mml:mtext>
+                                 <mml:mi>t</mml:mi>
+                                 <mml:mi>e</mml:mi>
+                                 <mml:mi>m</mml:mi>
+                                 <mml:mi>p</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                           <mml:mo>≤</mml:mo>
+                           <mml:mn>12</mml:mn>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>t</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>g</mml:mi>
+                                 <mml:mi>o</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                           <mml:mo>=</mml:mo>
+                           <mml:mn>800</mml:mn>
+                           <mml:mtext>                       </mml:mtext>
+                           <mml:msub>
+                              <mml:mi>t</mml:mi>
+                              <mml:mrow>
+                                 <mml:mtext>go</mml:mtext>
+                                 <mml:mi>t</mml:mi>
+                                 <mml:mi>e</mml:mi>
+                                 <mml:mi>m</mml:mi>
+                                 <mml:mi>p</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                           <mml:mo>≥</mml:mo>
+                           <mml:mn>800</mml:mn>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>t</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>g</mml:mi>
+                                 <mml:mi>o</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                           <mml:mo>=</mml:mo>
+                           <mml:msub>
+                              <mml:mi>t</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>g</mml:mi>
+                                 <mml:mi>o</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                                 <mml:mi>e</mml:mi>
+                                 <mml:mi>m</mml:mi>
+                                 <mml:mi>p</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                           <mml:mtext>                     其他</mml:mtext>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                    (1-7)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:margin-right="6pt"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:font-size="12pt">                   </phrase>
+      <phrase css:top="7pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:msub>
+                  <mml:mi>R</mml:mi>
+                  <mml:mrow>
+                     <mml:mi>z</mml:mi>
+                     <mml:mn>0</mml:mn>
+                  </mml:mrow>
+               </mml:msub>
+               <mml:mo>=</mml:mo>
+               <mml:msub>
+                  <mml:mi>R</mml:mi>
+                  <mml:mn>0</mml:mn>
+               </mml:msub>
+               <mml:mo>+</mml:mo>
+               <mml:msubsup>
+                  <mml:mi>V</mml:mi>
+                  <mml:mi>t</mml:mi>
+                  <mml:mn>0</mml:mn>
+               </mml:msubsup>
+               <mml:mo>⋅</mml:mo>
+               <mml:msub>
+                  <mml:mi>t</mml:mi>
+                  <mml:mrow>
+                     <mml:mi>g</mml:mi>
+                     <mml:mi>o</mml:mi>
+                  </mml:mrow>
+               </mml:msub>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">
+         <anchor role="start" xml:id="OLE_LINK1"/>                        (1-8)</phrase>
+      <anchor role="end" xml:id="OLE_LINK1_end"/>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:margin-right="6pt"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="7pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:msub>
+                  <mml:mi>t</mml:mi>
+                  <mml:mrow>
+                     <mml:mi>e</mml:mi>
+                     <mml:mi>s</mml:mi>
+                  </mml:mrow>
+               </mml:msub>
+               <mml:mo>=</mml:mo>
+               <mml:msub>
+                  <mml:mi>t</mml:mi>
+                  <mml:mrow>
+                     <mml:mi>g</mml:mi>
+                     <mml:mi>o</mml:mi>
+                  </mml:mrow>
+               </mml:msub>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                               (1-9)</phrase>
+   </para>
+   <para css:line-height="1.5"
+         css:text-indent="21.25pt"
+         css:text-align="right">
+      <phrase css:top="70pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>H</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>x</mml:mi>
+                              <mml:mi>i</mml:mi>
+                              <mml:mi>n</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msubsup>
+                           <mml:mi>h</mml:mi>
+                           <mml:mi>m</mml:mi>
+                           <mml:mn>0</mml:mn>
+                        </mml:msubsup>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>1000</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>0</mml:mn>
+                        <mml:mo>;</mml:mo>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>R</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>x</mml:mi>
+                              <mml:mi>i</mml:mi>
+                              <mml:mi>n</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mi>R</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>z</mml:mi>
+                              <mml:mn>0</mml:mn>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>1000</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>0</mml:mn>
+                        <mml:mo>;</mml:mo>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>H</mml:mi>
+                           <mml:mi>limmax</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>59000</mml:mn>
+                                    <mml:mtext xml:space="preserve">                                                 </mml:mtext>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>x</mml:mi>
+                                          <mml:mi>i</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>&gt;</mml:mo>
+                                    <mml:mn>10</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>59000</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mn>12000</mml:mn>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>10</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>x</mml:mi>
+                                          <mml:mi>i</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>5</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext xml:space="preserve">           5</mml:mtext>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>x</mml:mi>
+                                          <mml:mi>i</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>10</mml:mn>
+                                    <mml:mtext xml:space="preserve">   </mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>47000</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mn>6000</mml:mn>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>5</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>x</mml:mi>
+                                          <mml:mi>i</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>5</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext xml:space="preserve">             0</mml:mtext>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>x</mml:mi>
+                                          <mml:mi>i</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>5</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>41000</mml:mn>
+                                    <mml:mtext xml:space="preserve">                                                其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>m</mml:mi>
+                              <mml:mi>a</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext xml:space="preserve">                                      </mml:mtext>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>x</mml:mi>
+                                          <mml:mi>i</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>&gt;</mml:mo>
+                                    <mml:mn>12</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>12</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>x</mml:mi>
+                                          <mml:mi>i</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mtext xml:space="preserve">          9</mml:mtext>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>x</mml:mi>
+                                          <mml:mi>i</mml:mi>
+                                          <mml:mi>n</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>12</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>7</mml:mn>
+                                    <mml:mtext xml:space="preserve">                                    其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>H</mml:mi>
+                           <mml:mi>limmax</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>limmax</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mn>15000</mml:mn>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>K</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>m</mml:mi>
+                                          <mml:mi>a</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mi>M</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>a</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msub>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mtext xml:space="preserve">            </mml:mtext>
+                                    <mml:mi>M</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>a</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>K</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mi>m</mml:mi>
+                                          <mml:mi>a</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msub>
+                                    <mml:mtext>且</mml:mtext>
+                                    <mml:mi>M</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>a</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msub>
+                                    <mml:mo>&gt;</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>4</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>limmax</mml:mi>
+                                    </mml:msub>
+                                    <mml:mtext xml:space="preserve">                                               其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mtext xml:space="preserve"> </mml:mtext>
+                        <mml:msub>
+                           <mml:mi>R</mml:mi>
+                           <mml:mi>max</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mtext>206.6605</mml:mtext>
+                        <mml:mo>+</mml:mo>
+                        <mml:mtext>50.0670</mml:mtext>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msub>
+                           <mml:mi>H</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>x</mml:mi>
+                              <mml:mi>i</mml:mi>
+                              <mml:mi>n</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mtext>+ 420.9736</mml:mtext>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>M</mml:mi>
+                        <mml:msub>
+                           <mml:mi>a</mml:mi>
+                           <mml:mn>0</mml:mn>
+                        </mml:msub>
+                        <mml:mo>−</mml:mo>
+                        <mml:mtext>1.2462</mml:mtext>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msup>
+                           <mml:msub>
+                              <mml:mi>H</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>x</mml:mi>
+                                 <mml:mi>i</mml:mi>
+                                 <mml:mi>n</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                           <mml:mn>2</mml:mn>
+                        </mml:msup>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mtext xml:space="preserve">           </mml:mtext>
+                        <mml:mo>−</mml:mo>
+                        <mml:mtext>105.8443</mml:mtext>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>M</mml:mi>
+                        <mml:msup>
+                           <mml:msub>
+                              <mml:mi>a</mml:mi>
+                              <mml:mn>0</mml:mn>
+                           </mml:msub>
+                           <mml:mn>2</mml:mn>
+                        </mml:msup>
+                        <mml:mtext>+5.8586</mml:mtext>
+                        <mml:msub>
+                           <mml:mi>H</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>x</mml:mi>
+                              <mml:mi>i</mml:mi>
+                              <mml:mi>n</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>M</mml:mi>
+                        <mml:msub>
+                           <mml:mi>a</mml:mi>
+                           <mml:mn>0</mml:mn>
+                        </mml:msub>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>R</mml:mi>
+                           <mml:mi>max</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mi>R</mml:mi>
+                           <mml:mi>max</mml:mi>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mn>1000</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mi>r</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mn>1</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>1</mml:mn>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msub>
+                           <mml:mi>R</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>z</mml:mi>
+                              <mml:mn>0</mml:mn>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>/</mml:mo>
+                        <mml:msub>
+                           <mml:mi>R</mml:mi>
+                           <mml:mi>max</mml:mi>
+                        </mml:msub>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mi>r</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mtext xml:space="preserve">1.06          </mml:mtext>
+                                    <mml:msub>
+                                       <mml:mi>K</mml:mi>
+                                       <mml:mi>r</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>&gt;</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>06</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:msub>
+                                       <mml:mi>K</mml:mi>
+                                       <mml:mi>r</mml:mi>
+                                    </mml:msub>
+                                    <mml:mtext xml:space="preserve">            其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>H</mml:mi>
+                           <mml:mi>lim</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mi>r</mml:mi>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:msub>
+                              <mml:mi>H</mml:mi>
+                              <mml:mi>limmax</mml:mi>
+                           </mml:msub>
+                           <mml:mo>−</mml:mo>
+                           <mml:mn>15000</mml:mn>
+                        </mml:mfenced>
+                        <mml:mo>+</mml:mo>
+                        <mml:mn>15000</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>H</mml:mi>
+                           <mml:mi>lim</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>59000</mml:mn>
+                                    <mml:mtext xml:space="preserve">            </mml:mtext>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>lim</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>&gt;</mml:mo>
+                                    <mml:mn>59000</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>15000</mml:mn>
+                                    <mml:mtext xml:space="preserve">            </mml:mtext>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>lim</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>15000</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>lim</mml:mi>
+                                    </mml:msub>
+                                    <mml:mtext xml:space="preserve">                其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt"> </phrase>
+      <phrase css:font-family="宋体" css:font-size="12pt">(</phrase>
+      <phrase css:font-size="12pt">1-10</phrase>
+      <phrase css:font-family="宋体" css:font-size="12pt">)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="45pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>ε</mml:mi>
+                           <mml:mi>s</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>arcsin</mml:mi>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:mfrac>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Y</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>R</mml:mi>
+                              </mml:mrow>
+                           </mml:mfrac>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>β</mml:mi>
+                           <mml:mi>s</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>atan2</mml:mi>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:mo>−</mml:mo>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>Z</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mn>,</mml:mn>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>X</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>ε</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mi>s</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfrac>
+                           <mml:mrow>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>V</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>Y</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>n</mml:mi>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>R</mml:mi>
+                              <mml:mo>−</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mover accent="true">
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mo>˙</mml:mo>
+                              </mml:mover>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>P</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>Y</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>n</mml:mi>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msup>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi>cos</mml:mi>
+                              <mml:msub>
+                                 <mml:mi>ε</mml:mi>
+                                 <mml:mi>s</mml:mi>
+                              </mml:msub>
+                           </mml:mrow>
+                        </mml:mfrac>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                        (1-14)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="25pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:msub>
+                  <mml:mover accent="true">
+                     <mml:mi>β</mml:mi>
+                     <mml:mo>˙</mml:mo>
+                  </mml:mover>
+                  <mml:mi>s</mml:mi>
+               </mml:msub>
+               <mml:mo>=</mml:mo>
+               <mml:mfenced close="" open="{" separators="">
+                  <mml:mtable>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mfrac>
+                              <mml:mrow>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:mo>⋅</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:mo>−</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:mo>⋅</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:mo>)</mml:mo>
+                                 <mml:mo>⋅</mml:mo>
+                                 <mml:msup>
+                                    <mml:mi>cos</mml:mi>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>β</mml:mi>
+                                    <mml:mi>s</mml:mi>
+                                 </mml:msub>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:msup>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                              </mml:mrow>
+                           </mml:mfrac>
+                           <mml:mtext> </mml:mtext>
+                           <mml:mn>,</mml:mn>
+                           <mml:mtext> </mml:mtext>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>X</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mo>≠</mml:mo>
+                           <mml:mn>0</mml:mn>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                              </mml:mrow>
+                              <mml:mo>/</mml:mo>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                              </mml:mrow>
+                           </mml:mrow>
+                           <mml:mtext> </mml:mtext>
+                           <mml:mn>,</mml:mn>
+                           <mml:mtext>   </mml:mtext>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>X</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mo>=</mml:mo>
+                           <mml:mn>0</mml:mn>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">    (1-15)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="45pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>ε</mml:mi>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>arcsin</mml:mi>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:mfrac>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Y</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mn>1</mml:mn>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>R</mml:mi>
+                              </mml:mrow>
+                           </mml:mfrac>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>β</mml:mi>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>atan2</mml:mi>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:mo>−</mml:mo>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>Z</mml:mi>
+                              <mml:mrow>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mn>,</mml:mn>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>X</mml:mi>
+                              <mml:mrow>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>ε</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfrac>
+                           <mml:mrow>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>V</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>Y</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>R</mml:mi>
+                              <mml:mo>−</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mover accent="true">
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mo>˙</mml:mo>
+                              </mml:mover>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>P</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>Y</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msup>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi>cos</mml:mi>
+                              <mml:msub>
+                                 <mml:mi>ε</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                              </mml:msub>
+                           </mml:mrow>
+                        </mml:mfrac>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                         (1-16)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="27pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mfrac>
+                                       <mml:mrow>
+                                          <mml:mo>(</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>V</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>X</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:mo>⋅</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>P</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>Z</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:mo>−</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>V</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>Z</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:mo>⋅</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>P</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>X</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:mo>)</mml:mo>
+                                          <mml:mo>⋅</mml:mo>
+                                          <mml:msup>
+                                             <mml:mi>cos</mml:mi>
+                                             <mml:mn>2</mml:mn>
+                                          </mml:msup>
+                                          <mml:msub>
+                                             <mml:mi>β</mml:mi>
+                                             <mml:mn>1</mml:mn>
+                                          </mml:msub>
+                                       </mml:mrow>
+                                       <mml:mrow>
+                                          <mml:mo>(</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>P</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>X</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:msup>
+                                             <mml:mo>)</mml:mo>
+                                             <mml:mn>2</mml:mn>
+                                          </mml:msup>
+                                       </mml:mrow>
+                                    </mml:mfrac>
+                                    <mml:mtext> </mml:mtext>
+                                    <mml:mn>,</mml:mn>
+                                    <mml:mtext> </mml:mtext>
+                                    <mml:mi mathvariant="normal">Δ</mml:mi>
+                                    <mml:mi>P</mml:mi>
+                                    <mml:msup>
+                                       <mml:mi>X</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mn>1</mml:mn>
+                                          <mml:mi>t</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msup>
+                                    <mml:mo>≠</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mrow>
+                                       <mml:mrow>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>V</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>X</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                       </mml:mrow>
+                                       <mml:mo>/</mml:mo>
+                                       <mml:mrow>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>P</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>Z</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                       </mml:mrow>
+                                    </mml:mrow>
+                                    <mml:mtext> </mml:mtext>
+                                    <mml:mn>,</mml:mn>
+                                    <mml:mtext>   </mml:mtext>
+                                    <mml:mi>P</mml:mi>
+                                    <mml:msup>
+                                       <mml:mi>X</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mn>1</mml:mn>
+                                          <mml:mi>t</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msup>
+                                    <mml:mo>=</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>q</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mi>ε</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>ε</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>q</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mi>β</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>cos</mml:mi>
+                        <mml:mo>(</mml:mo>
+                        <mml:msub>
+                           <mml:mi>ε</mml:mi>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>)</mml:mo>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">   (1-17)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="45pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>ε</mml:mi>
+                           <mml:mi>s</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>arcsin</mml:mi>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:mfrac>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Y</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>R</mml:mi>
+                              </mml:mrow>
+                           </mml:mfrac>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>β</mml:mi>
+                           <mml:mi>s</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>atan2</mml:mi>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:mo>−</mml:mo>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>Z</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mn>,</mml:mn>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>X</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>ε</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mi>s</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfrac>
+                           <mml:mrow>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>V</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>Y</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>n</mml:mi>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>R</mml:mi>
+                              <mml:mo>−</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mover accent="true">
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mo>˙</mml:mo>
+                              </mml:mover>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>P</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>Y</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>n</mml:mi>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msup>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi>cos</mml:mi>
+                              <mml:msub>
+                                 <mml:mi>ε</mml:mi>
+                                 <mml:mi>s</mml:mi>
+                              </mml:msub>
+                           </mml:mrow>
+                        </mml:mfrac>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                        (1-14)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="25pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:msub>
+                  <mml:mover accent="true">
+                     <mml:mi>β</mml:mi>
+                     <mml:mo>˙</mml:mo>
+                  </mml:mover>
+                  <mml:mi>s</mml:mi>
+               </mml:msub>
+               <mml:mo>=</mml:mo>
+               <mml:mfenced close="" open="{" separators="">
+                  <mml:mtable>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mfrac>
+                              <mml:mrow>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:mo>⋅</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:mo>−</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:mo>⋅</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:mo>)</mml:mo>
+                                 <mml:mo>⋅</mml:mo>
+                                 <mml:msup>
+                                    <mml:mi>cos</mml:mi>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>β</mml:mi>
+                                    <mml:mi>s</mml:mi>
+                                 </mml:msub>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                                 <mml:msup>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                              </mml:mrow>
+                           </mml:mfrac>
+                           <mml:mtext> </mml:mtext>
+                           <mml:mn>,</mml:mn>
+                           <mml:mtext> </mml:mtext>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>X</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mo>≠</mml:mo>
+                           <mml:mn>0</mml:mn>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                              </mml:mrow>
+                              <mml:mo>/</mml:mo>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                              </mml:mrow>
+                           </mml:mrow>
+                           <mml:mtext> </mml:mtext>
+                           <mml:mn>,</mml:mn>
+                           <mml:mtext>   </mml:mtext>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>X</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mo>=</mml:mo>
+                           <mml:mn>0</mml:mn>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">    (1-15)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="45pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>ε</mml:mi>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>arcsin</mml:mi>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:mfrac>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msup>
+                                    <mml:mi>Y</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mn>1</mml:mn>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msup>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>R</mml:mi>
+                              </mml:mrow>
+                           </mml:mfrac>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>β</mml:mi>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>atan2</mml:mi>
+                        <mml:mfenced close=")" open="(" separators="">
+                           <mml:mo>−</mml:mo>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>Z</mml:mi>
+                              <mml:mrow>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mn>,</mml:mn>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:mi>P</mml:mi>
+                           <mml:msup>
+                              <mml:mi>X</mml:mi>
+                              <mml:mrow>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>t</mml:mi>
+                              </mml:mrow>
+                           </mml:msup>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>ε</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfrac>
+                           <mml:mrow>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>V</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>Y</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>R</mml:mi>
+                              <mml:mo>−</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mover accent="true">
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mo>˙</mml:mo>
+                              </mml:mover>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>P</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>Y</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msup>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:msup>
+                                 <mml:mi>R</mml:mi>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi>cos</mml:mi>
+                              <mml:msub>
+                                 <mml:mi>ε</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                              </mml:msub>
+                           </mml:mrow>
+                        </mml:mfrac>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                         (1-16)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-indent="24pt"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="441pt"/>
+      </tabs>
+      <phrase css:top="27pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mfrac>
+                                       <mml:mrow>
+                                          <mml:mo>(</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>V</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>X</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:mo>⋅</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>P</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>Z</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:mo>−</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>V</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>Z</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:mo>⋅</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>P</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>X</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:mo>)</mml:mo>
+                                          <mml:mo>⋅</mml:mo>
+                                          <mml:msup>
+                                             <mml:mi>cos</mml:mi>
+                                             <mml:mn>2</mml:mn>
+                                          </mml:msup>
+                                          <mml:msub>
+                                             <mml:mi>β</mml:mi>
+                                             <mml:mn>1</mml:mn>
+                                          </mml:msub>
+                                       </mml:mrow>
+                                       <mml:mrow>
+                                          <mml:mo>(</mml:mo>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>P</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>X</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                          <mml:msup>
+                                             <mml:mo>)</mml:mo>
+                                             <mml:mn>2</mml:mn>
+                                          </mml:msup>
+                                       </mml:mrow>
+                                    </mml:mfrac>
+                                    <mml:mtext> </mml:mtext>
+                                    <mml:mn>,</mml:mn>
+                                    <mml:mtext> </mml:mtext>
+                                    <mml:mi mathvariant="normal">Δ</mml:mi>
+                                    <mml:mi>P</mml:mi>
+                                    <mml:msup>
+                                       <mml:mi>X</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mn>1</mml:mn>
+                                          <mml:mi>t</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msup>
+                                    <mml:mo>≠</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mrow>
+                                       <mml:mrow>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>V</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>X</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                       </mml:mrow>
+                                       <mml:mo>/</mml:mo>
+                                       <mml:mrow>
+                                          <mml:mi mathvariant="normal">Δ</mml:mi>
+                                          <mml:mi>P</mml:mi>
+                                          <mml:msup>
+                                             <mml:mi>Z</mml:mi>
+                                             <mml:mrow>
+                                                <mml:mn>1</mml:mn>
+                                                <mml:mi>t</mml:mi>
+                                             </mml:mrow>
+                                          </mml:msup>
+                                       </mml:mrow>
+                                    </mml:mrow>
+                                    <mml:mtext> </mml:mtext>
+                                    <mml:mn>,</mml:mn>
+                                    <mml:mtext>   </mml:mtext>
+                                    <mml:mi>P</mml:mi>
+                                    <mml:msup>
+                                       <mml:mi>X</mml:mi>
+                                       <mml:mrow>
+                                          <mml:mn>1</mml:mn>
+                                          <mml:mi>t</mml:mi>
+                                       </mml:mrow>
+                                    </mml:msup>
+                                    <mml:mo>=</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>q</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mi>ε</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>ε</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>q</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mi>β</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mover accent="true">
+                              <mml:mi>β</mml:mi>
+                              <mml:mo>˙</mml:mo>
+                           </mml:mover>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>cos</mml:mi>
+                        <mml:mo>(</mml:mo>
+                        <mml:msub>
+                           <mml:mi>ε</mml:mi>
+                           <mml:mn>1</mml:mn>
+                        </mml:msub>
+                        <mml:mo>)</mml:mo>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">   (1-17)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="476.25pt"/>
+      </tabs>
+      <phrase css:top="33pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>S</mml:mi>
+                           <mml:mi>x</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mrow>
+                           <mml:msub>
+                              <mml:mi>S</mml:mi>
+                              <mml:mi>x</mml:mi>
+                           </mml:msub>
+                           <mml:mo>/</mml:mo>
+                           <mml:msqrt>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>x</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>+</mml:mo>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>y</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>+</mml:mo>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>z</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                           </mml:msqrt>
+                        </mml:mrow>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>S</mml:mi>
+                           <mml:mi>y</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mrow>
+                           <mml:msub>
+                              <mml:mi>S</mml:mi>
+                              <mml:mi>y</mml:mi>
+                           </mml:msub>
+                           <mml:mo>/</mml:mo>
+                           <mml:msqrt>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>x</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>+</mml:mo>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>y</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>+</mml:mo>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>z</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                           </mml:msqrt>
+                        </mml:mrow>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>S</mml:mi>
+                           <mml:mi>z</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mrow>
+                           <mml:msub>
+                              <mml:mi>S</mml:mi>
+                              <mml:mi>z</mml:mi>
+                           </mml:msub>
+                           <mml:mo>/</mml:mo>
+                           <mml:msqrt>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>x</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>+</mml:mo>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>y</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                              <mml:mo>+</mml:mo>
+                              <mml:msup>
+                                 <mml:msub>
+                                    <mml:mi>S</mml:mi>
+                                    <mml:mi>z</mml:mi>
+                                 </mml:msub>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msup>
+                           </mml:msqrt>
+                        </mml:mrow>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                     (1-32)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="476.25pt"/>
+      </tabs>
+      <phrase css:top="26pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mfenced close="]" open="[" separators="">
+                  <mml:mtable>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>n</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>x</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>f</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>n</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>y</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>f</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>n</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>z</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>f</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+               <mml:mo>=</mml:mo>
+               <mml:msub>
+                  <mml:mi>T</mml:mi>
+                  <mml:mi>D</mml:mi>
+               </mml:msub>
+               <mml:mfenced close="]" open="[" separators="">
+                  <mml:mtable>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>S</mml:mi>
+                              <mml:mi>x</mml:mi>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>S</mml:mi>
+                              <mml:mi>y</mml:mi>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>S</mml:mi>
+                              <mml:mi>z</mml:mi>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                        (1-33)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="476.25pt"/>
+      </tabs>
+      <phrase css:top="21pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>U</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>p</mml:mi>
+                              <mml:mn>1</mml:mn>
+                              <mml:mi>f</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mrow>
+                           <mml:mrow>
+                              <mml:mo>−</mml:mo>
+                              <mml:msub>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>z</mml:mi>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>f</mml:mi>
+                                 </mml:mrow>
+                              </mml:msub>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:msub>
+                                 <mml:mi>U</mml:mi>
+                                 <mml:mi>f</mml:mi>
+                              </mml:msub>
+                           </mml:mrow>
+                           <mml:mo>/</mml:mo>
+                           <mml:msqrt>
+                              <mml:msubsup>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>y</mml:mi>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>f</mml:mi>
+                                 </mml:mrow>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msubsup>
+                              <mml:mo>+</mml:mo>
+                              <mml:msubsup>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>z</mml:mi>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>f</mml:mi>
+                                 </mml:mrow>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msubsup>
+                           </mml:msqrt>
+                        </mml:mrow>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>U</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>y</mml:mi>
+                              <mml:mn>1</mml:mn>
+                              <mml:mi>f</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mrow>
+                           <mml:mrow>
+                              <mml:msub>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>y</mml:mi>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>f</mml:mi>
+                                 </mml:mrow>
+                              </mml:msub>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:msub>
+                                 <mml:mi>U</mml:mi>
+                                 <mml:mi>f</mml:mi>
+                              </mml:msub>
+                           </mml:mrow>
+                           <mml:mo>/</mml:mo>
+                           <mml:msqrt>
+                              <mml:msubsup>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>y</mml:mi>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>f</mml:mi>
+                                 </mml:mrow>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msubsup>
+                              <mml:mo>+</mml:mo>
+                              <mml:msubsup>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>z</mml:mi>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mi>f</mml:mi>
+                                 </mml:mrow>
+                                 <mml:mn>2</mml:mn>
+                              </mml:msubsup>
+                           </mml:msqrt>
+                        </mml:mrow>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                  (1-34)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="252pt"/>
+         <tab align="right" horizontal-position="476.25pt"/>
+      </tabs>
+      <phrase css:top="26pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mfenced close="]" open="[" separators="">
+                  <mml:mtable>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>n</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>x</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>g</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>n</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>y</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>g</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>n</mml:mi>
+                              <mml:mrow>
+                                 <mml:mi>z</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>g</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+               <mml:mo>=</mml:mo>
+               <mml:msub>
+                  <mml:mi>T</mml:mi>
+                  <mml:mi>D</mml:mi>
+               </mml:msub>
+               <mml:mfenced close="]" open="[" separators="">
+                  <mml:mtable>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>B</mml:mi>
+                              <mml:mn>1</mml:mn>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>B</mml:mi>
+                              <mml:mn>2</mml:mn>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mi>B</mml:mi>
+                              <mml:mn>3</mml:mn>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">                       (1-35)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="241.5pt"/>
+         <tab align="right" horizontal-position="467.8pt"/>
+      </tabs>
+      <phrase css:top="110pt"
+              css:position="relative"
+              css:background-color="#FFFF00">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mn>0</mml:mn>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>40</mml:mn>
+                                    <mml:mtext>                  </mml:mtext>
+                                    <mml:msub>
+                                       <mml:mi>R</mml:mi>
+                                       <mml:mi>z</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>≥</mml:mo>
+                                    <mml:mn>60</mml:mn>
+                                    <mml:mtext>000</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mtable columnalign="left">
+                                       <mml:mtr>
+                                          <mml:mtd>
+                                             <mml:mn>40</mml:mn>
+                                             <mml:mo>⋅</mml:mo>
+                                             <mml:mi>sin</mml:mi>
+                                             <mml:mo>(</mml:mo>
+                                             <mml:mn>0</mml:mn>
+                                             <mml:mo>.</mml:mo>
+                                             <mml:mn>5</mml:mn>
+                                             <mml:mo>⋅</mml:mo>
+                                             <mml:mi>π</mml:mi>
+                                             <mml:mo>(</mml:mo>
+                                             <mml:msub>
+                                                <mml:mi>R</mml:mi>
+                                                <mml:mi>z</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>−</mml:mo>
+                                             <mml:mn>40</mml:mn>
+                                             <mml:mtext>000</mml:mtext>
+                                             <mml:mo>)</mml:mo>
+                                             <mml:mo>/</mml:mo>
+                                             <mml:mn>20</mml:mn>
+                                             <mml:mtext>000</mml:mtext>
+                                             <mml:mo>)</mml:mo>
+                                             <mml:mtext>  </mml:mtext>
+                                             <mml:mn>40</mml:mn>
+                                             <mml:mtext>000</mml:mtext>
+                                             <mml:mo>≤</mml:mo>
+                                             <mml:msub>
+                                                <mml:mi>R</mml:mi>
+                                                <mml:mi>z</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>&lt;</mml:mo>
+                                             <mml:mn>60</mml:mn>
+                                             <mml:mtext>000</mml:mtext>
+                                          </mml:mtd>
+                                       </mml:mtr>
+                                       <mml:mtr>
+                                          <mml:mtd>
+                                             <mml:mn>0</mml:mn>
+                                             <mml:mtext xml:space="preserve">                     </mml:mtext>
+                                             <mml:msub>
+                                                <mml:mi>R</mml:mi>
+                                                <mml:mi>z</mml:mi>
+                                             </mml:msub>
+                                             <mml:mo>&lt;</mml:mo>
+                                             <mml:mn>40</mml:mn>
+                                             <mml:mtext>000</mml:mtext>
+                                          </mml:mtd>
+                                       </mml:mtr>
+                                    </mml:mtable>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>h</mml:mi>
+                           <mml:mi>θ</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msubsup>
+                           <mml:mi>h</mml:mi>
+                           <mml:mi>m</mml:mi>
+                           <mml:mn>0</mml:mn>
+                        </mml:msubsup>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>1000</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>0</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mi>h</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mo>−</mml:mo>
+                        <mml:mn>0</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>08</mml:mn>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msub>
+                           <mml:mi>h</mml:mi>
+                           <mml:mi>θ</mml:mi>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msub>
+                           <mml:mi>h</mml:mi>
+                           <mml:mi>θ</mml:mi>
+                        </mml:msub>
+                        <mml:mo>−</mml:mo>
+                        <mml:mn>0</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>2</mml:mn>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msub>
+                           <mml:mi>h</mml:mi>
+                           <mml:mi>θ</mml:mi>
+                        </mml:msub>
+                        <mml:mo>+</mml:mo>
+                        <mml:mn>10</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>0</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>M</mml:mi>
+                              <mml:mi>a</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mtext xml:space="preserve">                                               </mml:mtext>
+                                    <mml:mi>M</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>a</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>85</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>25</mml:mn>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mi>M</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>a</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>85</mml:mn>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mtext>     </mml:mtext>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>85</mml:mn>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:mi>M</mml:mi>
+                                    <mml:msub>
+                                       <mml:mi>a</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>65</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext xml:space="preserve">                                               其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mi>h</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>M</mml:mi>
+                              <mml:mi>a</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mi>h</mml:mi>
+                        </mml:msub>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mi>h</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext xml:space="preserve">             </mml:mtext>
+                                    <mml:msub>
+                                       <mml:mi>θ</mml:mi>
+                                       <mml:mi>h</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:msub>
+                                       <mml:mi>θ</mml:mi>
+                                       <mml:mi>h</mml:mi>
+                                    </mml:msub>
+                                    <mml:mtext xml:space="preserve">           其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>k</mml:mi>
+                        <mml:mi>h</mml:mi>
+                        <mml:mo>=</mml:mo>
+                        <mml:mn>1</mml:mn>
+                        <mml:mo>−</mml:mo>
+                        <mml:mo>(</mml:mo>
+                        <mml:mn>1</mml:mn>
+                        <mml:mo>−</mml:mo>
+                        <mml:msub>
+                           <mml:mi>H</mml:mi>
+                           <mml:mi>lim</mml:mi>
+                        </mml:msub>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>50000</mml:mn>
+                        <mml:mo>)</mml:mo>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mo>(</mml:mo>
+                        <mml:msubsup>
+                           <mml:mi>h</mml:mi>
+                           <mml:mi>m</mml:mi>
+                           <mml:mn>0</mml:mn>
+                        </mml:msubsup>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>1000</mml:mn>
+                        <mml:mo>−</mml:mo>
+                        <mml:mn>10</mml:mn>
+                        <mml:mo>)</mml:mo>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>2</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>k</mml:mi>
+                              <mml:mn>0</mml:mn>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>55</mml:mn>
+                                    <mml:mtext>000</mml:mtext>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>θ</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msub>
+                                    <mml:mo>+</mml:mo>
+                                    <mml:msubsup>
+                                       <mml:mi>ε</mml:mi>
+                                       <mml:mi>s</mml:mi>
+                                       <mml:mi>n</mml:mi>
+                                    </mml:msubsup>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mn>57</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>3</mml:mn>
+                                    <mml:mo>+</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>θ</mml:mi>
+                                       <mml:mi>h</mml:mi>
+                                    </mml:msub>
+                                    <mml:mtext xml:space="preserve">                         </mml:mtext>
+                                    <mml:msubsup>
+                                       <mml:mi>h</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msubsup>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:mn>10</mml:mn>
+                                    <mml:mi>e</mml:mi>
+                                    <mml:mn>3</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>55</mml:mn>
+                                    <mml:mtext>000</mml:mtext>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>θ</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msub>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mi>h</mml:mi>
+                                    <mml:mo>+</mml:mo>
+                                    <mml:msubsup>
+                                       <mml:mi>ε</mml:mi>
+                                       <mml:mi>s</mml:mi>
+                                       <mml:mi>n</mml:mi>
+                                    </mml:msubsup>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mn>57</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>3</mml:mn>
+                                    <mml:mtext xml:space="preserve">                      10</mml:mtext>
+                                    <mml:mi>e</mml:mi>
+                                    <mml:mn>3</mml:mn>
+                                    <mml:mtext>&lt;</mml:mtext>
+                                    <mml:msubsup>
+                                       <mml:mi>h</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msubsup>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:mn>12</mml:mn>
+                                    <mml:mi>e</mml:mi>
+                                    <mml:mn>3</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>55</mml:mn>
+                                    <mml:mtext>000</mml:mtext>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>θ</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msub>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:msub>
+                                       <mml:mi>H</mml:mi>
+                                       <mml:mi>lim</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>50000</mml:mn>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>+</mml:mo>
+                                    <mml:msubsup>
+                                       <mml:mi>ε</mml:mi>
+                                       <mml:mi>s</mml:mi>
+                                       <mml:mi>n</mml:mi>
+                                    </mml:msubsup>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mn>57</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>3</mml:mn>
+                                    <mml:mtext>          其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mi>θ</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>4</mml:mn>
+                                    <mml:mtext xml:space="preserve">                                                           </mml:mtext>
+                                    <mml:msubsup>
+                                       <mml:mi>h</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msubsup>
+                                    <mml:mo>&gt;</mml:mo>
+                                    <mml:mn>15</mml:mn>
+                                    <mml:mi>e</mml:mi>
+                                    <mml:mn>3</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>4</mml:mn>
+                                    <mml:mo>+</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>15</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msubsup>
+                                       <mml:mi>h</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msubsup>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>1000</mml:mn>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>016</mml:mn>
+                                    <mml:mtext xml:space="preserve">            </mml:mtext>
+                                    <mml:mn>10</mml:mn>
+                                    <mml:mi>e</mml:mi>
+                                    <mml:mn>3</mml:mn>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:msubsup>
+                                       <mml:mi>h</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msubsup>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:mn>15</mml:mn>
+                                    <mml:mi>e</mml:mi>
+                                    <mml:mn>3</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>48</mml:mn>
+                                    <mml:mo>+</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>10</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msubsup>
+                                       <mml:mi>h</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msubsup>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>1000</mml:mn>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>02</mml:mn>
+                                    <mml:mtext xml:space="preserve">              </mml:mtext>
+                                    <mml:mn>5</mml:mn>
+                                    <mml:mi>e</mml:mi>
+                                    <mml:mn>3</mml:mn>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:msubsup>
+                                       <mml:mi>h</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msubsup>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:mn>10</mml:mn>
+                                    <mml:mi>e</mml:mi>
+                                    <mml:mn>3</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>58</mml:mn>
+                                    <mml:mo>+</mml:mo>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mn>5</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:msubsup>
+                                       <mml:mi>h</mml:mi>
+                                       <mml:mi>m</mml:mi>
+                                       <mml:mn>0</mml:mn>
+                                    </mml:msubsup>
+                                    <mml:mo>/</mml:mo>
+                                    <mml:mn>1000</mml:mn>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>09</mml:mn>
+                                    <mml:mtext xml:space="preserve">                       其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mi>θ</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext xml:space="preserve">           </mml:mtext>
+                                    <mml:msub>
+                                       <mml:mi>K</mml:mi>
+                                       <mml:mi>θ</mml:mi>
+                                    </mml:msub>
+                                    <mml:mo>&gt;</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:msub>
+                                       <mml:mi>K</mml:mi>
+                                       <mml:mi>θ</mml:mi>
+                                    </mml:msub>
+                                    <mml:mtext xml:space="preserve">           其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mi>k</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:msub>
+                           <mml:mi>K</mml:mi>
+                           <mml:mi>θ</mml:mi>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>k</mml:mi>
+                              <mml:mn>0</mml:mn>
+                           </mml:mrow>
+                        </mml:msub>
+                        <mml:mo>/</mml:mo>
+                        <mml:mn>57</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>3</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">(2-1)</phrase>
+   </para>
+   <para docx2hub:generated-wordWrap="w:val:0"
+         css:line-height="1.5"
+         css:text-align="right">
+      <tabs>
+         <tab align="center" horizontal-position="241.5pt"/>
+         <tab align="right" horizontal-position="467.8pt"/>
+      </tabs>
+      <phrase css:top="89pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:mtable columnalign="left">
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi mathvariant="normal">Δ</mml:mi>
+                        <mml:msub>
+                           <mml:mi>U</mml:mi>
+                           <mml:mi>g</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mn>57</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>3</mml:mn>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mo>(</mml:mo>
+                        <mml:mi>sin</mml:mi>
+                        <mml:mi>θ</mml:mi>
+                        <mml:mo>−</mml:mo>
+                        <mml:mi>sin</mml:mi>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mi>k</mml:mi>
+                        </mml:msub>
+                        <mml:mo>)</mml:mo>
+                        <mml:mo>/</mml:mo>
+                        <mml:mi>cos</mml:mi>
+                        <mml:msub>
+                           <mml:mi>θ</mml:mi>
+                           <mml:mi>k</mml:mi>
+                        </mml:msub>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>P</mml:mi>
+                        <mml:mi>H</mml:mi>
+                        <mml:mi>Y</mml:mi>
+                        <mml:mo>=</mml:mo>
+                        <mml:mi>V</mml:mi>
+                        <mml:msubsup>
+                           <mml:mi>Z</mml:mi>
+                           <mml:mi>m</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>n</mml:mi>
+                              <mml:mi>t</mml:mi>
+                           </mml:mrow>
+                        </mml:msubsup>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi mathvariant="normal">Δ</mml:mi>
+                        <mml:mi>P</mml:mi>
+                        <mml:msubsup>
+                           <mml:mi>X</mml:mi>
+                           <mml:mi>Z</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>n</mml:mi>
+                              <mml:mi>t</mml:mi>
+                           </mml:mrow>
+                        </mml:msubsup>
+                        <mml:mo>−</mml:mo>
+                        <mml:mi>V</mml:mi>
+                        <mml:msubsup>
+                           <mml:mi>X</mml:mi>
+                           <mml:mi>m</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>n</mml:mi>
+                              <mml:mi>t</mml:mi>
+                           </mml:mrow>
+                        </mml:msubsup>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi mathvariant="normal">Δ</mml:mi>
+                        <mml:mi>P</mml:mi>
+                        <mml:msubsup>
+                           <mml:mi>Z</mml:mi>
+                           <mml:mi>Z</mml:mi>
+                           <mml:mrow>
+                              <mml:mi>n</mml:mi>
+                              <mml:mi>t</mml:mi>
+                           </mml:mrow>
+                        </mml:msubsup>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>C</mml:mi>
+                        <mml:mi>P</mml:mi>
+                        <mml:mi>H</mml:mi>
+                        <mml:mi>Y</mml:mi>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfrac>
+                           <mml:mrow>
+                              <mml:mo>(</mml:mo>
+                              <mml:mi>V</mml:mi>
+                              <mml:msubsup>
+                                 <mml:mi>X</mml:mi>
+                                 <mml:mi>m</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>n</mml:mi>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msubsup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>P</mml:mi>
+                              <mml:msubsup>
+                                 <mml:mi>X</mml:mi>
+                                 <mml:mi>Z</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>n</mml:mi>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msubsup>
+                              <mml:mo>+</mml:mo>
+                              <mml:mi>V</mml:mi>
+                              <mml:msubsup>
+                                 <mml:mi>Z</mml:mi>
+                                 <mml:mi>m</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>n</mml:mi>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msubsup>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:mi mathvariant="normal">Δ</mml:mi>
+                              <mml:mi>P</mml:mi>
+                              <mml:msubsup>
+                                 <mml:mi>Z</mml:mi>
+                                 <mml:mi>Z</mml:mi>
+                                 <mml:mrow>
+                                    <mml:mi>n</mml:mi>
+                                    <mml:mi>t</mml:mi>
+                                 </mml:mrow>
+                              </mml:msubsup>
+                              <mml:mo>)</mml:mo>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:msqrt>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:msubsup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mi>m</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msubsup>
+                                 <mml:msup>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                                 <mml:mo>+</mml:mo>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi>V</mml:mi>
+                                 <mml:msubsup>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mi>m</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msubsup>
+                                 <mml:msup>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                              </mml:msqrt>
+                              <mml:mo>⋅</mml:mo>
+                              <mml:msqrt>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msubsup>
+                                    <mml:mi>X</mml:mi>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msubsup>
+                                 <mml:msup>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                                 <mml:mo>+</mml:mo>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi mathvariant="normal">Δ</mml:mi>
+                                 <mml:mi>P</mml:mi>
+                                 <mml:msubsup>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mi>Z</mml:mi>
+                                    <mml:mrow>
+                                       <mml:mi>n</mml:mi>
+                                       <mml:mi>t</mml:mi>
+                                    </mml:mrow>
+                                 </mml:msubsup>
+                                 <mml:msup>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                              </mml:msqrt>
+                           </mml:mrow>
+                        </mml:mfrac>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi mathvariant="normal">Δ</mml:mi>
+                        <mml:msub>
+                           <mml:mi>U</mml:mi>
+                           <mml:mi>f</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mfenced close="" open="{" separators="">
+                           <mml:mtable columnalign="left">
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>0</mml:mn>
+                                    <mml:mtext>                                  </mml:mtext>
+                                    <mml:mi>C</mml:mi>
+                                    <mml:mi>P</mml:mi>
+                                    <mml:mi>H</mml:mi>
+                                    <mml:mi>Y</mml:mi>
+                                    <mml:mo>≥</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>180</mml:mn>
+                                    <mml:mtext>                               </mml:mtext>
+                                    <mml:mi>C</mml:mi>
+                                    <mml:mi>P</mml:mi>
+                                    <mml:mi>H</mml:mi>
+                                    <mml:mi>Y</mml:mi>
+                                    <mml:mo>≤</mml:mo>
+                                    <mml:mo>−</mml:mo>
+                                    <mml:mn>1</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                              <mml:mtr>
+                                 <mml:mtd>
+                                    <mml:mn>57</mml:mn>
+                                    <mml:mo>.</mml:mo>
+                                    <mml:mn>3</mml:mn>
+                                    <mml:mo>⋅</mml:mo>
+                                    <mml:mi>arccos</mml:mi>
+                                    <mml:mo>(</mml:mo>
+                                    <mml:mi>C</mml:mi>
+                                    <mml:mi>P</mml:mi>
+                                    <mml:mi>H</mml:mi>
+                                    <mml:mi>Y</mml:mi>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mtext>      其他</mml:mtext>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mfenced>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>U</mml:mi>
+                           <mml:mi>g</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mo>−</mml:mo>
+                        <mml:mi mathvariant="normal">Δ</mml:mi>
+                        <mml:msub>
+                           <mml:mi>U</mml:mi>
+                           <mml:mi>g</mml:mi>
+                        </mml:msub>
+                        <mml:mo>+</mml:mo>
+                        <mml:mi>cos</mml:mi>
+                        <mml:mi>θ</mml:mi>
+                        <mml:mo>;</mml:mo>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:msub>
+                           <mml:mi>U</mml:mi>
+                           <mml:mi>f</mml:mi>
+                        </mml:msub>
+                        <mml:mo>=</mml:mo>
+                        <mml:mo>−</mml:mo>
+                        <mml:mn>0</mml:mn>
+                        <mml:mo>.</mml:mo>
+                        <mml:mn>5</mml:mn>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mtext>  </mml:mtext>
+                        <mml:mi mathvariant="normal">Δ</mml:mi>
+                        <mml:msub>
+                           <mml:mi>U</mml:mi>
+                           <mml:mi>f</mml:mi>
+                        </mml:msub>
+                        <mml:mo>⋅</mml:mo>
+                        <mml:mi>s</mml:mi>
+                        <mml:mi>i</mml:mi>
+                        <mml:mi>g</mml:mi>
+                        <mml:mi>n</mml:mi>
+                        <mml:mo>(</mml:mo>
+                        <mml:mi>P</mml:mi>
+                        <mml:mi>H</mml:mi>
+                        <mml:mi>Y</mml:mi>
+                        <mml:mo>)</mml:mo>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mi>σ</mml:mi>
+                        <mml:mo>=</mml:mo>
+                        <mml:msqrt>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:msub>
+                              <mml:mi>U</mml:mi>
+                              <mml:mi>g</mml:mi>
+                           </mml:msub>
+                           <mml:msup>
+                              <mml:mo>)</mml:mo>
+                              <mml:mn>2</mml:mn>
+                           </mml:msup>
+                           <mml:mo>+</mml:mo>
+                           <mml:mo>(</mml:mo>
+                           <mml:mi mathvariant="normal">Δ</mml:mi>
+                           <mml:msub>
+                              <mml:mi>U</mml:mi>
+                              <mml:mi>f</mml:mi>
+                           </mml:msub>
+                           <mml:msup>
+                              <mml:mo>)</mml:mo>
+                              <mml:mn>2</mml:mn>
+                           </mml:msup>
+                        </mml:msqrt>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-size="12pt">             (2-2)</phrase>
+   </para>
+   <para role="a3">
+      <phrase css:font-family="宋体" css:font-size="12pt">公式中</phrase>
+      <phrase css:top="6pt" css:position="relative" css:font-size="12pt">
+         <inlineequation role="mtef" condition="ole">
+            <mml:math>
+               <mml:msub>
+                  <mml:mi>ε</mml:mi>
+                  <mml:mi>s</mml:mi>
+               </mml:msub>
+               <mml:mn>,</mml:mn>
+               <mml:msubsup>
+                  <mml:mi>ε</mml:mi>
+                  <mml:mi>s</mml:mi>
+                  <mml:mi>n</mml:mi>
+               </mml:msubsup>
+               <mml:mn>,</mml:mn>
+               <mml:msub>
+                  <mml:mover accent="true">
+                     <mml:mi>ε</mml:mi>
+                     <mml:mo>˙</mml:mo>
+                  </mml:mover>
+                  <mml:mi>s</mml:mi>
+               </mml:msub>
+               <mml:mn>,</mml:mn>
+               <mml:msubsup>
+                  <mml:mover accent="true">
+                     <mml:mi>ε</mml:mi>
+                     <mml:mo>˙</mml:mo>
+                  </mml:mover>
+                  <mml:mi>s</mml:mi>
+                  <mml:mi>n</mml:mi>
+               </mml:msubsup>
+               <mml:mn>,</mml:mn>
+               <mml:msub>
+                  <mml:mover accent="true">
+                     <mml:mi>β</mml:mi>
+                     <mml:mo>˙</mml:mo>
+                  </mml:mover>
+                  <mml:mi>s</mml:mi>
+               </mml:msub>
+               <mml:mn>,</mml:mn>
+               <mml:msubsup>
+                  <mml:mover accent="true">
+                     <mml:mi>β</mml:mi>
+                     <mml:mo>˙</mml:mo>
+                  </mml:mover>
+                  <mml:mi>s</mml:mi>
+                  <mml:mi>n</mml:mi>
+               </mml:msubsup>
+            </mml:math>
+         </inlineequation>
+      </phrase>
+      <phrase css:font-family="宋体" css:font-size="12pt">参数计算见</phrase>
+      <phrase css:font-size="12pt">1.3</phrase>
+      <phrase css:font-family="宋体" css:font-size="12pt">节。</phrase>
+   </para>
+   <para/>
+</hub>

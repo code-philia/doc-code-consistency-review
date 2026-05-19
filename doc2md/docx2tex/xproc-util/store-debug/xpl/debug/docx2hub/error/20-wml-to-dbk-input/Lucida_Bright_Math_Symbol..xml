@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols>
+   <symbol number="0031" entity="1" char="∘"/>
+   <!-- white circle / ringoperator -->
+   <symbol number="F023" entity="" char="−"/>
+   <!-- MINUS Sign -->
+   <symbol number="F024" entity="" char="⋅"/>
+   <!-- Dot Operator -->
+   <symbol number="F025" entity="" char="×"/>
+   <!-- Multiplication Sign -->
+   <symbol number="F02F" entity="" char="⨀"/>
+   <!-- N-ary Circled Dot Operator -->
+   <symbol number="F031" entity="" char="∘"/>
+   <!-- white circle / ringoperator -->
+   <symbol number="F041" entity="" char="⊰"/>
+   <!-- Precedes Under Relation -->
+   <symbol number="F055" entity="" char="∈"/>
+   <!--  Element Of -->
+   <symbol number="F056" entity="" char="∋"/>
+   <!--  Contains As Member -->
+   <symbol number="F057" entity="" char="Δ"/>
+   <!-- GREEK CAPITAL LETTER DELTA -->
+   <symbol number="F03C" entity="" char="≈"/>
+   <!-- Almost Equal To -->
+   <symbol number="F05B" entity="" char="∀"/>
+   <!-- For All -->
+   <symbol number="F05E" entity="" char="∅"/>
+   <!-- Empty Set -->
+   <symbol number="F062" entity="" char="⊥"/>
+   <!--  Up Tack -->
+   <symbol number="F080" entity="" char="∩"/>
+   <!-- Intersection -->
+   <symbol number="F08E" entity="" char="|"/>
+   <!-- Vertical Line -->
+   <symbol number="F08F" entity="" char="∥"/>
+   <!-- Parallel To -->
+   <symbol number="F0A6" entity="" char="Δ"/>
+   <!-- GREEK CAPITAL LETTER DELTA -->
+   <symbol number="F0A7" entity="" char="∈"/>
+   <!-- Element Of -->
+   <symbol number="F0AF" entity="" char="∢"/>
+   <!-- Spherical Angle -->
+   <symbol number="F0CF" entity="" char="≙"/>
+   <!-- Estimates -->
+</symbols>

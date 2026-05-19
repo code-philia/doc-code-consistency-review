@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+   <msub xmlns:tr="http://transpect.io">
+      <mi>μ</mi>
+      <mi>t</mi>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">t</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <mfenced xmlns:tr="http://transpect.io" close="" open="{" separators="">
+      <mtable columnalign="left">
+         <mtr>
+            <mtd>
+               <msup>
+                  <mi>e</mi>
+                  <mrow>
+                     <mo>−</mo>
+                     <msub>
+                        <mi>k</mi>
+                        <mn>1</mn>
+                     </msub>
+                     <msup>
+                        <msub>
+                           <mi>t</mi>
+                           <mrow/>
+                        </msub>
+                        <mn>2</mn>
+                     </msup>
+                  </mrow>
+               </msup>
+               <mtable>
+                  <mtr>
+                     <mtd/>
+                     <mtd/>
+                     <mtd/>
+                     <mtd>
+                        <mi>t</mi>
+                        <mo>≥</mo>
+                        <mn>0</mn>
+                     </mtd>
+                  </mtr>
+               </mtable>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <msup>
+                  <mi>e</mi>
+                  <mrow>
+                     <mo>−</mo>
+                     <msub>
+                        <mi>k</mi>
+                        <mn>2</mn>
+                     </msub>
+                     <msup>
+                        <msub>
+                           <mi>t</mi>
+                           <mrow/>
+                        </msub>
+                        <mn>2</mn>
+                     </msup>
+                  </mrow>
+               </msup>
+               <mtable>
+                  <mtr>
+                     <mtd/>
+                     <mtd/>
+                     <mtd/>
+                     <mtd>
+                        <mi>t</mi>
+                        <mo>&lt;</mo>
+                        <mn>0</mn>
+                     </mtd>
+                  </mtr>
+               </mtable>
+            </mtd>
+         </mtr>
+      </mtable>
+   </mfenced>
+</math>

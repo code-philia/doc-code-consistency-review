@@ -1,0 +1,784 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hub xmlns="http://docbook.org/ns/docbook"
+     xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+     xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+     xmlns:css="http://www.w3.org/1996/css"
+     xmlns:ct="http://schemas.openxmlformats.org/package/2006/content-types"
+     xmlns:customProps="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties"
+     xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex"
+     xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex"
+     xmlns:docx2hub="http://transpect.io/docx2hub"
+     xmlns:extendedProps="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+     xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+     xmlns:mml="http://www.w3.org/1998/Math/MathML"
+     xmlns:o="urn:schemas-microsoft-com:office:office"
+     xmlns:pkg="http://schemas.microsoft.com/office/2006/xmlPackage"
+     xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+     xmlns:rel="http://schemas.openxmlformats.org/package/2006/relationships"
+     xmlns:tr="http://transpect.io"
+     xmlns:v="urn:schemas-microsoft-com:vml"
+     xmlns:ve="http://schemas.openxmlformats.org/markup-compatibility/2006"
+     xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+     xmlns:w10="urn:schemas-microsoft-com:office:word"
+     xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+     xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"
+     xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid"
+     xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex"
+     xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml"
+     xmlns:word200x="http://schemas.microsoft.com/office/word/2003/wordml"
+     xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+     xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
+     xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+     xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+     xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk"
+     xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+     xmlns:wx="http://schemas.microsoft.com/office/word/2003/auxHint"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:xs="http://www.w3.org/2001/XMLSchema"
+     xml:lang="en-US"
+     version="5.1-variant le-tex_Hub-1.2"
+     css:version="3.0-variant le-tex_Hub-1.2"
+     css:rule-selection-attribute="role">
+   <info>
+      <keywordset role="hub">
+         <keyword role="formatting-deviations-only">true</keyword>
+         <keyword role="source-type">docx</keyword>
+         <keyword role="source-dir-uri">file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx.tmp/</keyword>
+         <keyword role="archive-dir-uri">file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/</keyword>
+         <keyword role="archive-uri">file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx</keyword>
+         <keyword role="archive-uri-local">file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx</keyword>
+         <keyword role="source-basename">error</keyword>
+         <keyword role="source-application">Microsoft Office Word</keyword>
+         <keyword role="mathtype2mml">ole</keyword>
+      </keywordset>
+      <keywordset role="docProps">
+         <keyword role="dc:title"/>
+         <keyword role="dc:subject"/>
+         <keyword role="dc:creator">mia mia</keyword>
+         <keyword role="cp:keywords"/>
+         <keyword role="dc:description"/>
+         <keyword role="cp:lastModifiedBy">mia mia</keyword>
+         <keyword role="cp:revision">2</keyword>
+         <keyword role="dcterms:created">2026-05-06T11:21:00Z</keyword>
+         <keyword role="dcterms:modified">2026-05-06T11:21:00Z</keyword>
+         <keyword role="extendedProps:Template">Normal.dotm</keyword>
+         <keyword role="extendedProps:TotalTime">0</keyword>
+         <keyword role="extendedProps:Pages">1</keyword>
+         <keyword role="extendedProps:Words">30</keyword>
+         <keyword role="extendedProps:Characters">171</keyword>
+         <keyword role="extendedProps:Application">Microsoft Office Word</keyword>
+         <keyword role="extendedProps:DocSecurity">0</keyword>
+         <keyword role="extendedProps:Lines">1</keyword>
+         <keyword role="extendedProps:Paragraphs">1</keyword>
+         <keyword role="extendedProps:ScaleCrop">false</keyword>
+         <keyword role="extendedProps:Company"/>
+         <keyword role="extendedProps:LinksUpToDate">false</keyword>
+         <keyword role="extendedProps:CharactersWithSpaces">200</keyword>
+         <keyword role="extendedProps:SharedDoc">false</keyword>
+         <keyword role="extendedProps:HyperlinksChanged">false</keyword>
+         <keyword role="extendedProps:AppVersion">16.0000</keyword>
+      </keywordset>
+      <css:rules/>
+   </info>
+   <w:docRels>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"
+                     xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx.tmp/word/_rels/document.xml.rels">
+         <Relationship Id="rId3"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings"
+                       Target="webSettings.xml"/>
+         <Relationship Id="rId2"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings"
+                       Target="settings.xml"/>
+         <Relationship Id="rId16"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
+                       Target="theme/theme1.xml"/>
+         <Relationship Id="rId1"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"
+                       Target="styles.xml"/>
+         <Relationship Id="rId5"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes"
+                       Target="endnotes.xml"/>
+         <Relationship Id="rId15"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable"
+                       Target="fontTable.xml"/>
+         <Relationship Id="rId4"
+                       Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes"
+                       Target="footnotes.xml"/>
+      </Relationships>
+   </w:docRels>
+   <w:fonts xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+            xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+            xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+            xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+            xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx.tmp/word/fontTable.xml"
+            mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16du">
+      <w:font w:name="等线">
+         <w:altName w:val="DengXian"/>
+         <w:panose1 w:val="02010600030101010101"/>
+         <w:charset w:val="86"/>
+         <w:family w:val="auto"/>
+         <w:pitch w:val="variable"/>
+         <w:sig w:usb0="A00002BF"
+                w:usb1="38CF7CFA"
+                w:usb2="00000016"
+                w:usb3="00000000"
+                w:csb0="0004000F"
+                w:csb1="00000000"/>
+      </w:font>
+      <w:font w:name="Times New Roman">
+         <w:panose1 w:val="02020603050405020304"/>
+         <w:charset w:val="00"/>
+         <w:family w:val="roman"/>
+         <w:pitch w:val="variable"/>
+         <w:sig w:usb0="E0002EFF"
+                w:usb1="C000785B"
+                w:usb2="00000009"
+                w:usb3="00000000"
+                w:csb0="000001FF"
+                w:csb1="00000000"/>
+      </w:font>
+      <w:font w:name="等线 Light">
+         <w:panose1 w:val="02010600030101010101"/>
+         <w:charset w:val="86"/>
+         <w:family w:val="auto"/>
+         <w:pitch w:val="variable"/>
+         <w:sig w:usb0="A00002BF"
+                w:usb1="38CF7CFA"
+                w:usb2="00000016"
+                w:usb3="00000000"
+                w:csb0="0004000F"
+                w:csb1="00000000"/>
+      </w:font>
+   </w:fonts>
+   <w:footnotes xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx.tmp/word/footnotes.xml"
+                mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16du wp14">
+      <w:footnote w:type="separator" w:id="-1">
+         <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+              xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+              xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+              xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+              xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+              xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+              xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+              xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+              xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+              xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+              xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+              xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+              xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+              xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+              w14:paraId="3ECE197C"
+              w14:textId="77777777">
+            <w:r>
+               <w:separator/>
+            </w:r>
+         </w:p>
+      </w:footnote>
+      <w:footnote w:type="continuationSeparator" w:id="0">
+         <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+              xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+              xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+              xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+              xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+              xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+              xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+              xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+              xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+              xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+              xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+              xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+              xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+              xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+              w14:paraId="3FFDA416"
+              w14:textId="77777777">
+            <w:r>
+               <w:continuationSeparator/>
+            </w:r>
+         </w:p>
+      </w:footnote>
+   </w:footnotes>
+   <w:endnotes xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx.tmp/word/endnotes.xml"
+               mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16du wp14">
+      <w:endnote w:type="separator" w:id="-1">
+         <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+              xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+              xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+              xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+              xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+              xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+              xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+              xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+              xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+              xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+              xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+              xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+              xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+              xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+              w14:paraId="2EB4153B"
+              w14:textId="77777777">
+            <w:r>
+               <w:separator/>
+            </w:r>
+         </w:p>
+      </w:endnote>
+      <w:endnote w:type="continuationSeparator" w:id="0">
+         <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+              xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+              xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+              xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+              xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+              xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+              xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+              xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+              xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+              xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+              xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+              xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+              xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+              xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+              w14:paraId="6F95191B"
+              w14:textId="77777777">
+            <w:r>
+               <w:continuationSeparator/>
+            </w:r>
+         </w:p>
+      </w:endnote>
+   </w:endnotes>
+   <w:settings xml:base="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/error_20260506T201927_1edc02/error_temp_29770/error.docx.tmp/word/settings.xml"
+               mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16du">
+      <w:zoom w:percent="100"/>
+      <w:bordersDoNotSurroundHeader/>
+      <w:bordersDoNotSurroundFooter/>
+      <w:defaultTabStop w:val="420"/>
+      <w:characterSpacingControl w:val="doNotCompress"/>
+      <w:hdrShapeDefaults>
+         <o:shapedefaults v:ext="edit" spidmax="2050"/>
+      </w:hdrShapeDefaults>
+      <w:footnotePr>
+         <w:footnote w:id="-1"/>
+         <w:footnote w:id="0"/>
+      </w:footnotePr>
+      <w:endnotePr>
+         <w:endnote w:id="-1"/>
+         <w:endnote w:id="0"/>
+      </w:endnotePr>
+      <w:compat>
+         <w:useFELayout/>
+         <w:compatSetting w:name="compatibilityMode"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="15"/>
+         <w:compatSetting w:name="overrideTableStyleFontSizeAndJustification"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="1"/>
+         <w:compatSetting w:name="enableOpenTypeFeatures"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="1"/>
+         <w:compatSetting w:name="doNotFlipMirrorIndents"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="1"/>
+         <w:compatSetting w:name="differentiateMultirowTableHeaders"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="1"/>
+         <w:compatSetting w:name="useWord2013TrackBottomHyphenation"
+                          w:uri="http://schemas.microsoft.com/office/word"
+                          w:val="0"/>
+      </w:compat>
+      <w:rsids>
+         <w:rsidRoot w:val="006838C5"/>
+         <w:rsid w:val="00053625"/>
+         <w:rsid w:val="000D3B79"/>
+         <w:rsid w:val="001529AF"/>
+         <w:rsid w:val="001827FC"/>
+         <w:rsid w:val="004C09A2"/>
+         <w:rsid w:val="004C171B"/>
+         <w:rsid w:val="00546B03"/>
+         <w:rsid w:val="005C0F7C"/>
+         <w:rsid w:val="005C6E11"/>
+         <w:rsid w:val="005F51C2"/>
+         <w:rsid w:val="006149BD"/>
+         <w:rsid w:val="006838C5"/>
+         <w:rsid w:val="006B2337"/>
+         <w:rsid w:val="00717F89"/>
+         <w:rsid w:val="00750FFA"/>
+         <w:rsid w:val="007B1AF0"/>
+         <w:rsid w:val="00977CAE"/>
+         <w:rsid w:val="00AD3466"/>
+         <w:rsid w:val="00BA659F"/>
+         <w:rsid w:val="00C37238"/>
+         <w:rsid w:val="00F066E1"/>
+      </w:rsids>
+      <m:mathPr>
+         <m:mathFont m:val="Cambria Math"/>
+         <m:brkBin m:val="before"/>
+         <m:brkBinSub m:val="--"/>
+         <m:smallFrac m:val="0"/>
+         <m:dispDef/>
+         <m:lMargin m:val="0"/>
+         <m:rMargin m:val="0"/>
+         <m:defJc m:val="centerGroup"/>
+         <m:wrapIndent m:val="1440"/>
+         <m:intLim m:val="subSup"/>
+         <m:naryLim m:val="undOvr"/>
+      </m:mathPr>
+      <w:themeFontLang w:val="en-US" w:eastAsia="zh-CN"/>
+      <w:clrSchemeMapping w:bg1="light1"
+                          w:t1="dark1"
+                          w:bg2="light2"
+                          w:t2="dark2"
+                          w:accent1="accent1"
+                          w:accent2="accent2"
+                          w:accent3="accent3"
+                          w:accent4="accent4"
+                          w:accent5="accent5"
+                          w:accent6="accent6"
+                          w:hyperlink="hyperlink"
+                          w:followedHyperlink="followedHyperlink"/>
+      <w:shapeDefaults>
+         <o:shapedefaults v:ext="edit" spidmax="2050"/>
+         <o:shapelayout v:ext="edit">
+            <o:idmap v:ext="edit" data="2"/>
+         </o:shapelayout>
+      </w:shapeDefaults>
+      <w:decimalSymbol w:val="."/>
+      <w:listSeparator w:val=","/>
+      <w14:docId w14:val="09C0CDAF"/>
+      <w15:chartTrackingRefBased/>
+      <w15:docId w15:val="{11BA5B57-0058-4B19-8E62-8AC7509ECC60}"/>
+   </w:settings>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="66D6041C"
+        w14:textId="333A4577">
+      <w:r>
+         <w:t>采用可变参量非均匀采样的</w:t>
+      </w:r>
+      <w:r css:top="5pt" css:position="relative">
+         <w:object w:dxaOrig="379" w:dyaOrig="319" w14:anchorId="788FEFE5">
+            <v:shapetype id="_x0000_t75"
+                         coordsize="21600,21600"
+                         o:spt="75"
+                         o:preferrelative="t"
+                         path="m@4@5l@4@11@9@11@9@5xe"
+                         filled="f"
+                         stroked="f">
+               <v:stroke joinstyle="miter"/>
+               <v:formulas>
+                  <v:f eqn="if lineDrawn pixelLineWidth 0"/>
+                  <v:f eqn="sum @0 1 0"/>
+                  <v:f eqn="sum 0 0 @1"/>
+                  <v:f eqn="prod @2 1 2"/>
+                  <v:f eqn="prod @3 21600 pixelWidth"/>
+                  <v:f eqn="prod @3 21600 pixelHeight"/>
+                  <v:f eqn="sum @0 0 1"/>
+                  <v:f eqn="prod @6 1 2"/>
+                  <v:f eqn="prod @7 21600 pixelWidth"/>
+                  <v:f eqn="sum @8 21600 0"/>
+                  <v:f eqn="prod @7 21600 pixelHeight"/>
+                  <v:f eqn="sum @10 21600 0"/>
+               </v:formulas>
+               <v:path o:extrusionok="f" gradientshapeok="t" o:connecttype="rect"/>
+               <o:lock v:ext="edit" aspectratio="t"/>
+            </v:shapetype>
+            <mml:math class="ole">
+               <mml:mi>α</mml:mi>
+               <mml:mi>β</mml:mi>
+            </mml:math>
+         </w:object>
+      </w:r>
+      <w:r>
+         <w:t>滤波器在大地球坐标系下进行滤波，在大地直角坐标系下进行外推并利用残差修正</w:t>
+      </w:r>
+      <w:r css:top="5pt" css:position="relative">
+         <w:object w:dxaOrig="379" w:dyaOrig="319" w14:anchorId="44F311BD">
+            <mml:math class="ole">
+               <mml:mi>α</mml:mi>
+               <mml:mi>β</mml:mi>
+            </mml:math>
+         </w:object>
+      </w:r>
+      <w:r>
+         <w:t>值；</w:t>
+      </w:r>
+   </w:p>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="378AB622"
+        w14:textId="77777777"/>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="27B5C091"
+        w14:textId="77777777"/>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="4DC8C67D"
+        w14:textId="77777777"
+        css:margin-top="7.8pt"
+        css:margin-bottom="7.8pt"
+        css:line-height="1.5"
+        css:text-indent="24pt"
+        css:text-align="left">
+      <w:bookmarkStart w:id="0" w:name="_Toc135474279"/>
+      <w:bookmarkStart w:id="1" w:name="_Toc490050169"/>
+      <w:bookmarkStart w:id="2" w:name="_Toc124528701"/>
+      <w:r css:font-size="12pt">
+         <w:t>1）</w:t>
+      </w:r>
+      <w:r css:font-size="12pt">
+         <w:t>到达时间威胁隶属度函数</w:t>
+      </w:r>
+      <w:bookmarkEnd w:id="0"/>
+      <w:bookmarkEnd w:id="1"/>
+      <w:bookmarkEnd w:id="2"/>
+      <w:r css:font-size="12pt">
+         <w:t>：</w:t>
+      </w:r>
+   </w:p>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="324D7DF5"
+        w14:textId="2A739083">
+      <w:r css:font-weight="toggle(bold,normal)"
+           css:color="#000000"
+           css:top="20pt"
+           css:position="relative"
+           css:font-size="12pt">
+         <w:object w:dxaOrig="2901" w:dyaOrig="919" w14:anchorId="61E5F3D9">
+            <mml:math class="ole">
+               <mml:msub>
+                  <mml:mi>μ</mml:mi>
+                  <mml:mi>t</mml:mi>
+               </mml:msub>
+               <mml:mo>(</mml:mo>
+               <mml:mi>t</mml:mi>
+               <mml:mo>)</mml:mo>
+               <mml:mo>=</mml:mo>
+               <mml:mfenced close="" open="{" separators="">
+                  <mml:mtable columnalign="left">
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msup>
+                              <mml:mi>e</mml:mi>
+                              <mml:mrow>
+                                 <mml:mo>−</mml:mo>
+                                 <mml:msub>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mn>1</mml:mn>
+                                 </mml:msub>
+                                 <mml:msup>
+                                    <mml:msub>
+                                       <mml:mi>t</mml:mi>
+                                       <mml:mrow/>
+                                    </mml:msub>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mtable>
+                              <mml:mtr>
+                                 <mml:mtd/>
+                                 <mml:mtd/>
+                                 <mml:mtd/>
+                                 <mml:mtd>
+                                    <mml:mi>t</mml:mi>
+                                    <mml:mo>≥</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msup>
+                              <mml:mi>e</mml:mi>
+                              <mml:mrow>
+                                 <mml:mo>−</mml:mo>
+                                 <mml:msub>
+                                    <mml:mi>k</mml:mi>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msub>
+                                 <mml:msup>
+                                    <mml:msub>
+                                       <mml:mi>t</mml:mi>
+                                       <mml:mrow/>
+                                    </mml:msub>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                              </mml:mrow>
+                           </mml:msup>
+                           <mml:mtable>
+                              <mml:mtr>
+                                 <mml:mtd/>
+                                 <mml:mtd/>
+                                 <mml:mtd/>
+                                 <mml:mtd>
+                                    <mml:mi>t</mml:mi>
+                                    <mml:mo>&lt;</mml:mo>
+                                    <mml:mn>0</mml:mn>
+                                 </mml:mtd>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+            </mml:math>
+         </w:object>
+      </w:r>
+   </w:p>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="209E435F"
+        w14:textId="77777777"/>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="68EC3301"
+        w14:textId="77777777"/>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="66C04822"
+        w14:textId="77777777"
+        css:margin-top="7.8pt"
+        css:margin-bottom="7.8pt"
+        css:line-height="1.5"
+        css:text-indent="24pt"
+        css:text-align="left">
+      <w:bookmarkStart w:id="3" w:name="_Toc490050172"/>
+      <w:bookmarkStart w:id="4" w:name="_Toc135474282"/>
+      <w:bookmarkStart w:id="5" w:name="_Toc124528704"/>
+      <w:r css:font-size="12pt">
+         <w:t>3）</w:t>
+      </w:r>
+      <w:r css:font-size="12pt">
+         <w:t>飞行高度威胁隶属度函数</w:t>
+      </w:r>
+      <w:bookmarkEnd w:id="3"/>
+      <w:bookmarkEnd w:id="4"/>
+      <w:bookmarkEnd w:id="5"/>
+   </w:p>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="799C20B5"
+        w14:textId="77777777"
+        css:line-height="1.5"
+        css:margin-left="5.25pt"
+        css:margin-right="7.9pt"
+        css:text-indent="42pt"
+        css:text-align="left">
+      <w:r css:font-weight="toggle(bold,normal)"
+           css:color="#000000"
+           css:top="17pt"
+           css:position="relative">
+         <w:object w:dxaOrig="1700" w:dyaOrig="799" w14:anchorId="30DC13F7">
+            <mml:math display="block" class="ole">
+               <mml:msub>
+                  <mml:mi>μ</mml:mi>
+                  <mml:mi>h</mml:mi>
+               </mml:msub>
+               <mml:mo>(</mml:mo>
+               <mml:mi>h</mml:mi>
+               <mml:mo>)</mml:mo>
+               <mml:mo>=</mml:mo>
+               <mml:mfenced close="" open="{" separators="">
+                  <mml:mtable>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mn>1</mml:mn>
+                           <mml:mtable>
+                              <mml:mtr>
+                                 <mml:mtd/>
+                                 <mml:mtd/>
+                              </mml:mtr>
+                           </mml:mtable>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msup>
+                              <mml:mi>e</mml:mi>
+                              <mml:mrow>
+                                 <mml:mo>−</mml:mo>
+                                 <mml:mi>k</mml:mi>
+                                 <mml:mo>(</mml:mo>
+                                 <mml:mi>h</mml:mi>
+                                 <mml:mo>−</mml:mo>
+                                 <mml:mi>α</mml:mi>
+                                 <mml:msup>
+                                    <mml:mo>)</mml:mo>
+                                    <mml:mn>2</mml:mn>
+                                 </mml:msup>
+                              </mml:mrow>
+                           </mml:msup>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mfenced>
+            </mml:math>
+         </w:object>
+      </w:r>
+      <w:r css:font-weight="toggle(bold,normal)"
+           css:color="#000000"
+           css:top="14pt"
+           css:position="relative">
+         <w:object w:dxaOrig="1160" w:dyaOrig="679" w14:anchorId="05F6C3C0">
+            <mml:math class="ole">
+               <mml:mtable>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mn>0</mml:mn>
+                        <mml:mo>≤</mml:mo>
+                        <mml:mi>h</mml:mi>
+                        <mml:mo>≤</mml:mo>
+                        <mml:mn>500</mml:mn>
+                     </mml:mtd>
+                  </mml:mtr>
+                  <mml:mtr>
+                     <mml:mtd>
+                        <mml:mn>500</mml:mn>
+                        <mml:mo>&lt;</mml:mo>
+                        <mml:mi>h</mml:mi>
+                     </mml:mtd>
+                  </mml:mtr>
+               </mml:mtable>
+            </mml:math>
+         </w:object>
+      </w:r>
+   </w:p>
+   <w:p xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink"
+        xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d"
+        xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex"
+        xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex"
+        xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex"
+        xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex"
+        xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex"
+        xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex"
+        xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex"
+        xmlns:oel="http://schemas.microsoft.com/office/2019/extlst"
+        xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml"
+        xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex"
+        xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du"
+        xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash"
+        w14:paraId="30AE7C1C"
+        w14:textId="77777777"/>
+   <w:sectPr>
+      <w:pgSz css:width="595.3pt" css:height="841.9pt"/>
+      <w:pgMar w:top="1440"
+               w:right="1800"
+               w:bottom="1440"
+               w:left="1800"
+               w:header="851"
+               w:footer="992"
+               w:gutter="0"/>
+      <w:cols w:space="425"/>
+      <w:docGrid w:type="lines" w:linePitch="312"/>
+   </w:sectPr>
+</hub>

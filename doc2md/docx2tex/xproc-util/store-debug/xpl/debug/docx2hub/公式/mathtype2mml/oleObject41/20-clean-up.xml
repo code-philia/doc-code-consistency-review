@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <msub xmlns:tr="http://transpect.io">
+      <mtext>P</mtext>
+      <mtext>t</mtext>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">&lt;</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mtext>P</mtext>
+      <mtext>Max</mtext>
+   </msub>
+</math>

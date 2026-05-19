@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mfenced close="" open="{" separators="">
+         <mtable columnalign="left">
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi mathsize="100%" mathvariant="italic">t</mi>
+                     <msub>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                           <mi mathvariant="italic">o</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">=</mo>
+                     <mn mathsize="100%" mathvariant="normal">1</mn>
+                     <mn mathsize="100%" mathvariant="normal">2</mn>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mi mathsize="100%" mathvariant="italic">t</mi>
+                     <msub>
+                        <mrow>
+                           <mtext mathvariant="normal">g</mtext>
+                           <mtext mathvariant="normal">o</mtext>
+                           <mi mathvariant="italic">t</mi>
+                           <mi mathvariant="italic">e</mi>
+                           <mi mathvariant="italic">m</mi>
+                           <mi mathvariant="italic">p</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">≤</mo>
+                     <mn mathsize="100%" mathvariant="normal">1</mn>
+                     <mn mathsize="100%" mathvariant="normal">2</mn>
+                  </mrow>
+               </mtd>
+            </mtr>
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi mathsize="100%" mathvariant="italic">t</mi>
+                     <msub>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                           <mi mathvariant="italic">o</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">=</mo>
+                     <mn mathsize="100%" mathvariant="normal">8</mn>
+                     <mn mathsize="100%" mathvariant="normal">0</mn>
+                     <mn mathsize="100%" mathvariant="normal">0</mn>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mi mathsize="100%" mathvariant="italic">t</mi>
+                     <msub>
+                        <mrow>
+                           <mtext mathvariant="normal">g</mtext>
+                           <mtext mathvariant="normal">o</mtext>
+                           <mi mathvariant="italic">t</mi>
+                           <mi mathvariant="italic">e</mi>
+                           <mi mathvariant="italic">m</mi>
+                           <mi mathvariant="italic">p</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">≥</mo>
+                     <mn mathsize="100%" mathvariant="normal">8</mn>
+                     <mn mathsize="100%" mathvariant="normal">0</mn>
+                     <mn mathsize="100%" mathvariant="normal">0</mn>
+                  </mrow>
+               </mtd>
+            </mtr>
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi mathsize="100%" mathvariant="italic">t</mi>
+                     <msub>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                           <mi mathvariant="italic">o</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">=</mo>
+                     <mi mathsize="100%" mathvariant="italic">t</mi>
+                     <msub>
+                        <mrow>
+                           <mi mathvariant="italic">g</mi>
+                           <mi mathvariant="italic">o</mi>
+                           <mi mathvariant="italic">t</mi>
+                           <mi mathvariant="italic">e</mi>
+                           <mi mathvariant="italic">m</mi>
+                           <mi mathvariant="italic">p</mi>
+                        </mrow>
+                     </msub>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%"> </mtext>
+                     <mtext mathsize="100%" mathvariant="normal">其</mtext>
+                     <mtext mathsize="100%" mathvariant="normal">他</mtext>
+                  </mrow>
+               </mtd>
+            </mtr>
+         </mtable>
+      </mfenced>
+   </mrow>
+</math>

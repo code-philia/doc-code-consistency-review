@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols>
+  <!--  *
+        * Euclid Extra
+        * -->
+  <!-- SPACE -->
+   <symbol number="0009" entity="&#x9;" char=" "/>
+   <!-- HAIR SPACE -->
+   <symbol number="002C" entity="," char=" "/>
+   <!-- TILDE OPERATOR -->
+   <symbol number="F03A" entity="" char="∼"/>
+   <!-- ASYMPTOTICALLY EQUAL TO -->
+   <symbol number="F03B" entity="" char="≃"/>
+   <!-- WHITE LEFT-POINTING TRIANGLE -->
+   <symbol number="F03C" entity="" char="◁"/>
+   <!-- MUCH LESS-THAN -->
+   <symbol number="F03D" entity="" char="≪"/>
+   <!-- RIGHT LEFT-POINTING TRIANGLE -->
+   <symbol number="F03E" entity="" char="▷"/>
+   <!-- MUCH GREATER-THAN -->
+   <symbol number="F03F" entity="" char="≫"/>
+   <!-- DELTA EQUAL TO -->
+   <symbol number="F040" entity="" char="≜"/>
+   <!-- ESTIMATES -->
+   <symbol number="F041" entity="" char="≙"/>
+   <!-- APPROACHES THE LIMIT	 -->
+   <symbol number="F042" entity="" char="≐"/>
+   <!-- N-ARY COPRODUCT	 -->
+   <symbol number="F043" entity="" char="∐"/>
+   <!-- LATIN SMALL LETTER LAMBDA WITH STROKE -->
+   <symbol number="F044" entity="" char="ƛ"/>
+   <!-- RIGHTHAND INTERIOR PRODUCT -->
+   <symbol number="F045" entity="" char="⨽"/>
+   <!-- INTERIOR PRODUCT -->
+   <symbol number="F046" entity="" char="⨼"/>
+   <!-- REVERSED NOT SIGN -->
+   <symbol number="F047" entity="" char="⌐"/>
+   <!-- NOT SIGN -->
+   <symbol number="F048" entity="" char="￢"/>
+   <!-- N-ARY INTERSECTION -->
+   <symbol number="F049" entity="" char="⋂"/>
+   <!-- INVERTED OHM SIGN -->
+   <symbol number="F04a" entity="" char="℧"/>
+   <!-- ELLIPSIS -->
+   <symbol number="F04b" entity="" char="…"/>
+   <!-- MIDLINE HORIZONTAL ELLIPSIS -->
+   <symbol number="F04c" entity="" char="⋯"/>
+   <!-- VERTICAL ELLIPSIS -->
+   <symbol number="F04d" entity="" char="⋮"/>
+   <!-- UP RIGHT DIAGONAL ELLIPSIS -->
+   <symbol number="F04e" entity="" char="⋰"/>
+   <!-- DOWN RIGHT DIAGONAL ELLIPSIS	 -->
+   <symbol number="F04f" entity="" char="⋱"/>
+   <!-- PARALLEL TO	 -->
+   <symbol number="F050" entity="" char="∥"/>
+   <!-- BECAUSE -->
+   <symbol number="F051" entity="" char="∵"/>
+   <!-- MEASURED ANGLE -->
+   <symbol number="F052" entity="" char="∡"/>
+   <!-- SPHERICAL ANGLE -->
+   <symbol number="F053" entity="" char="∢"/>
+   <!-- N-ARY UNION -->
+   <symbol number="F055" entity="" char="⋃"/>
+   <!-- WHITE UP-POINTING TRIANGLE -->
+   <symbol number="F056" entity="" char="△"/>
+   <!-- WHITE LARGE SQUARE -->
+   <symbol number="F057" entity="" char="⬜"/>
+</symbols>

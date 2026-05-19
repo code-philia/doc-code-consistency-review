@@ -48,7 +48,7 @@ class User(UserMixin):
         c = db.cursor()
         c.execute(f'select user_id, username, password, ip, name, role from user where ip="{ip}"')
         row = c.fetchone()
-        print('row', row)
+        #print('row', row)
         if row:
             return User(row['user_id'], row['username'], row['password'], row['ip'], row['name'], row['role'])
         return None
@@ -84,7 +84,7 @@ def login_password():
 @user_bp.route('/login/ip', methods=['POST'])
 def login_ip():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr).split(',')[0].strip()
-    print('ip:', ip)
+    # print('ip:', ip)
 
     user = User.get_by_ip(ip)
 

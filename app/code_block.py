@@ -58,25 +58,29 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
     patterns = [
         
         # 2. 多行注释 /* ... */
-        (re.compile(r'^[\s\ufeff]*/\*\*'),
-        # (re.compile(r'^[\s\ufeff]*/\*\*+.*?'
-                    # r'(?:\n.*?\n\*+/)?'),
+        (re.compile(r'[\s\ufeff]*\/\*', re.DOTALL),
          lambda i, name: find_multiline_comment_end(lines, i),
          "multiline_comment"),
         
          # 1. 多行注释 //
-        (re.compile(r'^\s*//.*(?:[\r\n]+\s*//.*)*'),
+        (re.compile(r'^[\s\ufeff]*/\*\*'),
          lambda i, name: i + 1,
          "multi_comment"),
         
         # 3. 函数定义（包括模板/成员/友元函数等） 
-        # (re.compile(r'^\s*([A-Za-z0-9_*&<>]+\s+)+([A-Za-z_][A-Za-z0-9_]*::\s*)?[A-Za-z_][A-Za-z0-9_~]*\s*\(\s*[^\)]*\s*\)\s*[const&volatile]*\s*[;{]?\s*$'), 
-        (re.compile(r'^\s*([A-Za-z0-9_*&<>]+\s+)+([A-Za-z_][A-Za-z0-9_]*::\s*)?[A-Za-z_][A-Za-z0-9_~]*\s*\(\s*[^)]*\s*$'), 
+        # (re.compile(r'^\s*([A-Za-z0-9_*&<>]+\s+)+([A-Za-z_][A-Za-z0-9_]*::\s*)?[A-Za-z_][A-Za-z0-9_~]*\s*\(\s*[^)]*\s*$'), 
+        #  lambda i, name: find_function_end(lines, i, processed),
+        #  "function"),
+        
+        # 3.5. 函数定义（跨行）
+         #(re.compile(r'^\s*([A-Za-z0-9_*&<>]+\s+)+([A-Za-z_][A-Za-z0-9_]*::\s*)?[A-Za-z_][A-Za-z0-9_~]*\s*\([^)]*\)\s*'),
+         (re.compile(r'^\s*([A-Za-z0-9_*<>]+(?:\s+[A-Za-z0-9_*<>]+)*)\s+([A-Za-z_][A-Za-z0-9_]*)(?:::[A-Za-z0-9_]+)?\s*(?:\([^)]*\))?\s*'),
          lambda i, name: find_function_end(lines, i, processed),
          "function"),
         
         # 4. 类和结构体定义
          (re.compile(r'^[\s\ufeff]*(?:(?:class|struct|union)\s+)?(?:[\w:]+::)?[\w<>_]+\s*(?:\s*:\s*(?:public|private|protected)\s+[\w:]+)?\s*'), 
+          # (re.compile(r'^[\s\ufeff]*(?:\b(?:class|struct|union)\b\s+)(?:[\w:]+::)?[\w<>_]+\s*(?:\s*:\s*(?:public|private|protected)\s+[\w:]+)?\s*'), 
          lambda i, name: find_class_struct_end(lines, i, processed),
          "class/struct"),
 
@@ -135,15 +139,19 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
     # 处理所有行，确保每一行都被处理
     i = 0
     while i < total_lines:
-        # print(lines[i])
+        #print(lines[i])
         if processed[i]:
             i += 1
             continue
         # 尝试匹配已知的多行模式
         matched = False
+        #print(i+1)
         for pattern, end_finder, block_type in patterns:
             match = pattern.match(lines[i])
             if match:
+                #print(i+1)
+                #print(lines[i])
+                #print(pattern)
                 start_idx = i
                 start_line = i + 1  # 行号从1开始
                 
@@ -158,7 +166,7 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                 # 提取代码块内容
                 code = '\n'.join(lines[start_idx:end_idx + 1])
                 # print(code)
-                # print(block_type)
+                #print(block_type)
                 # sys.exit()
                 # 记录注释但先不添加，后续判断是不是结构体/函数前的注释
                 if block_type == 'multiline_comment' or block_type == 'single_comment' or block_type == 'multi_comment': 
@@ -178,9 +186,9 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                                 "code": comment_dict["code"] + code
                             }
                         comment_dict = temp_dict
-                    # print(code)
-                    # print(block_type)
-                    
+                    #print(code)
+                    #print(block_type)
+                
                 else: # 添加到结果
                     
                     # 代码文件开头的注释和#include不存储到代码块
@@ -194,20 +202,22 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                         if (block_type == "function") and ( '\r' in code or '\n' in code):
                             code_next   = "" 
                             
-                            i_temp = end_idx + 1
-                            end_idx = end_finder(i_temp, block_type) - 1  # 转换为索引
+                            #i_temp = end_idx # + 1
+                            #print('end_idx======',end_idx)
+                            #end_idx = end_finder(i_temp, block_type) - 1  # 转换为索引
                             
                             # 确保不超出范围
                             end_idx = min(end_idx, total_lines - 1)
                             
                             # 提取代码块内容
-                            code = '\n'.join(lines[start_idx:end_idx + 1])
-                            # print(code)
+                            code = '\n'.join(lines[start_idx:end_idx+1])
+                            print('end_idx======',end_idx)
+                            #print(code)
                             # sys.exit()
                         
                         chunks.append({
                             "file":filename,
-                            "range": [comment_dict['range'][0], end_idx + 1],
+                            "range": [comment_dict['range'][0], end_idx+1],
                             "type": block_type,
                             "code": comment_dict['code'] + '\n' + code 
                         })
@@ -229,8 +239,8 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                         if (block_type == "function") and ( '\r' in code or '\n' in code):
                             code_next   = "" 
                             
-                            i_temp = end_idx + 1
-                            end_idx = end_finder(i_temp, block_type) - 1  # 转换为索引
+                            #i_temp = end_idx #+ 1
+                            #end_idx = end_finder(i_temp, block_type) - 1  # 转换为索引
                             
                             # 确保不超出范围
                             end_idx = min(end_idx, total_lines - 1)
@@ -355,7 +365,8 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
         print(f"总代码行数: {total_lines}")
         print(f"生成块数量: {len(chunks)}")
         
-    return chunks
+    # return output_json # main调试用
+    return chunks # 集成到前端时，返回代码块
 
 def is_match_any_pattern(line: str, patterns: List[re.Pattern]) -> bool:
     """检查行是否匹配任何模式"""
@@ -368,10 +379,6 @@ def find_class_struct_end(lines: List[str], start_idx: int, processed: List[bool
     """确保完整包含整个class/struct块"""
     return find_block_end(lines, start_idx, processed, block_type='class/struct')
 
-def find_function_end(lines: List[str], start_idx: int, processed: List[bool]) -> int:
-    """确保完整包含整个函数块"""
-    return find_block_end(lines, start_idx, processed, block_type='function')
-
 def find_namespace_end(lines: List[str], start_idx: int, processed: List[bool]) -> int:
     """确保完整包含整个namespace块"""
     return find_block_end(lines, start_idx, processed, block_type='namespace')
@@ -379,6 +386,10 @@ def find_namespace_end(lines: List[str], start_idx: int, processed: List[bool]) 
 def find_enum_end(lines: List[str], start_idx: int, processed: List[bool]) -> int:
     """确保完整包含整个enum块"""
     return find_block_end(lines, start_idx, processed, block_type='enum')
+
+def find_function_end(lines: List[str], start_idx: int, processed: List[bool]) -> int:
+    """确保完整包含整个函数块"""
+    return find_function_block_end(lines, start_idx, processed, block_type='function')
 
 def find_block_end(lines: List[str], start_idx: int, processed: List[bool], block_type: str) -> int:
     """
@@ -418,6 +429,60 @@ def find_block_end(lines: List[str], start_idx: int, processed: List[bool], bloc
         i += 1
         
     return total_lines
+
+
+def find_function_block_end(lines: List[str], start_idx: int, processed: List[bool], block_type: str) -> int:
+    """
+    通用块结束位置查找函数，处理各种带有{}的块
+    正确识别嵌套结构，找到最外层的闭合}
+    """
+    brace_cnt = 0
+    paren_cnt = 0 # 跟踪圆括号的计数
+    i = start_idx
+    total_lines = len(lines)
+    
+    
+    while i < total_lines:
+        if processed[i]:
+            i += 1
+            continue
+        line_clean = remove_strings_comments(lines[i])
+        paren_cnt += line_clean.count('(')
+        paren_cnt -= line_clean.count(')')
+        brace_cnt += line_clean.count('{')
+        brace_cnt -= line_clean.count('}')
+        
+        if paren_cnt == 0 and brace_cnt>0:
+            break
+        
+        i += 1
+    else:
+        return total_lines
+    i += 1    
+
+    while i<total_lines:
+        if processed[i]:
+            i += 1
+            continue
+        
+        line_clean = remove_strings_comments(lines[i])
+        brace_cnt += line_clean.count('{')
+        brace_cnt -= line_clean.count('}')
+
+        # 找到最外层的闭合}
+        if brace_cnt ==0:
+            # 对于函数，可能需要包含最后的分号
+            if block_type == 'function'  and ';' in lines[i]:
+                return i + 1
+            
+            # 对于类/结构体，可能需要包含最后的分号
+            if block_type in ['class/struct'] and i+1 < total_lines and lines[i+1].strip()==';':
+                return i + 2
+
+            return i + 1
+        i += 1
+
+    return total_lines
      
 def remove_strings_comments(line: str) -> str:
     """移除字符串、字符常量、注释等，避免干扰花括号的匹配"""
@@ -437,17 +502,31 @@ def find_single_comment_end(lines: List[str], start_idx: int) -> int:
     i = start_idx
     return start_idx
 
+# def find_multiline_comment_end(lines: List[str], start_idx: int) -> int:
+#     """找到多行注释的结束位置"""
+#     i = start_idx
+#     total_lines = len(lines)
+#     #pattern = re.compile(r'\s*\*/')
+#     pattern = re.compile(r'(?:\s*(.*?)\s*\*+/)')
+#     while i < total_lines:
+#         if pattern.match(lines[i]) is not None :
+#             return i + 1
+#         i += 1
+#     return total_lines
+
 def find_multiline_comment_end(lines: List[str], start_idx: int) -> int:
     """找到多行注释的结束位置"""
     i = start_idx
     total_lines = len(lines)
-    #pattern = re.compile(r'\s*\*/')
-    pattern = re.compile(r'(?:\s*(.*?)\s*\*+/)')
     while i < total_lines:
-        if pattern.match(lines[i]) is not None :
-            return i + 1
+        if re.match(r'[\s\ufeff]*\/\*.*', lines[i]):
+            while i < total_lines:
+                if re.match(r'.*\*\/', lines[i]):
+                    return i + 1
+                i += 1
         i += 1
     return total_lines
+
 
 def find_preprocessor_block_end(lines: List[str], start_idx: int) -> int:
     """找到预处理指令块的结束位置（如#if ... #endif）"""
@@ -767,3 +846,22 @@ def get_all_code_blocks(code_base_path, all_rel_code_paths, code_block_base_path
             f.write(json.dumps(block, ensure_ascii=False) + "\n")
 
     return all_code_blocks
+    
+if __name__ == "__main__":
+    
+    # 读入存放代码的工程文件夹
+    # cpp_file = r'.\data\数学模型_弹目相对运动及安控等项目\code_repo'
+    cpp_file =r'D:\课题项目申请\2025年\八院质量工艺技术基础项目\工程文件\llm-align\data\AN4660\code_repo'
+    #cpp_file= r'.\data\测试用文件夹\code_repo'
+    # cpp_file= r'.\data\code_repo'
+    
+    name = 'AN4660'
+    
+    # 分块后jsonl文件的存储位置
+    #output_json_path = './test/' 
+    output_json_path = r'./data'
+    
+    # 执行分块
+    code_data = chunk_codes(name, cpp_file, output_json_path)
+    
+    

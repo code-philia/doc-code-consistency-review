@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mtext mathvariant="normal" mathsize="100%">R</mtext>
+      <msub>
+         <mrow>
+            <mtext mathvariant="normal">m</mtext>
+            <mtext mathvariant="normal">i</mtext>
+            <mtext mathvariant="normal">n</mtext>
+         </mrow>
+      </msub>
+      <mtext mathvariant="normal" mathsize="100%">=</mtext>
+      <mtext mathvariant="normal" mathsize="100%">1</mtext>
+      <mtext mathvariant="normal" mathsize="100%">k</mtext>
+      <mtext mathvariant="normal" mathsize="100%">m</mtext>
+   </mrow>
+</math>

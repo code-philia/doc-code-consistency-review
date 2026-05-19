@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathvariant="italic" mathsize="100%">α</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">C</mi>
+         </mrow>
+      </msub>
+      <mn mathvariant="normal" mathsize="100%">(</mn>
+      <mi mathvariant="italic" mathsize="100%">k</mi>
+      <mn mathvariant="normal" mathsize="100%">)</mn>
+      <mo mathvariant="normal" mathsize="100%">=</mo>
+      <mn mathvariant="normal" mathsize="100%">(</mn>
+      <mfrac>
+         <mrow>
+            <mi mathvariant="italic" mathsize="100%">r</mi>
+         </mrow>
+         <mrow>
+            <mn mathvariant="normal" mathsize="100%">2</mn>
+         </mrow>
+      </mfrac>
+      <mo mathvariant="normal" mathsize="100%">+</mo>
+      <mn mathvariant="normal" mathsize="100%">2</mn>
+      <msqrt>
+         <mrow>
+            <mi mathvariant="italic" mathsize="100%">r</mi>
+         </mrow>
+      </msqrt>
+      <mn mathvariant="normal" mathsize="100%">)</mn>
+      <mn mathvariant="normal" mathsize="100%">(</mn>
+      <msqrt>
+         <mrow>
+            <mn mathvariant="normal" mathsize="100%">1</mn>
+            <mo mathvariant="normal" mathsize="100%">+</mo>
+            <mfrac>
+               <mrow>
+                  <mn mathvariant="normal" mathsize="100%">4</mn>
+               </mrow>
+               <mrow>
+                  <mi mathvariant="italic" mathsize="100%">r</mi>
+                  <mo mathvariant="normal" mathsize="100%">+</mo>
+                  <mn mathvariant="normal" mathsize="100%">4</mn>
+                  <msqrt>
+                     <mrow>
+                        <mi mathvariant="italic" mathsize="100%">r</mi>
+                     </mrow>
+                  </msqrt>
+               </mrow>
+            </mfrac>
+         </mrow>
+      </msqrt>
+      <mo mathvariant="normal" mathsize="100%">−</mo>
+      <mn mathvariant="normal" mathsize="100%">1</mn>
+      <mn mathvariant="normal" mathsize="100%">)</mn>
+   </mrow>
+</math>

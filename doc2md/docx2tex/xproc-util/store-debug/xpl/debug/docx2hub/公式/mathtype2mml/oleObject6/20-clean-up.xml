@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+   <mi xmlns:tr="http://transpect.io">P</mi>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <msup xmlns:tr="http://transpect.io">
+      <mfenced close="]" open="[" separators="">
+         <mtable>
+            <mtr>
+               <mtd>
+                  <mi>R</mi>
+                  <mo mathvariant="italic">(</mo>
+                  <mi>k</mi>
+                  <mo mathvariant="italic">/</mo>
+                  <mi>k</mi>
+                  <mo>−</mo>
+                  <mtext>1</mtext>
+                  <mo mathvariant="italic">)</mo>
+               </mtd>
+               <mtd>
+                  <mi>A</mi>
+                  <mo mathvariant="italic">(</mo>
+                  <mi>k</mi>
+                  <mo mathvariant="italic">/</mo>
+                  <mi>k</mi>
+                  <mo>−</mo>
+                  <mtext>1</mtext>
+                  <mo mathvariant="italic">)</mo>
+               </mtd>
+               <mtd>
+                  <mi>E</mi>
+                  <mo mathvariant="italic">(</mo>
+                  <mi>k</mi>
+                  <mo mathvariant="italic">/</mo>
+                  <mi>k</mi>
+                  <mo>−</mo>
+                  <mtext>1</mtext>
+                  <mo mathvariant="italic">)</mo>
+               </mtd>
+            </mtr>
+         </mtable>
+      </mfenced>
+      <mtext>T</mtext>
+   </msup>
+</math>

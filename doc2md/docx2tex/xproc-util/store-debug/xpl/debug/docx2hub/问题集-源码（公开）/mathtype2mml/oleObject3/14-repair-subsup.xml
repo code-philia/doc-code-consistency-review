@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <msub>
+         <mi mathsize="100%" mathvariant="italic">t</mi>
+         <mrow>
+            <mtext mathvariant="normal">go</mtext>
+            <mi mathvariant="italic">t</mi>
+            <mi mathvariant="italic">e</mi>
+            <mi mathvariant="italic">m</mi>
+            <mi mathvariant="italic">p</mi>
+         </mrow>
+      </msub>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mfenced close="|" open="|" separators="">
+         <mrow>
+            <mrow>
+               <mrow>
+                  <msub>
+                     <mi mathsize="100%" mathvariant="italic">R</mi>
+                     <mrow>
+                        <mi mathvariant="italic">z</mi>
+                        <mn mathvariant="normal">0</mn>
+                     </mrow>
+                  </msub>
+               </mrow>
+               <mo>/</mo>
+               <mrow>
+                  <mi mathsize="100%" mathvariant="italic">V</mi>
+                  <msub>
+                     <mi mathsize="100%" mathvariant="italic">r</mi>
+                     <mrow>
+                        <mi mathvariant="italic">e</mi>
+                        <mi mathvariant="italic">s</mi>
+                        <mi mathvariant="italic">t</mi>
+                     </mrow>
+                  </msub>
+               </mrow>
+            </mrow>
+         </mrow>
+      </mfenced>
+   </mrow>
+</math>

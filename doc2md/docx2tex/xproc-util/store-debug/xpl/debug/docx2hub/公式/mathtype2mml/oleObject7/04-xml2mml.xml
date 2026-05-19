@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi fontfamily=""
+          default-font=""
+          mathvariant="italic"
+          mathsize="100%">Z</mi>
+      <mn fontfamily=""
+          default-font=""
+          mathvariant="normal"
+          mathsize="100%">(</mn>
+      <mi fontfamily=""
+          default-font=""
+          mathvariant="italic"
+          mathsize="100%">k</mi>
+      <mn fontfamily=""
+          default-font=""
+          mathvariant="normal"
+          mathsize="100%">)</mn>
+      <mo fontfamily="Symbol"
+          default-font=""
+          mathvariant="normal"
+          mathsize="100%">=</mo>
+      <mfenced separators="" open="[" close="]">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">R</mi>
+                        <msub>
+                           <mrow>
+                              <mtext fontfamily="" default-font="" mathvariant="normal">m</mtext>
+                           </mrow>
+                        </msub>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">(</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">k</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">/</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">k</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">)</mi>
+                     </mrow>
+                  </mtd>
+                  <mtd>
+                     <mrow>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">A</mi>
+                        <msub>
+                           <mrow>
+                              <mtext fontfamily="" default-font="" mathvariant="normal">m</mtext>
+                           </mrow>
+                        </msub>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">(</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">k</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">/</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">k</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">)</mi>
+                     </mrow>
+                  </mtd>
+                  <mtd>
+                     <mrow>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">E</mi>
+                        <msub>
+                           <mrow>
+                              <mtext fontfamily="" default-font="" mathvariant="normal">m</mtext>
+                           </mrow>
+                        </msub>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">(</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">k</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">/</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">k</mi>
+                        <mi fontfamily=""
+                            default-font=""
+                            mathvariant="italic"
+                            mathsize="100%">)</mi>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+      <msup>
+         <mrow>
+            <mtext fontfamily="" default-font="" mathvariant="normal">T</mtext>
+         </mrow>
+      </msup>
+   </mrow>
+</math>

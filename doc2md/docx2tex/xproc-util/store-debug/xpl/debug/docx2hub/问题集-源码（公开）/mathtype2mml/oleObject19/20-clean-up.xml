@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <mfenced xmlns:tr="http://transpect.io" close="]" open="[" separators="">
+      <mtable>
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>n</mi>
+                  <mrow>
+                     <mi>x</mi>
+                     <mn>1</mn>
+                     <mi>g</mi>
+                  </mrow>
+               </msub>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>n</mi>
+                  <mrow>
+                     <mi>y</mi>
+                     <mn>1</mn>
+                     <mi>g</mi>
+                  </mrow>
+               </msub>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>n</mi>
+                  <mrow>
+                     <mi>z</mi>
+                     <mn>1</mn>
+                     <mi>g</mi>
+                  </mrow>
+               </msub>
+            </mtd>
+         </mtr>
+      </mtable>
+   </mfenced>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mi>T</mi>
+      <mi>D</mi>
+   </msub>
+   <mfenced xmlns:tr="http://transpect.io" close="]" open="[" separators="">
+      <mtable>
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>B</mi>
+                  <mn>1</mn>
+               </msub>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>B</mi>
+                  <mn>2</mn>
+               </msub>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>B</mi>
+                  <mn>3</mn>
+               </msub>
+            </mtd>
+         </mtr>
+      </mtable>
+   </mfenced>
+</math>

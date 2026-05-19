@@ -1,6 +1,7 @@
 ﻿from celery.result import AsyncResult
 from flask import Blueprint, jsonify
 
+from app.db import get_db
 
 task_bp = Blueprint('task', __name__)
 

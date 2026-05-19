@@ -93,15 +93,22 @@ def delete_project():
     c = db.cursor()
 
     try:
-
-        # 从历史记录中删除项目条目
-        # placeholders = ', '.join(['?'] * len(ids))
-        # print(placeholders)
-        # delete_sql = f"delete from project where project_id in ({placeholders}) and user_id={current_user.user_id}"
         
         placeholders = ', '.join(['%s'] * len(ids))  # MySQL 使用 %s，不是 ?
-        delete_sql = f"DELETE FROM project WHERE project_id IN ({placeholders}) AND user_id = %s"
-        c.execute(delete_sql, ids + [current_user.user_id])
+        delete_abs = f"DELETE FROM abstracts WHERE project_id IN ({placeholders})"
+        delete_ali = f"DELETE FROM alignments WHERE project_id IN ({placeholders})"
+        delete_issues = f"DELETE FROM issues WHERE project_id IN ({placeholders})"
+        delete_pro = f"DELETE FROM project WHERE project_id IN ({placeholders})"
+        if current_user.role == "admin":
+            condition = ""
+        else:
+            condition = f"and user_id = {current_user.user_id}"
+        delete_pro += condition
+
+        c.execute(delete_abs, ids)
+        c.execute(delete_ali, ids)
+        c.execute(delete_issues, ids)
+        c.execute(delete_pro, ids)
 
         # 删除项目目录
         for folder_path in paths:

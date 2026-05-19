@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <msub xmlns:tr="http://transpect.io">
+      <mi mathvariant="normal">R</mi>
+      <mi mathvariant="normal">t</mi>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mi mathvariant="normal">R</mi>
+      <mrow>
+         <mi mathvariant="normal">t</mi>
+         <mo>−</mo>
+         <mi>out</mi>
+      </mrow>
+   </msub>
+</math>

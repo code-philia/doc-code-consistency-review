@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:param-set xmlns:c="http://www.w3.org/ns/xproc-step">
+   <c:param name="texmap-uri" namespace="" value="../texmap/texmap.xml"/>
+   <c:param name="preprocessing" namespace="" value="yes"/>
+   <c:param name="status-dir-uri" namespace="" value="debug/status"/>
+   <c:param name="prefix" namespace="" value="xml2tex/"/>
+   <c:param name="table-model" namespace="" value="tabularx"/>
+   <c:param name="table-grid" namespace="" value="yes"/>
+   <c:param name="collect-all-xsl" namespace="" value="no"/>
+   <c:param name="debug" namespace="" value="yes"/>
+   <c:param name="fail-on-error" namespace="" value="yes"/>
+   <c:param name="debug-dir-uri" namespace="" value="debug"/>
+   <c:param name="collect-all-xsl-var" namespace="" value="no"/>
+   <c:param name="no-table-grid-style" namespace="" value="blind-table"/>
+   <c:param name="only-tex-body" namespace="" value="no"/>
+   <c:param name="no-table-grid-att" namespace="" value="role"/>
+   <c:param name="nested-tables" namespace="" value="no"/>
+   <c:param name="xslt-version" namespace="" value="2.0"/>
+</c:param-set>

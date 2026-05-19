@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:data xmlns:c="http://www.w3.org/ns/xproc-step"
+        xmlns:css="http://www.w3.org/1996/css"
+        xmlns:dbk="http://docbook.org/ns/docbook"
+        xmlns:docx2tex="http://transpect.io/docx2tex"
+        xmlns:functx="http://www.functx.com"
+        xmlns:html="http://www.w3.org/1999/xhtml"
+        xmlns:mml2tex="http://transpect.io/mml2tex"
+        xmlns:svg="http://www.w3.org/2000/svg"
+        xmlns:tex="http://www-cs-faculty.stanford.edu/~uno/"
+        xmlns:tr="http://transpect.io"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xmlns:xml2tex="http://transpect.io/xml2tex"
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        content-type="text/plain">% docx2tex 1.10 --- ``TeX without any tariffs (local regulations may vary)'' 
+% 
+% docx2tex is Open Source and  
+% you can download it on GitHub: 
+% https://github.com/transpect/docx2tex 
+%  
+\documentclass{scrbook} 
+\usepackage[T1]{fontenc} 
+\usepackage[utf8]{inputenc} 
+\usepackage{graphicx}
+\usepackage{hyperref} 
+\usepackage{multirow} 
+\usepackage{tabularx} 
+\usepackage{color} 
+\usepackage{textcomp} 
+\usepackage{tipa}
+\usepackage{amsmath} 
+\usepackage{amssymb} 
+\usepackage{amsfonts} 
+\usepackage{amsxtra} 
+\usepackage{wasysym} 
+\usepackage{isomath} 
+\usepackage{mathtools} 
+\usepackage{txfonts} 
+\usepackage{upgreek} 
+\usepackage{enumerate} 
+\usepackage{tensor} 
+\usepackage{pifont} 
+\usepackage{ulem} 
+\usepackage{xfrac} 
+\usepackage{arydshln} 
+\usepackage[english,]{babel}
+
+\begin{document}
+{\centering \textbf{\textnormal{注释表}}
+
+\par}
+\begin{table}
+\begin{tabularx}{\textwidth}{|p{\dimexpr 0.25\linewidth-2\tabcolsep-2\arrayrulewidth}|p{\dimexpr 0.25\linewidth-2\tabcolsep-\arrayrulewidth}|p{\dimexpr 0.25\linewidth-2\tabcolsep-\arrayrulewidth}|p{\dimexpr 0.25\linewidth-2\tabcolsep-\arrayrulewidth}|} \hline 
+\centering\arraybackslash{}$<?mml2tex MF_{i}?>$ &amp; \centering\arraybackslash{}测量特征 &amp; \centering\arraybackslash{}$<?mml2tex ME_{i}?>$ &amp; \centering\arraybackslash{}测量设备 \\\hline 
+\centering\arraybackslash{}$<?mml2tex MS_{i}?>$ &amp; \centering\arraybackslash{}测量站位 &amp; \centering\arraybackslash{}$<?mml2tex MB_{i}?>$ &amp; \centering\arraybackslash{}测量基准 \\\hline 
+\centering\arraybackslash{}$<?mml2tex MT_{i}?>$ &amp; \centering\arraybackslash{}测量时间 &amp; \centering\arraybackslash{}$<?mml2tex TSF_{i}?>$ &amp; \centering\arraybackslash{}转站形式 \\\hline 
+\centering\arraybackslash{}$<?mml2tex EF_{i}?>$ &amp; \centering\arraybackslash{}执行形式 &amp; \centering\arraybackslash{}$<?mml2tex p_{ac}?>$ &amp; \centering\arraybackslash{}是否待执行 \\\hline 
+\centering\arraybackslash{}$<?mml2tex s_{ij}?>$ &amp; \centering\arraybackslash{}任务相似性 &amp; \centering\arraybackslash{}$<?mml2tex S?>$ &amp; \centering\arraybackslash{}相似性矩阵 \\\hline 
+\centering\arraybackslash{}$<?mml2tex A_{1}?>$ &amp; \centering\arraybackslash{}并行任务集 &amp; \centering\arraybackslash{}$<?mml2tex A_{2}?>$ &amp; \centering\arraybackslash{}串行任务集 \\\hline 
+\centering\arraybackslash{}$<?mml2tex t^{MC}?>$ &amp; \centering\arraybackslash{}执行时间段 &amp; \centering\arraybackslash{}$<?mml2tex t_{s}?>$ &amp; \centering\arraybackslash{}执行开始 \\\hline 
+\centering\arraybackslash{}$<?mml2tex t_{e}?>$ &amp; \centering\arraybackslash{}执行结束 &amp; \centering\arraybackslash{}$<?mml2tex \Delta t?>$ &amp; \centering\arraybackslash{}等待时间 \\\hline 
+\centering\arraybackslash{}$<?mml2tex O_{P}?>$ &amp; \centering\arraybackslash{}平面中心 &amp; \centering\arraybackslash{}$<?mml2tex O_{D}?>$ &amp; \centering\arraybackslash{}默认中心 \\\hline 
+\centering\arraybackslash{}$<?mml2tex M?>$ &amp; \centering\arraybackslash{}位置变换矩阵 &amp; \centering\arraybackslash{}$<?mml2tex v?>$ &amp; \centering\arraybackslash{}方向向量 \\\hline 
+\centering\arraybackslash{}$<?mml2tex P?>$ &amp; \centering\arraybackslash{}路径点集 &amp; \centering\arraybackslash{}$<?mml2tex Box_{i}?>$ &amp; \centering\arraybackslash{}包围盒 \\\hline 
+\centering\arraybackslash{}$<?mml2tex T?>$ &amp; \centering\arraybackslash{}平移矩阵 &amp; \centering\arraybackslash{}$<?mml2tex R?>$ &amp; \centering\arraybackslash{}旋转矩阵 \\\hline 
+\end{tabularx}
+\end{table}
+
+
+\chapter{绪论\label{mark-第n章}}
+
+\section{研究背景及意义\label{mark-1.1}}
+
+随着歼-20、运-20、ARJ、C919等新型航空器的成功研制,我国航空制造业正处于高速发展阶段,航空产品的制造水平不断提高。相比于传统航空器的设计制造方法,如二维手工绘图、模拟量装配等,数字化三维设计、数字化测量、数字化装配等先进技术的应用大幅度缩短了产品的设计与制造周期,
+
+{\centering \includegraphics[width=1\textwidth]{测试文档_copy.docx.tmp/word/media/image1.emf}\includegraphics[width=1\textwidth]{embeddings/Microsoft_Visio_Drawing.vsdx}
+
+\par}{\centering 图1. 1 某型飞机外形检测的多系统协同测量场景
+
+\par}\section{基于任务相似性的测量序列规划\label{mark-3.1}}
+
+\subsection{测量任务集合多层级划分\label{mark-3.2.1}}
+
+(1)	若以串行序列执行测量任务时,将会产生过多的等待时间,因此应该尽可能多规划测量任务的并行序列来有效地提高测量效率。
+
+因而可知,测量设备的优先级最高,测量站位次之,测量基准由于可以同时被占用使得其优先级最低。\foreignlanguage{english}{对于任意的两个测量任务}$<?mml2tex T_{i}?>$\foreignlanguage{english}{和}$<?mml2tex T_{j}?>$\foreignlanguage{english}{,测量要素可能相同或完全不同,则可通过一个三位二进制数}$<?mml2tex B_{ij}?>$\foreignlanguage{english}{来表示：}
+
+$<?mml2tex B_{ij}=b_{MD}^{ij}b_{MS}^{ij}b_{MB}^{ij}?>$	(3.1)
+
+\foreignlanguage{english}{其中,}$<?mml2tex B_{ij}?>$\foreignlanguage{english}{从高位到低位依次对应测量设备、测量站位和测量基准的相同与否。测量要素相同时,}$<?mml2tex b_{k}^{ij}?>$\foreignlanguage{english}{为1,否则为0。}
+
+\foreignlanguage{english}{将}$<?mml2tex B_{ij}?>$\foreignlanguage{english}{转化为十进制数}$<?mml2tex d_{ij}=2^{2}*b_{MD}^{ij}+2*b_{MS}^{ij}+b_{MB}^{ij}?>$\foreignlanguage{english}{,且}$<?mml2tex d_{ij}^{\prime}=b_{MD}^{ij}+b_{MS}^{ij}+b_{MB}^{ij}?>$\foreignlanguage{english}{,基于拉普拉斯核函数量化测量任务的相似性}$<?mml2tex s_{ij}?>$\foreignlanguage{english}{：}
+
+$<?mml2tex s_{ij}=1-(1-\frac{d_{ij}^{\prime}}{3})e^{-{d_{ij}}}?>$	(3.2)
+
+\foreignlanguage{english}{进而构造出测量任务集合}$<?mml2tex T?>$\foreignlanguage{english}{的相似性矩阵}$<?mml2tex S?>$\foreignlanguage{english}{：}
+
+$<?mml2tex S=\left[\begin{array}{cccc}
+s_{11} & s_{12} & \cdots  & s_{1n}\\
+s_{21} & s_{22} & \cdots  & s_{2n}\\
+\vdots  & \vdots  & \ddots  & \vdots \\
+s_{n1} & s_{n2} & \cdots  & s_{nn}
+\end{array}\right]\begin{array}{c}
+T_{1}\\
+T_{2}\\
+\vdots \\
+T_{n}
+\end{array}\newline \hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\hspace{0pt}\begin{array}{cccc}
+T_{1} & \hspace{0pt}\hspace{0pt}\hspace{0pt}T_{2} & \hspace{0pt}\hspace{0pt}\hspace{0pt}\cdots  & T_{n}
+\end{array}?>$	(3.3)
+
+\raisebox{-6pt}{\$ d\_\{ i \}  j=2 \textasciicircum{} \{ 2 \} *b\_\{ M \}  D \textasciicircum{} \{ i \} j+2*b\_\{ M \}  S \textasciicircum{} \{ i \} j+b\_\{ M \}  B \textasciicircum{} \{ i \} j \$}
+\begin{equation*}
+<?mml2tex d_{i}j=2^{2}*b_{M}D^{i}j+2*b_{M}S^{i}j+b_{M}B^{i}j?>
+\end{equation*}
+\raisebox{-2pt}{\$  \$}
+
+\raisebox{-6pt}{\$ s\_\{ i \}  j=1-(1-(d\_\{ i \}  j)/3)e \textasciicircum{} \{ (-d\_\{ i \}  j) \}  \$}
+\end{document}
+</c:data>

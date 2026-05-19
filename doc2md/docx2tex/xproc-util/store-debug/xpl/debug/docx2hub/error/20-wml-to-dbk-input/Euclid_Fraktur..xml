@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols>
+  <!--  *
+        * Euclid Fraktur
+        * -->
+  <!-- SPACE -->
+   <symbol number="0009" entity="&#x9;" char=" "/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL A -->
+   <symbol number="0041" entity="A" char="𝔄"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL B -->
+   <symbol number="0042" entity="B" char="𝔅"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL C -->
+   <symbol number="0043" entity="C" char="ℭ"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL D -->
+   <symbol number="0044" entity="D" char="𝔇"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL E -->
+   <symbol number="0045" entity="E" char="𝔈"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL F -->
+   <symbol number="0046" entity="F" char="𝔉"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL G -->
+   <symbol number="0047" entity="G" char="𝔊"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL H -->
+   <symbol number="0048" entity="H" char="ℌ"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL I -->
+   <symbol number="0049" entity="@" char="ℑ"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL J -->
+   <symbol number="004a" entity="J" char="𝔍"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL K -->
+   <symbol number="004b" entity="K" char="𝔎"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL L -->
+   <symbol number="004c" entity="L" char="𝔏"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL M -->
+   <symbol number="004d" entity="M" char="𝔐"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL N -->
+   <symbol number="004e" entity="N" char="𝔑"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL O -->
+   <symbol number="004f" entity="O" char="𝔒"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL P -->
+   <symbol number="0050" entity="P" char="𝔓"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL Q -->
+   <symbol number="0051" entity="Q" char="𝔔"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL R -->
+   <symbol number="0052" entity="R" char="ℜ"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL S -->
+   <symbol number="0053" entity="S" char="𝔖"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL T -->
+   <symbol number="0054" entity="T" char="𝔗"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL U -->
+   <symbol number="0055" entity="U" char="𝔘"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL V -->
+   <symbol number="0056" entity="V" char="𝔙"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL W -->
+   <symbol number="0057" entity="W" char="𝔚"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL X -->
+   <symbol number="0058" entity="X" char="𝔛"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL Y -->
+   <symbol number="0059" entity="Y" char="𝔜"/>
+   <!-- MATHEMATICAL FRAKTUR CAPITAL Z -->
+   <symbol number="005A" entity="Z" char="ℨ"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL A -->
+   <symbol number="0061" entity="a" char="𝔞"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL B -->
+   <symbol number="0062" entity="b" char="𝔟"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL C -->
+   <symbol number="0063" entity="c" char="𝔠"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL D -->
+   <symbol number="0064" entity="d" char="𝔡"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL E -->
+   <symbol number="0065" entity="e" char="𝔢"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL F -->
+   <symbol number="0066" entity="f" char="𝔣"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL G -->
+   <symbol number="0067" entity="g" char="𝔤"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL H -->
+   <symbol number="0068" entity="h" char="𝔥"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL I -->
+   <symbol number="0069" entity="i" char="𝔦"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL J -->
+   <symbol number="006A" entity="j" char="𝔧"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL K -->
+   <symbol number="006B" entity="k" char="𝔨"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL L -->
+   <symbol number="006C" entity="l" char="𝔩"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL M -->
+   <symbol number="006D" entity="m" char="𝔪"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL N -->
+   <symbol number="006E" entity="n" char="𝔫"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL O -->
+   <symbol number="006F" entity="o" char="𝔬"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL P -->
+   <symbol number="0070" entity="p" char="𝔭"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL Q -->
+   <symbol number="0071" entity="q" char="𝔮"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL R -->
+   <symbol number="0072" entity="r" char="𝔯"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL S -->
+   <symbol number="0073" entity="s" char="𝔰"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL T -->
+   <symbol number="0074" entity="t" char="𝔱"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL U -->
+   <symbol number="0075" entity="u" char="𝔲"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL V -->
+   <symbol number="0076" entity="v" char="𝔳"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL W -->
+   <symbol number="0077" entity="w" char="𝔴"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL X -->
+   <symbol number="0078" entity="x" char="𝔵"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL Y -->
+   <symbol number="0079" entity="y" char="𝔶"/>
+   <!-- MATHEMATICAL FRAKTUR SMALL Z -->
+   <symbol number="007A" entity="z" char="𝔷"/>
+</symbols>

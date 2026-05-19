@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+   <mi xmlns:tr="http://transpect.io">α</mi>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <msup xmlns:tr="http://transpect.io">
+      <mfenced close="]" open="[" separators="">
+         <mtable>
+            <mtr>
+               <mtd>
+                  <msub>
+                     <mi>α</mi>
+                     <mi>R</mi>
+                  </msub>
+                  <mo>(</mo>
+                  <mi>k</mi>
+                  <mo>)</mo>
+               </mtd>
+               <mtd>
+                  <msub>
+                     <mi>α</mi>
+                     <mi>A</mi>
+                  </msub>
+                  <mo>(</mo>
+                  <mi>k</mi>
+                  <mo>)</mo>
+               </mtd>
+               <mtd>
+                  <msub>
+                     <mi>α</mi>
+                     <mi>E</mi>
+                  </msub>
+                  <mo>(</mo>
+                  <mi>k</mi>
+                  <mo>)</mo>
+               </mtd>
+            </mtr>
+         </mtable>
+      </mfenced>
+      <mi>T</mi>
+   </msup>
+</math>

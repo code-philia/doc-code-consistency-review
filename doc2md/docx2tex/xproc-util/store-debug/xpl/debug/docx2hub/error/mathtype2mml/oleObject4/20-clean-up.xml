@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <msub xmlns:tr="http://transpect.io">
+      <mi>μ</mi>
+      <mi>h</mi>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">h</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <mfenced xmlns:tr="http://transpect.io" close="" open="{" separators="">
+      <mtable>
+         <mtr>
+            <mtd>
+               <mn>1</mn>
+               <mtable>
+                  <mtr>
+                     <mtd/>
+                     <mtd/>
+                  </mtr>
+               </mtable>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <msup>
+                  <mi>e</mi>
+                  <mrow>
+                     <mo>−</mo>
+                     <mi>k</mi>
+                     <mo>(</mo>
+                     <mi>h</mi>
+                     <mo>−</mo>
+                     <mi>α</mi>
+                     <msup>
+                        <mo>)</mo>
+                        <mn>2</mn>
+                     </msup>
+                  </mrow>
+               </msup>
+            </mtd>
+         </mtr>
+      </mtable>
+   </mfenced>
+</math>

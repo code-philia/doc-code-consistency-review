@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <msub xmlns:tr="http://transpect.io">
+      <mi>T</mi>
+      <mi>D</mi>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <mfenced xmlns:tr="http://transpect.io" close="]" open="[" separators="">
+      <mtable columnalign="left">
+         <mtr>
+            <mtd>
+               <mtext>         </mtext>
+               <mi>cos</mi>
+               <mi>ψ</mi>
+               <mi>cos</mi>
+               <mi>ϑ</mi>
+               <mtext>                          </mtext>
+               <mi>sin</mi>
+               <mi>ϑ</mi>
+               <mtext>                         </mtext>
+               <mo>−</mo>
+               <mi>sin</mi>
+               <mi>ψ</mi>
+               <mi>cos</mi>
+               <mi>ϑ</mi>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <mi>sin</mi>
+               <mi>ψ</mi>
+               <mi>sin</mi>
+               <mi>γ</mi>
+               <mo>−</mo>
+               <mi>cos</mi>
+               <mi>ψ</mi>
+               <mi>sin</mi>
+               <mi>ϑ</mi>
+               <mi>cos</mi>
+               <mi>γ</mi>
+               <mtext>     </mtext>
+               <mi>cos</mi>
+               <mi>ϑ</mi>
+               <mi>cos</mi>
+               <mi>γ</mi>
+               <mtext>        </mtext>
+               <mi>cos</mi>
+               <mi>ψ</mi>
+               <mi>sin</mi>
+               <mi>γ</mi>
+               <mo>+</mo>
+               <mi>sin</mi>
+               <mi>ψ</mi>
+               <mi>sin</mi>
+               <mi>ϑ</mi>
+               <mi>cos</mi>
+               <mi>γ</mi>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <mi>sin</mi>
+               <mi>ψ</mi>
+               <mi>cos</mi>
+               <mi>γ</mi>
+               <mo>+</mo>
+               <mi>cos</mi>
+               <mi>ψ</mi>
+               <mi>sin</mi>
+               <mi>ϑ</mi>
+               <mi>sin</mi>
+               <mi>γ</mi>
+               <mtext>     </mtext>
+               <mo>−</mo>
+               <mi>cos</mi>
+               <mi>ϑ</mi>
+               <mi>sin</mi>
+               <mi>γ</mi>
+               <mtext>      </mtext>
+               <mi>cos</mi>
+               <mi>ψ</mi>
+               <mi>cos</mi>
+               <mi>γ</mi>
+               <mo>−</mo>
+               <mi>sin</mi>
+               <mi>ψ</mi>
+               <mi>sin</mi>
+               <mi>ϑ</mi>
+               <mi>sin</mi>
+               <mi>γ</mi>
+            </mtd>
+         </mtr>
+      </mtable>
+   </mfenced>
+</math>

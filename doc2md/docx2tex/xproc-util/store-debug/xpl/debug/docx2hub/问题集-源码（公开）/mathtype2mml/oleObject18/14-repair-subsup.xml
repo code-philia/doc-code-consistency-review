@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mtable columnalign="left">
+      <mtr>
+         <mtd>
+            <mrow>
+               <msub>
+                  <mi mathsize="100%" mathvariant="italic">U</mi>
+                  <mrow>
+                     <mi mathvariant="italic">p</mi>
+                     <mn mathvariant="normal">1</mn>
+                     <mi mathvariant="italic">f</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mrow>
+                  <mrow>
+                     <mo mathsize="100%" mathvariant="normal">−</mo>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">n</mi>
+                        <mrow>
+                           <mi mathvariant="italic">z</mi>
+                           <mn mathvariant="normal">1</mn>
+                           <mi mathvariant="italic">f</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">U</mi>
+                        <mi mathvariant="italic">f</mi>
+                     </msub>
+                  </mrow>
+                  <mo>/</mo>
+                  <mrow>
+                     <msqrt>
+                        <mrow>
+                           <msubsup>
+                              <mi mathsize="100%" mathvariant="italic">n</mi>
+                              <mrow>
+                                 <mi mathvariant="italic">y</mi>
+                                 <mn mathvariant="normal">1</mn>
+                                 <mi mathvariant="italic">f</mi>
+                              </mrow>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msubsup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <msubsup>
+                              <mi mathsize="100%" mathvariant="italic">n</mi>
+                              <mrow>
+                                 <mi mathvariant="italic">z</mi>
+                                 <mn mathvariant="normal">1</mn>
+                                 <mi mathvariant="italic">f</mi>
+                              </mrow>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msubsup>
+                        </mrow>
+                     </msqrt>
+                  </mrow>
+               </mrow>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <msub>
+                  <mi mathsize="100%" mathvariant="italic">U</mi>
+                  <mrow>
+                     <mi mathvariant="italic">y</mi>
+                     <mn mathvariant="normal">1</mn>
+                     <mi mathvariant="italic">f</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mrow>
+                  <mrow>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">n</mi>
+                        <mrow>
+                           <mi mathvariant="italic">y</mi>
+                           <mn mathvariant="normal">1</mn>
+                           <mi mathvariant="italic">f</mi>
+                        </mrow>
+                     </msub>
+                     <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">U</mi>
+                        <mi mathvariant="italic">f</mi>
+                     </msub>
+                  </mrow>
+                  <mo>/</mo>
+                  <mrow>
+                     <msqrt>
+                        <mrow>
+                           <msubsup>
+                              <mi mathsize="100%" mathvariant="italic">n</mi>
+                              <mrow>
+                                 <mi mathvariant="italic">y</mi>
+                                 <mn mathvariant="normal">1</mn>
+                                 <mi mathvariant="italic">f</mi>
+                              </mrow>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msubsup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <msubsup>
+                              <mi mathsize="100%" mathvariant="italic">n</mi>
+                              <mrow>
+                                 <mi mathvariant="italic">z</mi>
+                                 <mn mathvariant="normal">1</mn>
+                                 <mi mathvariant="italic">f</mi>
+                              </mrow>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msubsup>
+                        </mrow>
+                     </msqrt>
+                  </mrow>
+               </mrow>
+            </mrow>
+         </mtd>
+      </mtr>
+   </mtable>
+</math>

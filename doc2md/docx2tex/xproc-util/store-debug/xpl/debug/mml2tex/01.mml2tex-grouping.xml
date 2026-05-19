@@ -1,0 +1,2034 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hub xmlns="http://docbook.org/ns/docbook"
+     xmlns:css="http://www.w3.org/1996/css"
+     xml:lang="sq-AL"
+     version="5.1-variant le-tex_Hub-1.2"
+     css:version="3.0-variant le-tex_Hub-1.2"
+     css:rule-selection-attribute="role"
+     xml:base="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_20260508T052008_27c0f6/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_temp_7234/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.hub.xml">
+   <info>
+      <keywordset role="hub">
+         <keyword role="formatting-deviations-only">true</keyword>
+         <keyword role="source-type">docx</keyword>
+         <keyword role="source-dir-uri">file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/测试文档_copy_20260508T052008_27c0f6/测试文档_copy_temp_7234/测试文档_copy.docx.tmp/</keyword>
+         <keyword role="archive-dir-uri">file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/测试文档_copy_20260508T052008_27c0f6/测试文档_copy_temp_7234/</keyword>
+         <keyword role="archive-uri">file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_20260508T052008_27c0f6/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_temp_7234/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.docx</keyword>
+         <keyword role="archive-uri-local">file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_20260508T052008_27c0f6/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_temp_7234/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.docx</keyword>
+         <keyword role="source-basename">测试文档_copy</keyword>
+         <keyword role="source-application">Microsoft Office Word</keyword>
+         <keyword role="mathtype2mml">ole</keyword>
+         <keyword role="marked-identifiers">true</keyword>
+         <keyword role="processed-lists">true</keyword>
+      </keywordset>
+      <keywordset role="docProps">
+         <keyword role="dc:creator">Mia</keyword>
+         <keyword role="cp:lastModifiedBy">mia mia</keyword>
+         <keyword role="cp:revision">29</keyword>
+         <keyword role="cp:lastPrinted">2022-03-25T09:21:00Z</keyword>
+         <keyword role="dcterms:created">2022-03-25T04:15:00Z</keyword>
+         <keyword role="dcterms:modified">2026-05-08T02:30:00Z</keyword>
+         <keyword role="extendedProps:Template">Normal.dotm</keyword>
+         <keyword role="extendedProps:TotalTime">4</keyword>
+         <keyword role="extendedProps:Pages">3</keyword>
+         <keyword role="extendedProps:Words">225</keyword>
+         <keyword role="extendedProps:Characters">1285</keyword>
+         <keyword role="extendedProps:Application">Microsoft Office Word</keyword>
+         <keyword role="extendedProps:DocSecurity">0</keyword>
+         <keyword role="extendedProps:Lines">10</keyword>
+         <keyword role="extendedProps:Paragraphs">3</keyword>
+         <keyword role="extendedProps:ScaleCrop">false</keyword>
+         <keyword role="extendedProps:Company">aaa</keyword>
+         <keyword role="extendedProps:LinksUpToDate">false</keyword>
+         <keyword role="extendedProps:CharactersWithSpaces">1507</keyword>
+         <keyword role="extendedProps:SharedDoc">false</keyword>
+         <keyword role="extendedProps:HyperlinksChanged">false</keyword>
+         <keyword role="extendedProps:AppVersion">16.0000</keyword>
+      </keywordset>
+      <keywordset role="custom-meta">
+         <keyword role="MTWinEqns">true</keyword>
+         <keyword role="KSOTemplateDocerSaveRecord">eyJoZGlkIjoiNDI0OTE5NjkxZTgxOTVhODgxZjczOWUzNWUwMmUxZjYiLCJ1c2VySWQiOiIzMDMwNzg3MzYifQ==</keyword>
+         <keyword role="KSOProductBuildVer">2052-12.1.0.20784</keyword>
+         <keyword role="ICV">C70AA43A414B4B78876928BDDA21D414_13</keyword>
+      </keywordset>
+      <css:rules>
+         <css:rule layout-type="para"
+                   native-name="heading 1"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="center"
+                   css:font-size="15pt"
+                   css:font-family="Times New Roman"
+                   css:margin-left="0pt"
+                   css:text-indent="0pt"
+                   css:page-break-after="avoid"
+                   css:margin-top="23.4pt"
+                   css:margin-bottom="23.4pt"
+                   css:line-height="20pt"
+                   remap="h1"
+                   numbering-level="1"
+                   numbering-multilevel-type="multi"
+                   name="Heading1">
+            <css:attic css:list-style-type="chineseCountingThousand"/>
+         </css:rule>
+         <css:rule layout-type="para"
+                   native-name="heading 2"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="justify"
+                   css:font-size="14pt"
+                   css:font-family="Times New Roman"
+                   css:margin-left="0pt"
+                   css:text-indent="0pt"
+                   css:page-break-after="avoid"
+                   css:margin-top="2.5pt"
+                   css:margin-bottom="2.5pt"
+                   css:line-height="20pt"
+                   remap="h2"
+                   numbering-level="1"
+                   numbering-multilevel-type="multi"
+                   name="Heading2">
+            <css:attic css:list-style-type="decimal"/>
+         </css:rule>
+         <css:rule layout-type="para"
+                   native-name="heading 3"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="justify"
+                   css:font-size="12pt"
+                   css:font-family="Times New Roman"
+                   css:margin-left="0pt"
+                   css:text-indent="0pt"
+                   css:page-break-after="avoid"
+                   css:margin-top="7.8pt"
+                   css:margin-bottom="7.8pt"
+                   css:line-height="20pt"
+                   remap="h3"
+                   numbering-level="1"
+                   numbering-multilevel-type="multi"
+                   name="Heading3">
+            <css:attic css:list-style-type="decimal"/>
+         </css:rule>
+         <css:rule layout-type="para"
+                   native-name="caption"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="justify"
+                   css:font-size="10pt"
+                   css:font-family="Calibri Light"
+                   name="a3"/>
+         <css:rule layout-type="para"
+                   native-name="footer"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="left"
+                   css:font-size="9pt"
+                   css:font-family="Calibri"
+                   name="a6">
+            <tabs>
+               <tab align="center" horizontal-position="207.65pt"/>
+               <tab align="right" horizontal-position="415.3pt"/>
+            </tabs>
+         </css:rule>
+         <css:rule layout-type="para"
+                   native-name="Title"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="center"
+                   css:font-size="15pt"
+                   css:font-family="Calibri Light"
+                   css:margin-top="7.5pt"
+                   css:margin-bottom="7.5pt"
+                   css:line-height="20pt"
+                   remap="h1"
+                   css:font-weight="bold"
+                   name="ab"/>
+         <css:rule layout-type="para"
+                   native-name="List Paragraph"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="justify"
+                   css:font-size="10.5pt"
+                   css:font-family="Calibri"
+                   css:text-indent="21pt"
+                   name="af0"/>
+         <css:rule layout-type="para"
+                   native-name="公式"
+                   css:orphans="1"
+                   css:widows="1"
+                   css:text-align="left"
+                   css:font-size="10.5pt"
+                   xml:lang="en-US"
+                   css:font-family="Times New Roman"
+                   css:vertical-align="middle"
+                   name="af1">
+            <tabs>
+               <tab align="center" horizontal-position="199.5pt"/>
+               <tab align="right" horizontal-position="399pt"/>
+            </tabs>
+         </css:rule>
+         <css:rule layout-type="table"
+                   native-name="网格型1"
+                   css:font-size="10.5pt"
+                   name="_11"/>
+      </css:rules>
+   </info>
+   <para role="ab" css:margin-top="15.6pt" css:margin-bottom="15.6pt">
+      <phrase css:font-family="Times New Roman" css:font-weight="normal">注释表</phrase>
+   </para>
+   <informaltable role="_11"
+                  css:border-collapse="collapse"
+                  css:margin-left="auto"
+                  css:padding-top="0pt"
+                  css:padding-left="5.4pt"
+                  css:padding-bottom="0pt"
+                  css:padding-right="5.4pt"
+                  css:border-top-style="none"
+                  css:border-top-width="0.5pt"
+                  css:border-left-style="none"
+                  css:border-left-width="0.5pt"
+                  css:border-bottom-style="none"
+                  css:border-bottom-width="0.5pt"
+                  css:border-right-style="none"
+                  css:border-right-width="0.5pt"
+                  css:margin-right="auto"
+                  frame="all">
+      <tgroup cols="4" rowsep="1" colsep="1">
+<?cals2tabular \begin{tabularx}{\textwidth}{|p{\dimexpr 0.25\linewidth-2\tabcolsep-2\arrayrulewidth}|p{\dimexpr 0.25\linewidth-2\tabcolsep-\arrayrulewidth}|p{\dimexpr 0.25\linewidth-2\tabcolsep-\arrayrulewidth}|p{\dimexpr 0.25\linewidth-2\tabcolsep-\arrayrulewidth}|} \hline ?>
+         <tbody>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>M</mml:mi>
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>F</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">测量特征</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>M</mml:mi>
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>E</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">测量设备</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>M</mml:mi>
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>S</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">测量站位</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>M</mml:mi>
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>B</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">测量基准</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>M</mml:mi>
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>T</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">测量时间</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>T</mml:mi>
+                        <mml:mi>S</mml:mi>
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>F</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">转站形式</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>E</mml:mi>
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>F</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">执行形式</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>p</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>a</mml:mi>
+                              <mml:mi>c</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">是否待执行</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>s</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                              <mml:mi>j</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">任务相似性</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>S</mml:mi>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">相似性矩阵</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>A</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mn>1</mml:mn>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">并行任务集</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>A</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mn>2</mml:mn>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">串行任务集</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msup>
+                           <mml:mrow>
+                              <mml:mi>t</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>M</mml:mi>
+                              <mml:mi>C</mml:mi>
+                           </mml:mrow>
+                        </mml:msup>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">执行时间段</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>t</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>s</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">执行开始</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>t</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>e</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">执行结束</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>Δ</mml:mi>
+                        <mml:mi>t</mml:mi>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">等待时间</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>O</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>P</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">平面中心</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>O</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>D</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">默认中心</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>M</mml:mi>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">位置变换矩阵</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>v</mml:mi>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">方向向量</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>P</mml:mi>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">路径点集</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>B</mml:mi>
+                        <mml:mi>o</mml:mi>
+                        <mml:msub>
+                           <mml:mrow>
+                              <mml:mi>x</mml:mi>
+                           </mml:mrow>
+                           <mml:mrow>
+                              <mml:mi>i</mml:mi>
+                           </mml:mrow>
+                        </mml:msub>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">包围盒</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+            <row><?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col1">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>T</mml:mi>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col2">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">平移矩阵</phrase>
+                  </para>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col3">
+                  <equation role="omml">
+                     <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+                        <mml:mi>R</mml:mi>
+                     </mml:math>
+                  </equation>
+               </entry>
+               <?cals2tabular & ?>
+               <?cals2tabular \centering\arraybackslash{}?>
+               <entry css:height="34pt"
+                      css:text-align="center"
+                      css:width="99.2pt"
+                      css:vertical-align="middle"
+                      css:border-top-style="solid"
+                      css:border-top-width="0.5pt"
+                      css:border-left-style="solid"
+                      css:border-left-width="0.5pt"
+                      css:border-bottom-style="solid"
+                      css:border-bottom-width="0.5pt"
+                      css:border-right-style="solid"
+                      css:border-right-width="0.5pt"
+                      colname="col4">
+                  <para css:text-align="center">
+                     <phrase xml:lang="en-US" css:font-family="Times New Roman">旋转矩阵</phrase>
+                  </para>
+               </entry>
+            </row>
+            <?cals2tabular \\?>
+            <?cals2tabular \hline ?>
+         </tbody>
+         <?cals2tabular \end{tabularx}?>
+      </tgroup>
+   </informaltable>
+   <para/>
+   <para xmlns:docx2tex="http://transpect.io/docx2tex"
+         text-indent="0"
+         margin-left="0"
+         role="Heading1"
+         css:margin-left="0pt"
+         css:text-indent="0pt"
+         docx2tex:config="headline">绪论<?latex \label{mark-第n章}?></para>
+   <para xmlns:docx2tex="http://transpect.io/docx2tex"
+         text-indent="0"
+         margin-left="0"
+         role="Heading2"
+         css:margin-left="0pt"
+         css:text-indent="0pt"
+         docx2tex:config="headline"
+         css:margin-top="7.8pt"
+         css:margin-bottom="7.8pt">研究背景及意义<?latex \label{mark-1.1}?></para>
+   <para css:line-height="20pt" css:text-indent="21pt">
+      <phrase css:font-family="Times New Roman">随着歼-20、运-20、ARJ、C919等新型航空器的成功研制，我国航空制造业正处于高速发展阶段，航空产品的制造水平不断提高。相比于传统航空器的设计制造方法，如二维手工绘图、模拟量装配等，数字化三维设计、数字化测量、数字化装配等先进技术的应用大幅度缩短了产品的设计与制造周期，</phrase>
+   </para>
+   <para css:page-break-after="avoid" css:text-align="center">
+      <inlinemediaobject annotations="object_d9708e5028"
+                         css:width="366.75pt"
+                         css:height="234.75pt">
+         <imageobject>
+            <imagedata fileref="测试文档_copy.docx.tmp/word/media/image1.emf"/>
+         </imageobject>
+      </inlinemediaobject>
+      <inlinemediaobject role="OLEObject" annotations="object_d9708e5028">
+         <imageobject role="Visio.Drawing.15">
+            <imagedata fileref="embeddings/Microsoft_Visio_Drawing.vsdx"/>
+         </imageobject>
+      </inlinemediaobject>
+   </para>
+   <para role="a3" css:line-height="20pt" css:text-align="center">
+      <phrase css:font-family="Times New Roman" css:font-size="10.5pt">图1. 1 某型飞机外形检测的多系统协同测量场景</phrase>
+   </para>
+   <para xmlns:docx2tex="http://transpect.io/docx2tex"
+         text-indent="0"
+         margin-left="0"
+         role="Heading2"
+         css:margin-left="0pt"
+         css:text-indent="0pt"
+         docx2tex:config="headline"
+         css:margin-top="7.8pt"
+         css:margin-bottom="7.8pt">基于任务相似性的测量序列规划<?latex \label{mark-3.1}?></para>
+   <para xmlns:docx2tex="http://transpect.io/docx2tex"
+         text-indent="0"
+         margin-left="0"
+         role="Heading3"
+         css:margin-left="0pt"
+         css:text-indent="0pt"
+         docx2tex:config="headline">测量任务集合多层级划分<?latex \label{mark-3.2.1}?></para>
+   <para role="af0"
+         css:text-indent="0pt"
+         css:line-height="20pt"
+         css:margin-left="0pt">
+      <phrase role="hub:identifier">（1）</phrase>
+      <tab role="docx2hub:generated"/>
+      <phrase css:font-family="Times New Roman">若以串行序列执行测量任务时，将会产生过多的等待时间，因此应该尽可能多规划测量任务的并行序列来有效地提高测量效率。</phrase>
+   </para>
+   <para css:line-height="20pt" css:text-indent="21pt">
+      <phrase css:font-family="Times New Roman">因而可知，测量设备的优先级最高，测量站位次之，测量基准由于可以同时被占用使得其优先级最低。</phrase>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">对于任意的两个测量任务</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>T</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">和</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>T</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">，测量要素可能相同或完全不同，则可通过一个三位二进制数</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>B</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">来表示：</phrase>
+   </para>
+   <para role="af1">
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>B</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+            <mml:mo>=</mml:mo>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>D</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>S</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>B</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+         </mml:math>
+      </inlineequation>
+      <tab xml:space="preserve">	</tab>（3.1）</para>
+   <para css:line-height="20pt" css:text-indent="21pt">
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">其中，</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>B</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">从高位到低位依次对应测量设备、测量站位和测量基准的相同与否。测量要素相同时，</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>k</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">为1，否则为0。</phrase>
+   </para>
+   <para css:text-indent="21pt">
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">将</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>B</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">转化为十进制数</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>d</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+            <mml:mo>=</mml:mo>
+            <mml:msup>
+               <mml:mrow>
+                  <mml:mn>2</mml:mn>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mn>2</mml:mn>
+               </mml:mrow>
+            </mml:msup>
+            <mml:mi>*</mml:mi>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>D</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+            <mml:mo>+</mml:mo>
+            <mml:mn>2</mml:mn>
+            <mml:mi>*</mml:mi>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>S</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+            <mml:mo>+</mml:mo>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>B</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">，且</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>d</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>'</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+            <mml:mo>=</mml:mo>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>D</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+            <mml:mo>+</mml:mo>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>S</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+            <mml:mo>+</mml:mo>
+            <mml:msubsup>
+               <mml:mrow>
+                  <mml:mi>b</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>M</mml:mi>
+                  <mml:mi>B</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msubsup>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">，基于拉普拉斯核函数量化测量任务的相似性</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>s</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">：</phrase>
+   </para>
+   <para role="af1">
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:msub>
+               <mml:mrow>
+                  <mml:mi>s</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mi>i</mml:mi>
+                  <mml:mi>j</mml:mi>
+               </mml:mrow>
+            </mml:msub>
+            <mml:mo>=</mml:mo>
+            <mml:mn>1</mml:mn>
+            <mml:mo>-</mml:mo>
+            <mml:mo>(</mml:mo>
+            <mml:mn>1</mml:mn>
+            <mml:mo>-</mml:mo>
+            <mml:mfrac>
+               <mml:mrow>
+                  <mml:msubsup>
+                     <mml:mrow>
+                        <mml:mi>d</mml:mi>
+                     </mml:mrow>
+                     <mml:mrow>
+                        <mml:mi>i</mml:mi>
+                        <mml:mi>j</mml:mi>
+                     </mml:mrow>
+                     <mml:mrow>
+                        <mml:mi>'</mml:mi>
+                     </mml:mrow>
+                  </mml:msubsup>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mn>3</mml:mn>
+               </mml:mrow>
+            </mml:mfrac>
+            <mml:mo>)</mml:mo>
+            <mml:msup>
+               <mml:mrow>
+                  <mml:mi>e</mml:mi>
+               </mml:mrow>
+               <mml:mrow>
+                  <mml:mo>-</mml:mo>
+                  <mml:msub>
+                     <mml:mrow>
+                        <mml:mi>d</mml:mi>
+                     </mml:mrow>
+                     <mml:mrow>
+                        <mml:mi>i</mml:mi>
+                        <mml:mi>j</mml:mi>
+                     </mml:mrow>
+                  </mml:msub>
+               </mml:mrow>
+            </mml:msup>
+         </mml:math>
+      </inlineequation>
+      <tab xml:space="preserve">	</tab>（3.2）</para>
+   <para css:line-height="20pt" css:text-indent="21pt">
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">进而构造出测量任务集合</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:mi>T</mml:mi>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">的相似性矩阵</phrase>
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:mi>S</mml:mi>
+         </mml:math>
+      </inlineequation>
+      <phrase xml:lang="en-US" css:font-family="Times New Roman">：</phrase>
+   </para>
+   <para role="af1">
+      <inlineequation role="omml">
+         <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="inline">
+            <mml:mi>S</mml:mi>
+            <mml:mo>=</mml:mo>
+            <mml:mfenced open="[" close="]">
+               <mml:mrow>
+                  <mml:mtable>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mn>11</mml:mn>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mn>12</mml:mn>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:mo>⋯</mml:mo>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mn>1</mml:mn>
+                                 <mml:mi>n</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mn>21</mml:mn>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mn>22</mml:mn>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:mo>⋯</mml:mo>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mn>2</mml:mn>
+                                 <mml:mi>n</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:mo>⋮</mml:mo>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:mo>⋮</mml:mo>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:mo>⋱</mml:mo>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:mo>⋮</mml:mo>
+                        </mml:mtd>
+                     </mml:mtr>
+                     <mml:mtr>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mn>1</mml:mn>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mn>2</mml:mn>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:mo>⋯</mml:mo>
+                        </mml:mtd>
+                        <mml:mtd>
+                           <mml:msub>
+                              <mml:mrow>
+                                 <mml:mi>s</mml:mi>
+                              </mml:mrow>
+                              <mml:mrow>
+                                 <mml:mi>n</mml:mi>
+                                 <mml:mi>n</mml:mi>
+                              </mml:mrow>
+                           </mml:msub>
+                        </mml:mtd>
+                     </mml:mtr>
+                  </mml:mtable>
+               </mml:mrow>
+            </mml:mfenced>
+            <mml:mtable>
+               <mml:mtr>
+                  <mml:mtd>
+                     <mml:msub>
+                        <mml:mrow>
+                           <mml:mi>T</mml:mi>
+                        </mml:mrow>
+                        <mml:mrow>
+                           <mml:mn>1</mml:mn>
+                        </mml:mrow>
+                     </mml:msub>
+                  </mml:mtd>
+               </mml:mtr>
+               <mml:mtr>
+                  <mml:mtd>
+                     <mml:msub>
+                        <mml:mrow>
+                           <mml:mi>T</mml:mi>
+                        </mml:mrow>
+                        <mml:mrow>
+                           <mml:mn>2</mml:mn>
+                        </mml:mrow>
+                     </mml:msub>
+                  </mml:mtd>
+               </mml:mtr>
+               <mml:mtr>
+                  <mml:mtd>
+                     <mml:mo>⋮</mml:mo>
+                  </mml:mtd>
+               </mml:mtr>
+               <mml:mtr>
+                  <mml:mtd>
+                     <mml:msub>
+                        <mml:mrow>
+                           <mml:mi>T</mml:mi>
+                        </mml:mrow>
+                        <mml:mrow>
+                           <mml:mi>n</mml:mi>
+                        </mml:mrow>
+                     </mml:msub>
+                  </mml:mtd>
+               </mml:mtr>
+            </mml:mtable>
+            <mml:mspace linebreak="newline"/>
+            <mtext xmlns="http://www.w3.org/1998/Math/MathML" mathvariant="italic">​​​​​​​​​​​​​​​​​​​​​​​​</mtext>
+            <mml:mtable>
+               <mml:mtr>
+                  <mml:mtd>
+                     <mml:msub>
+                        <mml:mrow>
+                           <mml:mi>T</mml:mi>
+                        </mml:mrow>
+                        <mml:mrow>
+                           <mml:mn>1</mml:mn>
+                        </mml:mrow>
+                     </mml:msub>
+                  </mml:mtd>
+                  <mml:mtd>
+                     <mml:mi>​</mml:mi>
+                     <mml:mi>​</mml:mi>
+                     <mml:mi>​</mml:mi>
+                     <mml:msub>
+                        <mml:mrow>
+                           <mml:mi>T</mml:mi>
+                        </mml:mrow>
+                        <mml:mrow>
+                           <mml:mn>2</mml:mn>
+                        </mml:mrow>
+                     </mml:msub>
+                  </mml:mtd>
+                  <mml:mtd>
+                     <mml:mi>​</mml:mi>
+                     <mml:mi>​</mml:mi>
+                     <mml:mi>​</mml:mi>
+                     <mml:mo>⋯</mml:mo>
+                  </mml:mtd>
+                  <mml:mtd>
+                     <mml:msub>
+                        <mml:mrow>
+                           <mml:mi>T</mml:mi>
+                        </mml:mrow>
+                        <mml:mrow>
+                           <mml:mi>n</mml:mi>
+                        </mml:mrow>
+                     </mml:msub>
+                  </mml:mtd>
+               </mml:mtr>
+            </mml:mtable>
+         </mml:math>
+      </inlineequation>
+      <tab xml:space="preserve">	</tab>（3.3）</para>
+   <para>
+      <phrase css:font-family="Times New Roman"
+              css:top="6pt"
+              css:position="relative">$ d_{ i }  j=2 ^ { 2 } *b_{ M }  D ^ { i } j+2*b_{ M }  S ^ { i } j+b_{ M }  B ^ { i } j $</phrase>
+   </para>
+   <equation role="mtef"
+             css:font-family="Times New Roman"
+             css:top="6pt"
+             css:position="relative"
+             condition="ole">
+      <mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" display="block">
+         <mml:msub>
+            <mml:mi>d</mml:mi>
+            <mml:mi>i</mml:mi>
+         </mml:msub>
+         <mml:mi>j</mml:mi>
+         <mml:mo>=</mml:mo>
+         <mml:msup>
+            <mml:mn>2</mml:mn>
+            <mml:mn>2</mml:mn>
+         </mml:msup>
+         <mml:mo>*</mml:mo>
+         <mml:msub>
+            <mml:mi>b</mml:mi>
+            <mml:mi>M</mml:mi>
+         </mml:msub>
+         <mml:msup>
+            <mml:mi>D</mml:mi>
+            <mml:mi>i</mml:mi>
+         </mml:msup>
+         <mml:mi>j</mml:mi>
+         <mml:mo>+</mml:mo>
+         <mml:mn>2</mml:mn>
+         <mml:mo>*</mml:mo>
+         <mml:msub>
+            <mml:mi>b</mml:mi>
+            <mml:mi>M</mml:mi>
+         </mml:msub>
+         <mml:msup>
+            <mml:mi>S</mml:mi>
+            <mml:mi>i</mml:mi>
+         </mml:msup>
+         <mml:mi>j</mml:mi>
+         <mml:mo>+</mml:mo>
+         <mml:msub>
+            <mml:mi>b</mml:mi>
+            <mml:mi>M</mml:mi>
+         </mml:msub>
+         <mml:msup>
+            <mml:mi>B</mml:mi>
+            <mml:mi>i</mml:mi>
+         </mml:msup>
+         <mml:mi>j</mml:mi>
+      </mml:math>
+   </equation>
+   <para>
+      <phrase css:font-family="Times New Roman"
+              css:top="2pt"
+              css:position="relative">$  $</phrase>
+   </para>
+   <para>
+      <phrase css:font-family="Times New Roman"
+              css:top="6pt"
+              css:position="relative">$ s_{ i }  j=1-(1-(d_{ i }  j)/3)e ^ { (-d_{ i }  j) }  $</phrase>
+   </para>
+</hub>

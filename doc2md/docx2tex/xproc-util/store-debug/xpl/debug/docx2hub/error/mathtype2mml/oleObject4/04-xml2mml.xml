@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathvariant="italic"
+          font-position="006D"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">μ</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">h</mi>
+         </mrow>
+      </msub>
+      <mn mathvariant="normal"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">(</mn>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">h</mi>
+      <mn mathvariant="normal"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">)</mn>
+      <mo mathvariant="normal"
+          font-position="003D"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">=</mo>
+      <mfenced separators="" open="{" close="">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mn mathvariant="normal"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">1</mn>
+                        <mtable>
+                           <mtr>
+                              <mtd>
+                                 <mrow/>
+                              </mtd>
+                              <mtd>
+                                 <mrow/>
+                              </mtd>
+                           </mtr>
+                        </mtable>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">e</mi>
+                        <msup>
+                           <mrow>
+                              <mo mathvariant="normal"
+                                  font-position="002D"
+                                  fontfamily="Symbol"
+                                  default-font="">−</mo>
+                              <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">k</mi>
+                              <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">(</mn>
+                              <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">h</mi>
+                              <mo mathvariant="normal"
+                                  font-position="002D"
+                                  fontfamily="Symbol"
+                                  default-font="">−</mo>
+                              <mi mathvariant="italic"
+                                  font-position="0061"
+                                  fontfamily="Symbol"
+                                  default-font="">α</mi>
+                              <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">)</mn>
+                              <msup>
+                                 <mrow>
+                                    <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">2</mn>
+                                 </mrow>
+                              </msup>
+                           </mrow>
+                        </msup>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+   </mrow>
+</math>

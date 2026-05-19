@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <mfenced xmlns:tr="http://transpect.io" close="" open="{" separators="">
+      <mtable columnalign="left">
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>t</mi>
+                  <mrow>
+                     <mi>g</mi>
+                     <mi>o</mi>
+                  </mrow>
+               </msub>
+               <mo>=</mo>
+               <mn>12</mn>
+               <mtext>                         </mtext>
+               <msub>
+                  <mi>t</mi>
+                  <mrow>
+                     <mtext>go</mtext>
+                     <mi>t</mi>
+                     <mi>e</mi>
+                     <mi>m</mi>
+                     <mi>p</mi>
+                  </mrow>
+               </msub>
+               <mo>≤</mo>
+               <mn>12</mn>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>t</mi>
+                  <mrow>
+                     <mi>g</mi>
+                     <mi>o</mi>
+                  </mrow>
+               </msub>
+               <mo>=</mo>
+               <mn>800</mn>
+               <mtext>                       </mtext>
+               <msub>
+                  <mi>t</mi>
+                  <mrow>
+                     <mtext>go</mtext>
+                     <mi>t</mi>
+                     <mi>e</mi>
+                     <mi>m</mi>
+                     <mi>p</mi>
+                  </mrow>
+               </msub>
+               <mo>≥</mo>
+               <mn>800</mn>
+            </mtd>
+         </mtr>
+         <mtr>
+            <mtd>
+               <msub>
+                  <mi>t</mi>
+                  <mrow>
+                     <mi>g</mi>
+                     <mi>o</mi>
+                  </mrow>
+               </msub>
+               <mo>=</mo>
+               <msub>
+                  <mi>t</mi>
+                  <mrow>
+                     <mi>g</mi>
+                     <mi>o</mi>
+                     <mi>t</mi>
+                     <mi>e</mi>
+                     <mi>m</mi>
+                     <mi>p</mi>
+                  </mrow>
+               </msub>
+               <mtext>                     其他</mtext>
+            </mtd>
+         </mtr>
+      </mtable>
+   </mfenced>
+</math>

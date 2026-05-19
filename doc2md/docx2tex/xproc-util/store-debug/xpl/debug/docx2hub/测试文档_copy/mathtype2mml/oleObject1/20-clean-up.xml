@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+   <msub xmlns:tr="http://transpect.io">
+      <mi>d</mi>
+      <mi>i</mi>
+   </msub>
+   <mi xmlns:tr="http://transpect.io">j</mi>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <msup xmlns:tr="http://transpect.io">
+      <mn>2</mn>
+      <mn>2</mn>
+   </msup>
+   <mo xmlns:tr="http://transpect.io">*</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mi>b</mi>
+      <mi>M</mi>
+   </msub>
+   <msup xmlns:tr="http://transpect.io">
+      <mi>D</mi>
+      <mi>i</mi>
+   </msup>
+   <mi xmlns:tr="http://transpect.io">j</mi>
+   <mo xmlns:tr="http://transpect.io">+</mo>
+   <mn xmlns:tr="http://transpect.io">2</mn>
+   <mo xmlns:tr="http://transpect.io">*</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mi>b</mi>
+      <mi>M</mi>
+   </msub>
+   <msup xmlns:tr="http://transpect.io">
+      <mi>S</mi>
+      <mi>i</mi>
+   </msup>
+   <mi xmlns:tr="http://transpect.io">j</mi>
+   <mo xmlns:tr="http://transpect.io">+</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mi>b</mi>
+      <mi>M</mi>
+   </msub>
+   <msup xmlns:tr="http://transpect.io">
+      <mi>B</mi>
+      <mi>i</mi>
+   </msup>
+   <mi xmlns:tr="http://transpect.io">j</mi>
+</math>

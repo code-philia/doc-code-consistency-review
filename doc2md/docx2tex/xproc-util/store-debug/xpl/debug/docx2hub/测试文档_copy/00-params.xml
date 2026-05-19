@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:param-set xmlns:c="http://www.w3.org/ns/xproc-step">
+   <c:param name="extract-dir" namespace="" value=""/>
+   <c:param name="basename"
+            namespace=""
+            value="%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy"/>
+   <c:param name="mml-space-handling" namespace="" value="xml-space"/>
+   <c:param name="field-vars" namespace="" value="no"/>
+   <c:param name="hub-version" namespace="" value="1.2"/>
+   <c:param name="insert-document-defaults" namespace="" value="yes"/>
+   <c:param name="remove-biblioentry-paragraphs" namespace="" value="yes"/>
+   <c:param name="srcpaths" namespace="" value="no"/>
+   <c:param name="use-filename-from-http-response" namespace="" value="no"/>
+   <c:param name="debug" namespace="" value="yes"/>
+   <c:param name="fail-on-error" namespace="" value="no"/>
+   <c:param name="debug-dir-uri" namespace="" value="debug"/>
+   <c:param name="unwrap-tooltip-links" namespace="" value="no"/>
+   <c:param name="no-srcpaths-for-text-runs-threshold"
+            namespace=""
+            value="40000"/>
+   <c:param name="docx"
+            namespace=""
+            value="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_20260508T052008_27c0f6/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_temp_7234/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.docx"/>
+   <c:param xmlns:cx="http://xmlcalabash.com/ns/extensions"
+            xmlns:dbk="http://docbook.org/ns/docbook"
+            xmlns:docx2hub="http://transpect.io/docx2hub"
+            xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xmlns:rel="http://schemas.openxmlformats.org/package/2006/relationships"
+            xmlns:tr="http://transpect.io"
+            xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            name="error-msg-file-path"
+            value="file:/home/lenovo/ubushare/cf/docx2tex/docx2hub/xpl"/>
+   <c:param xmlns:cx="http://xmlcalabash.com/ns/extensions"
+            xmlns:dbk="http://docbook.org/ns/docbook"
+            xmlns:docx2hub="http://transpect.io/docx2hub"
+            xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xmlns:rel="http://schemas.openxmlformats.org/package/2006/relationships"
+            xmlns:tr="http://transpect.io"
+            xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            name="extract-dir-uri"
+            value="file:/home/lenovo/ubushare/cf/docx2tex/output_workspace/测试文档_copy_20260508T052008_27c0f6/测试文档_copy_temp_7234/测试文档_copy.docx.tmp/"/>
+   <c:param xmlns:cx="http://xmlcalabash.com/ns/extensions"
+            xmlns:dbk="http://docbook.org/ns/docbook"
+            xmlns:docx2hub="http://transpect.io/docx2hub"
+            xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xmlns:rel="http://schemas.openxmlformats.org/package/2006/relationships"
+            xmlns:tr="http://transpect.io"
+            xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            name="local-href"
+            value="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_20260508T052008_27c0f6/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_temp_7234/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.docx"/>
+   <c:param xmlns:cx="http://xmlcalabash.com/ns/extensions"
+            xmlns:dbk="http://docbook.org/ns/docbook"
+            xmlns:docx2hub="http://transpect.io/docx2hub"
+            xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xmlns:rel="http://schemas.openxmlformats.org/package/2006/relationships"
+            xmlns:tr="http://transpect.io"
+            xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:xs="http://www.w3.org/2001/XMLSchema"
+            xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+            name="srcpaths"
+            value="no"/>
+</c:param-set>

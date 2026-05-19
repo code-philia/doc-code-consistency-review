@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <mtable xmlns:tr="http://transpect.io" columnalign="left">
+      <mtr>
+         <mtd>
+            <msub>
+               <mi>ε</mi>
+               <mn>1</mn>
+            </msub>
+            <mo>=</mo>
+            <mi>arcsin</mi>
+            <mfenced close=")" open="(" separators="">
+               <mfrac>
+                  <mrow>
+                     <mi mathvariant="normal">Δ</mi>
+                     <mi>P</mi>
+                     <msup>
+                        <mi>Y</mi>
+                        <mrow>
+                           <mn>1</mn>
+                           <mi>t</mi>
+                        </mrow>
+                     </msup>
+                  </mrow>
+                  <mrow>
+                     <mi mathvariant="normal">Δ</mi>
+                     <mi>R</mi>
+                  </mrow>
+               </mfrac>
+            </mfenced>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <msub>
+               <mi>β</mi>
+               <mn>1</mn>
+            </msub>
+            <mo>=</mo>
+            <mi>atan2</mi>
+            <mfenced close=")" open="(" separators="">
+               <mo>−</mo>
+               <mi mathvariant="normal">Δ</mi>
+               <mi>P</mi>
+               <msup>
+                  <mi>Z</mi>
+                  <mrow>
+                     <mn>1</mn>
+                     <mi>t</mi>
+                  </mrow>
+               </msup>
+               <mn>,</mn>
+               <mi mathvariant="normal">Δ</mi>
+               <mi>P</mi>
+               <msup>
+                  <mi>X</mi>
+                  <mrow>
+                     <mn>1</mn>
+                     <mi>t</mi>
+                  </mrow>
+               </msup>
+            </mfenced>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <msub>
+               <mover accent="true">
+                  <mi>ε</mi>
+                  <mo>˙</mo>
+               </mover>
+               <mn>1</mn>
+            </msub>
+            <mo>=</mo>
+            <mfrac>
+               <mrow>
+                  <mi mathvariant="normal">Δ</mi>
+                  <mi>V</mi>
+                  <msup>
+                     <mi>Y</mi>
+                     <mrow>
+                        <mn>1</mn>
+                        <mi>t</mi>
+                     </mrow>
+                  </msup>
+                  <mo>⋅</mo>
+                  <mi mathvariant="normal">Δ</mi>
+                  <mi>R</mi>
+                  <mo>−</mo>
+                  <mi mathvariant="normal">Δ</mi>
+                  <mover accent="true">
+                     <mi>R</mi>
+                     <mo>˙</mo>
+                  </mover>
+                  <mo>⋅</mo>
+                  <mi mathvariant="normal">Δ</mi>
+                  <mi>P</mi>
+                  <msup>
+                     <mi>Y</mi>
+                     <mrow>
+                        <mn>1</mn>
+                        <mi>t</mi>
+                     </mrow>
+                  </msup>
+               </mrow>
+               <mrow>
+                  <mi mathvariant="normal">Δ</mi>
+                  <msup>
+                     <mi>R</mi>
+                     <mn>2</mn>
+                  </msup>
+                  <mo>⋅</mo>
+                  <mi>cos</mi>
+                  <msub>
+                     <mi>ε</mi>
+                     <mn>1</mn>
+                  </msub>
+               </mrow>
+            </mfrac>
+         </mtd>
+      </mtr>
+   </mtable>
+</math>

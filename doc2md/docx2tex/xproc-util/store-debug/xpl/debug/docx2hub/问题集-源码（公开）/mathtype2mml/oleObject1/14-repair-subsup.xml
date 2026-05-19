@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <msub>
+         <mi mathsize="100%" mathvariant="italic">T</mi>
+         <mi mathvariant="italic">D</mi>
+      </msub>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mfenced close="]" open="[" separators="">
+         <mtable columnalign="left">
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mtext mathsize="100%" mathvariant="normal">         </mtext>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                     <mtext mathsize="100%">                          </mtext>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                     <mtext mathsize="100%">                         </mtext>
+                     <mo mathsize="100%" mathvariant="normal">−</mo>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                  </mrow>
+               </mtd>
+            </mtr>
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                     <mo mathsize="100%" mathvariant="normal">−</mo>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                     <mtext mathsize="100%">     </mtext>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                     <mtext mathsize="100%">        </mtext>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                     <mo mathsize="100%" mathvariant="normal">+</mo>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                  </mrow>
+               </mtd>
+            </mtr>
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                     <mo mathsize="100%" mathvariant="normal">+</mo>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                     <mtext mathsize="100%">     </mtext>
+                     <mo mathsize="100%" mathvariant="normal">−</mo>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                     <mtext mathsize="100%">      </mtext>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">cos</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                     <mo mathsize="100%" mathvariant="normal">−</mo>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ψ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">ϑ</mi>
+                     <mi mathsize="100%" mathvariant="normal">sin</mi>
+                     <mi mathsize="100%" mathvariant="italic">γ</mi>
+                  </mrow>
+               </mtd>
+            </mtr>
+         </mtable>
+      </mfenced>
+   </mrow>
+</math>

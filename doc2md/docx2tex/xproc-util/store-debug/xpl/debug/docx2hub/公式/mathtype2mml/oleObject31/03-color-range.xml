@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+   <mtef>
+      <mtef_version>3</mtef_version>
+      <platform>1</platform>
+      <product>1</product>
+      <product_version>3</product_version>
+      <product_subversion>10</product_subversion>
+      <full/>
+      <slot>
+         <options>0</options>
+         <char>
+            <options>0</options>
+            <typeface>4</typeface>
+            <mt_code_value>0x03B2</mt_code_value>
+         </char>
+         <char>
+            <options>0</options>
+            <typeface>2</typeface>
+            <mt_code_value>0x0028</mt_code_value>
+         </char>
+         <char>
+            <options>1</options>
+            <typeface>3</typeface>
+            <mt_code_value>0x006B</mt_code_value>
+         </char>
+         <char>
+            <options>0</options>
+            <typeface>2</typeface>
+            <mt_code_value>0x0029</mt_code_value>
+         </char>
+         <end/>
+      </slot>
+      <end/>
+   </mtef>
+</root>

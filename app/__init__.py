@@ -31,6 +31,9 @@ def create_app():
     from .task_view import task_bp
     app.register_blueprint(task_bp)
 
+    from .kbs_view import kbs_bp
+    app.register_blueprint(kbs_bp)
+
     @app.teardown_appcontext
     def close_db(exception):
         db = g.pop('db', None)

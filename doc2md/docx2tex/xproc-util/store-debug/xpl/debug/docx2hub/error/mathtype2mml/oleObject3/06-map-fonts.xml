@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi mathvariant="italic" mathsize="100%">μ</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">t</mi>
+         </mrow>
+      </msub>
+      <mn mathvariant="normal" mathsize="100%">(</mn>
+      <mi mathvariant="italic" mathsize="100%">t</mi>
+      <mn mathvariant="normal" mathsize="100%">)</mn>
+      <mo mathvariant="normal" mathsize="100%">=</mo>
+      <mfenced close="" open="{" separators="">
+         <mtable columnalign="left">
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi mathvariant="italic" mathsize="100%">e</mi>
+                     <msup>
+                        <mrow>
+                           <mo mathvariant="normal">−</mo>
+                           <mi mathvariant="italic">k</mi>
+                           <msub>
+                              <mrow>
+                                 <mn mathvariant="normal">1</mn>
+                              </mrow>
+                           </msub>
+                           <mi mathvariant="italic">t</mi>
+                           <msub>
+                              <mrow/>
+                           </msub>
+                           <msup>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msup>
+                        </mrow>
+                     </msup>
+                     <mtable>
+                        <mtr>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow>
+                                 <mi mathvariant="italic" mathsize="100%">t</mi>
+                                 <mo mathvariant="normal" mathsize="100%">≥</mo>
+                                 <mn mathvariant="normal" mathsize="100%">0</mn>
+                              </mrow>
+                           </mtd>
+                        </mtr>
+                     </mtable>
+                  </mrow>
+               </mtd>
+            </mtr>
+            <mtr>
+               <mtd>
+                  <mrow>
+                     <mi mathvariant="italic" mathsize="100%">e</mi>
+                     <msup>
+                        <mrow>
+                           <mo mathvariant="normal">−</mo>
+                           <mi mathvariant="italic">k</mi>
+                           <msub>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msub>
+                           <mi mathvariant="italic">t</mi>
+                           <msub>
+                              <mrow/>
+                           </msub>
+                           <msup>
+                              <mrow>
+                                 <mn mathvariant="normal">2</mn>
+                              </mrow>
+                           </msup>
+                        </mrow>
+                     </msup>
+                     <mtable>
+                        <mtr>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow/>
+                           </mtd>
+                           <mtd>
+                              <mrow>
+                                 <mi mathvariant="italic" mathsize="100%">t</mi>
+                                 <mo mathvariant="normal" mathsize="100%">&lt;</mo>
+                                 <mn mathvariant="normal" mathsize="100%">0</mn>
+                              </mrow>
+                           </mtd>
+                        </mtr>
+                     </mtable>
+                  </mrow>
+               </mtd>
+            </mtr>
+         </mtable>
+      </mfenced>
+   </mrow>
+</math>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:result xmlns:c="http://www.w3.org/ns/xproc-step"
+          xmlns:cat="urn:oasis:names:tc:entity:xmlns:xml:catalog"
+          xmlns:cx="http://xmlcalabash.com/ns/extensions"
+          xmlns:pos="http://exproc.org/proposed/steps/os"
+          xmlns:tr="http://transpect.io"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+          href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx"
+          cwd="/home/lenovo/ubushare/cf/docx2tex/"
+          local-href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx"
+          os-path="/home/lenovo/ubushare/cf/docx2tex/output_workspace/问题集-源码（公开）_20260506T195926_1918f0/问题集-源码（公开）_temp_23657/问题集-源码（公开）.docx"
+          lastpath="%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx"
+          lastpath-os="问题集-源码（公开）.docx"
+          rel-path="output_workspace/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_20260506T195926_1918f0/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89_temp_23657/%E9%97%AE%E9%A2%98%E9%9B%86-%E6%BA%90%E7%A0%81%EF%BC%88%E5%85%AC%E5%BC%80%EF%BC%89.docx"/>

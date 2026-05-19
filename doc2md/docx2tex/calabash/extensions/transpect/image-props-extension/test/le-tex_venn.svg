@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="1000px" height="700px" font-family="Myriad">
+  <circle r="200px" fill-opacity="0.5" fill="#f45" cx="780px" cy="410px" stroke="#c22"/>
+  <circle r="200px" fill-opacity="0.5" fill="#3ff" cx="700px" cy="250px" stroke="#0dd"/>
+  <circle r="200px" fill-opacity="0.5" fill="#fd3" cx="620px" cy="410px" stroke="#ca0"/>
+
+  <text x="570" y="160" font-size="36">Prepress Services</text>
+
+  <text x="430" y="420" font-size="36">Software</text>
+  <text x="410" y="455" font-size="36">Development</text>
+
+  <text x="810" y="455" font-size="36">Consultancy</text>
+
+
+  <text x="625" y="320" font-size="36">Publishing</text>
+  <text x="620" y="355" font-size="36">Production </text>
+  <text x="645" y="390" font-size="36">Systems</text>
+
+</svg>

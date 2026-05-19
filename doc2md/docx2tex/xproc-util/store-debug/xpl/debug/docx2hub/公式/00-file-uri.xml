@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:result xmlns:c="http://www.w3.org/ns/xproc-step"
+          xmlns:cat="urn:oasis:names:tc:entity:xmlns:xml:catalog"
+          xmlns:cx="http://xmlcalabash.com/ns/extensions"
+          xmlns:pos="http://exproc.org/proposed/steps/os"
+          xmlns:tr="http://transpect.io"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+          href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E5%85%AC%E5%BC%8F_20260508T035925_648697/%E5%85%AC%E5%BC%8F_temp_20445/%E5%85%AC%E5%BC%8F.docx"
+          cwd="/home/lenovo/ubushare/cf/docx2tex/"
+          local-href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E5%85%AC%E5%BC%8F_20260508T035925_648697/%E5%85%AC%E5%BC%8F_temp_20445/%E5%85%AC%E5%BC%8F.docx"
+          os-path="/home/lenovo/ubushare/cf/docx2tex/output_workspace/公式_20260508T035925_648697/公式_temp_20445/公式.docx"
+          lastpath="%E5%85%AC%E5%BC%8F.docx"
+          lastpath-os="公式.docx"
+          rel-path="output_workspace/%E5%85%AC%E5%BC%8F_20260508T035925_648697/%E5%85%AC%E5%BC%8F_temp_20445/%E5%85%AC%E5%BC%8F.docx"/>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <msub>
+         <mi mathsize="100%" mathvariant="italic">R</mi>
+         <mrow>
+            <mi mathvariant="italic">z</mi>
+            <mn mathvariant="normal">0</mn>
+         </mrow>
+      </msub>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <msub>
+         <mi mathsize="100%" mathvariant="italic">R</mi>
+         <mn mathvariant="normal">0</mn>
+      </msub>
+      <mo mathsize="100%" mathvariant="normal">+</mo>
+      <msubsup>
+         <mi mathsize="100%" mathvariant="italic">V</mi>
+         <mrow>
+            <mi mathvariant="italic">t</mi>
+         </mrow>
+         <mrow>
+            <mn mathvariant="normal">0</mn>
+         </mrow>
+      </msubsup>
+      <mo mathsize="100%" mathvariant="normal">⋅</mo>
+      <msub>
+         <mi mathsize="100%" mathvariant="italic">t</mi>
+         <mrow>
+            <mi mathvariant="italic">g</mi>
+            <mi mathvariant="italic">o</mi>
+         </mrow>
+      </msub>
+   </mrow>
+</math>

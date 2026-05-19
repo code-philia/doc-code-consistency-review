@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi mathvariant="italic" mathsize="100%">d</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">i</mi>
+         </mrow>
+      </msub>
+      <mi mathvariant="italic" mathsize="100%">j</mi>
+      <mo mathvariant="normal" mathsize="100%">=</mo>
+      <mn mathvariant="normal" mathsize="100%">2</mn>
+      <msup>
+         <mrow>
+            <mn mathvariant="normal">2</mn>
+         </mrow>
+      </msup>
+      <mn mathvariant="normal" mathsize="100%">*</mn>
+      <mi mathvariant="italic" mathsize="100%">b</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">M</mi>
+         </mrow>
+      </msub>
+      <mi mathvariant="italic" mathsize="100%">D</mi>
+      <msup>
+         <mrow>
+            <mi mathvariant="italic">i</mi>
+         </mrow>
+      </msup>
+      <mi mathvariant="italic" mathsize="100%">j</mi>
+      <mo mathvariant="normal" mathsize="100%">+</mo>
+      <mn mathvariant="normal" mathsize="100%">2</mn>
+      <mn mathvariant="normal" mathsize="100%">*</mn>
+      <mi mathvariant="italic" mathsize="100%">b</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">M</mi>
+         </mrow>
+      </msub>
+      <mi mathvariant="italic" mathsize="100%">S</mi>
+      <msup>
+         <mrow>
+            <mi mathvariant="italic">i</mi>
+         </mrow>
+      </msup>
+      <mi mathvariant="italic" mathsize="100%">j</mi>
+      <mo mathvariant="normal" mathsize="100%">+</mo>
+      <mi mathvariant="italic" mathsize="100%">b</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">M</mi>
+         </mrow>
+      </msub>
+      <mi mathvariant="italic" mathsize="100%">B</mi>
+      <msup>
+         <mrow>
+            <mi mathvariant="italic">i</mi>
+         </mrow>
+      </msup>
+      <mi mathvariant="italic" mathsize="100%">j</mi>
+   </mrow>
+</math>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mtable columnalign="left">
+      <mtr>
+         <mtd>
+            <mrow>
+               <msub>
+                  <mi mathsize="100%" mathvariant="italic">S</mi>
+                  <mi mathvariant="italic">x</mi>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mrow>
+                  <mrow>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">S</mi>
+                        <mi mathvariant="italic">x</mi>
+                     </msub>
+                  </mrow>
+                  <mo>/</mo>
+                  <mrow>
+                     <msqrt>
+                        <mrow>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">x</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">y</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">z</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                        </mrow>
+                     </msqrt>
+                  </mrow>
+               </mrow>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <msub>
+                  <mi mathsize="100%" mathvariant="italic">S</mi>
+                  <mi mathvariant="italic">y</mi>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mrow>
+                  <mrow>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">S</mi>
+                        <mi mathvariant="italic">y</mi>
+                     </msub>
+                  </mrow>
+                  <mo>/</mo>
+                  <mrow>
+                     <msqrt>
+                        <mrow>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">x</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">y</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">z</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                        </mrow>
+                     </msqrt>
+                  </mrow>
+               </mrow>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <msub>
+                  <mi mathsize="100%" mathvariant="italic">S</mi>
+                  <mi mathvariant="italic">z</mi>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mrow>
+                  <mrow>
+                     <msub>
+                        <mi mathsize="100%" mathvariant="italic">S</mi>
+                        <mi mathvariant="italic">z</mi>
+                     </msub>
+                  </mrow>
+                  <mo>/</mo>
+                  <mrow>
+                     <msqrt>
+                        <mrow>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">x</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">y</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                           <mo mathsize="100%" mathvariant="normal">+</mo>
+                           <msup>
+                              <msub>
+                                 <mi mathsize="100%" mathvariant="italic">S</mi>
+                                 <mi mathvariant="italic">z</mi>
+                              </msub>
+                              <mn mathvariant="normal">2</mn>
+                           </msup>
+                        </mrow>
+                     </msqrt>
+                  </mrow>
+               </mrow>
+            </mrow>
+         </mtd>
+      </mtr>
+   </mtable>
+</math>

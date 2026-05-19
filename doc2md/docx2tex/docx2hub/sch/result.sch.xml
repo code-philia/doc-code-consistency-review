@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://purl.oclc.org/dsdl/schematron" 
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:fn="http://www.w3.org/2005/xpath-functions"
+  xmlns:dbk="http://docbook.org/ns/docbook"
+  queryBinding="xslt2" xml:lang="en">
+  
+  <ns prefix="w" uri="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>
+  <ns prefix="dbk" uri="http://docbook.org/ns/docbook" />
+  <ns prefix="fn" uri="http://www.w3.org/2005/xpath-functions"/>
+
+  <title>docx</title>
+
+  <let name="base-dir" value="/*/dbk:info/dbk:keywordset[@role eq 'hub']/dbk:keyword[@role eq 'source-dir-uri']"/>
+  <xsl:param name="report-referenced-images-in-docx"/>
+  <xsl:variable name="indexterms" select="//dbk:indexterm" as="element(dbk:indexterm)*"/>
+  
+  <pattern id="docx_unbalanced_field_functions_pattern">
+    <rule context="*[processing-instruction(letex)[starts-with(., 'W2D_094')]]">
+      <let name="pi-text"  value="string-join(
+                                    for $pi in processing-instruction(letex)[starts-with(., 'W2D_094')]
+                                    return concat('''', replace($pi, '^W2D_094\s+', ''), ''''),
+                                    ', '
+                                  )"/>
+      <report test="true()" id="docx_unbalanced_field_functions" diagnostics="docx_unbalanced_field_functions_de" role="error">
+        <span class="srcpath"><xsl:value-of 
+          select="for $s in tokenize(ancestor-or-self::*[@srcpath][1]/@srcpath, '\s+')
+                  return concat($base-dir, $s)"/></span>
+        <span class="category">docx</span>
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Unbalanced field functions</span>
+        There was an error (infinite loop) in finding matching start/end markers for field functions.
+        This is typically caused by inadvertent removal of one of the markers while “track changes” is active.
+        Word has some autocorrection capability for these things that this converter lacks. 
+        Please accept all changes in the document and convert it again. If there are no tracked changes,
+        please ask for help. In the absence of a more specific contact, you may turn to <a xmlns="http://www.w3.org/1999/xhtml" 
+          href="mailto:support@le-tex.de">support@le-tex.de</a>. This text – probably a mix of instruction 
+        text and regular text – might give you a hint where the error occured: <xsl:value-of select="$pi-text"/>.
+      </report>
+      
+    </rule>
+  </pattern>
+
+  <pattern id="docx_CSL_mapping">
+    <rule context="dbk:bibliography[@role = 'CSL']//dbk:biblioentry">
+      <report test="descendant::dbk:phrase[starts-with(@role, 'csl_')] or descendant::fn:*" id="Unimplemented_CSL_element" 
+        diagnostics="Unimplemented_CSL_element_de" role="info">
+        <span class="srcpath"><xsl:value-of 
+          select="for $s in tokenize((descendant-or-self::*[@srcpath][1])/@srcpath, '\s+')
+                  return concat($base-dir, $s)"/></span>
+        <span class="category">docx</span>
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Mapping incomplete</span>
+        Regarding mapping of the 'Citation Style Language' (CSL) bibliography: there is content in biblio entry <xsl:value-of select="index-of(for $i in //dbk:biblioentry return generate-id($i), generate-id(.))"/> not mapped to DocBook/Hub properly.
+        <br xmlns="http://www.w3.org/1999/xhtml"/>
+        In further conversion processes content may get lost.
+        <br xmlns="http://www.w3.org/1999/xhtml"/>
+        In the absence of a more specific contact, you may turn to <a xmlns="http://www.w3.org/1999/xhtml" href="mailto:support@le-tex.de">support@le-tex.de</a>.
+      </report>
+    </rule>
+  </pattern>
+
+  <pattern id="docx_unbalanced_table_columns_pattern">
+    <let name="max_calc_colnum"
+      value="max(for $r in dbk:tgroup/*/dbk:row return (count($r/*:entry[not(@namest or @nameend)]) + sum(for $span in $r/dbk:entry[@namest and @nameend] return 1 + xs:integer(substring-after($span/@nameend, 'col')) - xs:integer(substring-after($span/@namest, 'col')))))"/>
+    <rule context="//dbk:informaltable[count(dbk:tgroup/dbk:colspec) gt $max_calc_colnum]">
+      <report test="true()" id="docx_unbalanced_table_columns" diagnostics="docx_unbalanced_table_columns_de" role="warning">
+        <span class="srcpath"><xsl:value-of select="concat($base-dir, @srcpath)"/></span>
+        <span class="category">docx</span>
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Unbalanced table columns</span>
+        There are more columns defined than actually needed. The number of defined columns is <xsl:value-of
+          select="count(dbk:tgroup/dbk:colspec)"/> and the number of maximal used is <xsl:value-of
+          select="$max_calc_colnum"/>.
+        <br xmlns="http://www.w3.org/1999/xhtml"/>
+        Please check if some or all table cells can be merged or renewed. Try to solve column spans.
+        Otherwise the table will stay in xml in the current state: more columns defined than needed.
+      </report>
+      
+    </rule>
+  </pattern>
+
+  <pattern id="docx_referenced-images">
+    <rule context="dbk:imagedata[@fileref]">
+      <report test="($report-referenced-images-in-docx = ('yes', 'true')) and not(starts-with(@fileref, 'container:'))" id="docx_referenced-image" diagnostics="docx_referenced-image_de" role="warning">
+        <span class="srcpath"><xsl:value-of select="concat($base-dir, @srcpath)"/></span>
+        <span class="category">docx</span>
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Image not inside docx file</span>
+        The image  <xsl:value-of select="@fileref"/> is referenced and not contained in the docx container.
+        <br xmlns="http://www.w3.org/1999/xhtml"/>
+        If the image is needed for your workflow make sure it is available for the conversion process via embedding it or uploading it.
+      </report>
+      
+    </rule>
+  </pattern>
+
+  <pattern id="docx_carriage_returns">
+    <rule context="dbk:phrase[@role='cr']">
+      <report test="true()" id="docx_carriage_return" diagnostics="docx_carriage_return_de" role="warning">
+        <span class="srcpath"><xsl:value-of select="concat($base-dir, (@srcpath, ancestor::*[@srcpath][1]/@srcpath)[1])"/></span>
+        <span class="category">docx</span>
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">A carriage return character used</span>
+        Instead of a normal paragraph, a carriage return character was used here, possibly from copying contents from other files. 
+        This cannot be seen in Word because it is displayed in the same way. 
+        Nonetheless, it is not handled in the same way and no seperate paragraph is generated. Ignore this message if that is a wanted behaviour, 
+        the control character is mapped to a phrase.
+       <br xmlns="http://www.w3.org/1999/xhtml"/>
+        If separate paraphraphs were intended, delete the character and the enter button instead.
+      </report>
+    </rule>
+  </pattern>
+
+  <pattern id="docx_broken_indexterms">
+    <rule context="dbk:indexterm">
+     <let name="text" value="(preceding-sibling::*[normalize-space()][1], following-sibling::*[normalize-space()][1])[1]"/>
+      <assert test="if(@class eq 'endofrange') then true() else exists(*)" id="docx_broken_indexterm" diagnostics="docx_broken_indexterm_de" role="warning">
+        <span class="srcpath"><xsl:value-of 
+          select="for $s in tokenize(ancestor-or-self::*[@srcpath][1]/@srcpath, '\s+')
+                  return concat($base-dir, $s)"/></span>
+        <span class="category">docx</span>
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Empty or broken index entry</span>
+                An empty indexterm was created, please check the input.<br xmlns="http://www.w3.org/1999/xhtml"/><br xmlns="http://www.w3.org/1999/xhtml"/> 
+        The following text before or after the index entry might give you a hint where the error occured: 
+       <br xmlns="http://www.w3.org/1999/xhtml"/><xsl:value-of select="string-join($text, '')"/>
+      </assert>
+      <assert test="if(@class eq 'startofrange') then @xml:id = $indexterms[@class eq 'endofrange']/@startref else true()" id="docx_indexterm_no_endref" diagnostics="docx_indexterm_no_endref_de" role="warning">
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">End delimiter for index entry is missing</span>
+        An index entry was found that defines a range, but the end separator is missing. 
+        Please check the input.<br xmlns="http://www.w3.org/1999/xhtml"/><br xmlns="http://www.w3.org/1999/xhtml"/>
+        The following text before or after the index entry might give you a hint where the error occured:
+        <br xmlns="http://www.w3.org/1999/xhtml"/><xsl:value-of select="string-join($text, '')"/>
+      </assert>
+      <assert test="if(@class eq 'endofrange') then @startref = $indexterms[@class eq 'startofrange']/@xml:id else true()" id="docx_indexterm_no_startref" diagnostics="docx_indexterm_no_startref_de" role="warning">
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">End delimiter found but beginning of index entry is missing</span>
+        An index separator was found that indicates the end of an index entry range, but the beginning of the index term is missing. 
+        Please check the input.<br xmlns="http://www.w3.org/1999/xhtml"/><br xmlns="http://www.w3.org/1999/xhtml"/>
+        The following text before or after the index entry might give you a hint where the error occured:
+        <br xmlns="http://www.w3.org/1999/xhtml"/><xsl:value-of select="string-join($text, '')"/>
+      </assert>
+      
+    </rule>
+  </pattern>
+
+  <diagnostics>
+    <diagnostic id="docx_broken_indexterm_de" xml:lang="de">
+      <span class="category">docx</span>
+      <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Leerer oder unvollständiger Indexeintrag</span>
+      Ein leerer Indexeintrag wurde generiert. Möglicherweise ist er im Dokument nicht richtig erfasst. Bitte prüfen Sie die Stelle.
+      <br xmlns="http://www.w3.org/1999/xhtml"/><br xmlns="http://www.w3.org/1999/xhtml"/>
+      Folgender Text, der vor oder nach dem Indexeintrag stehen kann, soll Ihnen helfen die Stelle leichter zu finden: 
+      <br xmlns="http://www.w3.org/1999/xhtml"/><xsl:value-of select="string-join($text, '')"/>
+    </diagnostic>
+    <diagnostic id="docx_indexterm_no_endref_de" xml:lang="de">
+      <span class="category">docx</span>
+      <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Indexeintrag </span>
+      Ein Indexeintrag wurde gefunden, der einen Bereich definiert, aber die Endmarke für den Bereich ist nicht vorhanden.
+      <br xmlns="http://www.w3.org/1999/xhtml"/><br xmlns="http://www.w3.org/1999/xhtml"/>
+      Folgender Text, der vor oder nach dem Indexeintrag stehen kann, soll Ihnen helfen die Stelle leichter zu finden: 
+      <br xmlns="http://www.w3.org/1999/xhtml"/><xsl:value-of select="string-join($text, '')"/>
+    </diagnostic>
+    <diagnostic id="docx_indexterm_no_startref_de" xml:lang="de">
+      <span class="category">docx</span>
+      <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Index-Endmarke ohne Indexeintrag</span>
+      Es wurde die Endmarke eines Indexeintrags gefunden, das das Ende eines Indexeintragsbereichs angibt, aber der Anfang des Indexeintrags fehlt.
+      <br xmlns="http://www.w3.org/1999/xhtml"/><br xmlns="http://www.w3.org/1999/xhtml"/>
+      Folgender Text, der vor oder nach dem Indexeintrag stehen kann, soll Ihnen helfen die Stelle leichter zu finden: 
+      <br xmlns="http://www.w3.org/1999/xhtml"/><xsl:value-of select="string-join($text, '')"/>
+    </diagnostic>
+    
+    <diagnostic id="docx_carriage_return_de" xml:lang="de">
+      <span class="category">docx</span>
+      <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Carriage Return Zeichen verwendet</span>
+      An dieser Stelle wurde ein Carriage-Return-Zeichen verwendet, z.B. durch das Kopieren von Inhalten aus anderen Dokumenten. 
+      In Word sieht man den Unterschied nicht, aber es handelt sich nicht um eine echte Absatzmarke, sondern ein spezielles Steuerzeichen. 
+      Bei der Konvertierung werden keine eigenen Absätze erzeugt. Falls das so gewollt ist, ignorieren Sie die Meldung. 
+      <br xmlns="http://www.w3.org/1999/xhtml"/>
+      Sollen separate Absätze erzeugt werden, löschen Sie das Zeichen bitte und trennen die Absätze regulär durch Eingabe der Enter-Taste.
+    </diagnostic>
+    <diagnostic id="docx_referenced-image_de" xml:lang="de">
+      <span class="category">docx</span>
+      <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Referenziertes Bild</span>
+      Das Bild  <xsl:value-of select="@fileref"/> wurde im Word-Dokument referenziert und ist nicht physisch im Dokument enthalten.
+        <br xmlns="http://www.w3.org/1999/xhtml"/>
+      Soll das Bild im weiteren Konvertierungsprozess verarbeitet werden, muss es an definierter Stelle bereit gestellt oder in die docx-Datei eingebettet werden.
+    </diagnostic>
+    <diagnostic id="docx_unbalanced_field_functions_de" xml:lang="de">
+      <span class="category">docx</span>
+      <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Feldfunktionen: Schachtelung falsch</span>
+      Es gab einen Fehler (unendliche Rekursion) beim Zuordnen von Start-/Endemarkierungen für Feldfunktionen.
+      Dies wird typischerweise dadurch verursacht, dass solche Markierungen bei eingeschalteter Änderungsverfolgung 
+      unbeabsichtigt mit entfernt werden. Word kann derlei wohl korrigieren, dieser Konverter jedoch nicht.
+      Deshalb bitten wir Sie, sämtliche Änderungen zu akzeptieren und das Dokument erneut zu konvertieren.
+      Sollte das Dokument keine Änderungsmarkierung enthalten, so wenden Sie sich bitte an den Support (wenn nichts
+      anderes angegeben, an <a xmlns="http://www.w3.org/1999/xhtml" href="mailto:support@le-tex.de">support@le-tex.de</a>).
+      Dieser Text könnte einen Hinweis auf den Fehlerort und -text geben: <xsl:value-of select="$pi-text"/>.
+    </diagnostic>
+    <diagnostic id="docx_unbalanced_table_columns_de" xml:lang="de">
+      <span class="category">docx</span>
+      <span class="issue" xmlns="http://www.w3.org/1999/xhtml"></span>
+      Es sind mehr Tabellenspalten definiert als tatsächlich gebraucht werden. Definierte Spalten sind <xsl:value-of
+          select="count(*:tgroup/*:colspec)"/> vorhanden. Die Anzahl an maximal benötigter Spalten ist <xsl:value-of
+          select="$max_calc_colnum"/>.
+        <br xmlns="http://www.w3.org/1999/xhtml"/>
+        Bitte prüfen, ob Tabellenzellen zusammengeführt oder erneuert werden können.
+        Andernfalls verbleibt die Tabelle XML-seitig im aktuellen Stand: mehr Tabellenspalten definiert als benötigt werden. 
+    </diagnostic>
+    <diagnostic id="Unimplemented_CSL_element_de" xml:lang="de">
+      <span class="category">docx</span>
+        <span class="issue" xmlns="http://www.w3.org/1999/xhtml">Mapping unvollständig</span>
+        Mapping des 'Citation Style Language' (CSL) Literaturverzeichnisses: in Eintrag <xsl:value-of select="index-of(for $i in //dbk:biblioentry return generate-id($i), generate-id(.))"/> finden sich Inhalte, welche nicht ordentlich nach DocBook/Hub konvertiert werden konnten.
+        <br xmlns="http://www.w3.org/1999/xhtml"/>
+        In weiteren Konvertierungsschritten könnten diese Inhalte verloren gehen.
+        <br xmlns="http://www.w3.org/1999/xhtml"/>
+        Falls keine konkreten Ansprechpartner bekannt sind, bitte an <a xmlns="http://www.w3.org/1999/xhtml" href="mailto:support@le-tex.de">support@le-tex.de</a> wenden.
+    </diagnostic>
+  </diagnostics>
+  
+</schema>

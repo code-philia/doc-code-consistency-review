@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<c:result xmlns:c="http://www.w3.org/ns/xproc-step"
+          xmlns:cat="urn:oasis:names:tc:entity:xmlns:xml:catalog"
+          xmlns:cx="http://xmlcalabash.com/ns/extensions"
+          xmlns:pos="http://exproc.org/proposed/steps/os"
+          xmlns:tr="http://transpect.io"
+          xmlns:xs="http://www.w3.org/2001/XMLSchema"
+          xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+          href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_20260508T052008_27c0f6/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_temp_7234/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.docx"
+          cwd="/home/lenovo/ubushare/cf/docx2tex/"
+          local-href="file:///home/lenovo/ubushare/cf/docx2tex/output_workspace/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_20260508T052008_27c0f6/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_temp_7234/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.docx"
+          os-path="/home/lenovo/ubushare/cf/docx2tex/output_workspace/测试文档_copy_20260508T052008_27c0f6/测试文档_copy_temp_7234/测试文档_copy.docx"
+          lastpath="%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.docx"
+          lastpath-os="测试文档_copy.docx"
+          rel-path="output_workspace/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_20260508T052008_27c0f6/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy_temp_7234/%E6%B5%8B%E8%AF%95%E6%96%87%E6%A1%A3_copy.docx"/>

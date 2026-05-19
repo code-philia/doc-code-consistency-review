@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <msub xmlns:tr="http://transpect.io">
+      <mi>t</mi>
+      <mrow>
+         <mi>e</mi>
+         <mi>s</mi>
+      </mrow>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <msub xmlns:tr="http://transpect.io">
+      <mi>t</mi>
+      <mrow>
+         <mi>g</mi>
+         <mi>o</mi>
+      </mrow>
+   </msub>
+</math>

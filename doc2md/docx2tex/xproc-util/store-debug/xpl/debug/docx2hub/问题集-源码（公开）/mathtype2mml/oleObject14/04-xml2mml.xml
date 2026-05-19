@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mtable columnalign="left">
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathvariant="italic"
+                   font-position="0065"
+                   fontfamily="Symbol"
+                   default-font=""
+                   mathsize="100%">ε</mi>
+               <msub>
+                  <mrow>
+                     <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                  </mrow>
+               </msub>
+               <mo mathvariant="normal"
+                   font-position="003D"
+                   fontfamily="Symbol"
+                   default-font=""
+                   mathsize="100%">=</mo>
+               <mn mathvariant="normal"
+                   start-function=""
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">a</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">r</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">c</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">s</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">i</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">n</mn>
+               <mfenced separators="" open="(" close=")">
+                  <mrow>
+                     <mfrac>
+                        <mrow>
+                           <mi mathvariant="normal"
+                               font-position="0044"
+                               fontfamily="Symbol"
+                               default-font=""
+                               mathsize="100%">Δ</mi>
+                           <mi mathvariant="italic"
+                               fontfamily="Times New Roman"
+                               default-font=""
+                               mathsize="100%">P</mi>
+                           <mi mathvariant="italic"
+                               fontfamily="Times New Roman"
+                               default-font=""
+                               mathsize="100%">Y</mi>
+                           <msup>
+                              <mrow>
+                                 <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                                 <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">t</mi>
+                              </mrow>
+                           </msup>
+                        </mrow>
+                        <mrow>
+                           <mi mathvariant="normal"
+                               font-position="0044"
+                               fontfamily="Symbol"
+                               default-font=""
+                               mathsize="100%">Δ</mi>
+                           <mi mathvariant="italic"
+                               fontfamily="Times New Roman"
+                               default-font=""
+                               mathsize="100%">R</mi>
+                        </mrow>
+                     </mfrac>
+                  </mrow>
+               </mfenced>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathvariant="italic"
+                   font-position="0062"
+                   fontfamily="Symbol"
+                   default-font=""
+                   mathsize="100%">β</mi>
+               <msub>
+                  <mrow>
+                     <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                  </mrow>
+               </msub>
+               <mo mathvariant="normal"
+                   font-position="003D"
+                   fontfamily="Symbol"
+                   default-font=""
+                   mathsize="100%">=</mo>
+               <mn mathvariant="normal"
+                   start-function=""
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">a</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">t</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">a</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">n</mn>
+               <mn mathvariant="normal"
+                   fontfamily="Times New Roman"
+                   default-font=""
+                   mathsize="100%">2</mn>
+               <mfenced separators="" open="(" close=")">
+                  <mrow>
+                     <mo mathvariant="normal"
+                         font-position="002D"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">−</mo>
+                     <mi mathvariant="normal"
+                         font-position="0044"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">Δ</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">P</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">Z</mi>
+                     <msup>
+                        <mrow>
+                           <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                           <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">t</mi>
+                        </mrow>
+                     </msup>
+                     <mn mathvariant="normal"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">,</mn>
+                     <mi mathvariant="normal"
+                         font-position="0044"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">Δ</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">P</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">X</mi>
+                     <msup>
+                        <mrow>
+                           <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                           <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">t</mi>
+                        </mrow>
+                     </msup>
+                  </mrow>
+               </mfenced>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mover accent="true">
+                  <mi mathvariant="italic"
+                      font-position="0065"
+                      fontfamily="Symbol"
+                      default-font=""
+                      mathsize="100%">ε</mi>
+                  <mo>˙</mo>
+               </mover>
+               <msub>
+                  <mrow>
+                     <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                  </mrow>
+               </msub>
+               <mo mathvariant="normal"
+                   font-position="003D"
+                   fontfamily="Symbol"
+                   default-font=""
+                   mathsize="100%">=</mo>
+               <mfrac>
+                  <mrow>
+                     <mi mathvariant="normal"
+                         font-position="0044"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">Δ</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">V</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">Y</mi>
+                     <msup>
+                        <mrow>
+                           <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                           <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">t</mi>
+                        </mrow>
+                     </msup>
+                     <mo mathvariant="normal"
+                         font-position="00D7"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">⋅</mo>
+                     <mi mathvariant="normal"
+                         font-position="0044"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">Δ</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">R</mi>
+                     <mo mathvariant="normal"
+                         font-position="002D"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">−</mo>
+                     <mi mathvariant="normal"
+                         font-position="0044"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">Δ</mi>
+                     <mover accent="true">
+                        <mi mathvariant="italic"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">R</mi>
+                        <mo>˙</mo>
+                     </mover>
+                     <mo mathvariant="normal"
+                         font-position="00D7"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">⋅</mo>
+                     <mi mathvariant="normal"
+                         font-position="0044"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">Δ</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">P</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">Y</mi>
+                     <msup>
+                        <mrow>
+                           <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                           <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">t</mi>
+                        </mrow>
+                     </msup>
+                  </mrow>
+                  <mrow>
+                     <mi mathvariant="normal"
+                         font-position="0044"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">Δ</mi>
+                     <mi mathvariant="italic"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">R</mi>
+                     <msup>
+                        <mrow>
+                           <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">2</mn>
+                        </mrow>
+                     </msup>
+                     <mo mathvariant="normal"
+                         font-position="00D7"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">⋅</mo>
+                     <mn mathvariant="normal"
+                         start-function=""
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">c</mn>
+                     <mn mathvariant="normal"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">o</mn>
+                     <mn mathvariant="normal"
+                         fontfamily="Times New Roman"
+                         default-font=""
+                         mathsize="100%">s</mn>
+                     <mi mathvariant="italic"
+                         font-position="0065"
+                         fontfamily="Symbol"
+                         default-font=""
+                         mathsize="100%">ε</mi>
+                     <msub>
+                        <mrow>
+                           <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                        </mrow>
+                     </msub>
+                  </mrow>
+               </mfrac>
+            </mrow>
+         </mtd>
+      </mtr>
+   </mtable>
+</math>

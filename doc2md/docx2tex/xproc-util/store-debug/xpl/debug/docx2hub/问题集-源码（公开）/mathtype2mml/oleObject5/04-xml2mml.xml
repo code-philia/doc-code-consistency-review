@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">R</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">z</mi>
+            <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">0</mn>
+         </mrow>
+      </msub>
+      <mo mathvariant="normal"
+          font-position="003D"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">=</mo>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">R</mi>
+      <msub>
+         <mrow>
+            <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">0</mn>
+         </mrow>
+      </msub>
+      <mo mathvariant="normal"
+          font-position="002B"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">+</mo>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">V</mi>
+      <msubsup>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">t</mi>
+         </mrow>
+         <mrow>
+            <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">0</mn>
+         </mrow>
+      </msubsup>
+      <mo mathvariant="normal"
+          font-position="00D7"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">⋅</mo>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">t</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">g</mi>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">o</mi>
+         </mrow>
+      </msub>
+   </mrow>
+</math>

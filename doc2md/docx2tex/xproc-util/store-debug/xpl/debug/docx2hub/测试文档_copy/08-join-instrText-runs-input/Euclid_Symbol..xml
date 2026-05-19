@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols>
+  <!--  *
+        * Euclid Symbol
+        * -->
+   <symbol number="0077" entity="" char="ω"/>
+   <!--EMPTY SET-->
+   <symbol number="F0C6" entity="" char="∅"/>
+   <!--GREEK SMALL LETTER ALPHA-->
+   <symbol number="F061" entity="" char="α"/>
+   <!--MULTIPLICATION SIGN-->
+   <symbol number="00B4" entity="" char="×"/>
+   <symbol number="F0B4" entity="" char="×"/>
+   <!--LESS-THAN OR EQUAL TO-->
+   <symbol number="F0A3" entity="" char="≤"/>
+   <!--NOT EQUAL TO-->
+   <symbol number="F0B9" entity="" char="≠"/>
+   <!--GREEK SMALL LETTER PI-->
+   <symbol number="F070" entity="" char="π"/>
+   <!--GREEK SMALL LETTER EPSILON-->
+   <symbol number="F065" entity="" char="ε"/>
+   <!--GREEK SMALL LETTER OMEGA-->
+   <symbol number="F077" entity="" char="ω"/>
+   <!--DOT OPERATOR-->
+   <symbol number="F0D7" entity="" char="⋅"/>
+   <!--ELEMENT OF-->
+   <symbol number="F0CE" entity="" char="∈"/>
+   <!--GREEK SMALL LETTER RHO-->
+   <symbol number="F072" entity="" char="ρ"/>
+   <!--GREEK SMALL LETTER BETA-->
+   <symbol number="F062" entity="" char="β"/>
+</symbols>

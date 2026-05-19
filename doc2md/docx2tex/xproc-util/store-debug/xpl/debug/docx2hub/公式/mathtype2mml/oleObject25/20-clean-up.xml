@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <msup xmlns:tr="http://transpect.io">
+      <msub>
+         <mi>α</mi>
+         <mi>w</mi>
+      </msub>
+      <mn>2</mn>
+   </msup>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mstyle xmlns:tr="http://transpect.io" displaystyle="true">
+      <munderover>
+         <mo>∑</mo>
+         <mrow>
+            <mi>i</mi>
+            <mo>=</mo>
+            <mn>0</mn>
+         </mrow>
+         <mrow>
+            <mi>N</mi>
+            <mo>−</mo>
+            <mn>1</mn>
+         </mrow>
+      </munderover>
+      <msup>
+         <mi>V</mi>
+         <mn>2</mn>
+      </msup>
+   </mstyle>
+   <mo xmlns:tr="http://transpect.io">(</mo>
+   <mi xmlns:tr="http://transpect.io">k</mi>
+   <mo xmlns:tr="http://transpect.io">−</mo>
+   <mi xmlns:tr="http://transpect.io">i</mi>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">)</mo>
+   <mo xmlns:tr="http://transpect.io">/</mo>
+   <mi xmlns:tr="http://transpect.io">N</mi>
+</math>

@@ -1,0 +1,1 @@
+Validation of xml2tex configuration successful

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <mfrac xmlns:tr="http://transpect.io">
+      <mrow>
+         <msup>
+            <msub>
+               <mi>α</mi>
+               <mi>w</mi>
+            </msub>
+            <mn>2</mn>
+         </msup>
+         <mo>(</mo>
+         <mi>k</mi>
+         <mo>)</mo>
+      </mrow>
+      <mrow>
+         <msup>
+            <msub>
+               <mi>α</mi>
+               <mi>n</mi>
+            </msub>
+            <mn>2</mn>
+         </msup>
+         <mo>(</mo>
+         <mi>k</mi>
+         <mo>)</mo>
+      </mrow>
+   </mfrac>
+</math>

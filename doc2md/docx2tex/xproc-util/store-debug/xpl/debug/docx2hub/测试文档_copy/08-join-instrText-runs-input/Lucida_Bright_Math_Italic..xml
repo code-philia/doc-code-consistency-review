@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols xmlns:css="http://www.w3.org/1996/css">
+   <symbol number="F022" entity="" char="Δ" css:font-style="normal"/>
+   <!-- GREEK CAPITAL LETTER DELTA -->
+   <!--<symbol number="F041" entity="&#xF041;" char="&#x3C7;" css:font-style="normal"/>-->
+   <!-- italic(!?) -->
+   <!-- Greek Small Letter Chi -->
+   <symbol number="F05E" entity="" char="∅" css:font-style="normal"/>
+   <!-- Empty Set -->
+   <symbol number="F08E" entity="" char="|" css:font-style="normal"/>
+   <!-- Vertical Line -->
+   <symbol number="F0B8" entity="" char="𝔼" css:font-style="normal"/>
+   <!-- Mathematical Double-struck Capital E -->
+   <symbol number="F0BA" entity="" char="𝔾" css:font-style="normal"/>
+   <!-- Mathematical Double-struck Capital G -->
+   <symbol number="F0BE" entity="" char="𝕂" css:font-style="normal"/>
+   <!-- Mathematical Double-struck Capital K -->
+   <symbol number="F0BF" entity="" char="𝕃" css:font-style="normal"/>
+   <!-- Mathematical Double-struck Capital L -->
+   <symbol number="F0C1" entity="" char="ℕ" css:font-style="normal"/>
+   <!-- DOUBLE-STRUCK CAPITAL N -->
+   <symbol number="F0C3" entity="" char="ℙ" css:font-style="normal"/>
+   <!-- DOUBLE-STRUCK CAPITAL P -->
+   <symbol number="F0C4" entity="" char="ℚ" css:font-style="normal"/>
+   <!-- DOUBLE-STRUCK CAPITAL Q -->
+   <symbol number="F0C5" entity="" char="ℝ" css:font-style="normal"/>
+   <!-- DOUBLE-STRUCK CAPITAL R -->
+   <symbol number="F0CA" entity="" char="𝕎" css:font-style="normal"/>
+   <!-- Mathematical Double-struck Capital W -->
+   <symbol number="F0CD" entity="" char="ℤ" css:font-style="normal"/>
+   <!-- DOUBLE-STRUCK CAPITAL Z -->
+   <symbol number="F02D" entity="" char="β" css:font-style="italic"/>
+   <!-- GREEK SMALL LETTER BETA -->
+   <symbol number="F02E" entity="" char="γ" css:font-style="italic"/>
+   <!-- GREEK SMALL LETTER GAMMA -->
+   <symbol number="F02F" entity="" char="δ" css:font-style="italic"/>
+   <!-- GREEK SMALL LETTER DELTA -->
+   <symbol number="F044" entity="" char="ε" css:font-style="italic"/>
+   <!-- GREEK SMALL LETTER EPSILON -->
+   <symbol number="F0F7" entity="" char="⩡" css:font-style="normal"/>
+   <!-- Small Vee With Underbar -->
+</symbols>

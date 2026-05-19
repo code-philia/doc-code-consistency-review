@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mfenced close="]" open="[" separators="">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">n</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic">x</mi>
+                              <mn mathvariant="normal">1</mn>
+                              <mi mathvariant="italic">g</mi>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">n</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic">y</mi>
+                              <mn mathvariant="normal">1</mn>
+                              <mi mathvariant="italic">g</mi>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">n</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic">z</mi>
+                              <mn mathvariant="normal">1</mn>
+                              <mi mathvariant="italic">g</mi>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mi mathsize="100%" mathvariant="italic">T</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic">D</mi>
+         </mrow>
+      </msub>
+      <mfenced close="]" open="[" separators="">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">B</mi>
+                        <msub>
+                           <mrow>
+                              <mn mathvariant="normal">1</mn>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">B</mi>
+                        <msub>
+                           <mrow>
+                              <mn mathvariant="normal">2</mn>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">B</mi>
+                        <msub>
+                           <mrow>
+                              <mn mathvariant="normal">3</mn>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+   </mrow>
+</math>

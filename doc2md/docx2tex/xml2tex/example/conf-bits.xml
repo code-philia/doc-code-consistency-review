@@ -1,0 +1,365 @@
+<?xml-model href="http://transpect.io/xml2tex/schema/xml2tex.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="http://transpect.io/xml2tex/schema/xml2tex.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<set xmlns="http://transpect.io/xml2tex" 
+  xmlns:xml2tex="http://transpect.io/xml2tex" 
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <ns prefix="css" uri="http://www.w3.org/1996/css"/>
+  <ns prefix="mml2tex" uri="http://transpect.io/mml2tex"/>
+  <ns prefix="tr" uri="http://transpect.io"/>
+
+  <import href="conf.charmap.xml"/>
+
+  <xsl:import href="http://transpect.io/mml2tex/xsl/mml2tex.xsl"/>
+  <xsl:import href="http://transpect.io/xslt-util/colors/xsl/colors.xsl"/>
+  <xsl:import href="http://transpect.io/xslt-util/paths/xsl/paths.xsl"/>
+  <xsl:import href="http://transpect.io/xslt-util/roman-numerals/xsl/roman2int.xsl"/>
+
+  <xsl:param name="image-dir" select="'images/'" as="xs:string"/>
+
+  <xsl:variable name="langs" select="distinct-values((//@xml:lang, 'en'))" as="xs:string*"/>
+
+  <preamble>
+    <!-- JATS and BITS -->
+    <xsl:value-of select="concat('\documentclass{', /*/name(), '}')"/>
+    \usepackage{tabularx}
+    
+    <!-- JATS -->
+    <xsl:apply-templates select="/article/front/article-meta/title-group/article-title" mode="#current"/>
+    <xsl:apply-templates select="/article/front/article-meta/abstract" mode="#current"/>
+    <xsl:apply-templates select="/article/front/article-meta/kwd-group[@kwd-group-type = 'author-created']" mode="#current"/>
+
+    <!-- BITS -->
+
+  </preamble>
+
+  <front><xsl:text>&#xa;%% line(s) after document-begin&#xa;</xsl:text></front>
+
+  <back><xsl:text>&#xa;%% line(s) before document-end&#xa;</xsl:text></back>
+
+  <template context="abstract">
+    <rule name="abstract" type="env">
+      <xsl:if test="title/normalize-space()">
+        <option select="title"/>
+      </xsl:if>
+      <xsl:apply-templates select="*[not(self::title)]" mode="#current"/>
+    </rule>
+  </template>
+
+  <template context="article-meta/kwd-group[@kwd-group-type = 'abbreviations']">
+    <rule name="Abbrev" type="env">
+      <xsl:if test="title/normalize-space()">
+        <option select="title"/>
+      </xsl:if>
+      <xsl:apply-templates select="*[not(self::title)]" mode="#current"/>
+    </rule>
+  </template>
+
+  <template context="article-meta/kwd-group[@kwd-group-type = 'abbreviations']/compound-kwd">
+    <rule name="item" type="cmd" break-before="1">
+      <option select="compound-kwd-part[@content-type = 'abbrev']"/>
+      <text select="compound-kwd-part[@content-type = 'expansion']"/>
+    </rule>
+  </template>
+
+  <template context="article-meta/kwd-group[@kwd-group-type = 'author-created']">
+    <rule name="Keywords" type="cmd" break-before="1">
+      <xsl:if test="title/normalize-space()">
+        <option select="title"/>
+      </xsl:if>
+      <param select="kwd"/>
+    </rule>
+  </template>
+
+  <template context="article-meta/kwd-group[@kwd-group-type = 'author-created']/kwd">
+    <xsl:apply-templates mode="#current"/>
+    <xsl:if test="following-sibling::kwd">
+      <xsl:text>,&#x20;</xsl:text>
+    </xsl:if>
+  </template>
+
+  <template context="article/front"/>
+
+  <template context="title-group/article-title">
+    <rule name="title" type="cmd">
+      <param select="node()"/>
+    </rule>
+  </template>
+
+  <template context="title-group/subtitle">
+    <rule name="subtitle" type="cmd" break-before="1">
+      <param select="node()"/>
+    </rule>
+  </template>
+  
+  <xsl:variable name="label-content-as-comment" as="xs:boolean"
+    select="true()"/>
+
+  <template context="label">
+    <xsl:choose>
+      <xsl:when test="$label-content-as-comment">
+        <xsl:value-of select="'%', ."/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-templates mode="#current"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </template>
+  
+  <template context="/book/book-body/book-part/book-part-meta/title-group/title">
+    <rule break-after="2" name="chapter" type="cmd">
+      <param/>
+    </rule>
+  </template>
+  
+  <template context="book-part[count(ancestor::book-part) eq 0]/book-part-meta/title-group/title
+                    |sec[count(ancestor::sec) eq 0]/title">
+    <rule break-after="2" name="section" type="cmd">
+      <param/>
+    </rule>
+  </template>
+  
+  <template context="book-part[count(ancestor::*[self::book-part]) eq 2]/book-part-meta/title-group/title
+                    |sec[count(ancestor::sec) eq 1]/title">
+    <rule break-after="2" name="subsection" type="cmd">
+      <param/>
+    </rule>
+  </template>
+  
+  <template context="book-part[count(ancestor::*[self::book-part]) eq 3]/book-part-meta/title-group/title
+                    |sec[count(ancestor::sec) eq 2]/title">
+    <rule break-after="2" name="subsubsection" type="cmd">
+      <param/>
+    </rule>
+  </template>
+  
+  <template context="book-part[count(ancestor::*[self::book-part]) eq 4]/book-part-meta/title-group/title
+                    |sec[count(ancestor::sec) eq 3]/title">
+    <rule break-after="2" name="paragraph" type="cmd">
+      <param/>
+    </rule>
+  </template>
+  
+  <template context="book-part[count(ancestor::*[self::book-part]) eq 5]/book-part-meta/title-group/title
+                    |sec[count(ancestor::sec) eq 4]/title">
+    <rule break-after="2" name="subparagraph" type="cmd">
+      <param/>
+    </rule>
+  </template>
+
+  <template context="p">
+    <rule break-before="1">
+      <text/>
+    </rule>
+  </template>
+
+  <template context="p[preceding-sibling::*[1]/self::p]" priority="99">
+    <rule break-before="2">
+      <text/>
+    </rule>
+  </template>
+
+  <template context="disp-quote">
+    <rule name="quotation" type="env" break-before="1">
+      <param select="*"/>
+    </rule>
+  </template>
+
+  <template context="fig">
+    <rule name="figure" type="env">
+      <option select="'h'"/>
+      <text/>
+    </rule>
+  </template>
+
+  <template context="fig/caption">
+    <rule name="caption" type="cmd">
+      <param select="node()"/>
+    </rule>
+  </template>
+
+  <template context="graphic">
+    <rule name="includegraphics" type="cmd">
+      <param select="@xlink:href"/>
+    </rule>
+  </template>
+
+  <template context="graphic[@xlink:href/normalize-space(.)]">
+    <rule name="includegraphics" type="cmd">
+      <xsl:if test="parent::*/name() = ('fig', 'fig-group')">
+        <param/>
+      </xsl:if>
+      <param select="replace(@xlink:href, '^.+/(.+?)$', concat($image-dir, '$1'))"/>
+    </rule>
+  </template>
+
+  <!--<template context="text()[ancestor::*/name() = ('sub', 'sup')]">
+    <rule>
+      <text select="mml2tex:utf2tex(replace(normalize-space(.), '\$', ''), (), (), (), '')"/>
+    </rule>
+  </template>-->
+
+  <template context="sup">
+    <rule name="textsuperscript" type="cmd">
+      <param/>
+    </rule>
+  </template>
+
+  <template context="sub">
+    <rule name="textsubscript" type="cmd">
+      <param/>
+    </rule>
+  </template>
+
+  <template context="ref-list[ref]">
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:apply-templates select="title" mode="#current"/>
+    <rule name="thebibliography" type="env">
+      <xsl:apply-templates select="node() except title" mode="#current"/>
+    </rule>
+  </template>
+
+  <template context="ref-list/ref">
+    <rule name="bibitem" type="cmd" break-before="1">
+      <option select="(@id, concat('ref-', position()))[1]"/>
+      <param select="(@id, concat('ref-', position()))[1]"/>
+      <text select="(citation-alternatives/mixed-citation, node())[1]"/>
+    </rule>
+  </template>
+
+  <template context="list[not(@list-type = 'order')]">
+    <rule name="itemize" type="env" break-before="1">
+      <text/>
+    </rule>
+  </template>
+
+  <template context="list[@list-type = 'order']">
+    <rule name="enumerate" type="env" break-before="1">
+      <option select="((list-item[label/normalize-space()][string-length(label) = max(../list-item/label/string-length())][last()]/label, count(list-item))[not(. = '')][1])/xs:string(.)"/>
+      <text/>
+    </rule>
+  </template>
+
+  <template context="list-item">
+    <rule name="item" type="cmd" break-before="1">
+      <xsl:if test="label/normalize-space()">
+        <option select="label/node()"/>
+      </xsl:if>
+      <text/>
+    </rule>
+  </template>
+
+  <template context="list[@list-type = 'order']/list-item">
+    <rule name="item" type="cmd" break-before="1">
+      <option select="(label/node(), position())[1]"/>
+      <text/>
+    </rule>
+  </template>
+
+  <template context="list-item/label"/>
+
+  <template context="fn">
+    <rule name="footnote" type="cmd">
+      <xsl:if test="label[normalize-space()]">
+        <option select="label"/>
+      </xsl:if>
+      <param select="*[not(self::label)]"/>
+    </rule>
+  </template>
+
+  <template context="ext-link[@xlink:href]">
+    <rule name="href" type="cmd">
+      <param select="replace((@xlink:href, @url)[1], '([%#_\\])', '\\$1')"/>
+      <param/>
+    </rule>
+  </template>
+
+  <template context="fn/p[. is (../*[not(self::label)])[1]]">
+    <rule break-before="1">
+      <text/>
+    </rule>
+  </template>
+
+  <template context="inline-formula">
+    <rule>
+      <text select="'$'"/>
+      <text/>
+      <text select="'$'"/>
+    </rule>
+  </template>
+
+  <template context="disp-formula">
+    <rule name="equation*" type="env" break-before="1">
+      <xsl:text>&#xa;</xsl:text>
+      <text/>
+    </rule>
+  </template>
+
+  <template context="break">
+    <rule name="newline" type="cmd"/>
+  </template>
+
+  <template context="bold">
+    <rule name="textbf" type="cmd">
+      <param/>
+    </rule>
+  </template>
+
+  <template context="italic">
+    <rule name="textit" type="cmd">
+      <param/>
+    </rule>
+  </template>
+  
+  <!-- babel support -->
+  
+  <template context="named-content[@content-type = 'foreign-phrase'][@xml:lang]
+                                  [normalize-space(.)]
+                                  [xml2tex:lang-to-babel-lang(@xml:lang)]
+                                  [not(parent::ext-link)]
+                                  [not(parent::article-title)]
+                                  [every $lang in @xml:lang
+                                   satisfies not(ancestor::*[@xml:lang][1]/@xml:lang = $lang)]
+                                  [not(ancestor::*:entry or self::term or self::list-item)]
+                                  [not((*/local-name() = ('ext-link', 'graphic', 'inline-graphic'))
+                                       and 
+                                       not(normalize-space(string-join(.//text()[not(ancestor::*/local-name() = ('ext-link', 'graphic', 'inline-graphic'))], '')))
+                                      )]
+                                  [not(matches(., '^[\p{P}\p{Z}\d&#x4e00;-&#x9fff;&#x530;-&#x58f;&#xfb13;-&#xfb17;]+$'))]">
+    <xsl:param name="suppress-foreign-lang" as="xs:boolean?" tunnel="yes"/>
+    <xsl:value-of select="if(    $suppress-foreign-lang 
+                             and not(xml2tex:lang-to-babel-lang(@xml:lang) = ('greek', 
+                                                                              'arabic', 
+                                                                              'hebrew', 
+                                                                              'japanese', 
+                                                                              'chinese', 
+                                                                              'syriac', 
+                                                                              'armenian'))) 
+                          then () 
+                          else concat('\foreignlanguage{', xml2tex:lang-to-babel-lang(@xml:lang), '}{')"/>
+    <xsl:next-match/>
+    <xsl:value-of select="if(    $suppress-foreign-lang 
+                             and not(xml2tex:lang-to-babel-lang(@xml:lang) = ('greek',
+                                                                              'arabic', 
+                                                                              'hebrew', 
+                                                                              'japanese', 
+                                                                              'chinese', 
+                                                                              'syriac', 
+                                                                              'armenian'))) 
+                          then ()
+                          else '}'"/>
+  </template>
+  
+  <template context="p[@xml:lang][not(@xml:lang = $langs[1])]">
+    <xsl:param name="suppress-select-lang" as="xs:boolean" select="false()"/>
+    <xsl:if test="not($suppress-select-lang)">
+      <xsl:value-of select="concat('\selectlanguage{', xml2tex:lang-to-babel-lang(@xml:lang), '}%&#xa;')"/>
+      <xsl:next-match/>
+      <xsl:if test="not(parent::fn and not(following-sibling::*))">
+        <xsl:value-of select="concat('\selectlanguage{', xml2tex:lang-to-babel-lang($langs[1]), '}')"/>
+      </xsl:if>
+    </xsl:if>
+  </template>
+
+</set>

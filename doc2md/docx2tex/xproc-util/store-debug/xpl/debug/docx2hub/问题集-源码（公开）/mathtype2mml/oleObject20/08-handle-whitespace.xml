@@ -1,0 +1,1263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mtable columnalign="left">
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <msub>
+                  <mrow>
+                     <mn mathvariant="normal">0</mn>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mfenced close="" open="{" separators="">
+                  <mrow>
+                     <mtable>
+                        <mtr>
+                           <mtd>
+                              <mrow>
+                                 <mn mathsize="100%" mathvariant="normal">4</mn>
+                                 <mn mathsize="100%" mathvariant="normal">0</mn>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mi mathsize="100%" mathvariant="italic">R</mi>
+                                 <msub>
+                                    <mrow>
+                                       <mi mathvariant="italic">z</mi>
+                                    </mrow>
+                                 </msub>
+                                 <mo mathsize="100%" mathvariant="normal">≥</mo>
+                                 <mn mathsize="100%" mathvariant="normal">6</mn>
+                                 <mn mathsize="100%" mathvariant="normal">0</mn>
+                                 <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                 <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                 <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              </mrow>
+                           </mtd>
+                        </mtr>
+                        <mtr>
+                           <mtd>
+                              <mtable columnalign="left">
+                                 <mtr>
+                                    <mtd>
+                                       <mrow>
+                                          <mn mathsize="100%" mathvariant="normal">4</mn>
+                                          <mn mathsize="100%" mathvariant="normal">0</mn>
+                                          <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                                          <mn mathsize="100%" mathvariant="normal" start-function="">s</mn>
+                                          <mn mathsize="100%" mathvariant="normal">i</mn>
+                                          <mn mathsize="100%" mathvariant="normal">n</mn>
+                                          <mn mathsize="100%" mathvariant="normal">(</mn>
+                                          <mn mathsize="100%" mathvariant="normal">0</mn>
+                                          <mn mathsize="100%" mathvariant="normal">.</mn>
+                                          <mn mathsize="100%" mathvariant="normal">5</mn>
+                                          <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                                          <mi mathsize="100%" mathvariant="italic">π</mi>
+                                          <mn mathsize="100%" mathvariant="normal">(</mn>
+                                          <mi mathsize="100%" mathvariant="italic">R</mi>
+                                          <msub>
+                                             <mrow>
+                                                <mi mathvariant="italic">z</mi>
+                                             </mrow>
+                                          </msub>
+                                          <mo mathsize="100%" mathvariant="normal">−</mo>
+                                          <mn mathsize="100%" mathvariant="normal">4</mn>
+                                          <mn mathsize="100%" mathvariant="normal">0</mn>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mn mathsize="100%" mathvariant="normal">)</mn>
+                                          <mn mathsize="100%" mathvariant="normal">/</mn>
+                                          <mn mathsize="100%" mathvariant="normal">2</mn>
+                                          <mn mathsize="100%" mathvariant="normal">0</mn>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mn mathsize="100%" mathvariant="normal">)</mn>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mn mathsize="100%" mathvariant="normal">4</mn>
+                                          <mn mathsize="100%" mathvariant="normal">0</mn>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mo mathsize="100%" mathvariant="normal">≤</mo>
+                                          <mi mathsize="100%" mathvariant="italic">R</mi>
+                                          <msub>
+                                             <mrow>
+                                                <mi mathvariant="italic">z</mi>
+                                             </mrow>
+                                          </msub>
+                                          <mo mathsize="100%" mathvariant="normal">&lt;</mo>
+                                          <mn mathsize="100%" mathvariant="normal">6</mn>
+                                          <mn mathsize="100%" mathvariant="normal">0</mn>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                       </mrow>
+                                    </mtd>
+                                 </mtr>
+                                 <mtr>
+                                    <mtd>
+                                       <mrow>
+                                          <mn mathsize="100%" mathvariant="normal">0</mn>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%"> </mtext>
+                                          <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                          <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                          <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                          <mi mathsize="100%" mathvariant="italic">R</mi>
+                                          <msub>
+                                             <mrow>
+                                                <mi mathvariant="italic">z</mi>
+                                             </mrow>
+                                          </msub>
+                                          <mo mathsize="100%" mathvariant="normal">&lt;</mo>
+                                          <mn mathsize="100%" mathvariant="normal">4</mn>
+                                          <mn mathsize="100%" mathvariant="normal">0</mn>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                          <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                                       </mrow>
+                                    </mtd>
+                                 </mtr>
+                              </mtable>
+                           </mtd>
+                        </mtr>
+                     </mtable>
+                  </mrow>
+               </mfenced>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">h</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">θ</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mi mathsize="100%" mathvariant="italic">h</mi>
+               <msubsup>
+                  <mrow>
+                     <mi mathvariant="italic">m</mi>
+                  </mrow>
+                  <mrow>
+                     <mn mathvariant="normal">0</mn>
+                  </mrow>
+               </msubsup>
+               <mn mathsize="100%" mathvariant="normal">/</mn>
+               <mn mathsize="100%" mathvariant="normal">1</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">.</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">h</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">.</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">8</mn>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mi mathsize="100%" mathvariant="italic">h</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">θ</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mi mathsize="100%" mathvariant="italic">h</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">θ</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">.</mn>
+               <mn mathsize="100%" mathvariant="normal">2</mn>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mi mathsize="100%" mathvariant="italic">h</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">θ</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">+</mo>
+               <mn mathsize="100%" mathvariant="normal">1</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">.</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mrow mathcolor="#FF0000">
+                  <mi mathsize="100%" mathvariant="italic">K</mi>
+                  <msub>
+                     <mrow>
+                        <mi mathvariant="italic">M</mi>
+                        <mi mathvariant="italic">a</mi>
+                     </mrow>
+                  </msub>
+                  <mo mathsize="100%" mathvariant="normal">=</mo>
+                  <mfenced close="" open="{" separators="">
+                     <mtable columnalign="left">
+                        <mtr>
+                           <mtd>
+                              <mrow>
+                                 <mn mathsize="100%" mathvariant="normal">1</mn>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mi mathsize="100%" mathvariant="italic">M</mi>
+                                 <mi mathsize="100%" mathvariant="italic">a</mi>
+                                 <msub>
+                                    <mrow>
+                                       <mi mathvariant="italic">t</mi>
+                                    </mrow>
+                                 </msub>
+                                 <mo mathsize="100%" mathvariant="normal">&lt;</mo>
+                                 <mn mathsize="100%" mathvariant="normal">0</mn>
+                                 <mn mathsize="100%" mathvariant="normal">.</mn>
+                                 <mn mathsize="100%" mathvariant="normal">8</mn>
+                                 <mn mathsize="100%" mathvariant="normal">5</mn>
+                              </mrow>
+                           </mtd>
+                        </mtr>
+                        <mtr>
+                           <mtd>
+                              <mrow>
+                                 <mn mathsize="100%" mathvariant="normal">1</mn>
+                                 <mo mathsize="100%" mathvariant="normal">−</mo>
+                                 <mn mathsize="100%" mathvariant="normal">1</mn>
+                                 <mn mathsize="100%" mathvariant="normal">.</mn>
+                                 <mn mathsize="100%" mathvariant="normal">2</mn>
+                                 <mn mathsize="100%" mathvariant="normal">5</mn>
+                                 <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                                 <mn mathsize="100%" mathvariant="normal">(</mn>
+                                 <mi mathsize="100%" mathvariant="italic">M</mi>
+                                 <mi mathsize="100%" mathvariant="italic">a</mi>
+                                 <msub>
+                                    <mrow>
+                                       <mi mathvariant="italic">t</mi>
+                                    </mrow>
+                                 </msub>
+                                 <mo mathsize="100%" mathvariant="normal">−</mo>
+                                 <mn mathsize="100%" mathvariant="normal">0</mn>
+                                 <mn mathsize="100%" mathvariant="normal">.</mn>
+                                 <mn mathsize="100%" mathvariant="normal">8</mn>
+                                 <mn mathsize="100%" mathvariant="normal">5</mn>
+                                 <mn mathsize="100%" mathvariant="normal">)</mn>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mtext mathsize="100%"> </mtext>
+                                 <mn mathsize="100%" mathvariant="normal">0</mn>
+                                 <mn mathsize="100%" mathvariant="normal">.</mn>
+                                 <mn mathsize="100%" mathvariant="normal">8</mn>
+                                 <mn mathsize="100%" mathvariant="normal">5</mn>
+                                 <mo mathsize="100%" mathvariant="normal">≤</mo>
+                                 <mi mathsize="100%" mathvariant="italic">M</mi>
+                                 <mi mathsize="100%" mathvariant="italic">a</mi>
+                                 <msub>
+                                    <mrow>
+                                       <mi mathvariant="italic">t</mi>
+                                    </mrow>
+                                 </msub>
+                                 <mo mathsize="100%" mathvariant="normal">&lt;</mo>
+                                 <mn mathsize="100%" mathvariant="normal">1</mn>
+                                 <mn mathsize="100%" mathvariant="normal">.</mn>
+                                 <mn mathsize="100%" mathvariant="normal">6</mn>
+                                 <mn mathsize="100%" mathvariant="normal">5</mn>
+                              </mrow>
+                           </mtd>
+                        </mtr>
+                        <mtr>
+                           <mtd>
+                              <mrow>
+                                 <mn mathsize="100%" mathvariant="normal">0</mn>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                                 <mtext mathsize="100%" mathvariant="normal">其</mtext>
+                                 <mtext mathsize="100%" mathvariant="normal">他</mtext>
+                              </mrow>
+                           </mtd>
+                        </mtr>
+                     </mtable>
+                  </mfenced>
+               </mrow>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mrow mathcolor="#FF0000">
+                  <mi mathsize="100%" mathvariant="italic">θ</mi>
+                  <msub>
+                     <mrow>
+                        <mi mathvariant="italic">h</mi>
+                     </mrow>
+                  </msub>
+                  <mo mathsize="100%" mathvariant="normal">=</mo>
+                  <mi mathsize="100%" mathvariant="italic">K</mi>
+                  <msub>
+                     <mrow>
+                        <mi mathvariant="italic">M</mi>
+                        <mi mathvariant="italic">a</mi>
+                     </mrow>
+                  </msub>
+                  <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                  <mi mathsize="100%" mathvariant="italic">θ</mi>
+                  <msub>
+                     <mrow>
+                        <mi mathvariant="italic">h</mi>
+                     </mrow>
+                  </msub>
+               </mrow>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">h</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mfenced close="" open="{" separators="">
+                  <mtable columnalign="left">
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mi mathsize="100%" mathvariant="italic">θ</mi>
+                              <msub>
+                                 <mrow>
+                                    <mi mathvariant="italic">h</mi>
+                                 </mrow>
+                              </msub>
+                              <mo mathsize="100%" mathvariant="normal">&lt;</mo>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mi mathsize="100%" mathvariant="italic">θ</mi>
+                              <msub>
+                                 <mrow>
+                                    <mi mathvariant="italic">h</mi>
+                                 </mrow>
+                              </msub>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal">其</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">他</mtext>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                  </mtable>
+               </mfenced>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">k</mi>
+               <mi mathsize="100%" mathvariant="italic">h</mi>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mn mathsize="100%" mathvariant="normal">1</mn>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mn mathsize="100%" mathvariant="normal">(</mn>
+               <mn mathsize="100%" mathvariant="normal">1</mn>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mi mathsize="100%" mathvariant="italic">H</mi>
+               <msub>
+                  <mrow>
+                     <mn mathvariant="normal" start-function="">l</mn>
+                     <mn mathvariant="normal">i</mn>
+                     <mn mathvariant="normal">m</mn>
+                  </mrow>
+               </msub>
+               <mn mathsize="100%" mathvariant="normal">/</mn>
+               <mn mathsize="100%" mathvariant="normal">5</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">)</mn>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mn mathsize="100%" mathvariant="normal">(</mn>
+               <mi mathsize="100%" mathvariant="italic">h</mi>
+               <msubsup>
+                  <mrow>
+                     <mi mathvariant="italic">m</mi>
+                  </mrow>
+                  <mrow>
+                     <mn mathvariant="normal">0</mn>
+                  </mrow>
+               </msubsup>
+               <mn mathsize="100%" mathvariant="normal">/</mn>
+               <mn mathsize="100%" mathvariant="normal">1</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mo mathsize="100%" mathvariant="normal">−</mo>
+               <mn mathsize="100%" mathvariant="normal">1</mn>
+               <mn mathsize="100%" mathvariant="normal">0</mn>
+               <mn mathsize="100%" mathvariant="normal">)</mn>
+               <mn mathsize="100%" mathvariant="normal">/</mn>
+               <mn mathsize="100%" mathvariant="normal">2</mn>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">k</mi>
+                     <mn mathvariant="normal">0</mn>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mfenced close="" open="{" separators="">
+                  <mtable columnalign="left">
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">(</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mo mathsize="100%" mathvariant="normal">−</mo>
+                              <mi mathsize="100%" mathvariant="italic">H</mi>
+                              <msub>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                              </msub>
+                              <mn mathsize="100%" mathvariant="normal">/</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mn mathsize="100%" mathvariant="normal">)</mn>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mi mathsize="100%" mathvariant="italic">θ</mi>
+                              <msub>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msub>
+                              <mo mathsize="100%" mathvariant="normal">+</mo>
+                              <mi mathsize="100%" mathvariant="italic">ε</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">s</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mi mathvariant="italic">n</mi>
+                                 </mrow>
+                              </msubsup>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">7</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                              <mo mathsize="100%" mathvariant="normal">+</mo>
+                              <mi mathsize="100%" mathvariant="italic">θ</mi>
+                              <msub>
+                                 <mrow>
+                                    <mi mathvariant="italic">h</mi>
+                                 </mrow>
+                              </msub>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msubsup>
+                              <mo mathsize="100%" mathvariant="normal">≤</mo>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mi mathsize="100%" mathvariant="italic">e</mi>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">(</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mo mathsize="100%" mathvariant="normal">−</mo>
+                              <mi mathsize="100%" mathvariant="italic">H</mi>
+                              <msub>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                              </msub>
+                              <mn mathsize="100%" mathvariant="normal">/</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mn mathsize="100%" mathvariant="normal">)</mn>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mi mathsize="100%" mathvariant="italic">θ</mi>
+                              <msub>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msub>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mi mathsize="100%" mathvariant="italic">k</mi>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <mo mathsize="100%" mathvariant="normal">+</mo>
+                              <mi mathsize="100%" mathvariant="italic">ε</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">s</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mi mathvariant="italic">n</mi>
+                                 </mrow>
+                              </msubsup>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">7</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal">1</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mi mathsize="100%" mathvariant="italic">e</mi>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                              <mtext mathsize="100%" mathvariant="normal">&lt;</mtext>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msubsup>
+                              <mo mathsize="100%" mathvariant="normal">≤</mo>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">2</mn>
+                              <mi mathsize="100%" mathvariant="italic">e</mi>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">(</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mo mathsize="100%" mathvariant="normal">−</mo>
+                              <mi mathsize="100%" mathvariant="italic">H</mi>
+                              <msub>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                              </msub>
+                              <mn mathsize="100%" mathvariant="normal">/</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">0</mtext>
+                              <mn mathsize="100%" mathvariant="normal">)</mn>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mi mathsize="100%" mathvariant="italic">θ</mi>
+                              <msub>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msub>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mn mathsize="100%" mathvariant="normal">(</mn>
+                              <mi mathsize="100%" mathvariant="italic">H</mi>
+                              <msub>
+                                 <mrow>
+                                    <mn mathvariant="normal" start-function="">l</mn>
+                                    <mn mathvariant="normal">i</mn>
+                                    <mn mathvariant="normal">m</mn>
+                                 </mrow>
+                              </msub>
+                              <mn mathsize="100%" mathvariant="normal">/</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">)</mn>
+                              <mo mathsize="100%" mathvariant="normal">+</mo>
+                              <mi mathsize="100%" mathvariant="italic">ε</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">s</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mi mathvariant="italic">n</mi>
+                                 </mrow>
+                              </msubsup>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">7</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal">其</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">他</mtext>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                  </mtable>
+               </mfenced>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">K</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">θ</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mfenced close="" open="{" separators="">
+                  <mtable columnalign="left">
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">4</mn>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msubsup>
+                              <mo mathsize="100%" mathvariant="normal">&gt;</mo>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mi mathsize="100%" mathvariant="italic">e</mi>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">4</mn>
+                              <mo mathsize="100%" mathvariant="normal">+</mo>
+                              <mn mathsize="100%" mathvariant="normal">(</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mo mathsize="100%" mathvariant="normal">−</mo>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msubsup>
+                              <mn mathsize="100%" mathvariant="normal">/</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">)</mn>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">6</mn>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mi mathsize="100%" mathvariant="italic">e</mi>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                              <mo mathsize="100%" mathvariant="normal">&lt;</mo>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msubsup>
+                              <mo mathsize="100%" mathvariant="normal">≤</mo>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mi mathsize="100%" mathvariant="italic">e</mi>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">4</mn>
+                              <mn mathsize="100%" mathvariant="normal">8</mn>
+                              <mo mathsize="100%" mathvariant="normal">+</mo>
+                              <mn mathsize="100%" mathvariant="normal">(</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mo mathsize="100%" mathvariant="normal">−</mo>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msubsup>
+                              <mn mathsize="100%" mathvariant="normal">/</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">)</mn>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">2</mn>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mi mathsize="100%" mathvariant="italic">e</mi>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                              <mo mathsize="100%" mathvariant="normal">&lt;</mo>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msubsup>
+                              <mo mathsize="100%" mathvariant="normal">≤</mo>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mi mathsize="100%" mathvariant="italic">e</mi>
+                              <mn mathsize="100%" mathvariant="normal">3</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">8</mn>
+                              <mo mathsize="100%" mathvariant="normal">+</mo>
+                              <mn mathsize="100%" mathvariant="normal">(</mn>
+                              <mn mathsize="100%" mathvariant="normal">5</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mo mathsize="100%" mathvariant="normal">−</mo>
+                              <mi mathsize="100%" mathvariant="italic">h</mi>
+                              <msubsup>
+                                 <mrow>
+                                    <mi mathvariant="italic">m</mi>
+                                 </mrow>
+                                 <mrow>
+                                    <mn mathvariant="normal">0</mn>
+                                 </mrow>
+                              </msubsup>
+                              <mn mathsize="100%" mathvariant="normal">/</mn>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">)</mn>
+                              <mo mathsize="100%" mathvariant="normal">⋅</mo>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mn mathsize="100%" mathvariant="normal">9</mn>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal">其</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">他</mtext>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                  </mtable>
+               </mfenced>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">K</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">θ</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mfenced close="" open="{" separators="">
+                  <mtable columnalign="left">
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mi mathsize="100%" mathvariant="italic">K</mi>
+                              <msub>
+                                 <mrow>
+                                    <mi mathvariant="italic">θ</mi>
+                                 </mrow>
+                              </msub>
+                              <mo mathsize="100%" mathvariant="normal">&gt;</mo>
+                              <mn mathsize="100%" mathvariant="normal">1</mn>
+                              <mn mathsize="100%" mathvariant="normal">.</mn>
+                              <mn mathsize="100%" mathvariant="normal">0</mn>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                     <mtr>
+                        <mtd>
+                           <mrow>
+                              <mi mathsize="100%" mathvariant="italic">K</mi>
+                              <msub>
+                                 <mrow>
+                                    <mi mathvariant="italic">θ</mi>
+                                 </mrow>
+                              </msub>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal"> </mtext>
+                              <mtext mathsize="100%" mathvariant="normal">其</mtext>
+                              <mtext mathsize="100%" mathvariant="normal">他</mtext>
+                           </mrow>
+                        </mtd>
+                     </mtr>
+                  </mtable>
+               </mfenced>
+            </mrow>
+         </mtd>
+      </mtr>
+      <mtr>
+         <mtd>
+            <mrow>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">k</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">=</mo>
+               <mi mathsize="100%" mathvariant="italic">K</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">θ</mi>
+                  </mrow>
+               </msub>
+               <mo mathsize="100%" mathvariant="normal">⋅</mo>
+               <mi mathsize="100%" mathvariant="italic">θ</mi>
+               <msub>
+                  <mrow>
+                     <mi mathvariant="italic">k</mi>
+                     <mn mathvariant="normal">0</mn>
+                  </mrow>
+               </msub>
+               <mn mathsize="100%" mathvariant="normal">/</mn>
+               <mn mathsize="100%" mathvariant="normal">5</mn>
+               <mn mathsize="100%" mathvariant="normal">7</mn>
+               <mn mathsize="100%" mathvariant="normal">.</mn>
+               <mn mathsize="100%" mathvariant="normal">3</mn>
+            </mrow>
+         </mtd>
+      </mtr>
+   </mtable>
+</math>

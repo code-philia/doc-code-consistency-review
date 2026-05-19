@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi fontfamily="Symbol"
+          default-font=""
+          mathvariant="italic"
+          mathsize="100%">α</mi>
+      <mo fontfamily="Symbol"
+          default-font=""
+          mathvariant="normal"
+          mathsize="100%">−</mo>
+      <mi fontfamily="Symbol"
+          default-font=""
+          mathvariant="italic"
+          mathsize="100%">β</mi>
+   </mrow>
+</math>

@@ -1,0 +1,816 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<symbols>
+  <!--  *
+        * Thanks to Alan Wood for providing a comprehensive list with 
+        * Wingdings character set and equivalent Unicode characters
+        * and allowing us to use it here.
+        * 
+        * http://www.alanwood.net/demos/wingdings.html
+        * 
+        * -->
+  <!--SPACE-->
+   <symbol number="F020" entity="" char=" "/>
+   <symbol number="0020" entity=" " char=" "/>
+   <!--LOWER LEFT PENCIL-->
+   <symbol number="F021" entity="" char="🖉" font="Segoe UI Symbol"/>
+   <symbol number="0021" entity="!" char="🖉" font="Segoe UI Symbol"/>
+   <!--BLACK SCISSORS-->
+   <symbol number="F022" entity="" char="✂" font="Segoe UI Symbol"/>
+   <symbol number="0022" entity="&#34;" char="✂" font="Segoe UI Symbol"/>
+   <!--UPPER BLADE SCISSORS-->
+   <symbol number="F023" entity="" char="✁" font="Segoe UI Symbol"/>
+   <symbol number="0023" entity="#" char="✁" font="Segoe UI Symbol"/>
+   <!--EYEGLASSES-->
+   <symbol number="F024" entity="" char="👓" font="Segoe UI Symbol"/>
+   <symbol number="0024" entity="$" char="👓" font="Segoe UI Symbol"/>
+   <!--RINGING BELL-->
+   <symbol number="F025" entity="" char="🕭" font="Segoe UI Symbol"/>
+   <symbol number="0025" entity="%" char="🕭" font="Segoe UI Symbol"/>
+   <!--BOOK-->
+   <symbol number="F026" entity="" char="🕮" font="Segoe UI Symbol"/>
+   <symbol number="0026" entity="&amp;" char="🕮" font="Segoe UI Symbol"/>
+   <!--CANDLE-->
+   <symbol number="F027" entity="" char="🕯" font="Segoe UI Symbol"/>
+   <symbol number="0027" entity="'" char="🕯" font="Segoe UI Symbol"/>
+   <!--BLACK TOUCHTONE TELEPHONE-->
+   <symbol number="F028" entity="" char="🕿" font="Segoe UI Symbol"/>
+   <symbol number="0028" entity="(" char="🕿" font="Segoe UI Symbol"/>
+   <!--TELEPHONE LOCATION SIGN-->
+   <symbol number="F029" entity="" char="✆" font="Segoe UI Symbol"/>
+   <symbol number="0029" entity=")" char="✆" font="Segoe UI Symbol"/>
+   <!--BACK OF ENVELOPE-->
+   <symbol number="F02A" entity="" char="🖂" font="Segoe UI Symbol"/>
+   <symbol number="002A" entity="*" char="🖂" font="Segoe UI Symbol"/>
+   <!--STAMPED ENVELOPE-->
+   <symbol number="F02B" entity="" char="🖃" font="Segoe UI Symbol"/>
+   <symbol number="002B" entity="+" char="🖃" font="Segoe UI Symbol"/>
+   <!--CLOSED MAILBOX WITH LOWERED FLAG-->
+   <symbol number="F02C" entity="" char="📪" font="Segoe UI Symbol"/>
+   <symbol number="002C" entity="," char="📪" font="Segoe UI Symbol"/>
+   <!--CLOSED MAILBOX WITH RAISED FLAG-->
+   <symbol number="F02D" entity="" char="📫" font="Segoe UI Symbol"/>
+   <symbol number="002D" entity="-" char="📫" font="Segoe UI Symbol"/>
+   <!--OPEN MAILBOX WITH RAISED FLAG-->
+   <symbol number="F02E" entity="" char="📬" font="Segoe UI Symbol"/>
+   <symbol number="002E" entity="." char="📬" font="Segoe UI Symbol"/>
+   <!--OPEN MAILBOX WITH LOWERED FLAG-->
+   <symbol number="F02F" entity="" char="📭" font="Segoe UI Symbol"/>
+   <symbol number="002F" entity="/" char="📭" font="Segoe UI Symbol"/>
+   <!--FILE FOLDER-->
+   <symbol number="F030" entity="" char="📁" font="Segoe UI Symbol"/>
+   <symbol number="0030" entity="0" char="📁" font="Segoe UI Symbol"/>
+   <!--OPEN FILE FOLDER-->
+   <symbol number="F031" entity="" char="📂" font="Segoe UI Symbol"/>
+   <symbol number="0031" entity="1" char="📂" font="Segoe UI Symbol"/>
+   <!--PAGE FACING UP-->
+   <symbol number="F032" entity="" char="📄" font="Segoe UI Symbol"/>
+   <symbol number="0032" entity="2" char="📄" font="Segoe UI Symbol"/>
+   <!--PAGE-->
+   <symbol number="F033" entity="" char="🗏" font="Segoe UI Symbol"/>
+   <symbol number="0033" entity="3" char="🗏" font="Segoe UI Symbol"/>
+   <!--PAGES-->
+   <symbol number="F034" entity="" char="🗐" font="Segoe UI Symbol"/>
+   <symbol number="0034" entity="4" char="🗐" font="Segoe UI Symbol"/>
+   <!--FILE CABINET-->
+   <symbol number="F035" entity="" char="🗄" font="Segoe UI Symbol"/>
+   <symbol number="0035" entity="5" char="🗄" font="Segoe UI Symbol"/>
+   <!--HOURGLASS-->
+   <symbol number="F036" entity="" char="⌛" font="Segoe UI Symbol"/>
+   <symbol number="0036" entity="6" char="⌛" font="Segoe UI Symbol"/>
+   <!--WIRED KEYBOARD-->
+   <symbol number="F037" entity="" char="🖮" font="Segoe UI Symbol"/>
+   <symbol number="0037" entity="7" char="🖮" font="Segoe UI Symbol"/>
+   <!--TWO BUTTON MOUSE-->
+   <symbol number="F038" entity="" char="🖰" font="Segoe UI Symbol"/>
+   <symbol number="0038" entity="8" char="🖰" font="Segoe UI Symbol"/>
+   <!--TRACKBALL-->
+   <symbol number="F039" entity="" char="🖲" font="Segoe UI Symbol"/>
+   <symbol number="0039" entity="9" char="🖲" font="Segoe UI Symbol"/>
+   <!--OLD PERSONAL COMPUTER-->
+   <symbol number="F03A" entity="" char="🖳" font="Segoe UI Symbol"/>
+   <symbol number="003A" entity=":" char="🖳" font="Segoe UI Symbol"/>
+   <!--HARD DISK-->
+   <symbol number="F03B" entity="" char="🖴" font="Segoe UI Symbol"/>
+   <symbol number="003B" entity=";" char="🖴" font="Segoe UI Symbol"/>
+   <!--WHITE HARD SHELL FLOPPY DISK-->
+   <symbol number="F03C" entity="" char="🖫" font="Segoe UI Symbol"/>
+   <symbol number="003C" entity="&lt;" char="🖫" font="Segoe UI Symbol"/>
+   <!--SOFT SHELL FLOPPY DISK-->
+   <symbol number="F03D" entity="" char="🖬" font="Segoe UI Symbol"/>
+   <symbol number="003D" entity="=" char="🖬" font="Segoe UI Symbol"/>
+   <!--TAPE DRIVE-->
+   <symbol number="F03E" entity="" char="✇" font="Segoe UI Symbol"/>
+   <symbol number="003E" entity="&gt;" char="✇" font="Segoe UI Symbol"/>
+   <!--WRITING HAND-->
+   <symbol number="F03F" entity="" char="✍" font="Segoe UI Symbol"/>
+   <symbol number="003F" entity="?" char="✍" font="Segoe UI Symbol"/>
+   <!--LEFT WRITING HAND-->
+   <symbol number="F040" entity="" char="🖎" font="Segoe UI Symbol"/>
+   <symbol number="0040" entity="@" char="🖎" font="Segoe UI Symbol"/>
+   <!--VICTORY HAND-->
+   <symbol number="F041" entity="" char="✌" font="Segoe UI Symbol"/>
+   <symbol number="0041" entity="A" char="✌" font="Segoe UI Symbol"/>
+   <!--OK HAND SIGN-->
+   <symbol number="F042" entity="" char="👌" font="Segoe UI Symbol"/>
+   <symbol number="0042" entity="B" char="👌" font="Segoe UI Symbol"/>
+   <!--THUMBS UP SIGN-->
+   <symbol number="F043" entity="" char="👍" font="Segoe UI Symbol"/>
+   <symbol number="0043" entity="C" char="👍" font="Segoe UI Symbol"/>
+   <!--THUMBS DOWN SIGN-->
+   <symbol number="F044" entity="" char="👎" font="Segoe UI Symbol"/>
+   <symbol number="0044" entity="D" char="👎" font="Segoe UI Symbol"/>
+   <!--WHITE LEFT POINTING INDEX-->
+   <symbol number="F045" entity="" char="☜" font="Segoe UI Symbol"/>
+   <symbol number="0045" entity="E" char="☜" font="Segoe UI Symbol"/>
+   <!--WHITE RIGHT POINTING INDEX-->
+   <symbol number="F046" entity="" char="☞" font="Segoe UI Symbol"/>
+   <symbol number="0046" entity="F" char="☞" font="Segoe UI Symbol"/>
+   <!--WHITE UP POINTING INDEX-->
+   <symbol number="F047" entity="" char="☝" font="Segoe UI Symbol"/>
+   <symbol number="0047" entity="G" char="☝" font="Segoe UI Symbol"/>
+   <!--WHITE DOWN POINTING INDEX-->
+   <symbol number="F048" entity="" char="☟" font="Segoe UI Symbol"/>
+   <symbol number="0048" entity="H" char="☟" font="Segoe UI Symbol"/>
+   <!--RAISED HAND WITH FINGERS SPLAYED-->
+   <symbol number="F049"
+           entity=""
+           char="🖐"
+           char-msoffice="✋"
+           font="Segoe UI Symbol"/>
+   <symbol number="0049"
+           entity="I"
+           char="🖐"
+           char-msoffice="✋"
+           font="Segoe UI Symbol"/>
+   <!--WHITE SMILING FACE-->
+   <symbol number="F04A" entity="" char="☺" font="Segoe UI Symbol"/>
+   <symbol number="004A" entity="J" char="☺" font="Segoe UI Symbol"/>
+   <!--NEUTRAL FACE-->
+   <symbol number="F04B" entity="" char="😐" font="Segoe UI Symbol"/>
+   <symbol number="004B" entity="K" char="😐" font="Segoe UI Symbol"/>
+   <!--WHITE FROWNING FACE-->
+   <symbol number="F04C" entity="" char="☹" font="Segoe UI Symbol"/>
+   <symbol number="004C" entity="L" char="☹" font="Segoe UI Symbol"/>
+   <!--BOMB-->
+   <symbol number="F04D" entity="" char="💣" font="Segoe UI Symbol"/>
+   <symbol number="004D" entity="M" char="💣" font="Segoe UI Symbol"/>
+   <!--SKULL AND CROSSBONES-->
+   <symbol number="F04E" entity="" char="☠" font="Segoe UI Symbol"/>
+   <symbol number="004E" entity="N" char="☠" font="Segoe UI Symbol"/>
+   <!--WAVING WHITE FLAG-->
+   <symbol number="F04F" entity="" char="🏳" font="Segoe UI Symbol"/>
+   <symbol number="004F" entity="O" char="🏳" font="Segoe UI Symbol"/>
+   <!--WHITE PENNANT-->
+   <symbol number="F050" entity="" char="🏱" font="Segoe UI Symbol"/>
+   <symbol number="0050" entity="P" char="🏱" font="Segoe UI Symbol"/>
+   <!--AIRPLANE-->
+   <symbol number="F051" entity="" char="✈" font="Segoe UI Symbol"/>
+   <symbol number="0051" entity="Q" char="✈" font="Segoe UI Symbol"/>
+   <!--WHITE SUN WITH RAYS-->
+   <symbol number="F052" entity="" char="☼" font="Segoe UI Symbol"/>
+   <symbol number="0052" entity="R" char="☼" font="Segoe UI Symbol"/>
+   <!--DROPLET-->
+   <symbol number="F053" entity="" char="💧" font="Segoe UI Symbol"/>
+   <symbol number="0053" entity="S" char="💧" font="Segoe UI Symbol"/>
+   <!--SNOWFLAKE-->
+   <symbol number="F054" entity="" char="❄" font="Segoe UI Symbol"/>
+   <symbol number="0054" entity="T" char="❄" font="Segoe UI Symbol"/>
+   <!--WHITE LATIN CROSS-->
+   <symbol number="F055" entity="" char="🕆" font="Segoe UI Symbol"/>
+   <symbol number="0055" entity="U" char="🕆" font="Segoe UI Symbol"/>
+   <!--SHADOWED WHITE LATIN CROSS-->
+   <symbol number="F056" entity="" char="✞" font="Segoe UI Symbol"/>
+   <symbol number="0056" entity="V" char="✞" font="Segoe UI Symbol"/>
+   <!--CELTIC CROSS-->
+   <symbol number="F057" entity="" char="🕈" font="Segoe UI Symbol"/>
+   <symbol number="0057" entity="W" char="🕈" font="Segoe UI Symbol"/>
+   <!--MALTESE CROSS-->
+   <symbol number="F058" entity="" char="✠" font="Segoe UI Symbol"/>
+   <symbol number="0058" entity="X" char="✠" font="Segoe UI Symbol"/>
+   <!--STAR OF DAVID-->
+   <symbol number="F059" entity="" char="✡" font="Segoe UI Symbol"/>
+   <symbol number="0059" entity="Y" char="✡" font="Segoe UI Symbol"/>
+   <!--STAR AND CRESCENT-->
+   <symbol number="F05A" entity="" char="☪" font="Segoe UI Symbol"/>
+   <symbol number="005A" entity="Z" char="☪" font="Segoe UI Symbol"/>
+   <!--YIN YANG-->
+   <symbol number="F05B" entity="" char="☯" font="Segoe UI Symbol"/>
+   <symbol number="005B" entity="[" char="☯" font="Segoe UI Symbol"/>
+   <!--DEVANAGARI OM-->
+   <symbol number="F05C" entity="" char="ॐ" font="Segoe UI Symbol"/>
+   <symbol number="005C" entity="\" char="ॐ" font="Segoe UI Symbol"/>
+   <!--WHEEL OF DHARMA-->
+   <symbol number="F05D" entity="" char="☸" font="Segoe UI Symbol"/>
+   <symbol number="005D" entity="]" char="☸" font="Segoe UI Symbol"/>
+   <!--ARIES-->
+   <symbol number="F05E" entity="" char="♈" font="Segoe UI Symbol"/>
+   <symbol number="005E" entity="^" char="♈" font="Segoe UI Symbol"/>
+   <!--TAURUS-->
+   <symbol number="F05F" entity="" char="♉" font="Segoe UI Symbol"/>
+   <symbol number="005F" entity="_" char="♉" font="Segoe UI Symbol"/>
+   <!--GEMINI-->
+   <symbol number="F060" entity="" char="♊" font="Segoe UI Symbol"/>
+   <symbol number="0060" entity="`" char="♊" font="Segoe UI Symbol"/>
+   <!--CANCER-->
+   <symbol number="0061" entity="a" char="♋" font="Segoe UI Symbol"/>
+   <symbol number="F061" entity="" char="♋" font="Segoe UI Symbol"/>
+   <!--LEO-->
+   <symbol number="F062" entity="" char="♌" font="Segoe UI Symbol"/>
+   <symbol number="0062" entity="b" char="♌" font="Segoe UI Symbol"/>
+   <!--VIRGO-->
+   <symbol number="F063" entity="" char="♍" font="Segoe UI Symbol"/>
+   <symbol number="0063" entity="c" char="♍" font="Segoe UI Symbol"/>
+   <!--LIBRA-->
+   <symbol number="F064" entity="" char="♎" font="Segoe UI Symbol"/>
+   <symbol number="0064" entity="d" char="♎" font="Segoe UI Symbol"/>
+   <!--SCORPIO-->
+   <symbol number="F065" entity="" char="♏" font="Segoe UI Symbol"/>
+   <symbol number="0065" entity="e" char="♏" font="Segoe UI Symbol"/>
+   <!--SAGITTARIUS-->
+   <symbol number="F066" entity="" char="♐" font="Segoe UI Symbol"/>
+   <symbol number="0066" entity="f" char="♐" font="Segoe UI Symbol"/>
+   <!--CAPRICORN-->
+   <symbol number="F067" entity="" char="♑" font="Segoe UI Symbol"/>
+   <symbol number="0067" entity="g" char="♑" font="Segoe UI Symbol"/>
+   <!--AQUARIUS-->
+   <symbol number="F068" entity="" char="♒" font="Segoe UI Symbol"/>
+   <symbol number="0068" entity="h" char="♒" font="Segoe UI Symbol"/>
+   <!--PISCES-->
+   <symbol number="F069" entity="" char="♓" font="Segoe UI Symbol"/>
+   <symbol number="0069" entity="i" char="♓" font="Segoe UI Symbol"/>
+   <!--SCRIPT LIGATURE ET ORNAMENT-->
+   <symbol number="F06A" entity="" char="🙰" font="Segoe UI Symbol"/>
+   <symbol number="006A" entity="j" char="🙰" font="Segoe UI Symbol"/>
+   <!--SWASH AMPERSAND ORNAMENT-->
+   <symbol number="F06B" entity="" char="🙵" font="Segoe UI Symbol"/>
+   <symbol number="006B" entity="k" char="🙵" font="Segoe UI Symbol"/>
+   <!--BLACK CIRCLE-->
+   <symbol number="F06C" entity="" char="●" font="Segoe UI Symbol"/>
+   <symbol number="006C" entity="l" char="●" font="Segoe UI Symbol"/>
+   <!--LOWER RIGHT SHADOWED WHITE CIRCLE-->
+   <symbol number="F06D" entity="" char="🔾" font="Segoe UI Symbol"/>
+   <symbol number="006D" entity="m" char="🔾" font="Segoe UI Symbol"/>
+   <!--BLACK SQUARE-->
+   <symbol number="006E" entity="n" char="■" font="Segoe UI Symbol"/>
+   <symbol number="F06E" entity="" char="■" font="Segoe UI Symbol"/>
+   <!--WHITE SQUARE-->
+   <symbol number="006F" entity="o" char="□" font="Segoe UI Symbol"/>
+   <symbol number="F06F" entity="" char="□" font="Segoe UI Symbol"/>
+   <!--BOLD WHITE SQUARE-->
+   <symbol number="F070" entity="" char="🞐" font="Segoe UI Symbol"/>
+   <symbol number="0070" entity="p" char="🞐" font="Segoe UI Symbol"/>
+   <!--LOWER RIGHT SHADOWED WHITE SQUARE-->
+   <symbol number="F071" entity="" char="❑" font="Segoe UI Symbol"/>
+   <symbol number="0071" entity="q" char="❑" font="Segoe UI Symbol"/>
+   <!--UPPER RIGHT SHADOWED WHITE SQUARE-->
+   <symbol number="F072" entity="" char="❒" font="Segoe UI Symbol"/>
+   <symbol number="0072" entity="r" char="❒" font="Segoe UI Symbol"/>
+   <!--BLACK MEDIUM LOZENGE-->
+   <symbol number="F073" entity="" char="⬧" font="Segoe UI Symbol"/>
+   <symbol number="0073" entity="s" char="⬧" font="Segoe UI Symbol"/>
+   <!--BLACK LOZENGE-->
+   <symbol number="F074" entity="" char="⧫" font="Segoe UI Symbol"/>
+   <symbol number="0074" entity="t" char="⧫" font="Segoe UI Symbol"/>
+   <!--BLACK DIAMOND-->
+   <symbol number="F075" entity="" char="◆" font="Segoe UI Symbol"/>
+   <symbol number="0075" entity="u" char="◆" font="Segoe UI Symbol"/>
+   <!--BLACK DIAMOND MINUS WHITE X-->
+   <symbol number="F076" entity="" char="❖" font="Segoe UI Symbol"/>
+   <symbol number="0076" entity="v" char="❖" font="Segoe UI Symbol"/>
+   <!--BLACK MEDIUM DIAMOND-->
+   <symbol number="F077" entity="" char="⬥" font="Segoe UI Symbol"/>
+   <symbol number="0077" entity="w" char="⬥" font="Segoe UI Symbol"/>
+   <!--X IN A RECTANGLE BOX-->
+   <symbol number="F078" entity="" char="⌧" font="Segoe UI Symbol"/>
+   <symbol number="0078" entity="x" char="⌧" font="Segoe UI Symbol"/>
+   <!--UP ARROWHEAD IN A RECTANGLE BOX-->
+   <symbol number="F079" entity="" char="⮹" font="Segoe UI Symbol"/>
+   <symbol number="0079" entity="y" char="⮹" font="Segoe UI Symbol"/>
+   <!--PLACE OF INTEREST SIGN-->
+   <symbol number="F07A" entity="" char="⌘" font="Segoe UI Symbol"/>
+   <symbol number="007A" entity="z" char="⌘" font="Segoe UI Symbol"/>
+   <!--ROSETTE-->
+   <symbol number="F07B" entity="" char="🏵" font="Segoe UI Symbol"/>
+   <symbol number="007B" entity="{" char="🏵" font="Segoe UI Symbol"/>
+   <!--BLACK ROSETTE-->
+   <symbol number="F07C" entity="" char="🏶" font="Segoe UI Symbol"/>
+   <symbol number="007C" entity="|" char="🏶" font="Segoe UI Symbol"/>
+   <!--SANS-SERIF HEAVY DOUBLE TURNED COMMA QUOTATION MARK ORNAMENT-->
+   <symbol number="F07D" entity="" char="🙶" font="Segoe UI Symbol"/>
+   <symbol number="007D" entity="}" char="🙶" font="Segoe UI Symbol"/>
+   <!--SANS-SERIF HEAVY DOUBLE COMMA QUOTATION MARK ORNAMENT-->
+   <symbol number="F07E" entity="" char="🙷" font="Segoe UI Symbol"/>
+   <symbol number="007E" entity="~" char="🙷" font="Segoe UI Symbol"/>
+   <!---->
+   <symbol number="F07F" entity="" char="" font="Segoe UI Symbol"/>
+   <symbol number="007F" entity="&#x7f;" char="" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT ZERO-->
+   <symbol number="F080" entity="" char="⓪" font="Segoe UI Symbol"/>
+   <symbol number="0080" entity="&#x80;" char="⓪" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT ONE-->
+   <symbol number="F081" entity="" char="①" font="Segoe UI Symbol"/>
+   <symbol number="0081" entity="&#x81;" char="①" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT TWO-->
+   <symbol number="F082" entity="" char="②" font="Segoe UI Symbol"/>
+   <symbol number="0082" entity="&#x82;" char="②" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT THREE-->
+   <symbol number="F083" entity="" char="③" font="Segoe UI Symbol"/>
+   <symbol number="0083" entity="&#x83;" char="③" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT FOUR-->
+   <symbol number="F084" entity="" char="④" font="Segoe UI Symbol"/>
+   <symbol number="0084" entity="&#x84;" char="④" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT FIVE-->
+   <symbol number="F085" entity="" char="⑤" font="Segoe UI Symbol"/>
+   <symbol number="0085" entity="&#x85;" char="⑤" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT SIX-->
+   <symbol number="F086" entity="" char="⑥" font="Segoe UI Symbol"/>
+   <symbol number="0086" entity="&#x86;" char="⑥" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT SEVEN-->
+   <symbol number="F087" entity="" char="⑦" font="Segoe UI Symbol"/>
+   <symbol number="0087" entity="&#x87;" char="⑦" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT EIGHT-->
+   <symbol number="F088" entity="" char="⑧" font="Segoe UI Symbol"/>
+   <symbol number="0088" entity="&#x88;" char="⑧" font="Segoe UI Symbol"/>
+   <!--CIRCLED DIGIT NINE-->
+   <symbol number="F089" entity="" char="⑨" font="Segoe UI Symbol"/>
+   <symbol number="0089" entity="&#x89;" char="⑨" font="Segoe UI Symbol"/>
+   <!--CIRCLED NUMBER TEN-->
+   <symbol number="F08A" entity="" char="⑩" font="Segoe UI Symbol"/>
+   <symbol number="008A" entity="&#x8a;" char="⑩" font="Segoe UI Symbol"/>
+   <!--NEGATIVE CIRCLED DIGIT ZERO-->
+   <symbol number="F08B" entity="" char="⓿" font="Segoe UI Symbol"/>
+   <symbol number="008B" entity="&#x8b;" char="⓿" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT ONE-->
+   <symbol number="F08C" entity="" char="❶" font="Segoe UI Symbol"/>
+   <symbol number="008C" entity="&#x8c;" char="❶" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT TWO-->
+   <symbol number="F08D" entity="" char="❷" font="Segoe UI Symbol"/>
+   <symbol number="008D" entity="&#x8d;" char="❷" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT THREE-->
+   <symbol number="F08E" entity="" char="❸" font="Segoe UI Symbol"/>
+   <symbol number="008E" entity="&#x8e;" char="❸" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT FOUR-->
+   <symbol number="F08F" entity="" char="❹" font="Segoe UI Symbol"/>
+   <symbol number="008F" entity="&#x8f;" char="❹" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT FIVE-->
+   <symbol number="F090" entity="" char="❺" font="Segoe UI Symbol"/>
+   <symbol number="0090" entity="&#x90;" char="❺" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT SIX-->
+   <symbol number="F091" entity="" char="❻" font="Segoe UI Symbol"/>
+   <symbol number="0091" entity="&#x91;" char="❻" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT SEVEN-->
+   <symbol number="F092" entity="" char="❼" font="Segoe UI Symbol"/>
+   <symbol number="0092" entity="&#x92;" char="❼" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT EIGHT-->
+   <symbol number="F093" entity="" char="❽" font="Segoe UI Symbol"/>
+   <symbol number="0093" entity="&#x93;" char="❽" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED DIGIT NINE-->
+   <symbol number="F094" entity="" char="❾" font="Segoe UI Symbol"/>
+   <symbol number="0094" entity="&#x94;" char="❾" font="Segoe UI Symbol"/>
+   <!--DINGBAT NEGATIVE CIRCLED NUMBER TEN-->
+   <symbol number="F095" entity="" char="❿" font="Segoe UI Symbol"/>
+   <symbol number="0095" entity="&#x95;" char="❿" font="Segoe UI Symbol"/>
+   <!--NORTH EAST POINTING BUD-->
+   <symbol number="F096" entity="" char="🙢" font="Segoe UI Symbol"/>
+   <symbol number="0096" entity="&#x96;" char="🙢" font="Segoe UI Symbol"/>
+   <!--NORTH WEST POINTING BUD-->
+   <symbol number="F097" entity="" char="🙠" font="Segoe UI Symbol"/>
+   <symbol number="0097" entity="&#x97;" char="🙠" font="Segoe UI Symbol"/>
+   <!--SOUTH WEST POINTING BUD-->
+   <symbol number="F098" entity="" char="🙡" font="Segoe UI Symbol"/>
+   <symbol number="0098" entity="&#x98;" char="🙡" font="Segoe UI Symbol"/>
+   <!--SOUTH EAST POINTING BUD-->
+   <symbol number="F099" entity="" char="🙣" font="Segoe UI Symbol"/>
+   <symbol number="0099" entity="&#x99;" char="🙣" font="Segoe UI Symbol"/>
+   <!--HEAVY NORTH EAST POINTING VINE LEAF-->
+   <symbol number="F09A" entity="" char="🙞" font="Segoe UI Symbol"/>
+   <symbol number="009A" entity="&#x9a;" char="🙞" font="Segoe UI Symbol"/>
+   <!--HEAVY NORTH WEST POINTING VINE LEAF-->
+   <symbol number="F09B" entity="" char="🙜" font="Segoe UI Symbol"/>
+   <symbol number="009B" entity="&#x9b;" char="🙜" font="Segoe UI Symbol"/>
+   <!--HEAVY SOUTH WEST POINTING VINE LEAF-->
+   <symbol number="F09C" entity="" char="🙝" font="Segoe UI Symbol"/>
+   <symbol number="009C" entity="&#x9c;" char="🙝" font="Segoe UI Symbol"/>
+   <!--HEAVY SOUTH EAST POINTING VINE LEAF-->
+   <symbol number="F09D" entity="" char="🙟" font="Segoe UI Symbol"/>
+   <symbol number="009D" entity="&#x9d;" char="🙟" font="Segoe UI Symbol"/>
+   <!--MIDDLE DOT-->
+   <symbol number="F09E" entity="" char="·" font="Segoe UI Symbol"/>
+   <symbol number="009E" entity="&#x9e;" char="·" font="Segoe UI Symbol"/>
+   <!--BULLET-->
+   <symbol number="F09F" entity="" char="•" font="Segoe UI Symbol"/>
+   <symbol number="009F" entity="&#x9f;" char="•" font="Segoe UI Symbol"/>
+   <!--BLACK SMALL SQUARE-->
+   <symbol number="F0A0" entity="" char="▪" font="Segoe UI Symbol"/>
+   <symbol number="00A0" entity=" " char="▪" font="Segoe UI Symbol"/>
+   <!--MEDIUM WHITE CIRCLE-->
+   <symbol number="F0A1" entity="" char="⚪" font="Segoe UI Symbol"/>
+   <symbol number="00A1" entity="¡" char="⚪" font="Segoe UI Symbol"/>
+   <!--HEAVY LARGE CIRCLE-->
+   <symbol number="F0A2" entity="" char="🞆" font="Segoe UI Symbol"/>
+   <symbol number="00A2" entity="¢" char="🞆" font="Segoe UI Symbol"/>
+   <!--VERY HEAVY WHITE CIRCLE-->
+   <symbol number="F0A3" entity="" char="🞈" font="Segoe UI Symbol"/>
+   <symbol number="00A3" entity="£" char="🞈" font="Segoe UI Symbol"/>
+   <!--FISHEYE-->
+   <symbol number="F0A4" entity="" char="◉" font="Segoe UI Symbol"/>
+   <symbol number="00A4" entity="¤" char="◉" font="Segoe UI Symbol"/>
+   <!--BULLSEYE-->
+   <symbol number="F0A5" entity="" char="◎" font="Segoe UI Symbol"/>
+   <symbol number="00A5" entity="¥" char="◎" font="Segoe UI Symbol"/>
+   <!--UPPER RIGHT SHADOWED WHITE CIRCLE-->
+   <symbol number="F0A6" entity="" char="🔿" font="Segoe UI Symbol"/>
+   <symbol number="00A6" entity="¦" char="🔿" font="Segoe UI Symbol"/>
+   <!--BLACK SMALL SQUARE-->
+   <symbol number="F0A7" entity="" char="▪" font="Segoe UI Symbol"/>
+   <symbol number="00A7" entity="§" char="▪" font="Segoe UI Symbol"/>
+   <!--WHITE MEDIUM SQUARE-->
+   <symbol number="F0A8" entity="" char="◻" font="Segoe UI Symbol"/>
+   <symbol number="00A8" entity="¨" char="◻" font="Segoe UI Symbol"/>
+   <!--THREE POINTED BLACK STAR-->
+   <symbol number="F0A9" entity="" char="🟂" font="Segoe UI Symbol"/>
+   <symbol number="00A9" entity="©" char="🟂" font="Segoe UI Symbol"/>
+   <!--BLACK FOUR POINTED STAR-->
+   <symbol number="F0AA" entity="" char="✦" font="Segoe UI Symbol"/>
+   <symbol number="00AA" entity="ª" char="✦" font="Segoe UI Symbol"/>
+   <!--BLACK STAR-->
+   <symbol number="F0AB" entity="" char="★" font="Segoe UI Symbol"/>
+   <symbol number="00AB" entity="«" char="★" font="Segoe UI Symbol"/>
+   <!--SIX POINTED BLACK STAR-->
+   <symbol number="F0AC" entity="" char="✶" font="Segoe UI Symbol"/>
+   <symbol number="00AC" entity="¬" char="✶" font="Segoe UI Symbol"/>
+   <!--EIGHT POINTED BLACK STAR-->
+   <symbol number="F0AD" entity="" char="✴" font="Segoe UI Symbol"/>
+   <symbol number="00AD" entity="­" char="✴" font="Segoe UI Symbol"/>
+   <!--TWELVE POINTED BLACK STAR-->
+   <symbol number="F0AE" entity="" char="✹" font="Segoe UI Symbol"/>
+   <symbol number="00AE" entity="®" char="✹" font="Segoe UI Symbol"/>
+   <!--EIGHT POINTED PINWHEEL STAR-->
+   <symbol number="F0AF" entity="" char="✵" font="Segoe UI Symbol"/>
+   <symbol number="00AF" entity="¯" char="✵" font="Segoe UI Symbol"/>
+   <!--SQUARE POSITION INDICATOR-->
+   <symbol number="F0B0" entity="" char="⯐" font="Segoe UI Symbol"/>
+   <symbol number="00B0" entity="°" char="⯐" font="Segoe UI Symbol"/>
+   <!--POSITION INDICATOR-->
+   <symbol number="F0B1" entity="" char="⌖" font="Segoe UI Symbol"/>
+   <symbol number="00B1" entity="±" char="⌖" font="Segoe UI Symbol"/>
+   <!--WHITE CONCAVE-SIDED DIAMOND-->
+   <symbol number="F0B2" entity="" char="⟡" font="Segoe UI Symbol"/>
+   <symbol number="00B2" entity="²" char="⟡" font="Segoe UI Symbol"/>
+   <!--SQUARE LOZENGE-->
+   <symbol number="F0B3" entity="" char="⌑" font="Segoe UI Symbol"/>
+   <symbol number="00B3" entity="³" char="⌑" font="Segoe UI Symbol"/>
+   <!--UNCERTAINTY SIGN-->
+   <symbol number="F0B4" entity="" char="⯑" font="Segoe UI Symbol"/>
+   <symbol number="00B4" entity="´" char="⯑" font="Segoe UI Symbol"/>
+   <!--CIRCLED WHITE STAR-->
+   <symbol number="F0B5" entity="" char="✪" font="Segoe UI Symbol"/>
+   <symbol number="00B5" entity="µ" char="✪" font="Segoe UI Symbol"/>
+   <!--SHADOWED WHITE STAR-->
+   <symbol number="F0B6" entity="" char="✰" font="Segoe UI Symbol"/>
+   <symbol number="00B6" entity="¶" char="✰" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE ONE OCLOCK-->
+   <symbol number="F0B7" entity="" char="🕐" font="Segoe UI Symbol"/>
+   <symbol number="00B7" entity="·" char="🕐" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE TWO OCLOCK-->
+   <symbol number="F0B8" entity="" char="🕑" font="Segoe UI Symbol"/>
+   <symbol number="00B8" entity="¸" char="🕑" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE THREE OCLOCK-->
+   <symbol number="F0B9" entity="" char="🕒" font="Segoe UI Symbol"/>
+   <symbol number="00B9" entity="¹" char="🕒" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE FOUR OCLOCK-->
+   <symbol number="F0BA" entity="" char="🕓" font="Segoe UI Symbol"/>
+   <symbol number="00BA" entity="º" char="🕓" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE FIVE OCLOCK-->
+   <symbol number="F0BB" entity="" char="🕔" font="Segoe UI Symbol"/>
+   <symbol number="00BB" entity="»" char="🕔" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE SIX OCLOCK-->
+   <symbol number="F0BC" entity="" char="🕕" font="Segoe UI Symbol"/>
+   <symbol number="00BC" entity="¼" char="🕕" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE SEVEN OCLOCK-->
+   <symbol number="F0BD" entity="" char="🕖" font="Segoe UI Symbol"/>
+   <symbol number="00BD" entity="½" char="🕖" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE EIGHT OCLOCK-->
+   <symbol number="F0BE" entity="" char="🕗" font="Segoe UI Symbol"/>
+   <symbol number="00BE" entity="¾" char="🕗" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE NINE OCLOCK-->
+   <symbol number="F0BF" entity="" char="🕘" font="Segoe UI Symbol"/>
+   <symbol number="00BF" entity="¿" char="🕘" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE TEN OCLOCK-->
+   <symbol number="F0C0" entity="" char="🕙" font="Segoe UI Symbol"/>
+   <symbol number="00C0" entity="À" char="🕙" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE ELEVEN OCLOCK-->
+   <symbol number="F0C1" entity="" char="🕚" font="Segoe UI Symbol"/>
+   <symbol number="00C1" entity="Á" char="🕚" font="Segoe UI Symbol"/>
+   <!--CLOCK FACE TWELVE OCLOCK-->
+   <symbol number="F0C2" entity="" char="🕛" font="Segoe UI Symbol"/>
+   <symbol number="00C2" entity="Â" char="🕛" font="Segoe UI Symbol"/>
+   <!--RIBBON ARROW DOWN LEFT-->
+   <symbol number="F0C3" entity="" char="⮰" font="Segoe UI Symbol"/>
+   <symbol number="00C3" entity="Ã" char="⮰" font="Segoe UI Symbol"/>
+   <!--RIBBON ARROW DOWN RIGHT-->
+   <symbol number="F0C4" entity="" char="⮱" font="Segoe UI Symbol"/>
+   <symbol number="00C4" entity="Ä" char="⮱" font="Segoe UI Symbol"/>
+   <!--RIBBON ARROW UP LEFT-->
+   <symbol number="F0C5" entity="" char="⮲" font="Segoe UI Symbol"/>
+   <symbol number="00C5" entity="Å" char="⮲" font="Segoe UI Symbol"/>
+   <!--RIBBON ARROW UP RIGHT-->
+   <symbol number="F0C6" entity="" char="⮳" font="Segoe UI Symbol"/>
+   <symbol number="00C6" entity="Æ" char="⮳" font="Segoe UI Symbol"/>
+   <!--RIBBON ARROW LEFT UP-->
+   <symbol number="F0C7" entity="" char="⮴" font="Segoe UI Symbol"/>
+   <symbol number="00C7" entity="Ç" char="⮴" font="Segoe UI Symbol"/>
+   <!--RIBBON ARROW RIGHT UP-->
+   <symbol number="F0C8" entity="" char="⮵" font="Segoe UI Symbol"/>
+   <symbol number="00C8" entity="È" char="⮵" font="Segoe UI Symbol"/>
+   <!--RIBBON ARROW LEFT DOWN-->
+   <symbol number="F0C9" entity="" char="⮶" font="Segoe UI Symbol"/>
+   <symbol number="00C9" entity="É" char="⮶" font="Segoe UI Symbol"/>
+   <!--RIBBON ARROW RIGHT DOWN-->
+   <symbol number="F0CA" entity="" char="⮷" font="Segoe UI Symbol"/>
+   <symbol number="00CA" entity="Ê" char="⮷" font="Segoe UI Symbol"/>
+   <!--SOLID QUILT SQUARE ORNAMENT-->
+   <symbol number="F0CB" entity="" char="🙪" font="Segoe UI Symbol"/>
+   <symbol number="00CB" entity="Ë" char="🙪" font="Segoe UI Symbol"/>
+   <!--SOLID QUILT SQUARE ORNAMENT IN BLACK SQUARE-->
+   <symbol number="F0CB" entity="" char="🙫" font="Segoe UI Symbol"/>
+   <symbol number="00CB" entity="Ë" char="🙫" font="Segoe UI Symbol"/>
+   <!--TURNED SOUTH WEST POINTING LEAF-->
+   <symbol number="F0CD" entity="" char="🙕" font="Segoe UI Symbol"/>
+   <symbol number="00CD" entity="Í" char="🙕" font="Segoe UI Symbol"/>
+   <!--TURNED NORTH WEST POINTING LEAF-->
+   <symbol number="F0CE" entity="" char="🙔" font="Segoe UI Symbol"/>
+   <symbol number="00CE" entity="Î" char="🙔" font="Segoe UI Symbol"/>
+   <!--TURNED SOUTH EAST POINTING LEAF-->
+   <symbol number="F0CF" entity="" char="🙗" font="Segoe UI Symbol"/>
+   <symbol number="00CF" entity="Ï" char="🙗" font="Segoe UI Symbol"/>
+   <!--TURNED NORTH EAST POINTING LEAF-->
+   <symbol number="F0D0" entity="" char="🙖" font="Segoe UI Symbol"/>
+   <symbol number="00D0" entity="Ð" char="🙖" font="Segoe UI Symbol"/>
+   <!--NORTH WEST POINTING LEAF-->
+   <symbol number="F0D1" entity="" char="🙐" font="Segoe UI Symbol"/>
+   <symbol number="00D1" entity="Ñ" char="🙐" font="Segoe UI Symbol"/>
+   <!--SOUTH WEST POINTING LEAF-->
+   <symbol number="F0D2" entity="" char="🙑" font="Segoe UI Symbol"/>
+   <symbol number="00D2" entity="Ò" char="🙑" font="Segoe UI Symbol"/>
+   <!--NORTH EAST POINTING LEAF-->
+   <symbol number="F0D3" entity="" char="🙒" font="Segoe UI Symbol"/>
+   <symbol number="00D3" entity="Ó" char="🙒" font="Segoe UI Symbol"/>
+   <!--SOUTH EAST POINTING LEAF-->
+   <symbol number="F0D4" entity="" char="🙓" font="Segoe UI Symbol"/>
+   <symbol number="00D4" entity="Ô" char="🙓" font="Segoe UI Symbol"/>
+   <!--ERASE TO THE LEFT-->
+   <symbol number="F0D5" entity="" char="⌫" font="Segoe UI Symbol"/>
+   <symbol number="00D5" entity="Õ" char="⌫" font="Segoe UI Symbol"/>
+   <!--ERASE TO THE RIGHT-->
+   <symbol number="F0D6" entity="" char="⌦" font="Segoe UI Symbol"/>
+   <symbol number="00D6" entity="Ö" char="⌦" font="Segoe UI Symbol"/>
+   <!--THREE-D TOP-LIGHTED LEFTWARDS EQUILATERAL ARROWHEAD-->
+   <symbol number="F0D7" entity="" char="⮘" font="Segoe UI Symbol"/>
+   <symbol number="00D7" entity="×" char="⮘" font="Segoe UI Symbol"/>
+   <!--THREE-D TOP-LIGHTED RIGHTWARDS EQUILATERAL ARROWHEAD-->
+   <symbol number="F0D8" entity="" char="⮚" font="Segoe UI Symbol"/>
+   <symbol number="00D8" entity="Ø" char="⮚" font="Segoe UI Symbol"/>
+   <!--THREE-D RIGHT-LIGHTED UPWARDS EQUILATERAL ARROWHEAD-->
+   <symbol number="F0D9" entity="" char="⮙" font="Segoe UI Symbol"/>
+   <symbol number="00D9" entity="Ù" char="⮙" font="Segoe UI Symbol"/>
+   <!--THREE-D LEFT-LIGHTED DOWNWARDS EQUILATERAL ARROWHEAD-->
+   <symbol number="F0DA" entity="" char="⮛" font="Segoe UI Symbol"/>
+   <symbol number="00DA" entity="Ú" char="⮛" font="Segoe UI Symbol"/>
+   <!--LEFTWARDS BLACK CIRCLED WHITE ARROW-->
+   <symbol number="F0DB" entity="" char="⮈" font="Segoe UI Symbol"/>
+   <symbol number="00DB" entity="Û" char="⮈" font="Segoe UI Symbol"/>
+   <!--RIGHTWARDS BLACK CIRCLED WHITE ARROW-->
+   <symbol number="F0DC" entity="" char="⮊" font="Segoe UI Symbol"/>
+   <symbol number="00DC" entity="Ü" char="⮊" font="Segoe UI Symbol"/>
+   <!--UPWARDS BLACK CIRCLED WHITE ARROW-->
+   <symbol number="F0DD" entity="" char="⮉" font="Segoe UI Symbol"/>
+   <symbol number="00DD" entity="Ý" char="⮉" font="Segoe UI Symbol"/>
+   <!--DOWNWARDS BLACK CIRCLED WHITE ARROW-->
+   <symbol number="F0DE" entity="" char="⮋" font="Segoe UI Symbol"/>
+   <symbol number="00DE" entity="Þ" char="⮋" font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED LEFTWARDS BARB ARROW-->
+   <symbol number="F0DF"
+           entity=""
+           char="🡨"
+           char-msoffice="←"
+           font="Segoe UI Symbol"/>
+   <symbol number="00DF"
+           entity="ß"
+           char="🡨"
+           char-msoffice="←"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED RIGHTWARDS BARB ARROW-->
+   <symbol number="F0E0"
+           entity=""
+           char="🡪"
+           char-msoffice="→"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E0"
+           entity="à"
+           char="🡪"
+           char-msoffice="→"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED UPWARDS BARB ARROW-->
+   <symbol number="F0E1"
+           entity=""
+           char="🡩"
+           char-msoffice="↑"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E1"
+           entity="á"
+           char="🡩"
+           char-msoffice="↑"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED DOWNWARDS BARB ARROW-->
+   <symbol number="F0E2"
+           entity=""
+           char="🡫"
+           char-msoffice="↓"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E2"
+           entity="â"
+           char="🡫"
+           char-msoffice="↓"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED NORTH WEST BARB ARROW-->
+   <symbol number="F0E3"
+           entity=""
+           char="🡬"
+           char-msoffice="↖"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E3"
+           entity="ã"
+           char="🡬"
+           char-msoffice="↖"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED NORTH EAST BARB ARROW-->
+   <symbol number="F0E4"
+           entity=""
+           char="🡭"
+           char-msoffice="↗"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E4"
+           entity="ä"
+           char="🡭"
+           char-msoffice="↗"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED SOUTH WEST BARB ARROW-->
+   <symbol number="F0E5"
+           entity=""
+           char="🡯"
+           char-msoffice="↙"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E5"
+           entity="å"
+           char="🡯"
+           char-msoffice="↙"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED SOUTH EAST BARB ARROW-->
+   <symbol number="F0E6"
+           entity=""
+           char="🡮"
+           char-msoffice="↘"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E6"
+           entity="æ"
+           char="🡮"
+           char-msoffice="↘"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED LEFTWARDS HEAVY BARB ARROW-->
+   <symbol number="F0E7"
+           entity=""
+           char="🡸"
+           char-msoffice="⬅"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E7"
+           entity="ç"
+           char="🡸"
+           char-msoffice="⬅"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED RIGHTWARDS HEAVY BARB ARROW-->
+   <symbol number="F0E8"
+           entity=""
+           char="🡺"
+           char-msoffice="⮕"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E8"
+           entity="è"
+           char="🡺"
+           char-msoffice="⮕"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED UPWARDS HEAVY BARB ARROW-->
+   <symbol number="F0E9"
+           entity=""
+           char="🡹"
+           char-msoffice="⬆"
+           font="Segoe UI Symbol"/>
+   <symbol number="00E9"
+           entity="é"
+           char="🡹"
+           char-msoffice="⬆"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED DOWNWARDS HEAVY BARB ARROW-->
+   <symbol number="F0EA"
+           entity=""
+           char="🡻"
+           char-msoffice="⬇"
+           font="Segoe UI Symbol"/>
+   <symbol number="00EA"
+           entity="ê"
+           char="🡻"
+           char-msoffice="⬇"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED NORTH WEST HEAVY BARB ARROW-->
+   <symbol number="F0EB"
+           entity=""
+           char="🡼"
+           char-msoffice="⬉"
+           font="Segoe UI Symbol"/>
+   <symbol number="00EB"
+           entity="ë"
+           char="🡼"
+           char-msoffice="⬉"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED NORTH EAST HEAVY BARB ARROW-->
+   <symbol number="F0EC"
+           entity=""
+           char="🡽"
+           char-msoffice="⬈"
+           font="Segoe UI Symbol"/>
+   <symbol number="00EC"
+           entity="ì"
+           char="🡽"
+           char-msoffice="⬈"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED SOUTH WEST HEAVY BARB ARROW-->
+   <symbol number="F0ED"
+           entity=""
+           char="🡿"
+           char-msoffice="⬋"
+           font="Segoe UI Symbol"/>
+   <symbol number="00ED"
+           entity="í"
+           char="🡿"
+           char-msoffice="⬋"
+           font="Segoe UI Symbol"/>
+   <!--WIDE-HEADED SOUTH EAST HEAVY BARB ARROW-->
+   <symbol number="F0EE"
+           entity=""
+           char="🡾"
+           char-msoffice="⬊"
+           font="Segoe UI Symbol"/>
+   <symbol number="00EE"
+           entity="î"
+           char="🡾"
+           char-msoffice="⬊"
+           font="Segoe UI Symbol"/>
+   <!--LEFTWARDS WHITE ARROW-->
+   <symbol number="F0EF" entity="" char="⇦" font="Segoe UI Symbol"/>
+   <symbol number="00EF" entity="ï" char="⇦" font="Segoe UI Symbol"/>
+   <!--RIGHTWARDS WHITE ARROW-->
+   <symbol number="F0F0" entity="" char="⇨" font="Segoe UI Symbol"/>
+   <symbol number="00E0" entity="à" char="→" font="Segoe UI Symbol"/>
+   <!--UPWARDS WHITE ARROW-->
+   <symbol number="F0F1" entity="" char="⇧" font="Segoe UI Symbol"/>
+   <symbol number="00F1" entity="ñ" char="⇧" font="Segoe UI Symbol"/>
+   <!--DOWNWARDS WHITE ARROW-->
+   <symbol number="F0F2" entity="" char="⇩" font="Segoe UI Symbol"/>
+   <symbol number="00F2" entity="ò" char="⇩" font="Segoe UI Symbol"/>
+   <!--LEFT RIGHT WHITE ARROW-->
+   <symbol number="F0F3" entity="" char="⬄" font="Segoe UI Symbol"/>
+   <symbol number="00F3" entity="ó" char="⬄" font="Segoe UI Symbol"/>
+   <!--UP DOWN WHITE ARROW-->
+   <symbol number="F0F4" entity="" char="⇳" font="Segoe UI Symbol"/>
+   <symbol number="00F4" entity="ô" char="⇳" font="Segoe UI Symbol"/>
+   <!--NORTH EAST WHITE ARROW-->
+   <symbol number="F0F5" entity="" char="⬀" font="Segoe UI Symbol"/>
+   <symbol number="00F5" entity="õ" char="⬀" font="Segoe UI Symbol"/>
+   <!--NORTH WEST WHITE ARROW-->
+   <symbol number="F0F6" entity="" char="⬁" font="Segoe UI Symbol"/>
+   <symbol number="00F6" entity="ö" char="⬁" font="Segoe UI Symbol"/>
+   <!--SOUTH WEST WHITE ARROW-->
+   <symbol number="F0F7" entity="" char="⬃" font="Segoe UI Symbol"/>
+   <symbol number="00F7" entity="÷" char="⬃" font="Segoe UI Symbol"/>
+   <!--SOUTH EAST WHITE ARROW-->
+   <symbol number="F0F8" entity="" char="⬂" font="Segoe UI Symbol"/>
+   <symbol number="00F8" entity="ø" char="⬂" font="Segoe UI Symbol"/>
+   <!--WHITE ARROW SHAFT WIDTH ONE-->
+   <symbol number="F0F9" entity="" char="🢬" font="Segoe UI Symbol"/>
+   <symbol number="00F9" entity="ù" char="🢬" font="Segoe UI Symbol"/>
+   <!--WHITE ARROW SHAFT WIDTH TWO THIRDS-->
+   <symbol number="F0FA" entity="" char="🢭" font="Segoe UI Symbol"/>
+   <symbol number="00FA" entity="ú" char="🢭" font="Segoe UI Symbol"/>
+   <!--BALLOT BOLD SCRIPT X-->
+   <symbol number="F0FB" entity="" char="🗶" font="Segoe UI Symbol"/>
+   <symbol number="00FB" entity="û" char="🗶" font="Segoe UI Symbol"/>
+   <!--HEAVY CHECK MARK-->
+   <symbol number="F0FC" entity="" char="✔" font="Segoe UI Symbol"/>
+   <symbol number="00FC" entity="ü" char="✔" font="Segoe UI Symbol"/>
+   <!--BALLOT BOX WITH BOLD SCRIPT X-->
+   <symbol number="F0FD" entity="" char="🗷" font="Segoe UI Symbol"/>
+   <symbol number="00FD" entity="ý" char="🗷" font="Segoe UI Symbol"/>
+   <!--BALLOT BOX WITH BOLD CHECK-->
+   <symbol number="F0FE" entity="" char="🗹" font="Segoe UI Symbol"/>
+   <symbol number="00FE" entity="þ" char="🗹" font="Segoe UI Symbol"/>
+</symbols>

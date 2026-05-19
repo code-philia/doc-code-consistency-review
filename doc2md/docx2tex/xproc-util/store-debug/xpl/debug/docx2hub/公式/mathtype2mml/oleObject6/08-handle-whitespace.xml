@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mi mathsize="100%" mathvariant="italic">P</mi>
+      <mn mathsize="100%" mathvariant="normal">(</mn>
+      <mi mathsize="100%" mathvariant="italic">k</mi>
+      <mn mathsize="100%" mathvariant="normal">)</mn>
+      <mo mathsize="100%" mathvariant="normal">=</mo>
+      <mfenced close="]" open="[" separators="">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">R</mi>
+                        <mi mathsize="100%" mathvariant="italic">(</mi>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mi mathsize="100%" mathvariant="italic">/</mi>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mo mathsize="100%" mathvariant="normal">−</mo>
+                        <mtext mathsize="100%" mathvariant="normal">1</mtext>
+                        <mi mathsize="100%" mathvariant="italic">)</mi>
+                     </mrow>
+                  </mtd>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">A</mi>
+                        <mi mathsize="100%" mathvariant="italic">(</mi>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mi mathsize="100%" mathvariant="italic">/</mi>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mo mathsize="100%" mathvariant="normal">−</mo>
+                        <mtext mathsize="100%" mathvariant="normal">1</mtext>
+                        <mi mathsize="100%" mathvariant="italic">)</mi>
+                     </mrow>
+                  </mtd>
+                  <mtd>
+                     <mrow>
+                        <mi mathsize="100%" mathvariant="italic">E</mi>
+                        <mi mathsize="100%" mathvariant="italic">(</mi>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mi mathsize="100%" mathvariant="italic">/</mi>
+                        <mi mathsize="100%" mathvariant="italic">k</mi>
+                        <mo mathsize="100%" mathvariant="normal">−</mo>
+                        <mtext mathsize="100%" mathvariant="normal">1</mtext>
+                        <mi mathsize="100%" mathvariant="italic">)</mi>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+      <msup>
+         <mrow>
+            <mtext mathvariant="normal">T</mtext>
+         </mrow>
+      </msup>
+   </mrow>
+</math>

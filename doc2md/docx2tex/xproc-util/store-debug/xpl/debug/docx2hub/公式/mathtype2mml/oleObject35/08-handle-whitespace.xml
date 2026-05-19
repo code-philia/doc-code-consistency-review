@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" xmlns:tr="http://transpect.io">
+   <mrow>
+      <mtext mathsize="100%" mathvariant="normal">P</mtext>
+      <msub>
+         <mrow>
+            <mtext mathvariant="normal">t</mtext>
+         </mrow>
+      </msub>
+   </mrow>
+</math>

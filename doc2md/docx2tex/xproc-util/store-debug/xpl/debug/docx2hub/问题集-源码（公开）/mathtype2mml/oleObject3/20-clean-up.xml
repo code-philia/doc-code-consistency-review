@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+   <msub xmlns:tr="http://transpect.io">
+      <mi>t</mi>
+      <mrow>
+         <mtext>go</mtext>
+         <mi>t</mi>
+         <mi>e</mi>
+         <mi>m</mi>
+         <mi>p</mi>
+      </mrow>
+   </msub>
+   <mo xmlns:tr="http://transpect.io">=</mo>
+   <mfenced xmlns:tr="http://transpect.io" close="|" open="|" separators="">
+      <msub>
+         <mi>R</mi>
+         <mrow>
+            <mi>z</mi>
+            <mn>0</mn>
+         </mrow>
+      </msub>
+      <mo>/</mo>
+      <mrow>
+         <mi>V</mi>
+         <msub>
+            <mi>r</mi>
+            <mrow>
+               <mi>e</mi>
+               <mi>s</mi>
+               <mi>t</mi>
+            </mrow>
+         </msub>
+      </mrow>
+   </mfenced>
+</math>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <mfenced separators="" open="[" close="]">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">n</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">x</mi>
+                              <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                              <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">g</mi>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">n</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">y</mi>
+                              <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                              <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">g</mi>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">n</mi>
+                        <msub>
+                           <mrow>
+                              <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">z</mi>
+                              <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                              <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">g</mi>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+      <mo mathvariant="normal"
+          font-position="003D"
+          fontfamily="Symbol"
+          default-font=""
+          mathsize="100%">=</mo>
+      <mi mathvariant="italic"
+          fontfamily="Times New Roman"
+          default-font=""
+          mathsize="100%">T</mi>
+      <msub>
+         <mrow>
+            <mi mathvariant="italic" fontfamily="Times New Roman" default-font="">D</mi>
+         </mrow>
+      </msub>
+      <mfenced separators="" open="[" close="]">
+         <mrow>
+            <mtable>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">B</mi>
+                        <msub>
+                           <mrow>
+                              <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">1</mn>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">B</mi>
+                        <msub>
+                           <mrow>
+                              <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">2</mn>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+               <mtr>
+                  <mtd>
+                     <mrow>
+                        <mi mathvariant="italic"
+                            fontfamily="Times New Roman"
+                            default-font=""
+                            mathsize="100%">B</mi>
+                        <msub>
+                           <mrow>
+                              <mn mathvariant="normal" fontfamily="Times New Roman" default-font="">3</mn>
+                           </mrow>
+                        </msub>
+                     </mrow>
+                  </mtd>
+               </mtr>
+            </mtable>
+         </mrow>
+      </mfenced>
+   </mrow>
+</math>

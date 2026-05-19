@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<math xmlns="http://www.w3.org/1998/Math/MathML"
+      xmlns:tr="http://transpect.io"
+      display="block">
+   <mrow>
+      <msub>
+         <mtext mathsize="100%" mathvariant="normal">R</mtext>
+         <mrow>
+            <mtext mathvariant="normal">min</mtext>
+         </mrow>
+      </msub>
+      <mtext mathsize="100%" mathvariant="normal">=1km</mtext>
+   </mrow>
+</math>
