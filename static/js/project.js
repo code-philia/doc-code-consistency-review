@@ -268,12 +268,37 @@ const app = createApp({
             const normalizedType = normalizeKbType(type);
             return map[normalizedType] || normalizedType || '未知';
         };
+
+        const parseLocalDateTime = (value) => {
+            if (!value) return null;
+            if (value instanceof Date) {
+                return Number.isNaN(value.getTime()) ? null : value;
+            }
+
+            const raw = String(value).trim();
+            const localMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?$/);
+            if (localMatch) {
+                const [, year, month, day, hour, minute, second = '0'] = localMatch;
+                return new Date(
+                    Number(year),
+                    Number(month) - 1,
+                    Number(day),
+                    Number(hour),
+                    Number(minute),
+                    Number(second)
+                );
+            }
+
+            const parsed = new Date(raw);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        };
         
         // Format time helper (duplicate from welcome.js but needed here)
         const formatRelativeTime = (isoString) => {
             if (!isoString) return '未知时间';
             const now = new Date();
-            const past = new Date(isoString);
+            const past = parseLocalDateTime(isoString);
+            if (!past) return '未知时间';
             const diffInSeconds = Math.floor((now - past) / 1000);
             if (diffInSeconds < 60) return '刚刚';
             const diffInMinutes = Math.floor(diffInSeconds / 60);

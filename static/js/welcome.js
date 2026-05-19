@@ -7,10 +7,35 @@ const { ElMessage, ElMessageBox } = ElementPlus;
 // ========================
 // 工具函数
 // ========================
+const parseLocalDateTime = (value) => {
+    if (!value) return null;
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    const raw = String(value).trim();
+    const localMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?$/);
+    if (localMatch) {
+        const [, year, month, day, hour, minute, second = '0'] = localMatch;
+        return new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            Number(second)
+        );
+    }
+
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const formatRelativeTime = (isoString) => {
     if (!isoString) return '未知时间';
     const now = new Date();
-    const past = new Date(isoString);
+    const past = parseLocalDateTime(isoString);
+    if (!past) return '未知时间';
     const diffInSeconds = Math.floor((now - past) / 1000);
 
     if (diffInSeconds < 60) return '刚刚';
@@ -359,7 +384,7 @@ const app = createApp({
                     }   */
                     
                     const res = await axios.post('/project/create', {
-                        projectName: resu.data.folderName || projectName,
+                        projectName: resu.data.projectName || projectName,
                         projectLocation: resu.data.serverPath || projectLocation,
                         parseDocMethod: parseDocMethod,
                         creationType: 'folder',
@@ -371,7 +396,7 @@ const app = createApp({
                         window.projectId = res.data.new_id;
                         //console.log('resu.data.new_id:',resu.data.new_id)
                         openProject({
-                            name: res.data.project_name || projectName,
+                            name: res.data.project_name || resu.data.projectName || projectName,
                             path: res.data.project_path || projectLocation,
                             project_id: resu.data.new_id
                         });

@@ -1,6 +1,7 @@
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
@@ -8,6 +9,33 @@ from .db import get_db
 import traceback
 
 project_bp = Blueprint('project', __name__)
+
+
+def _project_now_str():
+    return datetime.now(ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _serialize_project_time(value):
+    if isinstance(value, datetime):
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    if value is None:
+        return None
+
+    raw = str(value).strip()
+    if not raw:
+        return None
+
+    # 兼容旧数据：历史上这里写入过不带时区的 ISO 字符串，实际语义更接近 UTC。
+    # 新数据统一改成空格分隔的本地时间字符串，这里仅对旧的 T 格式做矫正。
+    if 'T' in raw and '+' not in raw and raw[-1:] != 'Z':
+        for fmt in ('%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S'):
+            try:
+                parsed = datetime.strptime(raw, fmt).replace(tzinfo=timezone.utc)
+                return parsed.astimezone(ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                continue
+
+    return raw.replace('T', ' ')
 
 
 @project_bp.route('/project/recent-projects', methods=['GET'])
@@ -38,17 +66,23 @@ def get_recent_projects():
     rows = c.fetchall()
     history = []
     for row in rows:
-        history.append({'last_opened': row['last_opened'], 'name': row['name'], 'path': row['path'], 'id': row['project_id']})
+        history.append({
+            'last_opened': _serialize_project_time(row['last_opened']),
+            'name': row['name'],
+            'path': row['path'],
+            'id': row['project_id']
+        })
 
     return jsonify({"status": "success", "recentProjects": history})
 
 
 def project_access(project_id):
+    now_str = _project_now_str()
     if current_user.role == 'admin':
         sql = f'insert into project_access_log(user_id,project_id,access_time) ' \
-              f'values({current_user.user_id},{project_id},"{datetime.now().isoformat()}")'
+              f'values({current_user.user_id},{project_id},"{now_str}")'
     else:
-        sql = f'update project set last_opened="{datetime.now().isoformat()}" where project_id={project_id}'
+        sql = f'update project set last_opened="{now_str}" where project_id={project_id}'
 
     db = get_db()
     c = db.cursor()

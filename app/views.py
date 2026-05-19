@@ -24,6 +24,7 @@ from .doc_block import chunk_markdown
 import random
 import string
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from werkzeug.utils import secure_filename
 import uuid
 from docx import Document
@@ -53,6 +54,10 @@ handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
+
+
+def project_now_str():
+    return datetime.now(ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d %H:%M:%S')
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'app/history.json'
@@ -224,7 +229,7 @@ def create_project():
     if creation_type == 'blank':
         return create_blank_project(project_name, project_location, parseDocMethod)
     elif creation_type == 'folder':
-        return create_project_from_folder(project_name, project_location, parseDocMethod)
+        return create_project_from_folder(project_name, project_location, parseDocMethod, project_id=project_id)
     else:
         return jsonify({"status": "error", "message": "无效的创建类型。"}), 400
 
@@ -236,6 +241,7 @@ def create_blank_project(project_name, project_location, parseDocMethod):
         return jsonify({"status": "error", "message": f"项目文件夹 '{project_name}' 已存在于目标位置。"}), 400
 
     try:
+        now_str = project_now_str()
         code_repo_path = os.path.join(project_path, 'code_repo')
         doc_repo_path = os.path.join(project_path, 'doc_repo')
         os.makedirs(code_repo_path, exist_ok=True)
@@ -244,7 +250,7 @@ def create_blank_project(project_name, project_location, parseDocMethod):
         metadata = {
             "project_name": project_name,
             "project_location": project_location,
-            "create_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "create_time": now_str,
             "code_repo": code_repo_path,
             "doc_repo": doc_repo_path,
             "code_files": [],
@@ -262,8 +268,8 @@ def create_blank_project(project_name, project_location, parseDocMethod):
         auto_load_rag_db(project_path)
         sql = f"""
             insert into project(user_id,last_opened,name,path,create_time,update_time) 
-            values({current_user.user_id}, "{datetime.now().isoformat()}", "{project_name}", 
-            "{project_path}", "{datetime.now().isoformat()}", "{datetime.now().isoformat()}");
+            values({current_user.user_id}, "{now_str}", "{project_name}", 
+            "{project_path}", "{now_str}", "{now_str}");
             """
         # print('sql:', sql)
 
@@ -277,7 +283,7 @@ def create_blank_project(project_name, project_location, parseDocMethod):
         return jsonify({"status": "error", "message": f"创建目录或文件时出错: {e}"}), 500
 
 
-def create_project_from_folder(project_name, folder_path, parseDocMethod):
+def create_project_from_folder(project_name, folder_path, parseDocMethod, project_id=None):
     """处理从现有文件夹创建项目的逻辑"""
     project_path = folder_path # 项目路径就是用户选择的文件夹
     if not os.path.isdir(project_path):
@@ -293,6 +299,7 @@ def create_project_from_folder(project_name, folder_path, parseDocMethod):
         return jsonify({"status": "error", "message": "该文件夹已包含 'metadata.json'，似乎已是一个项目。"}), 400
 
     try:
+        now_str = project_now_str()
         code_files = get_all_files_with_relative_paths(code_repo_path, type ='code')
         doc_files = get_all_files_with_relative_paths(doc_repo_path, type ='doc')
 
@@ -321,7 +328,7 @@ def create_project_from_folder(project_name, folder_path, parseDocMethod):
         metadata = {
             "project_name": project_name,
             "project_location": os.path.dirname(project_path), # 存储其父目录
-            "create_time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            "create_time": now_str,
             "code_repo": code_repo_path,
             "doc_repo": doc_repo_path,
             "code_files": code_files,
@@ -338,7 +345,27 @@ def create_project_from_folder(project_name, folder_path, parseDocMethod):
         # init_project_db(project_path)
         auto_load_rag_db(project_path)
 
-        return jsonify({"status": "success", "project_path": project_path}), 200
+        db = get_db()
+        c = db.cursor()
+        if project_id:
+            sql = """
+                update project
+                set name=%s, path=%s, update_time=%s
+                where project_id=%s and user_id=%s
+            """
+            params = (project_name, project_path, now_str, project_id, current_user.user_id)
+            c.execute(sql, params)
+            new_id = project_id
+        else:
+            sql = """
+                insert into project(user_id,last_opened,name,path,create_time,update_time)
+                values(%s, %s, %s, %s, %s, %s)
+            """
+            params = (current_user.user_id, now_str, project_name, project_path, now_str, now_str)
+            c.execute(sql, params)
+            new_id = c.lastrowid
+
+        return jsonify({"status": "success", "project_path": project_path, "project_name": project_name, "new_id": new_id}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": f"扫描文件夹或生成元数据时出错: {e}"}), 500
 
@@ -964,11 +991,12 @@ def upload_files():
 def upload_folder():
     """处理文件夹上传功能"""
     try:
+        now_str = project_now_str()
         # 获取上传的文件和文件夹名称
         files = request.files.getlist('files')
         paths = request.form.getlist('paths')
         folder_name = request.form.get('folderName')
-        project_name = request.form.get('folderName')
+        project_name = (request.form.get('projectName') or folder_name or '').strip()
 
         if not files or not folder_name:
             return jsonify({"status": "error", "message": "没有接收到文件或文件夹名称"}), 400
@@ -983,7 +1011,6 @@ def upload_folder():
         # 如果目标文件夹已存在，添加时间戳后缀
         if os.path.exists(target_folder_path):
             target_folder_path = os.path.join(TESTDATA_DIR, f"{folder_name}_{timestamp}")
-            project_name = project_name + '_' + str(timestamp)
         # 创建目标文件夹
         os.makedirs(target_folder_path, exist_ok=True)
 
@@ -1018,8 +1045,7 @@ def upload_folder():
                 values(%s, %s, %s, %s, %s, %s);
                 """
         # print('sql:', sql)
-        params = (current_user.user_id, datetime.now().isoformat(), project_name, target_folder_path,
-                  datetime.now().isoformat(), datetime.now().isoformat())
+        params = (current_user.user_id, now_str, project_name, target_folder_path, now_str, now_str)
         db = get_db()
         c = db.cursor()
         c.execute(sql, params)
@@ -1030,6 +1056,7 @@ def upload_folder():
             "message": f"文件夹 '{folder_name}' 上传成功",
             "serverPath": target_folder_path,
             "folderName": os.path.basename(target_folder_path),
+            "projectName": project_name,
             "new_id": new_id
         }), 200
 
