@@ -516,8 +516,7 @@ const app = createApp({
             try {
                 let blocks = codeBlocks.value;
                 if (reload || !blocks || blocks.length === 0) {
-                    // 请求获取当前代码文件的代码块，如果没有选中文件则获取所有（取决于后端实现，这里传递文件名以支持后端筛选）
-                    const response = await axios.get(`/api/get-code-blocks?projectPath=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(selectedCodeFile.value || '')}`);
+                    const response = await axios.get(`/api/get-code-blocks?projectPath=${encodeURIComponent(projectPath.value)}`);
                     if (response.data.status === 'success') {
                         blocks = response.data.data;
                         codeBlocks.value = blocks; // Store
