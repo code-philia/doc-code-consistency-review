@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -49,6 +49,19 @@
                     <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (单个)</div>
                     <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (文件夹)</div>
                 </div>
+                
+                <!-- 选择解析方式弹窗 -->
+                <el-dialog v-model="dialogParseDocMethodVisible" title="选择文档解析方式" width="30%">
+                    <el-radio-group v-model="parseDocMethod">
+                        <el-radio-button label="default">默认解析</el-radio-button>
+                        <el-radio-button label="enhanced">公式加强解析</el-radio-button>
+                    </el-radio-group>
+                    <template #footer>
+                        <el-button @click="dialogParseDocMethodVisible = false">取消</el-button>
+                        <el-button type="primary" @click="handleConfirmParseDocMethod">确定</el-button>
+                    </template>
+                </el-dialog>
+                  
             </div>
             <div class="menu-item">
                 智能工具
@@ -216,12 +229,24 @@
                                 :expand-on-click-node="false"
                                 node-key="path"
                                 empty-text="">
-                                <template #default="{ node, data }">
+                                <!-- <template #default="{ node, data }">
                                     <span class="file-item req-file" :class="{ 'selected': data.path === selectedDocFile && data.type === 'file' }">
                                         <i :class="data.icon"></i>
                                         <span class="file-name">${ node.label }</span>
                                     </span>
-                                </template>
+                                </template>  -->
+								
+								<template #default="{ node, data }">
+                                    <span class="file-item req-file" :class="{ 'selected': data.path === selectedDocFile && data.type === 'file' }" @mouseenter="handleMouseEnter(data)" @mouseleave="handleMouseLeave(data)">
+                                        <i :class="data.icon"></i>
+                                        <span class="file-name">${ node.label }</span>
+										<!-- 删除按钮 -->
+										<div class="file-actions" v-show="showDeleteIcon && data.type === 'file'">
+										  <el-button size="small"  link @click.stop="removeFile(data.path, data.label, data.fileType)" class="delete-btn">×</el-button>
+										</div>
+                                    </span>
+                                </template> 
+                                
                             </el-tree>
                         </div>
                         </div>
@@ -244,9 +269,13 @@
                                 node-key="path"
                                 empty-text="">
                                 <template #default="{ node, data }">
-                                    <span class="file-item code-file" :class="{ 'selected': data.path === selectedCodeFile && data.type === 'file' }">
+                                    <span class="file-item code-file" :class="{ 'selected': data.path === selectedCodeFile && data.type === 'file' }" @mouseenter="handleMouseEnter(data)" @mouseleave="handleMouseLeave(data)">
                                         <i :class="data.icon"></i>
                                         <span class="file-name">${ node.label }</span>
+                                        <!-- 删除按钮 -->
+										<div class="file-actions" v-show="showDeleteIcon && data.type === 'file'">
+										  <el-button size="small"  link @click.stop="removeFile(data.path, data.label, data.fileType)" class="delete-btn">×</el-button>
+										</div>
                                     </span>
                                 </template>
                             </el-tree>
@@ -480,7 +509,7 @@
                                             text
                                             plain
                                             type="primary"
-                                            class="right-toolbar-btn"
+                                            class="right-toolbar-btn"  
                                         >
                                              取消选中
                                         </el-button>
@@ -499,7 +528,6 @@
                                             size="small" 
                                             text
                                             plain
-                                            type="primary"
                                             class="right-toolbar-btn"
                                         >
                                              导出结果
@@ -509,11 +537,12 @@
                                             size="small" 
                                             text
                                             plain
-                                            type="primary"
                                             class="right-toolbar-btn"
                                         >
                                              提示词设置
                                         </el-button>
+                                        
+                                        
                                         </div>
                                        <div class="right-toolbar-actions" v-if="rightSidebarMode === 'block'"> 
                                         <el-button 
@@ -536,6 +565,26 @@
                                         >
                                              刷新列表
                                         </el-button>
+                                        
+                                        <el-button 
+                                            @click="exportResults" 
+                                            size="small" 
+                                            text
+                                            plain
+                                            class="right-toolbar-btn"
+                                        >
+                                             导出结果
+                                        </el-button>
+                                        <el-button 
+                                            @click="SetPrompt" 
+                                            size="small" 
+                                            text
+                                            plain
+                                            class="right-toolbar-btn"
+                                        >
+                                             提示词设置
+                                        </el-button>
+                                        
                                         </div>
                                     </div>
                                     
@@ -1049,8 +1098,8 @@
                 <el-button @click="copyAndClose('你的审查结果错误')" type="primary" size="small" style="margin-left: 10px; font-size: 12px;">复制</el-button>
               </div>
               <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <span style="flex: 1;">你审查的代码缺陷有缺失，缺少了...</span>
-                <el-button @click="copyAndClose('你审查的代码缺陷有缺失，缺少了...')" type="primary" size="small" style="margin-left: 10px; font-size: 12px;">复制</el-button>
+                <span style="flex: 1;">你的审查结果不完整，思考过程太多，影响了问题单生成，请多注重问题单生成...</span>
+                <el-button @click="copyAndClose('你的审查结果不完整，思考过程太多，影响了问题单生成，请多注重问题单生成...')" type="primary" size="small" style="margin-left: 10px; font-size: 12px;">复制</el-button>
               </div>
             </div>               
             

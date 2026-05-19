@@ -2548,3 +2548,51 @@
     flex: 1;
     overflow-y: auto;
 }
+
+/* 新增 */
+.file-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: 20px; /* 为“×”预留空间 */
+}
+
+.file-actions {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  width: 30px;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px 0 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 悬停时显示 */
+.file-item:hover .file-actions {
+  opacity: 1;
+}
+
+.delete-btn {
+  padding: 0;
+  font-size: 16px;
+  color: #f56c6c;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  color: #e63946;
+  background: rgba(255, 0, 0, 0.1);
+}

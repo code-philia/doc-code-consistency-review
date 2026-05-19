@@ -44,6 +44,7 @@ const app = createApp({
         const projectForm = reactive({
             projectName: '',
             projectLocation: '',
+            parseDocMethod: 'default',
         });
         
         const recentProjects = ref([]);
@@ -303,14 +304,17 @@ const app = createApp({
         const openNewProjectDialog = () => {
             projectForm.projectName = '';
             projectForm.projectLocation = '',
+            projectForm.parseDocMethod = 'default'; // 或 'enhanced'
             selectedFolderFiles.value = [];
             selectedFolderName.value = '';
             showNewProjForm.value = true;
+            
         };
 
         const handleNewProject = async () => {
             const projectLocation = 'testdata'//(projectForm.projectLocation || '').trim();
             let projectName = (projectForm.projectName || '').trim();
+            let parseDocMethod = (projectForm.parseDocMethod || '').trim();
 
             /* if (!projectLocation) {
                 ElMessage.error('请填写项目存放路径');
@@ -325,20 +329,20 @@ const app = createApp({
             } */
 
             isCreating.value = true;
-
+            //console.log(projectForm)
             try {
                 if (selectedFolderFiles.value.length > 0) {
                     const formData = new FormData();
                     formData.append('projectName', projectName);
                     formData.append('projectLocation', projectLocation);
                     formData.append('folderName', selectedFolderName.value || projectName);
+                    formData.append('parseDocMethod', parseDocMethod);
 
                     selectedFolderFiles.value.forEach(file => {
                         formData.append('files', file);
                         formData.append('paths', file.webkitRelativePath || file.name);
                     });
                                      
-                    
                     const resu = await axios.post('/project/upload-folder', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
@@ -357,6 +361,7 @@ const app = createApp({
                     const res = await axios.post('/project/create', {
                         projectName: resu.data.folderName || projectName,
                         projectLocation: resu.data.serverPath || projectLocation,
+                        parseDocMethod: parseDocMethod,
                         creationType: 'folder',
                         project_id: resu.data.new_id
                     });
@@ -364,7 +369,7 @@ const app = createApp({
                         showNewProjForm.value = false;
                         ElMessage.success('创建成功');
                         window.projectId = res.data.new_id;
-                        console.log('resu.data.new_id:',resu.data.new_id)
+                        //console.log('resu.data.new_id:',resu.data.new_id)
                         openProject({
                             name: res.data.project_name || projectName,
                             path: res.data.project_path || projectLocation,
@@ -800,6 +805,24 @@ const app = createApp({
             currentKbDocument.value = doc;
         };
 
+        const DeleteKbsFile = async (file_name) => {
+            if (!currentKb.value) return;
+            try {
+                const res = await axios.post('/api/kb/file/delete', {
+                    kbName: currentKb.value.name,
+                    kbType: currentKb.value.type,
+                    file_name: file_name
+                });
+                if (res.data.status === 'success') {
+                    fetchKbItems(currentKb.value)
+                } else {
+                    ElMessage.error(res.data.message);
+                }
+            } catch (e) {
+                ElMessage.error("获取知识库文件失败");
+            }
+        };
+
         const openAddFileInKb = () => {
             if (!currentKb.value) return;
             openImportDialogForKb(currentKb.value);
@@ -864,7 +887,7 @@ const app = createApp({
         const fetchKbItems = async (kb) => {
             try {
                 const res = await axios.get('/api/kb/items', {
-                    params: { name: kb.name, type: kb.type, limit: 100 }
+                    params: { name: kb.name, type: kb.type, limit: 99999999 }
                 });
                 if (res.data.status === 'success') {
                     kbItems.value = res.data.items;
@@ -1028,6 +1051,7 @@ const app = createApp({
             kbItems,
             kbDocuments,
             openKbDocumentDetail,
+            DeleteKbsFile,
             currentKbDocument,
             openAddFileInKb,
             deleteKbItem,

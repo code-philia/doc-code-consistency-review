@@ -134,9 +134,6 @@
                                             <!-- <el-form-item label="项目存放路径（绝对路径）">
                                                 <el-input v-model="projectForm.projectLocation" placeholder="例如：/data/review/my_project"></el-input>
                                             </el-form-item> -->
-                                            <el-form-item label="项目名称">
-                                                <el-input v-model="projectForm.projectName" placeholder="根据项目路径实时生成，可手动修改"></el-input>
-                                            </el-form-item>
                                             <el-form-item label="源文件夹（可选）">
                                                 <div class="folder-input-group">
                                                     <el-input :model-value="selectedFolderName" placeholder="未选择则创建空白目录" readonly></el-input>
@@ -149,7 +146,20 @@
                                                     ${ selectedFolderName ? ('已选择源文件夹：' + selectedFolderName) : '未选择源文件夹，提交后创建空白项目目录' }
                                                 </div>
                                             </el-form-item>
-                                        </el-form>
+                                            
+                                            <el-form-item label="项目名称">
+                                                <el-input v-model="projectForm.projectName" placeholder="根据项目路径实时生成，可手动修改"></el-input>
+                                            </el-form-item>
+                                            
+                                            <!-- 新增：文档解析方式 -->
+                                            <el-form-item label="文档解析方式（若选择了“源文件夹”则必选）">
+                                                <el-radio-group v-model="projectForm.parseDocMethod">
+                                                    <el-radio-button label="default">默认解析</el-radio-button>
+                                                    <el-radio-button label="enhanced">公式加强解析</el-radio-button>
+                                                </el-radio-group>
+                                            </el-form-item>
+                                            
+                                        </el-form>   
                                     </div>
                                 </div>
                             </div>
@@ -339,6 +349,11 @@
                         <el-table-column label="操作" width="150" fixed="right">
                             <template #default="scope">
                                 <el-button link type="primary" size="small" @click="openKbDocumentDetail(scope.row)">查看详情</el-button>
+                                <el-button
+                                    @click="DeleteKbsFile(scope.row.name)"
+                                    style="background: #ff4d4f; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer;">
+                                    删除
+                                </el-button>
                             </template>
                         </el-table-column>
                     </el-table>

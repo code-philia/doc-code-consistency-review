@@ -51,21 +51,22 @@ def _normalize_kb_type_for_use(raw_type):
         return "align"
     return "other"
 
-
 @celery.task(name="user_bp.task.add")
 def add(x, y):
     time.sleep(10)
     return x + y
 
 
-@celery.task
-def abstract_code_from_project_task(params, code_file_path, user_id):
+@celery.task(bind=True)
+def abstract_code_from_project_task(self, params, code_file_path, user_id):
+    #print('*********1111111*******')
     try:
         project_id = params.get('project_id')
         project_path = params.get('projectPath', '')
         # 从SQLite读取数据
+        print('从SQLite读取数据!!!!!!!!!!!!!!!')
         df = get_abstracts_from_sqlite(project_id)
-        print(df.head())
+        # print(df.head())
         # 排除无关文件夹/目录
         exclude_folders = ['.git', '.idea']
         # 基于文件名后缀，指定文件类型
@@ -74,7 +75,17 @@ def abstract_code_from_project_task(params, code_file_path, user_id):
         file_abstract = {}
         for root, dirs, files in os.walk(code_file_path):
             dirs[:] = [d for d in dirs if d not in exclude_folders]
-            for file in files:
+            total = len(files)
+            for i, file in enumerate(files, 1):
+                self.update_state(
+                    state="PROGRESS",
+                    meta={
+                        'current': i,
+                        'total': total,
+                        'name': f'正在摘要:{file}',
+                        'status': f'任务进行中{i}/{total}...'
+                    }
+                )
                 if os.path.splitext(file)[1] in include_files:
                     file_path = os.path.join(root, file)
                     rel_path = os.path.relpath(file_path, code_file_path)
@@ -107,11 +118,20 @@ def abstract_code_from_project_task(params, code_file_path, user_id):
                         # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
                         save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id, user_id)
 
+        self.update_state(
+            state="SUCCESS",
+            meta={
+                'status': f'摘要生成完毕'
+            }
+        )
         logger.info('代码文件的摘要已生成')
         return {'status': True, 'message': '任务执行成功', 'data': file_abstract}
 
     except Exception as e:
-        # self.retry(exc=e)
+        self.update_state(
+            state="FAILURE",
+            message=f"摘要过程中出错{e}"
+        )
         logger.error(f"生成代码摘要出错: {str(e)}", exc_info=True)
         return {'status': False, 'message': str(e)}
 
@@ -200,15 +220,18 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
                 issues_list = [issue]
             else:
                 issues_list = []
-
+            
+            # 需求反生成
+            generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+            
             conn = get_db_celery()
             cur = conn.cursor()
             try:
 
                 cur.execute(
-                    'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, updatedAt=CURRENT_TIMESTAMP '
+                    'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP '
                     'WHERE id=%s and project_id=%s',
-                    (alignment.get('reviewThoughts') or '', alignment.get('id'), project_id)
+                    (alignment.get('reviewThoughts') or '', generated_requirement or '', mermaid_code or '', alignment.get('id'), project_id)
                 )
 
                 if issues_list:
@@ -265,6 +288,10 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
             finally:
                 conn.close()
     except Exception as e:
+        self.update_state(
+            state="FAILURE",
+            message=f"审查出错{e}"
+        )
         logger.error(f"审查失败2: {str(e)}", exc_info=True)
         raise RuntimeError(f"Failed to save review result: {str(e)}") from e
 
@@ -345,15 +372,18 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
         issues_list = [issue]
     else:
         issues_list = []
-
+    
+    # 需求反生成
+    generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+    
     conn = get_db_celery()
     cur = conn.cursor()
 
     try:
         cur.execute(
-            'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, updatedAt=CURRENT_TIMESTAMP '
+            'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP '
             'WHERE id=%s and project_id=%s',
-            (alignment.get('reviewThoughts') or '', alignment.get('id'), project_id)
+            (alignment.get('reviewThoughts') or '', generated_requirement or '', mermaid_code or '', alignment.get('id'), project_id)
         )
 
         if issues_list:
@@ -474,41 +504,46 @@ def align_requirement_to_project_task(self, file_abstract, params, user_id):
                     user_id=user_id,
                     project_path=project_path
                 )
+                
+                try:
+                    # 检查并添加 related_id 对应的代码块
+                    related_code = include_related_blocks(related_code, all_code_blocks)
 
-                # 检查并添加 related_id 对应的代码块
-                related_code = include_related_blocks(related_code, all_code_blocks)
+                    # 转换为codeRanges格式
+                    for code_block in related_code:
+                        # 获取原始代码内容（不带行号）
+                        file_path = os.path.join(code_repo_path, code_block['file'])
+                        if os.path.exists(file_path):
+                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                original_content = f.read()
+                                lines = original_content.splitlines(keepends=True)  # 保留换行符
 
-                # 转换为codeRanges格式
-                for code_block in related_code:
-                    # 获取原始代码内容（不带行号）
-                    file_path = os.path.join(code_repo_path, code_block['file'])
-                    if os.path.exists(file_path):
-                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                            original_content = f.read()
-                            lines = original_content.splitlines(keepends=True)  # 保留换行符
+                                # 提取指定行范围的内容
+                                start_line = max(1, code_block['range'][0])
+                                end_line = min(len(lines), code_block['range'][1])
 
-                            # 提取指定行范围的内容
-                            start_line = max(1, code_block['range'][0])
-                            end_line = min(len(lines), code_block['range'][1])
+                                if start_line <= end_line:
+                                    # 计算字符偏移量
+                                    char_start = sum(len(line) for line in lines[:start_line - 1])
+                                    char_end = sum(len(line) for line in lines[:end_line])
 
-                            if start_line <= end_line:
-                                # 计算字符偏移量
-                                char_start = sum(len(line) for line in lines[:start_line - 1])
-                                char_end = sum(len(line) for line in lines[:end_line])
+                                    # 提取内容（不保留换行符用于显示）
+                                    range_content = '\n'.join(
+                                        [line.rstrip('\n\r') for line in lines[start_line - 1:end_line]])
 
-                                # 提取内容（不保留换行符用于显示）
-                                range_content = '\n'.join(
-                                    [line.rstrip('\n\r') for line in lines[start_line - 1:end_line]])
-
-                                code_ranges.append({
-                                    'filename': code_block['file'],
-                                    'start': char_start,  # 字符偏移量
-                                    'end': char_end,  # 字符偏移量
-                                    'content': range_content,
-                                    'documentId': code_block['file'],
-                                    'startLine': start_line,
-                                    'endLine': end_line
-                                })
+                                    code_ranges.append({
+                                        'filename': code_block['file'],
+                                        'start': char_start,  # 字符偏移量
+                                        'end': char_end,  # 字符偏移量
+                                        'content': range_content,
+                                        'documentId': code_block['file'],
+                                        'startLine': start_line,
+                                        'endLine': end_line
+                                    })
+                                    
+                except Exception as e:
+                    print(f"add related_code failed: {e}") 
+                    
             chunk['codeRanges'] = code_ranges
             add_alignment_data(project_path, chunk, project_id, user_id)
 
@@ -518,6 +553,10 @@ def align_requirement_to_project_task(self, file_abstract, params, user_id):
         )
 
     except Exception as e:
+        self.update_state(
+            state="FAILURE",
+            message=f"对齐过程中出错{e}"
+        )
         logger.error(f'对齐过程中出错:{str(e)}', exc_info=True)
         raise RuntimeError(f'对齐过程中出错:{str(e)}') from e
 
@@ -713,6 +752,10 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
         )
 
     except Exception as e:
+        self.update_state(
+            state="FAILURE",
+            message=f"对齐过程中出错{e}"
+        )
         logger.error(f'对齐 代码=>需求 过程中出错:{str(e)}', exc_info=True)
         raise RuntimeError(f'对齐 代码=>需求 过程中出错:{str(e)}') from e
 
@@ -828,12 +871,53 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
         # 即使块创建失败，也不应该阻止对齐关系的保存，但最好记录日志
         logger.error(f"Error auto-creating blocks: {str(e)}", exc_info=True)
 
+
+    conn = get_db_celery()
+    cur = conn.cursor()
+    try:
+        # conn = get_db_conn(project_path)
+        cur.execute(
+            '''
+            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, createdAt, updatedAt) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+            ON DUPLICATE KEY UPDATE 
+                name = VALUES(name),
+                isReviewed = VALUES(isReviewed),
+                reviewThoughts = VALUES(reviewThoughts),
+                docRanges = VALUES(docRanges),
+                codeRanges = VALUES(codeRanges),
+                updatedAt = CURRENT_TIMESTAMP
+            ''',
+            (
+                new_alignment.get('id'),
+                user_id,
+                project_id,
+                new_alignment.get('name'),
+                1 if new_alignment.get('isReviewed') else 0,
+                new_alignment.get('reviewThoughts') or '',
+                json.dumps(new_alignment.get('docRanges') or []),
+                json.dumps(code_ranges or [])
+                # generated_requirement or ''
+                # mermaid_code or ''
+            )
+        )
+        conn.commit()
+        # conn.close()
+        return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"写入对齐数据失败:{str(e)}", exc_info=True)
+        return {"status": "error", "message": f"写入对齐数据失败: {e}"}
+    finally:
+        conn.close()
+
+def gen_requirement(doc_ranges, code_ranges):
     generated_requirement = ''
     mermaid_code = ''
 
     # 反生成需求+流程图
     try:
-        requirement_content = new_alignment.get('docRanges')
+        requirement_content = doc_ranges
         code_content = code_ranges
 
         # if not code_content:
@@ -865,44 +949,5 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
         # print(f"Error generating reverse requirement: {str(e)}")
         logger.error(f"Error generating reverse requirement: {str(e)}", exc_info=True)
         # return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
-
-    conn = get_db_celery()
-    cur = conn.cursor()
-    try:
-        # conn = get_db_conn(project_path)
-        cur.execute(
-            '''
-            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, GenReq, GenMermaid, createdAt, updatedAt) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
-            ON DUPLICATE KEY UPDATE 
-                name = VALUES(name),
-                isReviewed = VALUES(isReviewed),
-                reviewThoughts = VALUES(reviewThoughts),
-                docRanges = VALUES(docRanges),
-                codeRanges = VALUES(codeRanges),
-                GenReq = VALUES(GenReq),
-                GenMermaid = VALUES(GenMermaid),
-                updatedAt = CURRENT_TIMESTAMP
-            ''',
-            (
-                new_alignment.get('id'),
-                user_id,
-                project_id,
-                new_alignment.get('name'),
-                1 if new_alignment.get('isReviewed') else 0,
-                new_alignment.get('reviewThoughts') or '',
-                json.dumps(new_alignment.get('docRanges') or []),
-                json.dumps(code_ranges or []),
-                generated_requirement or '',
-                mermaid_code or ''
-            )
-        )
-        conn.commit()
-        # conn.close()
-        return {"status": "success"}
-    except Exception as e:
-        conn.rollback()
-        logger.error(f"写入对齐数据失败:{str(e)}", exc_info=True)
-        return {"status": "error", "message": f"写入对齐数据失败: {e}"}
-    finally:
-        conn.close()
+    
+    return generated_requirement, mermaid_code
