@@ -840,6 +840,9 @@
                             <div class="context-menu-item" @click="alignBlockFromContextMenu">
                                 <i class="fas fa-link"></i> 对齐
                             </div>
+                            <div class="context-menu-item" @click="manualAlignBlockFromContextMenu">
+                                <i class="fas fa-hand-pointer"></i> 手动对齐
+                            </div>
                             <div class="context-menu-item" @click="deleteBlockFromContextMenu">
                                 <i class="fas fa-trash"></i> 删除
                             </div>
@@ -854,6 +857,7 @@
             title="添加需求到对齐关系" 
             width="500px"
             :close-on-click-modal="false"
+            @close="resetManualAlignFromBlock"
         >
             <div v-if="currentSelection">
                 <div class="selection-preview">
@@ -904,7 +908,7 @@
             </div>
             <template #footer>
                 <div style="display: flex; justify-content: space-between; width: 100%;">
-                    <el-button @click="createBlockOnly('doc')">新建块</el-button>
+                    <el-button @click="createBlockOnly('doc')" :disabled="manualAlignFromBlock">新建块</el-button>
                     <div>
                         <el-button @click="showAlignmentDialog = false">取消</el-button>
                         <el-button type="primary" @click="createAlignment">创建新对齐关系</el-button>
@@ -1332,6 +1336,7 @@
             title="添加代码到对齐关系" 
             width="500px"
             :close-on-click-modal="false"
+            @close="resetManualAlignFromBlock"
         >
             <div v-if="currentSelection">
                 <div class="selection-preview">
@@ -1381,7 +1386,7 @@
             </div>
             <template #footer>
                 <div style="display: flex; justify-content: space-between; width: 100%;">
-                    <el-button @click="createBlockOnly('code')">新建块</el-button>
+                    <el-button @click="createBlockOnly('code')" :disabled="manualAlignFromBlock">新建块</el-button>
                     <div>
                         <el-button @click="showCodeSelectionDialog = false">取消</el-button>
                         <el-button type="primary" @click="createAlignment">创建新对齐关系</el-button>

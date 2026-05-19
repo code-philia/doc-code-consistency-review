@@ -96,6 +96,7 @@ const app = createApp({
         const showAlignmentDialog = ref(false);
         const showCodeSelectionDialog = ref(false);
         const currentSelection = ref(null);
+        const manualAlignFromBlock = ref(false);
         const newAlignmentName = ref('');
         const showReviewDialog = ref(false);
         const showAlignmentDirectionDialog = ref(false);
@@ -1600,6 +1601,86 @@ const app = createApp({
             }
         };
 
+        const fetchRawFileContentOnly = async (fileName, fileType) => {
+            const response = await axios.get(`/project/file-content?path=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(fileName)}&type=${fileType}`);
+            if (response.data.status !== 'success') {
+                throw new Error(response.data.message || '加载文件内容失败');
+            }
+            return regularizeFileContent(response.data.content, fileType);
+        };
+
+        const resetManualAlignFromBlock = () => {
+            manualAlignFromBlock.value = false;
+        };
+
+        const getSelectionRawContent = async (selection) => {
+            if (!selection || !selection.documentId) return '';
+            const selectionType = selection.type === 'code' ? 'code' : 'doc';
+            if (selectionType === 'doc' && selection.documentId === selectedDocFile.value && selectedDocRawContent.value) {
+                return selectedDocRawContent.value;
+            }
+            if (selectionType === 'code' && selection.documentId === selectedCodeFile.value && selectedCodeRawContent.value) {
+                return selectedCodeRawContent.value;
+            }
+            return await fetchRawFileContentOnly(selection.documentId, selectionType);
+        };
+
+        const resolveDocSelectionRange = async (selection) => {
+            const resolved = {
+                start: Number(selection?.start),
+                end: Number(selection?.end),
+                startLine: Number(selection?.startLine),
+                endLine: Number(selection?.endLine)
+            };
+
+            if (Number.isFinite(resolved.startLine) && Number.isFinite(resolved.endLine)) {
+                return resolved;
+            }
+
+            const docFileContent = await getSelectionRawContent(selection);
+            const { startLine, endLine } = convertOffsetToLineNumbers(
+                docFileContent,
+                resolved.start,
+                resolved.end
+            );
+            resolved.startLine = startLine;
+            resolved.endLine = endLine;
+            return resolved;
+        };
+
+        const resolveCodeSelectionRange = async (selection) => {
+            const resolved = {
+                start: Number(selection?.start),
+                end: Number(selection?.end),
+                startLine: Number(selection?.startLine),
+                endLine: Number(selection?.endLine)
+            };
+
+            const hasOffsets = Number.isFinite(resolved.start) && Number.isFinite(resolved.end);
+            const hasLines = Number.isFinite(resolved.startLine) && Number.isFinite(resolved.endLine);
+
+            if (hasOffsets && hasLines) {
+                return resolved;
+            }
+
+            const codeFileContent = await getSelectionRawContent(selection);
+            if (!hasOffsets && hasLines) {
+                const offsets = getOffsetsFromLineRange(codeFileContent, resolved.startLine, resolved.endLine);
+                resolved.start = offsets.start;
+                resolved.end = offsets.end;
+                return resolved;
+            }
+
+            const { startLine, endLine } = convertOffsetToLineNumbers(
+                codeFileContent,
+                resolved.start,
+                resolved.end
+            );
+            resolved.startLine = startLine;
+            resolved.endLine = endLine;
+            return resolved;
+        };
+
         const buildFileTree = (files, fileType) => {
             const tree = [];
             const root = {};
@@ -2735,11 +2816,13 @@ const app = createApp({
                 const [start, end] = getSourceDocumentRange(editorDiv, range);
                 if (end - start > 0) {
                     currentSelection.value = {
+                        type: 'doc',
                         documentId: selectedDocFile.value,
                         start,
                         end,
                         content: selectedDocRawContent.value.slice(start, end)
                     };
+                    resetManualAlignFromBlock();
                     showAlignmentDialog.value = true;
                     newAlignmentName.value = '';
                 }
@@ -2848,6 +2931,8 @@ const app = createApp({
                     // 代码块：直接使用内容的前20个字符
                     newAlignmentName.value = currentSelection.value.content.substring(0, 20).trim();
                     //newAlignmentName.value = currentSelection.value.content.trim();
+                } else if (manualAlignFromBlock.value) {
+                    newAlignmentName.value = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
                 } else {
                     // 需求块：从实际选中的完整parse元素中提取纯文本作为名称
                     const docElement = document.getElementById('doc-content');
@@ -2885,35 +2970,24 @@ const app = createApp({
             };
 
             if (currentSelection.value.type === 'code') {
-                // 代码块处理
-                const codeFileContent = selectedCodeRawContent.value;
-                const { startLine, endLine } = convertOffsetToLineNumbers(
-                    codeFileContent,
-                    currentSelection.value.start,
-                    currentSelection.value.end
-                );
+                const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
 
                 newAlignment.codeRanges.push({
                     documentId: currentSelection.value.documentId,
                     filename: currentSelection.value.documentId,
-                    start: currentSelection.value.start,
-                    end: currentSelection.value.end,
+                    start: start,
+                    end: end,
                     startLine: startLine,
                     endLine: endLine,
                     content: currentSelection.value.content
                 });
             } else {
-                // 需求块处理
-                // 为文档范围添加filename和行号信息
-                const docFileContent = selectedDocRawContent.value;
-                const { startLine, endLine } = convertOffsetToLineNumbers(
-                    docFileContent,
-                    currentSelection.value.start,
-                    currentSelection.value.end
-                );
+                const { start, end, startLine, endLine } = await resolveDocSelectionRange(currentSelection.value);
 
                 newAlignment.docRanges.push({
                     ...currentSelection.value,
+                    start: start,
+                    end: end,
                     filename: currentSelection.value.documentId, // 添加文件名
                     startLine: startLine, // 添加起始行号
                     endLine: endLine // 添加结束行号
@@ -2921,29 +2995,32 @@ const app = createApp({
             }
 
             // 先将当前选中内容保存为块（写入 doc_blocks/code_blocks jsonl）
-            try {
-                const blockPayload = buildBlockDataFromCurrentSelection();
-                if (blockPayload) {
-                    const blockResp = await axios.post('/api/add-block', {
-                        projectPath: projectPath.value,
-                        blockType: blockPayload.blockType,
-                        blockData: blockPayload.blockData
-                    });
-                    if (blockResp.data?.status === 'error') {
-                        ElMessage.error('创建对齐关系前保存块失败: ' + (blockResp.data?.message || '未知错误'));
-                        return;
+            if (!manualAlignFromBlock.value) {
+                try {
+                    const blockPayload = buildBlockDataFromCurrentSelection();
+                    if (blockPayload) {
+                        const blockResp = await axios.post('/api/add-block', {
+                            projectPath: projectPath.value,
+                            blockType: blockPayload.blockType,
+                            blockData: blockPayload.blockData
+                        });
+                        if (blockResp.data?.status === 'error') {
+                            ElMessage.error('创建对齐关系前保存块失败: ' + (blockResp.data?.message || '未知错误'));
+                            return;
+                        }
                     }
+                } catch (err) {
+                    console.error('创建对齐关系前保存块失败:', err);
+                    ElMessage.error('创建对齐关系前保存块失败: ' + (err.response?.data?.message || err.message));
+                    return;
                 }
-            } catch (err) {
-                console.error('创建对齐关系前保存块失败:', err);
-                ElMessage.error('创建对齐关系前保存块失败: ' + (err.response?.data?.message || err.message));
-                return;
             }
 
             // 更新前端UI
             alignmentResults.value.push(newAlignment);
             showAlignmentDialog.value = false;
             showCodeSelectionDialog.value = false;
+            resetManualAlignFromBlock();
 
             // 发送到后端保存
 
@@ -4060,6 +4137,7 @@ const app = createApp({
                         end,
                         content: selectedCodeRawContent.value.slice(start, end)
                     };
+                    resetManualAlignFromBlock();
                     showCodeSelectionDialog.value = true;
                     newAlignmentName.value = '';
                 }
@@ -4071,19 +4149,13 @@ const app = createApp({
             if (!currentSelection.value || !alignment) return;
 
             if (currentSelection.value.type === 'code') {
-                // 获取代码文件内容以转换字符偏移为行号
-                const codeFileContent = selectedCodeRawContent.value;
-                const { startLine, endLine } = convertOffsetToLineNumbers(
-                    codeFileContent,
-                    currentSelection.value.start,
-                    currentSelection.value.end
-                );
+                const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
 
                 alignment.codeRanges.push({
                     documentId: currentSelection.value.documentId,
                     filename: currentSelection.value.documentId, // 文件名
-                    start: currentSelection.value.start,
-                    end: currentSelection.value.end,
+                    start: start,
+                    end: end,
                     startLine: startLine, // 起始行号
                     endLine: endLine, // 结束行号
                     content: currentSelection.value.content
@@ -4091,6 +4163,7 @@ const app = createApp({
             }
 
             showCodeSelectionDialog.value = false;
+            resetManualAlignFromBlock();
             
             // 保存当前选择信息，因为稍后会清空currentSelection
             const selectionInfo = currentSelection.value;
@@ -4118,19 +4191,13 @@ const app = createApp({
         const addDocToAlignment = async (alignment) => {
             if (!currentSelection.value || !alignment) return;
 
-            // 获取需求文档内容以转换字符偏移为行号
-            const docFileContent = selectedDocRawContent.value;
-            const { startLine, endLine } = convertOffsetToLineNumbers(
-                docFileContent,
-                currentSelection.value.start,
-                currentSelection.value.end
-            );
+            const { start, end, startLine, endLine } = await resolveDocSelectionRange(currentSelection.value);
 
             const docRange = {
                 documentId: currentSelection.value.documentId,
                 filename: currentSelection.value.documentId, // 文件名
-                start: currentSelection.value.start,
-                end: currentSelection.value.end,
+                start: start,
+                end: end,
                 startLine: startLine, // 起始行号
                 endLine: endLine, // 结束行号
                 content: currentSelection.value.content
@@ -4139,6 +4206,7 @@ const app = createApp({
             alignment.docRanges.push(docRange);
             
             showAlignmentDialog.value = false;
+            resetManualAlignFromBlock();
             
             // 保存当前选择信息，因为稍后会清空currentSelection
             const selectionInfo = currentSelection.value;
@@ -5421,6 +5489,58 @@ const app = createApp({
             }
         };
 
+        const manualAlignBlockFromContextMenu = async () => {
+            const block = contextMenu.value.selectedBlock;
+            const blockTypeForMenu = contextMenu.value.selectedBlockType;
+            if (!block || !blockTypeForMenu) return;
+
+            try {
+                if (blockTypeForMenu === 'doc') {
+                    currentSelection.value = {
+                        type: 'doc',
+                        documentId: block.filename || block.documentId,
+                        start: Number(block.start),
+                        end: Number(block.end),
+                        startLine: Number(block.startLine),
+                        endLine: Number(block.endLine),
+                        content: block.content || ''
+                    };
+                    manualAlignFromBlock.value = true;
+                    newAlignmentName.value = '';
+                    hideContextMenu();
+                    showAlignmentDialog.value = true;
+                    return;
+                }
+
+                const range = Array.isArray(block.range) ? block.range : [];
+                const selection = {
+                    type: 'code',
+                    documentId: block.file || block.filename,
+                    start: Number(block.start),
+                    end: Number(block.end),
+                    startLine: Number(range[0] ?? block.startLine),
+                    endLine: Number(range[1] ?? block.endLine),
+                    content: block.code || block.content || ''
+                };
+
+                if (!(Number.isFinite(selection.start) && Number.isFinite(selection.end))) {
+                    const codeFileContent = await getSelectionRawContent(selection);
+                    const offsets = getOffsetsFromLineRange(codeFileContent, selection.startLine, selection.endLine);
+                    selection.start = offsets.start;
+                    selection.end = offsets.end;
+                }
+
+                currentSelection.value = selection;
+                manualAlignFromBlock.value = true;
+                newAlignmentName.value = '';
+                hideContextMenu();
+                showCodeSelectionDialog.value = true;
+            } catch (error) {
+                console.error('打开手动对齐弹窗失败:', error);
+                ElMessage.error(`打开手动对齐弹窗失败: ${error.message}`);
+            }
+        };
+
         const deleteBlockFromContextMenu = async () => {
             const block = contextMenu.value.selectedBlock;
             const blockTypeForMenu = contextMenu.value.selectedBlockType;
@@ -5709,6 +5829,7 @@ const app = createApp({
             filteredAlignments.value = null;
             isFiltered.value = false;
             currentSelection.value = null;
+            resetManualAlignFromBlock();
             newAlignmentName.value = '';
 
             // 问题单
@@ -6434,6 +6555,7 @@ const app = createApp({
             contextMenu,
             showContextMenu,
             alignBlockFromContextMenu,
+            manualAlignBlockFromContextMenu,
             deleteBlockFromContextMenu,
             renameAlignment,
             deleteAlignment,
@@ -6443,6 +6565,8 @@ const app = createApp({
             addToAlignment,
             addDocToAlignment,
             showCodeSelectionDialog,
+            manualAlignFromBlock,
+            resetManualAlignFromBlock,
 			
 			showDeleteIcon,
 			hoveredData,
