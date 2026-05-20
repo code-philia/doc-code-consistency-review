@@ -119,10 +119,17 @@ const app = createApp({
         const defaultCode2ReqAlignPromptKbs = ref('');
         const showReviewPromptDialog = ref(false); // 控制审查提示词设置弹窗
         const AddReviewPrompt = ref('');
+        const showReview = ref(false)
+        const reviewMode = ref('default')
+        const reviewModeKbs = ref('default')
         const currentReviewPrompt = ref('');
+        const currentCodeReviewPrompt = ref('');
         const defaultReviewPrompt = ref('');
+        const defaultCodeReviewPrompt = ref('');
         const currentReviewPromptKbs = ref('');
+        const currentCodeReviewPromptKbs = ref('');
         const defaultReviewPromptKbs = ref('');
+        const defaultCodeReviewPromptKbs = ref('');
         // 筛选相关状态
         const filteredAlignments = ref(null);
         const isFiltered = ref(false);
@@ -1422,7 +1429,7 @@ const app = createApp({
             }
         }
 
-        const startAutoReview = async () => {
+        const startAutoReview = async (reviewType) => {
             if (isAutoReviewing.value) {
                 ElMessage.warning('自动审查正在进行中，请稍候...');
                 return;
@@ -1433,48 +1440,58 @@ const app = createApp({
             ElMessage.info('开始自动审查，正在分析对齐关系...');
 
             try {
-                await fetchAllAlignments();
-
-                // 收集所有已对齐但未审查的需求点
-                const unreviewed = [];
-                Object.keys(allAlignments.value).forEach(docFile => {
-                    const alignments = allAlignments.value[docFile] || [];
-
-                    alignments.forEach(alignment => {
-                        if (alignment.codeRanges && alignment.codeRanges.length > 0 && !alignment.isReviewed) {
-                            unreviewed.push({ docFile, alignment });
-                        }
+                let groupedByDoc = {}
+                let codeBlocks = []
+                let total = 0
+                let promptType = ''
+//                ElMessage.info(`"${projectFiles.value.doc_files.length}"`)
+                if (reviewType === 'reviewCode'){
+                    // 1. 获取代码分块
+                    const chunksResponse = await axios.get('/api/get-code-chunks', {
+                        params: { projectPath: projectPath.value }
                     });
-                });
-
-//                reviewProgress.value.total = unreviewed.length;
-                 
-                if (unreviewed.length === 0)
-                {
-                    ElMessage.success(`所有对齐块均已审查完成！`);
-                    isAutoReviewing.value = false;
-                    return;
-                } 
-                 
-                // 按文档分组处理
-                const groupedByDoc = {};
-                unreviewed.forEach(({ docFile, alignment }) => {
-                    if (!groupedByDoc[docFile]) {
-                        groupedByDoc[docFile] = [];
+                    codeBlocks = chunksResponse.data.data || [];
+                    total = codeBlocks.length;
+                    if (codeBlocks.length === 0) {
+                        ElMessage.warning('未找到代码分块，请检查代码分解结果');
+                        return;
                     }
-                    groupedByDoc[docFile].push(alignment);
-                });
-                
-//                for (const [docFile, alignments] of Object.entries(groupedByDoc)) {
-//                    // 检查是否需要中断
-//                    if (!isAutoReviewing.value) {
-//                        break;
-//                    }
+                    promptType = reviewType
+                } else {
 
-                // 启动当前文档的进度显示
-//                startProgress('自动审查', unreviewed.length);
-                // 更新进度显示
-//                    updateProgress(i, docFile);
+                    await fetchAllAlignments();
+
+                    // 收集所有已对齐但未审查的需求点
+                    const unreviewed = [];
+                    Object.keys(allAlignments.value).forEach(docFile => {
+                        const alignments = allAlignments.value[docFile] || [];
+
+                        alignments.forEach(alignment => {
+                            if (alignment.codeRanges && alignment.codeRanges.length > 0 && !alignment.isReviewed) {
+                                unreviewed.push({ docFile, alignment });
+                            }
+                        });
+                    });
+
+    //                reviewProgress.value.total = unreviewed.length;
+                    total = unreviewed.length;
+                    if (unreviewed.length === 0)
+                    {
+                        ElMessage.success(`所有对齐块均已审查完成！`);
+                        isAutoReviewing.value = false;
+                        return;
+                    }
+
+                    // 按文档分组处理
+//                    const groupedByDoc = {};
+                    unreviewed.forEach(({ docFile, alignment }) => {
+                        if (!groupedByDoc[docFile]) {
+                            groupedByDoc[docFile] = [];
+                        }
+                        groupedByDoc[docFile].push(alignment);
+                    });
+                }
+
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
@@ -1484,14 +1501,16 @@ const app = createApp({
 //                    docFile: docFile,
 //                    alignments: alignments,
                     project_id: projectId,
-                    requirement_files: groupedByDoc
+                    requirement_files: groupedByDoc,
+                    code_blocks: codeBlocks,
+                    promptType: promptType
                 });
 
                 if (reviewResponse.data.status === 'success'){
                 ReviewTaskId.value = reviewResponse.data.task_id;
-                ReviewCurrentTotal.value = unreviewed.length
-                startProgress('自动审查', unreviewed.length);
-                reviewProgress.value.total = codeBlocks.length;
+                ReviewCurrentTotal.value = total
+                startProgress('自动审查', total);
+                reviewProgress.value.total = total;
                 reviewProgress.value.current = 0;
 
                 saveReviewTaskState()
@@ -1500,34 +1519,6 @@ const app = createApp({
                 } else {
                 ElMessage.warning('任务启动失败')
                 }
-
-//                    for (let i = 0; i < alignments.length; i++) {
-//                        const alignment = alignments[i];
-//
-//                        // 检查是否需要中断
-//                        if (!isAutoReviewing.value) {
-//                            break;
-//                        }
-//
-//                        reviewProgress.value.current++;
-//
-//
-//
-//                        // 实时更新统计数据
-//                        await fetchAllAlignments();
-//
-//                        // 如果当前审查的对齐关系属于当前选中的文档，实时更新右侧面板
-//                        if (docFile === selectedDocFile.value) {
-//                            await fetchAlignments();
-//                        }
-//
-//                        // 添加延迟以模拟处理时间
-//                        await new Promise(resolve => setTimeout(resolve, 800));
-//                    }
-
-                    // 停止当前文档的进度显示
-//                    stopProgress();
-//                }
 
                 // 重新加载所有对齐数据和问题单
                 await fetchAllAlignments();
@@ -4634,7 +4625,7 @@ const app = createApp({
             }
         };
 
-        const toggleAutoReview = async () => {
+        const toggleAutoReview = async (reviewType) => {
             if (isAutoReviewing.value) {
                 // 停止审查
                 await axios.post(`/api/stop-task/${ReviewTaskId.value}`)
@@ -4647,8 +4638,10 @@ const app = createApp({
                 clearReviewTaskState()
                 ElMessage.info('已停止自动审查');
             } else {
+
+                showReview.value = false;
                 // 开始审查
-                await startAutoReview();
+                await startAutoReview(reviewType);
             }
         };
 
@@ -4942,31 +4935,39 @@ const app = createApp({
             const req2Code = normalizePrompt(data.Req2CodeAlign)
             const code2Req = normalizePrompt(data.Code2ReqAlign)
             const review = normalizePrompt(data.review)
+            const reviewCode = normalizePrompt(data.reviewCode)
             const req2CodeKbs = normalizePrompt(data.Req2CodeAlignKbs)
             const code2ReqKbs = normalizePrompt(data.Code2ReqAlignKbs)
             const reviewKbs = normalizePrompt(data.reviewKbs)
+            const reviewCodeKbs = normalizePrompt(data.reviewCodeKbs)
 
             if (req2Code) defaultReq2CodeAlignPrompt.value = req2Code
             if (code2Req) defaultCode2ReqAlignPrompt.value = code2Req
             if (review) defaultReviewPrompt.value = review
+            if (reviewCode) defaultCodeReviewPrompt.value = reviewCode
             if (req2CodeKbs) defaultReq2CodeAlignPromptKbs.value = req2CodeKbs
             if (code2ReqKbs) defaultCode2ReqAlignPromptKbs.value = code2ReqKbs
             if (reviewKbs) defaultReviewPromptKbs.value = reviewKbs
+            if (reviewCodeKbs) defaultCodeReviewPromptKbs.value = reviewCodeKbs
 
             currentReq2CodeAlignPrompt.value = req2Code || defaultReq2CodeAlignPrompt.value
             currentCode2ReqAlignPrompt.value = code2Req || defaultCode2ReqAlignPrompt.value
             currentReviewPrompt.value = review || defaultReviewPrompt.value
+            currentCodeReviewPrompt.value = reviewCode || defaultReviewPrompt.value
             currentReq2CodeAlignPromptKbs.value = req2CodeKbs || defaultReq2CodeAlignPromptKbs.value
             currentCode2ReqAlignPromptKbs.value = code2ReqKbs || defaultCode2ReqAlignPromptKbs.value
             currentReviewPromptKbs.value = reviewKbs || defaultReviewPromptKbs.value
+            currentCodeReviewPromptKbs.value = reviewCodeKbs || defaultCodeReviewPromptKbs.value
           } catch (err) {
             console.error('Error loading prompts:', err)
             currentReq2CodeAlignPrompt.value = defaultReq2CodeAlignPrompt.value
             currentCode2ReqAlignPrompt.value = defaultCode2ReqAlignPrompt.value
             currentReviewPrompt.value = defaultReviewPrompt.value
+            currentCodeReviewPrompt.value = defaultCodeReviewPrompt.value
             currentReq2CodeAlignPromptKbs.value = defaultReq2CodeAlignPromptKbs.value
             currentCode2ReqAlignPromptKbs.value = defaultCode2ReqAlignPromptKbs.value
             currentReviewPromptKbs.value = defaultReviewPromptKbs.value
+            currentCodeReviewPromptKbs.value = defaultCodeReviewPromptKbs.value
           }
         }
 
@@ -4997,6 +4998,9 @@ const app = createApp({
             else if (tab === 'review') {
               currentReviewPrompt.value = data.default_prompt
             }
+            else if (tab === 'review-code') {
+              currentCodeReviewPrompt.value = data.default_prompt
+            }
             else if (tab === 'req-code-align-kbs'){
               currentReq2CodeAlignPromptKbs.value = data.default_prompt
             }
@@ -5005,6 +5009,9 @@ const app = createApp({
             }
             else if (tab === 'review-kbs'){
               currentReviewPromptKbs.value = data.default_prompt
+            }
+            else if (tab === 'review-code-kbs'){
+              currentCodeReviewPromptKbs.value = data.default_prompt
             }
 
             ElMessage.success('已恢复默认提示词')
@@ -5033,6 +5040,9 @@ const app = createApp({
             else if (tab === 'review'){
               content = currentReviewPrompt.value
             }
+            else if (tab === 'review-code'){
+              content = currentCodeReviewPrompt.value
+            }
             else if (tab === 'req-code-align-kbs'){
               content = currentReq2CodeAlignPromptKbs.value
             }
@@ -5041,6 +5051,9 @@ const app = createApp({
             }
             else if (tab === 'review-kbs'){
               content = currentReviewPromptKbs.value
+            }
+            else if (tab === 'review-code-kbs'){
+              content = currentCodeReviewPromptKbs.value
             }
 
           try {
@@ -6688,10 +6701,15 @@ const app = createApp({
             innerActiveB,
             currentReq2CodeAlignPrompt,
             currentCode2ReqAlignPrompt,
+            showReview,
+            reviewMode,
+            reviewModeKbs,
             currentReviewPrompt,
+            currentCodeReviewPrompt,
             currentReq2CodeAlignPromptKbs,
             currentCode2ReqAlignPromptKbs,
             currentReviewPromptKbs,
+            currentCodeReviewPromptKbs,
             restorePromptDefault,
             savePrompt,
             openPromptDialog,
