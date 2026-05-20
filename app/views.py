@@ -2047,8 +2047,10 @@ def review_alignment():
     # alignments = data.get('alignments')
     project_id = data.get('project_id')
     files = data.get('requirement_files')
+    code_blocks = data.get('code_blocks')
+    prompt_type = data.get('promptType', '')
 
-    if not all([project_path, project_id, files]):
+    if not all([project_path, project_id]) and not (files and code_blocks):
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
     # 尝试初始化RAG引擎
@@ -2058,7 +2060,7 @@ def review_alignment():
         # print(f"[Review] RAG initialize failed: {e}")
 
     from tasks import review_alignment_task
-    task = review_alignment_task.delay(project_path, project_id, current_user.user_id, files)
+    task = review_alignment_task.delay(project_path, project_id, current_user.user_id, files, code_blocks, prompt_type)
 
     return jsonify({"status": "success", "task_id": task.id})
 
@@ -2301,7 +2303,7 @@ def get_alignments():
                 'codeRanges': pyjson.loads(r['codeRanges'] or '[]')
             }
             result[alignment['id']] = alignment
-
+        # print(result)
         return jsonify({"status": "success", "data": result}), 200
     except Exception as e:
 
@@ -2888,7 +2890,7 @@ def get_code_blocks():
                             code_blocks.append(block)
                     except json.JSONDecodeError:
                         continue
-
+        # print(code_blocks)
         return jsonify({'status': 'success', 'data': code_blocks})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
@@ -4697,10 +4699,12 @@ def delete_export_project_results():
 # 提示词设置对话框
 
 # 保存用户自定义提示词的文件
-from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, \
-    THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, \
+from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, \
+    REVIEW_PROMPT_TEMPLATE_KBS, GENERATE_PROMPT_TEMPLATE, \
+    ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, \
     ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE, TAB_MAP, DEFAULTS, \
-    ALIGN_REQ_PROMPT_TEMPLATE_KBS, ALIGN_PROMPT_TEMPLATE_KBS
+    ALIGN_REQ_PROMPT_TEMPLATE_KBS, ALIGN_PROMPT_TEMPLATE_KBS, CODE_THINKING_PROMPT_TEMPLATE, \
+    CODE_THINKING_PROMPT_TEMPLATE_KBS
 
 # def load_user_prompt():
     # if os.path.exists(PROMPT_FILE):
@@ -4728,10 +4732,12 @@ prompts = {
 default_prompts = {
     'req-code-align': ALIGN_PROMPT_TEMPLATE,
     'code-req-align': ALIGN_REQ_PROMPT_TEMPLATE,
-    'review': THINKING_PROMPT_TEMPLATE,
+    'review': REVIEW_PROMPT_TEMPLATE,
+    'review-code': CODE_THINKING_PROMPT_TEMPLATE,
     'req-code-align-kbs': ALIGN_PROMPT_TEMPLATE_KBS,
     'code-req-align-kbs': ALIGN_REQ_PROMPT_TEMPLATE_KBS,
-    'review-kbs': THINKING_PROMPT_TEMPLATE
+    'review-kbs': REVIEW_PROMPT_TEMPLATE_KBS,
+    'review-code-kbs': CODE_THINKING_PROMPT_TEMPLATE_KBS
 }
 
 # 从文件加载
@@ -4765,7 +4771,7 @@ def get_prompts():
     c = db.cursor()
     existing_columns = _get_prompt_table_columns(db)
 
-    requested_fields = ['Req2CodeAlign', 'Code2ReqAlign', 'review', 'Req2CodeAlignKbs', 'Code2ReqAlignKbs', 'reviewKbs']
+    requested_fields = ['Req2CodeAlign', 'Code2ReqAlign', 'review', 'reviewCode', 'Req2CodeAlignKbs', 'Code2ReqAlignKbs', 'reviewKbs', 'reviewCodeKbs']
     available_fields = [f for f in requested_fields if f in existing_columns]
     row = None
     if available_fields:
@@ -4777,9 +4783,11 @@ def get_prompts():
         'Req2CodeAlign': default_prompts['req-code-align'],
         'Code2ReqAlign': default_prompts['code-req-align'],
         'review': default_prompts['review'],
+        'reviewCode': default_prompts['review-code'],
         'Req2CodeAlignKbs': default_prompts['req-code-align-kbs'],
         'Code2ReqAlignKbs': default_prompts['code-req-align-kbs'],
         'reviewKbs': default_prompts['review-kbs'],
+        'reviewCodeKbs': default_prompts['review-code-kbs'],
     }
     if row:
         for k in requested_fields:
@@ -4820,7 +4828,8 @@ def save_prompt():
     fallback_field_map = {
         'Req2CodeAlignKbs': 'Req2CodeAlign',
         'Code2ReqAlignKbs': 'Code2ReqAlign',
-        'reviewKbs': 'review'
+        'reviewKbs': 'review',
+        'reviewCodeKbs': 'reviewCode'
     }
     effective_field = field
     if effective_field not in existing_columns:
@@ -4851,8 +4860,8 @@ def restore_default():
     data = request.get_json()
     tab = data.get('tab')
 
-    if tab not in ['req-code-align', 'code-req-align', 'review',
-                   'req-code-align-kbs', 'code-req-align-kbs', 'review-kbs']:
+    if tab not in ['req-code-align', 'code-req-align', 'review', 'review-code',
+                   'req-code-align-kbs', 'code-req-align-kbs', 'review-kbs', 'review-code-kbs']:
         return jsonify({'success': False, 'message': 'Invalid tab'})
 
     # 恢复默认
@@ -4877,7 +4886,7 @@ def save_align_prompt():
 # 审查提示词相关
 @bp.route('/get_default_review_prompt')
 def get_default_review_prompt():
-    return jsonify({'default_prompt': THINKING_PROMPT_TEMPLATE})
+    return jsonify({'default_prompt': REVIEW_PROMPT_TEMPLATE})
 
 @bp.route('/save_review_prompt', methods=['POST'])
 def save_review_prompt():

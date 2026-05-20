@@ -7,7 +7,11 @@ from flask_login import current_user
 from dotenv import load_dotenv
 
 # from app.views import logger
-from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, GENERATE_PROMPT_TEMPLATE, THINKING_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, CODEFILE_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_KBS, ALIGN_REQ_PROMPT_TEMPLATE_KBS
+from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PROMPT_TEMPLATE, \
+    REVIEW_PROMPT_TEMPLATE_KBS, GENERATE_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, \
+    RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, \
+    CODEFILE_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_KBS, ALIGN_REQ_PROMPT_TEMPLATE_KBS, CODE_THINKING_PROMPT_TEMPLATE, \
+    CODE_THINKING_PROMPT_TEMPLATE_KBS, DEFAULTS
 from .prompt import Combine_Req2Code_Align_UserPrompt, Combine_Code2Req_Align_UserPrompt, Combine_Review_UserPrompt
 from openai import OpenAI
 from .utils import chunk_list
@@ -21,8 +25,11 @@ API_KEY = os.environ.get("API_KEY", "0")
 # MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-MODEL_NAME = "Qwen3-32B"
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+# MODEL_NAME = "Qwen3-32B"
+
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
+MODEL_NAME = "/llm"
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -145,6 +152,7 @@ def _load_user_prompt_row(user_id: Optional[int], requested_fields: List[str]) -
             return {}
         sql = f"select {', '.join(available_fields)} from prompt where user_id=%s"
         c.execute(sql, (user_id,))
+        # print('sql=====================', sql)
         row = c.fetchone() or {}
         return row if isinstance(row, dict) else {}
     except Exception:
@@ -1088,8 +1096,8 @@ def query_review_result_by_feedback(
         use_kbs_template=use_kbs_template,
         normal_key='review',
         kbs_key='reviewKbs',
-        normal_default=THINKING_PROMPT_TEMPLATE,
-        kbs_default=THINKING_PROMPT_TEMPLATE
+        normal_default=REVIEW_PROMPT_TEMPLATE,
+        kbs_default=REVIEW_PROMPT_TEMPLATE_KBS
     )
     
     original_prompt = original_template.format(
@@ -1144,7 +1152,8 @@ def query_review_result(
     issues=None,
     user_id=None,
     project_path=None,
-    reference_reviews=None
+    reference_reviews=None,
+    prompt_type=None
 ):
     """
     执行代码一致性审查
@@ -1206,15 +1215,20 @@ def query_review_result(
     resolved_user_id = _resolve_user_id(user_id)
     use_kbs_template = _has_any_selected_kb(project_path)
     row = _load_user_prompt_row(resolved_user_id, ['review', 'reviewKbs'])
-    template = _pick_template(
-        row=row,
-        use_kbs_template=use_kbs_template,
-        normal_key='review',
-        kbs_key='reviewKbs',
-        normal_default=THINKING_PROMPT_TEMPLATE,
-        kbs_default=THINKING_PROMPT_TEMPLATE
-    )
-
+    # print('use_kbs_template==============', use_kbs_template)
+    # print('row=======================', row)
+    if prompt_type:
+        template = get_prompt(prompt_type, resolved_user_id)
+    else:
+        template = _pick_template(
+            row=row,
+            use_kbs_template=use_kbs_template,
+            normal_key='review',
+            kbs_key='reviewKbs',
+            normal_default=REVIEW_PROMPT_TEMPLATE,
+            kbs_default=REVIEW_PROMPT_TEMPLATE_KBS
+        )
+    # print('template=======================', template)
     prompt = template.format(
         requirement=requirement_context,
         related_code=code_context,
@@ -1248,6 +1262,29 @@ def query_review_result(
     except Exception as e:
         print(f"审查过程中出错: {str(e)}")
         return f"审查过程中发生错误: {e}", None
+
+
+def get_prompt(prompt_type, user_id):
+    """
+    prompt_type: reviewCode 数据库中的字段类型
+    根据提示词字段获取提示词，如果没有就返回该提示词类型的默认提示词
+    """
+    db = get_db_celery()
+    c = db.cursor()
+    sql = f"select {prompt_type} from prompt where user_id={user_id}"
+    row = None
+    try:
+        c.execute(sql)
+        row = c.fetchone()
+        row = row.get(prompt_type)
+
+    except Exception as e:
+        print(f'查询出错:{e}')
+    finally:
+        db.close()
+    if not row:
+        row = DEFAULTS.get(prompt_type)
+    return row
 
 # def parse_review_output(response):
     # """
