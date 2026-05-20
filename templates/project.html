@@ -49,7 +49,7 @@
                     <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (单个)</div>
                     <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (文件夹)</div>
                 </div>
-                
+
                 <!-- 选择解析方式弹窗 -->
                 <el-dialog v-model="dialogParseDocMethodVisible" title="选择文档解析方式" width="30%">
                     <el-radio-group v-model="parseDocMethod">
@@ -61,7 +61,7 @@
                         <el-button type="primary" @click="handleConfirmParseDocMethod">确定</el-button>
                     </template>
                 </el-dialog>
-                  
+
             </div>
             <div class="menu-item">
                 智能工具
@@ -96,7 +96,7 @@
                         </div>
                     </div>
                     <div class="dropdown-item" @click="toggleAutoReview">
-                        <i class="fas fa-tasks"></i> 
+                        <i class="fas fa-tasks"></i>
                         <span v-if="!isAutoReviewing">自动审查</span>
                         <span v-else>停止审查</span>
                     </div>
@@ -133,7 +133,7 @@
                     clearable
                     style="width: 300px;"
                 ></el-input>
-                
+
                 <el-select v-model="kbAppFilterType" placeholder="类型筛选" style="width: 160px;">
                     <el-option label="全部类型" value="all"></el-option>
                     <el-option label="编码规则" value="coding_rule"></el-option>
@@ -147,10 +147,10 @@
 
             <!-- 知识库列表 -->
             <div class="kb-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; max-height: 500px; overflow-y: auto; padding: 5px;">
-                <div 
-                    v-for="kb in filteredKbAppList" 
-                    :key="kb.name" 
-                    class="kb-card" 
+                <div
+                    v-for="kb in filteredKbAppList"
+                    :key="kb.name"
+                    class="kb-card"
                     :class="{ 'selected': isKbSelected(kb) }"
                     @click="toggleKbSelection(kb)"
                     style="border: 1px solid #eee; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; position: relative; background: white;"
@@ -161,7 +161,7 @@
                     </div>
 
                     <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <div class="kb-icon" style="width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; color: white;" 
+                        <div class="kb-icon" style="width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; color: white;"
                              :style="{ backgroundColor: getKbColor(kb.type) }">
                             <i v-if="kb.type === 'coding_rule' || kb.type === 'rule'" class="fas fa-gavel"></i>
                             <i v-else-if="kb.type === 'history_issue' || kb.type === 'issue'" class="fas fa-bug"></i>
@@ -175,13 +175,13 @@
                             <span style="font-size: 12px; color: #999;">${ getKbTypeName(kb.type) }</span>
                         </div>
                     </div>
-                    
+
                     <div style="font-size: 12px; color: #666; display: flex; justify-content: space-between;">
                         <span><i class="far fa-file-alt"></i> ${ kb.doc_count || 0 } 条目</span>
                         <span><i class="far fa-clock"></i> ${ formatRelativeTime(kb.create_time) }</span>
                     </div>
                 </div>
-                
+
                 <div v-if="filteredKbAppList.length === 0" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
                     <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
                     <p>暂无匹配的知识库</p>
@@ -200,7 +200,7 @@
             </span>
         </template>
     </el-dialog>
-    
+
     <div class="main-container">
         <el-splitter>
             <!-- 侧边栏 -->
@@ -210,7 +210,7 @@
                         <span id="projectName">${projectName}</span>
                     </div>
                 </div>
-                
+
                 <div class="file-tree">
                     <div class="file-category">
                         <div class="category-header">
@@ -229,12 +229,12 @@
                                 :expand-on-click-node="false"
                                 node-key="path"
                                 empty-text="">
-                                <template #default="{ node, data }">
+								<template #default="{ node, data }">
                                     <div class="tree-node" :class="{ 'is-selected': data.path === selectedDocFile && data.type === 'file' }">
                                         <div class="tree-node-main">
                                             <i :class="[data.icon, 'tree-node-icon', data.type === 'directory' ? 'is-folder' : 'is-doc']"></i>
                                             <span class="tree-node-label" :title="node.label">${ node.label }</span>
-                                        </div>
+										</div>
                                         <el-button
                                             v-if="data.type === 'file' || data.type === 'directory'"
                                             link
@@ -271,7 +271,7 @@
                                         <div class="tree-node-main">
                                             <i :class="[data.icon, 'tree-node-icon', data.type === 'directory' ? 'is-folder' : 'is-code']"></i>
                                             <span class="tree-node-label" :title="node.label">${ node.label }</span>
-                                        </div>
+										</div>
                                         <el-button
                                             v-if="data.type === 'file' || data.type === 'directory'"
                                             link
@@ -288,7 +288,7 @@
 
 
                 </div>
-                
+
                 <!-- 进度显示区域 -->
                 <div class="progress-section" v-show="showProgress">
                     <div class="progress-header">
@@ -320,7 +320,7 @@
                             <div class="stat-value">${ projectFiles.doc_files.length }</div>
                             <div class="stat-description">当前项目中的需求文档总数</div>
                         </div>
-                        
+
                         <div class="stat-card">
                             <div class="stat-title">
                                 <i class="fas fa-code"></i> 代码文件
@@ -331,7 +331,7 @@
                                 总行数：<span style="font-weight: bold;">${ codeScale }</span>
                             </div>
                         </div>
-                        
+
                         <div class="stat-card">
                             <div class="stat-title">
                                 <i class="fas fa-link"></i> 需求-代码对齐对数
@@ -339,7 +339,7 @@
                             <div class="stat-value">${ totalAlignedRequirements }</div>
                             <div class="stat-description">已确认的需求与代码对应关系</div>
                         </div>
-                        
+
                         <div class="stat-card">
                             <div class="stat-title">
                                 <i class="fas fa-search"></i> 审查进度
@@ -356,7 +356,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="stat-card">
                             <div class="stat-title">
                                 <i class="fas fa-bug"></i> 问题单总数
@@ -374,7 +374,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <h3 style="margin-bottom: 15px; color: var(--text-primary);">
                         <i class="fas fa-file-alt"></i> 需求文档对齐进度
                     </h3>
@@ -406,7 +406,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    
+
                     <h3 style="margin: 25px 0 15px; color: var(--text-primary);">
                         <i class="fas fa-code"></i> 代码文件对齐进度
                     </h3>
@@ -430,7 +430,7 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- 对齐视图 -->
                 <div class="alignment-view split-view" id="alignmentView">
                     <el-splitter layout="vertical">
@@ -446,16 +446,16 @@
                                                 <el-button size="small" @click="navigateDocBlock(-1)" title="上一块">↑</el-button>
                                                 <el-button size="small" @click="navigateDocBlock(1)" title="下一块">↓</el-button>
                                             </el-button-group>
-                                            <el-button 
-                                                size="small" 
-                                                type="primary" 
+                                            <el-button
+                                                size="small"
+                                                type="primary"
                                                 plain
                                                 @click="startAutoMarkdownSplit">
                                                 <span>需求分解</span>
                                             </el-button>
-                                            <el-button 
-                                                size="small" 
-                                                type="primary" 
+                                            <el-button
+                                                size="small"
+                                                type="primary"
                                                 plain
                                                 @click="toggleAutoAlignment">
                                                 <span v-if="!isAutoAligning">自动对齐</span>
@@ -490,18 +490,18 @@
                                                 <el-button size="small" @click="navigateCodeBlock(-1)" title="上一块">↑</el-button>
                                                 <el-button size="small" @click="navigateCodeBlock(1)" title="下一块">↓</el-button>
                                             </el-button-group>
-                                            <el-button 
-                                                size="small" 
-                                                type="success" 
+                                            <el-button
+                                                size="small"
+                                                type="success"
                                                 plain
                                                 @click="startAutoCodeSplit">
                                                 <span>代码分解</span>
                                             </el-button>
 
-                                            <el-button 
-                                                size="small" 
-                                                type="success"
-                                                plain
+                                            <el-button
+                                                    size="small"
+                                                    type="success"
+                                                    plain
                                                     @click="isAutoReviewing ? toggleAutoReview() : showReview = true"
                                             >
                                                 <span v-if="!isAutoReviewing">自动审查</span>
@@ -546,20 +546,20 @@
                                                 <el-radio-button label="block">块视图</el-radio-button>
                                             </el-radio-group>
                                         </div>
-                                       <div class="right-toolbar-actions" v-if="rightSidebarMode === 'alignment'"> 
-                                        <el-button 
-                                            @click="cancelSelection" 
-                                            size="small" 
+                                       <div class="right-toolbar-actions" v-if="rightSidebarMode === 'alignment'">
+                                        <el-button
+                                            @click="cancelSelection"
+                                            size="small"
                                             text
                                             plain
                                             type="primary"
-                                            class="right-toolbar-btn"  
+                                            class="right-toolbar-btn"
                                         >
                                              取消选中
                                         </el-button>
-                                        <el-button 
-                                            @click="refreshAlignments" 
-                                            size="small" 
+                                        <el-button
+                                            @click="refreshAlignments"
+                                            size="small"
                                             text
                                             plain
                                             type="primary"
@@ -567,31 +567,31 @@
                                         >
                                              刷新列表
                                         </el-button>
-                                        <el-button 
-                                            @click="exportResults" 
-                                            size="small" 
+                                        <el-button
+                                            @click="exportResults"
+                                            size="small"
                                             text
                                             plain
                                             class="right-toolbar-btn"
                                         >
                                              导出结果
                                         </el-button>
-                                        <el-button 
-                                            @click="SetPrompt" 
-                                            size="small" 
+                                        <el-button
+                                            @click="SetPrompt"
+                                            size="small"
                                             text
                                             plain
                                             class="right-toolbar-btn"
                                         >
                                              提示词设置
                                         </el-button>
-                                        
-                                        
+
+
                                         </div>
-                                       <div class="right-toolbar-actions" v-if="rightSidebarMode === 'block'"> 
-                                        <el-button 
-                                            @click="cancelSelection" 
-                                            size="small" 
+                                       <div class="right-toolbar-actions" v-if="rightSidebarMode === 'block'">
+                                        <el-button
+                                            @click="cancelSelection"
+                                            size="small"
                                             text
                                             plain
                                             type="primary"
@@ -599,9 +599,9 @@
                                         >
                                              取消选中
                                         </el-button>
-                                        <el-button 
-                                            @click="refreshBlocks" 
-                                            size="small" 
+                                        <el-button
+                                            @click="refreshBlocks"
+                                            size="small"
                                             text
                                             plain
                                             type="primary"
@@ -609,29 +609,29 @@
                                         >
                                              刷新列表
                                         </el-button>
-                                        
-                                        <el-button 
-                                            @click="exportResults" 
-                                            size="small" 
+
+                                        <el-button
+                                            @click="exportResults"
+                                            size="small"
                                             text
                                             plain
                                             class="right-toolbar-btn"
                                         >
                                              导出结果
                                         </el-button>
-                                        <el-button 
-                                            @click="SetPrompt" 
-                                            size="small" 
+                                        <el-button
+                                            @click="SetPrompt"
+                                            size="small"
                                             text
                                             plain
                                             class="right-toolbar-btn"
                                         >
                                              提示词设置
                                         </el-button>
-                                        
+
                                         </div>
                                     </div>
-                                    
+
                                     <div class="content-card sidebar-list-container" v-if="rightSidebarMode === 'alignment'">
                                         <div class="sidebar-controls">
                                             <div class="filter-row sidebar-controls-group">
@@ -650,13 +650,13 @@
                                         </div>
                                         <div class="alignment-list">
                                             <div v-if="sidebarAlignments && sidebarAlignments.length > 0">
-                                                 <div 
-                                                    v-for="alignment in sidebarAlignments" 
+                                                 <div
+                                                    v-for="alignment in sidebarAlignments"
                                                     :key="alignment.id"
                                                     :id="'alignment-item-' + alignment.id"
                                                     class="alignment-list-item-container"
                                                  >
-                                                    <div 
+                                                    <div
                                                         class="alignment-list-item"
                                                         @click="handleAlignmentItemClick(alignment); toggleAlignmentExpansion(alignment.id)"
                                                         @contextmenu.prevent="showContextMenu($event, alignment)"
@@ -665,9 +665,9 @@
                                                             <span class="alignment-title">${ alignment.name }</span>
                                                         </el-tooltip>
                                                         <div style="display: flex; align-items: center; gap: 4px;">
-                                                            <el-tag 
-                                                                :type="getAlignmentStatus(alignment).type" 
-                                                                size="small" 
+                                                            <el-tag
+                                                                :type="getAlignmentStatus(alignment).type"
+                                                                size="small"
                                                                 class="review-tag"
                                                                 effect="plain"
                                                             >
@@ -681,9 +681,9 @@
                                                         <!-- 需求块列表 -->
                                                         <div v-if="alignment.docRanges && alignment.docRanges.length > 0" class="detail-section">
                                                             <div class="detail-title">需求块</div>
-                                                            <div 
-                                                                v-for="(doc, idx) in alignment.docRanges" 
-                                                                :key="'doc-'+idx" 
+                                                            <div
+                                                                v-for="(doc, idx) in alignment.docRanges"
+                                                                :key="'doc-'+idx"
                                                                 class="detail-item"
                                                                 @click="navigateToSpecificBlock(alignment, 'doc', idx)"
                                                             >
@@ -694,9 +694,9 @@
                                                         <!-- 代码块列表 -->
                                                         <div v-if="alignment.codeRanges && alignment.codeRanges.length > 0" class="detail-section">
                                                             <div class="detail-title">代码块</div>
-                                                            <div 
-                                                                v-for="(code, idx) in alignment.codeRanges" 
-                                                                :key="'code-'+idx" 
+                                                            <div
+                                                                v-for="(code, idx) in alignment.codeRanges"
+                                                                :key="'code-'+idx"
                                                                 class="detail-item"
                                                                 @click="navigateToSpecificBlock(alignment, 'code', idx)"
                                                             >
@@ -731,8 +731,8 @@
                                         </div>
                                         <div class="alignment-list">
                                             <div v-if="displayedBlocks && displayedBlocks.length > 0">
-                                                 <div 
-                                                   v-for="(block, index) in displayedBlocks" 
+                                                 <div
+                                                   v-for="(block, index) in displayedBlocks"
                                                    :key="index"
                                                    class="alignment-list-item"
                                                    :class="{ 'selected': currentSelectedBlockIndex === index }"
@@ -845,9 +845,9 @@
                         </el-splitter-panel>
                     </el-splitter>
 
-                    <div 
-                        v-if="contextMenu.visible" 
-                        class="context-menu" 
+                    <div
+                        v-if="contextMenu.visible"
+                        class="context-menu"
                         :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }"
                     >
                         <!-- 对齐关系右键菜单 -->
@@ -885,9 +885,9 @@
             </el-splitter-panel>
         </el-splitter>
 
-        <el-dialog 
-            v-model="showAlignmentDialog" 
-            title="添加需求到对齐关系" 
+        <el-dialog
+            v-model="showAlignmentDialog"
+            title="添加需求到对齐关系"
             width="500px"
             :close-on-click-modal="false"
             @close="resetManualAlignFromBlock"
@@ -896,14 +896,14 @@
                 <div class="selection-preview">
                     ${ currentSelection.content }
                 </div>
-                
+
                 <div class="annotation-options">
                     <div v-if="alignmentResults.length > 0">
                         <p style="margin: 10px 0 15px; font-size: 14px;">选择要添加到的对齐关系:</p>
-                        
-                        <el-dropdown 
-                            placement="bottom" 
-                            trigger="click" 
+
+                        <el-dropdown
+                            placement="bottom"
+                            trigger="click"
                             size="small"
                             style="width: 100%"
                         >
@@ -911,11 +911,11 @@
                                 选择对齐关系...
                                 <el-icon class="el-icon--right"><arrow-down /></el-icon>
                             </el-button>
-                            
+
                             <template #dropdown>
                                 <el-dropdown-menu class="annotation-dropdown-menu" style="max-height: 300px; overflow-y: auto;">
-                                    <el-dropdown-item 
-                                        v-for="alignment in alignmentResults" 
+                                    <el-dropdown-item
+                                        v-for="alignment in alignmentResults"
                                         :key="alignment.id"
                                         @click="addDocToAlignment(alignment)"
                                     >
@@ -926,10 +926,10 @@
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
-                        
+
                         <el-divider>或</el-divider>
                     </div>
-                    
+
                     <div>
                         <p style="margin: 10px 0 15px; font-size: 14px;">创建新的对齐关系:</p>
                         <el-input
@@ -965,8 +965,8 @@
                 <el-button type="success" @click="handleAlignmentDirectionSelect('codeToReq')">代码 → 需求</el-button>
             </template>
         </el-dialog>
-        
-        
+
+
         <!-- 提示词设置弹窗 -->
         <el-dialog
           v-model="showPromptDialog"
@@ -1101,8 +1101,8 @@
             <el-button @click="savePrompt" type="primary" style="margin-left: 10px;">保存</el-button>
           </template>
         </el-dialog>
-        
-        
+
+
         <!-- 对齐提示词设置弹窗 -->
         <el-dialog
           v-model="showAlignPromptDialog"
@@ -1143,7 +1143,7 @@
             <el-button @click="executeAlignment" type="success" style="margin-left: 10px;">应用并对齐</el-button>
           </template>
         </el-dialog>
-        
+
         <!-- 审查提示词设置弹窗 -->
         <el-dialog
             v-model="showReviewPromptDialog"
@@ -1162,7 +1162,7 @@
                 placeholder="请输入提示词..."
                 style="margin-bottom: 15px;"
             ></el-input>
-            
+
             <!-- 可复制的两行提示 -->
             <div style="margin-bottom: 15px; font-size: 14px; color: #666; border: 1px dashed #f00; padding: 10px; background-color: #fff5f5; border-radius: 6px;">
               <div style="display: flex; align-items: center; margin-bottom: 8px;">
@@ -1173,18 +1173,18 @@
                 <span style="flex: 1;">你的审查结果不完整，思考过程太多，影响了问题单生成，请多注重问题单生成...</span>
                 <el-button @click="copyAndClose('你的审查结果不完整，思考过程太多，影响了问题单生成，请多注重问题单生成...')" type="primary" size="small" style="margin-left: 10px; font-size: 12px;">复制</el-button>
               </div>
-            </div>               
-            
+            </div>
+
             <!-- 底部按钮 -->
             <template #footer>
                 <el-button @click="closeReviewPromptModal">关闭</el-button>
                 <el-button @click="executeReview" type="success" style="margin-left: 10px;">应用并审查</el-button>
             </template>
         </el-dialog>
-        
+
         <!-- 审查结果详情弹窗 -->
-        <el-dialog 
-            v-model="showReviewDialog" 
+        <el-dialog
+            v-model="showReviewDialog"
             width="1200px"
             top="2vh"
             :close-on-click-modal="false"
@@ -1196,14 +1196,14 @@
                     </span>
 
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        
+
                         <el-button type="success" size="small" @click="addAlignmentToKB">
                             <i class="fas fa-link"></i> 入库(对齐)
                         </el-button>
-                        
-                        <el-button 
-                            type="danger" 
-                            size="small" 
+
+                        <el-button
+                            type="danger"
+                            size="small"
                             @click="addIssueToKB"
                         >
                             <i class="fas fa-bug"></i> 入库(问题单)
@@ -1275,7 +1275,7 @@
                                             ${ issueLevelText(issue.level) }
                                         </div>
                                         <div v-else class="issue-level-selector">
-                                            <div 
+                                            <div
                                                 v-for="level in [{ value: 'high', label: '重大' }, { value: 'medium', label: '严重' }, { value: 'low', label: '一般' }]"
                                                 :key="level.value"
                                                 class="level-btn"
@@ -1285,10 +1285,10 @@
                                                 ${ level.label }
                                         </div>
                                         </div>
-                                        
-                                        <span 
-                                            class="issue-status clickable" 
-                                            :class="issue.status?.toLowerCase()" 
+
+                                        <span
+                                            class="issue-status clickable"
+                                            :class="issue.status?.toLowerCase()"
                                             @click="cycleIssueStatus(issue)"
                                             title="点击切换状态"
                                         >
@@ -1310,8 +1310,8 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <div 
-                                        class="issue-summary" 
+                                    <div
+                                        class="issue-summary"
                                         :contenteditable="issue._isEditing"
                                         :class="{ 'editable': issue._isEditing }"
                                         @blur="updateIssueContentOnBlur($event, issue)"
@@ -1332,9 +1332,9 @@
                         <el-tab-pane label="需求反生成" name="requirement-reverse">
                             <div class="requirement-reverse-container">
                                 <div v-if="!currentReverseRequirement && !currentFlowchart" class="reverse-actions">
-                                    <el-button 
-                                        type="primary" 
-                                        @click="generateReverseRequirement" 
+                                    <el-button
+                                        type="primary"
+                                        @click="generateReverseRequirement"
                                         :loading="isGeneratingReverse"
                                     >
                                         <span v-if="!isGeneratingReverse">需求反生成</span>
@@ -1343,29 +1343,29 @@
                                 </div>
                                 <div v-if="currentReverseRequirement || currentFlowchart" class="reverse-display">
                                     <div class="reverse-actions">
-                                        <el-button 
-                                            type="plain" 
-                                            @click="regenerateReverseRequirement" 
+                                        <el-button
+                                            type="plain"
+                                            @click="regenerateReverseRequirement"
                                             :loading="isGeneratingReverse"
                                         >
                                             重新生成
                                         </el-button>
-                                        <el-button 
+                                        <el-button
                                             v-if="currentFlowchart"
-                                            type="primary" 
-                                            @click="viewFlowchart" 
+                                            type="primary"
+                                            @click="viewFlowchart"
                                             :loading="isViewingFlowchart"
                                         >
                                             <i class="fas fa-external-link-alt"></i>
                                             查看流程图
                                         </el-button>
                                     </div>
-                                    
+
                                     <!-- 需求内容 -->
                                     <div v-if="currentReverseRequirement" class="reverse-requirement-section">
                                         <div class="reverse-requirement-content" v-html="renderMarkdownWithLatex(currentReverseRequirement)"></div>
                                     </div>
-                                    
+
                                     <!-- 分隔线 -->
                                     <el-divider v-if="currentReverseRequirement && currentFlowchart"></el-divider>
                                     <div v-if="currentFlowchart" class="flowchart-section">
@@ -1373,10 +1373,10 @@
                                     </div>
                                 </div>
                                 <div v-if="reverseError" class="error-message">
-                                    <el-alert 
-                                        :title="reverseError" 
-                                        type="error" 
-                                        show-icon 
+                                    <el-alert
+                                        :title="reverseError"
+                                        type="error"
+                                        show-icon
                                         :closable="false"
                                     ></el-alert>
                                 </div>
@@ -1388,9 +1388,9 @@
         </el-dialog>
 
         <!-- 代码选择对话框 -->
-        <el-dialog 
-            v-model="showCodeSelectionDialog" 
-            title="添加代码到对齐关系" 
+        <el-dialog
+            v-model="showCodeSelectionDialog"
+            title="添加代码到对齐关系"
             width="500px"
             :close-on-click-modal="false"
             @close="resetManualAlignFromBlock"
@@ -1399,14 +1399,14 @@
                 <div class="selection-preview">
                     ${ currentSelection.content }
                 </div>
-                
+
                 <div class="annotation-options">
                     <div v-if="alignmentResults.length > 0">
                         <p style="margin: 10px 0 15px; font-size: 14px;">选择要添加到的对齐关系:</p>
-                        
-                        <el-dropdown 
-                            placement="bottom" 
-                            trigger="click" 
+
+                        <el-dropdown
+                            placement="bottom"
+                            trigger="click"
                             size="small"
                             style="width: 100%"
                         >
@@ -1414,11 +1414,11 @@
                                 选择对齐关系...
                                 <el-icon class="el-icon--right"><arrow-down /></el-icon>
                             </el-button>
-                            
+
                             <template #dropdown>
                                 <el-dropdown-menu class="annotation-dropdown-menu" style="max-height: 300px; overflow-y: auto;">
-                                    <el-dropdown-item 
-                                        v-for="alignment in alignmentResults" 
+                                    <el-dropdown-item
+                                        v-for="alignment in alignmentResults"
                                         :key="alignment.id"
                                         @click="addToAlignment(alignment)"
                                     >
@@ -1431,7 +1431,7 @@
                         </el-dropdown>
                         <el-divider>或</el-divider>
                     </div>
-                    
+
                     <div>
                         <p style="margin: 10px 0 15px; font-size: 14px;">创建新的对齐关系:</p>
                         <el-input
@@ -1530,20 +1530,20 @@
                 <el-button type="primary" @click="confirmExport">确认导出</el-button>
             </template>
         </el-dialog>
-        <input 
-            type="file" 
-            ref="switchKBInput" 
-            style="display: none" 
-            webkitdirectory 
-            directory 
+        <input
+            type="file"
+            ref="switchKBInput"
+            style="display: none"
+            webkitdirectory
+            directory
         />
 
-        <el-dialog 
-            v-model="showImportReviewDialog" 
-            title="🛡️ 知识库人工审查与入库" 
+        <el-dialog
+            v-model="showImportReviewDialog"
+            title="🛡️ 知识库人工审查与入库"
             width="900px"
             :close-on-click-modal="false"
-            @open="loadInitData" 
+            @open="loadInitData"
         >
             <el-steps :active="importStep" finish-status="success" simple style="margin-bottom: 20px;">
                 <el-step title="选择文件">
@@ -1553,9 +1553,9 @@
                     <template #icon><i class="fas fa-check-double"></i></template>
                 </el-step>
             </el-steps>
-        
+
             <div v-if="importStep === 0" class="upload-section">
-                
+
                 <div style="margin-bottom: 20px; text-align: center;">
                     <span style="margin-right: 15px; font-weight: bold;">文档类型：</span>
                     <el-radio-group v-model="importDocType">
@@ -1564,15 +1564,15 @@
                         <el-radio label="rule" border>编程规则 (Rule)</el-radio>
                     </el-radio-group>
                 </div>
-        
+
                 <el-tabs type="border-card" v-model="fileSourceMode" style="min-height: 200px;">
                     <el-tab-pane name="server" label="📂 从服务器选择 (testdata)">
                         <div style="text-align: center; padding: 20px;">
                             <p style="color: #666; margin-bottom: 10px;">直接选择位于 <code>/testdata</code> 目录下的文件：</p>
-                            <el-select 
-                                v-model="selectedServerFile" 
-                                placeholder="请选择文件..." 
-                                style="width: 300px" 
+                            <el-select
+                                v-model="selectedServerFile"
+                                placeholder="请选择文件..."
+                                style="width: 300px"
                                 filterable
                             >
                                 <el-option
@@ -1591,7 +1591,7 @@
                             </div>
                         </div>
                     </el-tab-pane>
-        
+
                     <el-tab-pane name="local" label="💻 上传本地文件">
                         <div style="text-align: center; padding: 20px;">
                             <el-upload
@@ -1612,7 +1612,7 @@
                     </el-tab-pane>
                 </el-tabs>
             </div>
-        
+
             <div v-if="importStep === 1" class="review-section">
                 <div style="margin-bottom: 15px; background: #f5f7fa; padding: 15px; border-radius: 4px; border: 1px solid #e4e7ed;">
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
@@ -1621,27 +1621,27 @@
                             <el-radio-button label="new">新建</el-radio-button>
                             <el-radio-button label="append">追加</el-radio-button>
                         </el-radio-group>
-                        
-                        <el-input 
-                            v-if="importMode === 'new'" 
-                            v-model="targetKbName" 
-                            placeholder="名称不能含空格" 
+
+                        <el-input
+                            v-if="importMode === 'new'"
+                            v-model="targetKbName"
+                            placeholder="名称不能含空格"
                             style="width: 250px"
                             @input="targetKbName = targetKbName.replace(/\s+/g, '')"
                         >
                             <template #prefix>名称</template>
                         </el-input>
-                        
-                        <el-select 
-                            v-if="importMode === 'append'" 
-                            v-model="selectedExistingKb" 
-                            placeholder="请选择目标知识库" 
+
+                        <el-select
+                            v-if="importMode === 'append'"
+                            v-model="selectedExistingKb"
+                            placeholder="请选择目标知识库"
                             style="width: 250px"
                         >
-                            <el-option 
-                                v-for="kb in existingKbsForAppend" 
-                                :key="kb.name" 
-                                :label="kb.name + ' (' + (kb.doc_count || 0) + '条)'" 
+                            <el-option
+                                v-for="kb in existingKbsForAppend"
+                                :key="kb.name"
+                                :label="kb.name + ' (' + (kb.doc_count || 0) + '条)'"
                                 :value="kb.name"
                             ></el-option>
                         </el-select>
@@ -1657,11 +1657,11 @@
                         </div>
                     </div>
                 </div>
-                
-                <el-table 
+
+                <el-table
                     ref="reviewTableRef"
-                    :data="previewTableData" 
-                    style="width: 100%; height: 400px; overflow-y: auto;" 
+                    :data="previewTableData"
+                    style="width: 100%; height: 400px; overflow-y: auto;"
                     border
                     @selection-change="handleReviewSelectionChange"
                 >
@@ -1677,26 +1677,26 @@
                     </el-table-column>
                 </el-table>
             </div>
-        
+
             <template #footer>
                 <div style="display: flex; justify-content: space-between;">
                     <el-button v-if="importStep === 1" @click="importStep = 0">上一步</el-button>
                     <div style="flex-grow: 1;"></div>
                     <el-button @click="showImportReviewDialog = false">关闭</el-button>
-                    
-                    <el-button 
-                        v-if="importStep === 0" 
-                        type="primary" 
-                        @click="startPreview" 
+
+                    <el-button
+                        v-if="importStep === 0"
+                        type="primary"
+                        @click="startPreview"
                         :loading="isUploading"
                     >
                         开始解析
                     </el-button>
-                    
-                    <el-button 
-                        v-if="importStep === 1" 
-                        type="success" 
-                        @click="submitToKb" 
+
+                    <el-button
+                        v-if="importStep === 1"
+                        type="success"
+                        @click="submitToKb"
                         :loading="isCommitting"
                         :disabled="selectedReviewItems.length === 0"
                     >
@@ -1705,7 +1705,7 @@
                 </div>
             </template>
         </el-dialog>
-        
+
         <el-dialog
             v-model="showDetailDialog"
             title="条目详情"
