@@ -1,6 +1,6 @@
-﻿-- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
--- Host: localhost    Database: doc-code
+-- Host: localhost    Database: doc_code
 -- ------------------------------------------------------
 -- Server version	8.0.45
 
@@ -31,7 +31,7 @@ CREATE TABLE `abstracts` (
   `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updatedAt` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`abstract_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='摘要';
+) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='摘要';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -48,7 +48,7 @@ CREATE TABLE `alignments` (
   `name` varchar(100) DEFAULT NULL,
   `isReviewed` int DEFAULT '0',
   `reviewThoughts` text,
-  `docRanges` text NOT NULL COMMENT '',
+  `docRanges` text NOT NULL,
   `codeRanges` text NOT NULL COMMENT '代码',
   `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` timestamp NULL DEFAULT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE `alignments` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `newtable`
+-- Table structure for table `issues`
 --
 
 DROP TABLE IF EXISTS `issues`;
@@ -73,16 +73,16 @@ CREATE TABLE `issues` (
   `alignmentId` varchar(100) NOT NULL,
   `severity` varchar(100) DEFAULT NULL,
   `title` varchar(100) DEFAULT NULL,
-  `content` text DEFAULT NULL,
+  `content` text,
   `status` varchar(100) DEFAULT NULL,
-  `relatedDocFile` text DEFAULT NULL,
-  `relatedRequirementId` text DEFAULT NULL,
-  `briefRequirement` text DEFAULT NULL,
-  `briefCode` text DEFAULT NULL,
+  `relatedDocFile` text,
+  `relatedRequirementId` text,
+  `briefRequirement` text,
+  `briefCode` text,
   `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -102,7 +102,7 @@ CREATE TABLE `project` (
   `update_time` varchar(100) DEFAULT NULL COMMENT '更新时间',
   `is_delete` int DEFAULT '0' COMMENT '是否删除',
   PRIMARY KEY (`project_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='项目';
+) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='项目';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -118,7 +118,7 @@ CREATE TABLE `project_access_log` (
   `project_id` int NOT NULL COMMENT '项目id',
   `access_time` varchar(100) NOT NULL COMMENT '打开时间',
   PRIMARY KEY (`pal_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='项目打开记录';
+) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='项目打开记录';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -134,11 +134,14 @@ CREATE TABLE `prompt` (
   `Code2ReqAlign` text,
   `Req2CodeAlign` text,
   `review` text COMMENT '审查',
-  `Req2CodeAlignKbs` text COMMENT '需求找代码-知识库提示词',
-  `Code2ReqAlignKbs` text COMMENT '代码找需求-知识库提示词',
-  `reviewKbs` text COMMENT '审查-知识库提示词',
-  PRIMARY KEY (`prompt_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='提示词表';
+  `Code2ReqAlignKbs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `Req2CodeAlignKbs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `reviewKbs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '审查',
+  `reviewCode` text COMMENT '代码单独审查提示词',
+  `reviewCodeKbs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '代码单独审查-知识库版',
+  PRIMARY KEY (`prompt_id`),
+  UNIQUE KEY `prompt_unique` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='提示词表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -156,8 +159,12 @@ CREATE TABLE `user` (
   `ip` varchar(100) DEFAULT NULL COMMENT 'IP地址',
   `role` varchar(100) DEFAULT NULL COMMENT '角色',
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping routines for database 'doc_code'
+--
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -168,4 +175,4 @@ CREATE TABLE `user` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-22 14:13:21
+-- Dump completed on 2026-05-20  9:16:07

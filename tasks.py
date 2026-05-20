@@ -137,11 +137,15 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
 
 
 @celery.task(bind=True)
-def review_alignment_task(self, project_path, project_id, user_id, files):
+def review_alignment_task(self, project_path, project_id, user_id, files, code_blocks=None, prompt_type=None):
     try:
         result = [{"doc_file": doc_file, "alignment": item}
                   for doc_file, alignments in files.items()
                   for item in alignments]
+        if code_blocks:
+            result = [{"doc_file": item['codeRanges'][0]['filename'], "alignment": item}
+                      for item in code_blocks]
+        # print('result===============', result)
         total = len(result)
         for i, item in enumerate(result, 1):
             alignment = item['alignment']
@@ -207,7 +211,8 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
                 rules=retrieved_rules,
                 issues=retrieved_issues,
                 user_id=user_id,
-                project_path=project_path
+                project_path=project_path,
+                prompt_type=prompt_type
             )
 
             # 2. 更新对齐关系
@@ -229,9 +234,26 @@ def review_alignment_task(self, project_path, project_id, user_id, files):
             try:
 
                 cur.execute(
-                    'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP '
-                    'WHERE id=%s and project_id=%s',
-                    (alignment.get('reviewThoughts') or '', generated_requirement or '', mermaid_code or '', alignment.get('id'), project_id)
+                    'INSERT INTO alignments(id,user_id,project_id,name,isReviewed,reviewThoughts,docRanges,codeRanges,'
+                    'createdAt,updatedAt,GenReq,GenMermaid) '
+                    'VALUES(%s,%s,%s,%s,1,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,%s,%s) '
+                    'ON DUPLICATE KEY UPDATE '
+                    'isReviewed=1,'
+                    'reviewThoughts=VALUES(reviewThoughts),'
+                    'GenReq=VALUES(GenReq),'
+                    'GenMermaid=VALUES(GenMermaid),'
+                    'updatedAt=CURRENT_TIMESTAMP',
+                    (
+                        alignment.get('id'),
+                        user_id,
+                        project_id,
+                        alignment.get('name') or '',
+                        alignment.get('reviewThoughts') or '',
+                        json.dumps(doc_ranges or []),
+                        json.dumps(code_ranges or []),
+                        generated_requirement or '',
+                        mermaid_code or '',
+                    )
                 )
 
                 if issues_list:
