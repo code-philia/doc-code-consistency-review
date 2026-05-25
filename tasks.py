@@ -12,7 +12,7 @@ from app.code_block import get_codefile_blocks
 from app.db import get_db_celery
 from app.rag_chroma import rag_engine
 from app.utils import get_all_files_with_relative_paths, include_related_blocks
-from app.views import logger, get_abstracts_from_sqlite, generate_abstract, save_abstract_to_db
+from app.views import logger, get_abstracts_from_sqlite, generate_abstract, save_abstract_to_db, filter_non_abstract_files
 
 celery = Celery(
     'app',
@@ -64,7 +64,7 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
         project_id = params.get('project_id')
         project_path = params.get('projectPath', '')
         # 从SQLite读取数据
-        print('从SQLite读取数据!!!!!!!!!!!!!!!')
+        # print('从SQLite读取数据!!!!!!!!!!!!!!!')
         df = get_abstracts_from_sqlite(project_id)
         # print(df.head())
         # 排除无关文件夹/目录
@@ -88,6 +88,10 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
                 )
                 if os.path.splitext(file)[1] in include_files:
                     file_path = os.path.join(root, file)
+                    # 文件不能是0KB的空文件
+                    if os.path.getsize(file_path) == 0:
+                        continue
+                    # 构建相对路径    
                     rel_path = os.path.relpath(file_path, code_file_path)
 
                     if not df.empty:
@@ -270,7 +274,15 @@ def review_alignment_task(self, project_path, project_id, user_id, files, code_b
 
                     next_number = (max(used) + 1) if used else 1
 
-                    brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
+                    #brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
+                    # 安全获取 docRanges
+                    doc_ranges = alignment.get('docRanges', [])
+                    # 如果 docRanges 不为空，取第一个的 content
+                    if doc_ranges:
+                        content = doc_ranges[0].get('content', '')
+                    else:
+                        content = ''
+                    brief_req = content or ''
                     brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
 
                     for one in issues_list:
@@ -465,7 +477,7 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
 
 
 @celery.task(bind=True)
-def align_requirement_to_project_task(self, file_abstract, params, user_id):
+def align_requirement_to_project_task(self, abstract, params, user_id):
     project_path = params.get('projectPath', '')
     project_id = params.get('project_id')
     chunks = params.get('requirements')
@@ -496,10 +508,43 @@ def align_requirement_to_project_task(self, file_abstract, params, user_id):
                 return {"status": "error", "message": "缺少需求内容或项目路径参数"}
 
             # 如果有多个代码文件，执行检索代码摘要
+            file_abstract = abstract.get('data', abstract) if isinstance(abstract, dict) else abstract
             if len(all_files) > 1:
                 # 基于需求，利用大模型检索代码摘要，先定位代码文件
                 # 调用llm
                 file_name_list = query_codefile_from_abstract(requirement_text, file_abstract)
+                
+                # 解析异常，返回空列表时
+                # 过滤掉含有乱码的代码摘要（作为被定位的代码文件防止遗漏），重新调用大模型定位代码文件
+                FILE_MAX_LIMIT = 40
+                if not file_name_list:
+                    filter_non_file, filter_file_abstract, file_cnt = filter_non_abstract_files(file_abstract)
+                    
+                    # 代码摘要数量小于阈值时，可以直接调用
+                    if file_cnt <=FILE_MAX_LIMIT:
+                        # 调用llm
+                        file_name_list = query_codefile_from_abstract(requirement_text, filter_file_abstract)
+                        #print(file_name_list)
+                    
+                    # 可能由于代码摘要过多，影响大模型分析理解而报错
+                    else:
+                        # 对代码摘要分批次处理
+                        file_name_list = []
+                        file_cnt = 0
+                        batch_file_abstract = {}
+                        for key, value in filter_file_abstract.items():
+                            file_cnt += 1
+                            batch_file_abstract[key] = value
+                            if file_cnt >= FILE_MAX_LIMIT:
+                                file_cnt = 0
+                                batch_file_name_list = query_codefile_from_abstract(requirement_text, batch_file_abstract)
+                                file_name_list += batch_file_name_list
+                    
+                    # 谨防遗漏，将有摘要是乱码的代码文件全部放入候选区
+                    if not file_name_list:                    
+                        file_name_list += filter_non_file
+                    #print(file_name_list)
+                    
             # 如果只有一个代码文件，就不检索代码摘要
             else:
                 file_name_list = all_files
@@ -516,6 +561,8 @@ def align_requirement_to_project_task(self, file_abstract, params, user_id):
             for file_name in file_name_list:
 
                 # 为代码进行分块或读取分块结果
+                if not os.path.exists(os.path.join(code_repo_path, file_name)):
+                    continue
                 all_code_blocks = get_codefile_blocks(code_repo_path, file_name, code_block_base_path)
 
                 # 调用对齐函数获取相关代码

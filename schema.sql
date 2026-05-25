@@ -49,7 +49,7 @@ CREATE TABLE `alignments` (
   `isReviewed` int DEFAULT '0',
   `reviewThoughts` text,
   `docRanges` text NOT NULL,
-  `codeRanges` text NOT NULL COMMENT '代码',
+  `codeRanges` MEDIUMTEXT NOT NULL COMMENT '代码',
   `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` timestamp NULL DEFAULT NULL,
   `GenReq` text,
