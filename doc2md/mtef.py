@@ -42,14 +42,24 @@ class MTEF:
         # 默认设置为合法的，除非遇到不可解析数据
         self.Valid = True
 
+        def _read_byte():
+            data = self.reader.read(1)
+            if data is None or len(data) != 1:
+                return None
+            return Helper.bytes2int(data)
+
         # Header
-        self.mMtefVer = Helper.bytes2int(self.reader.read(1)) # uint8
-        self.mPlatform = Helper.bytes2int(self.reader.read(1)) # uint8
-        self.mProduct = Helper.bytes2int(self.reader.read(1)) # uint8
-        self.mVersion = Helper.bytes2int(self.reader.read(1)) # uint8
-        self.mVersionSub = Helper.bytes2int(self.reader.read(1)) # uint8
+        self.mMtefVer = _read_byte() # uint8
+        self.mPlatform = _read_byte() # uint8
+        self.mProduct = _read_byte() # uint8
+        self.mVersion = _read_byte() # uint8
+        self.mVersionSub = _read_byte() # uint8
         self.mApplication, _ = self.readNullTerminatedString()
-        self.mInline = Helper.bytes2int(self.reader.read(1)) # uint8
+        self.mInline = _read_byte() # uint8
+
+        if None in (self.mMtefVer, self.mPlatform, self.mProduct, self.mVersion, self.mVersionSub, self.mInline):
+            self.Valid = False
+            return None
 
         # print('(DEBUG)MTEF.readRecord.mMtefVer:', self.mMtefVer)
         # print('(DEBUG)MTEF.readRecord.mPlatform:', self.mPlatform)
@@ -69,19 +79,22 @@ class MTEF:
                 err = 'MEFT.readRecord: read byte error'
             record = Helper.bytes2int(read_data) # uint8
 
+            if err is not None:
+                break
+
             # 根据future定义，>=100的后面会跟一个字节，这个字节代表需要跳过的长度
             # For now, readers can assume that an unsigned integer follows the record type and is the number of bytes following it in the record
             # This makes it easy for software that reads MTEF to skip these records.
             if record >= RecordType.FUTURE:
                 skipFutureLength = Helper.bytes2int(self.reader.read(1)) # uint8
+                if skipFutureLength is None:
+                    self.Valid = False
+                    break
                 self.reader.seek(skipFutureLength, 1) # io.SeekCurrent
                 continue
 
             # debug 使用
             # print('(DEBUG)MTEF.readRecord.while.record:', record)
-
-            if err is not None:
-                break
 
             if record == RecordType.END:
                 self.nodes.append(MtAST(RecordType.END, None, None))
@@ -170,6 +183,7 @@ class MTEF:
             else:
                 self.Valid = False
                 print('MTEF.readRecord:FUTURE RECORD:', record)
+                break
 
         return None
 
@@ -224,8 +238,11 @@ class MTEF:
             'count': 0, # int64
             'array': []
         }
+        err = None
+        failed = False
 
         def fx(x):
+            nonlocal failed, err
             # x uint8
             if shareData['flag']:
                 if x == 0x00:
@@ -244,7 +261,8 @@ class MTEF:
                     shareData['flag'] = False
                     shareData['tmpStr'] += '%'
                 else:
-                    print('MTEF.readDimensionArrays.error: invalid bytes')
+                    failed = True
+                    err = 'MTEF.readDimensionArrays.error: invalid bytes'
             else:
                 if x == 0x00:
                     shareData['flag'] = False
@@ -288,15 +306,22 @@ class MTEF:
                     shareData['array'].append(shareData['tmpStr'])
                     shareData['tmpStr'] = ''
                 else:
-                    print('MTEF.readDimensionArrays.error: invalid bytes')
+                    failed = True
+                    err = 'MTEF.readDimensionArrays.error: invalid bytes'
 
         while True:
             if shareData['count'] >= size:
                 # print('(DEBUG)MTEF.readDimensionArrays:break with size=', size)
                 break
+            if failed:
+                break
 
             ch = 0 # uint8
-            ch =  Helper.bytes2int(self.reader.read(1))
+            ch_data = self.reader.read(1)
+            if ch_data is None or len(ch_data) != 1:
+                err = 'MTEF.readDimensionArrays.error: read byte error'
+                break
+            ch = Helper.bytes2int(ch_data)
 
             # print('(DEBUG)MTEF.readDimensionArrays.ch:', ch)
 
@@ -305,7 +330,7 @@ class MTEF:
             fx(hi)
             fx(lo)
             
-        return shareData['array'], None
+        return shareData['array'], err
 
     def readEqnPrefs(self, eqnPrefs):
         options = 0 # OptionType

@@ -820,8 +820,12 @@ def main(input_docx, output_docx):
 
 if __name__ == "__main__":
     import sys
-    INPUT_PATH = "优化版本.docx"
-    OUTPUT_PATH = "优化版本_parsed.docx"
+    # INPUT_PATH = "./测试文档/公式.docx"
+    # OUTPUT_PATH = "./测试文档/temp.docx"
+    # INPUT_PATH = "./测试文档/测试文档_copy.docx"
+    # OUTPUT_PATH = "./测试文档/temp05.docx"
+    INPUT_PATH = "模型.docx"
+    OUTPUT_PATH = "模型_parsed.docx"
     if INPUT_PATH and OUTPUT_PATH:
         res = convert_docx(INPUT_PATH, OUTPUT_PATH)
         try:
