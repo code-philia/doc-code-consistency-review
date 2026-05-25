@@ -45,6 +45,7 @@ from sqlalchemy import create_engine
 import pymysql
 
 from .utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
+from .utils import convert_docfile_to_markdown
 from .agent import smart_parse_doc
 # 配置日志
 handler = logging.StreamHandler(sys.stdout)
@@ -907,7 +908,6 @@ def upload_files():
         file_type = request.form.get('fileType')  # 'doc' or 'code'
         files = request.files.getlist('files')
         parseDocMethod = request.form.get('parseDocMethod')
-        #print(f'parseDocMethod=======:{parseDocMethod}')
 
         if not all([project_path, file_type, files]):
             return jsonify({"status": "error", "message": "请求参数不完整。"}), 400
@@ -963,17 +963,14 @@ def upload_files():
 
         elif file_type == 'doc':
             doc_repo_path = metadata.get('doc_repo')
-            has_docx = False
             for file in files:
                 # 直接使用原始文件名，仅取最后的文件名部分，天然防止了目录遍历
                 filename = os.path.basename(file.filename)
                 if filename.endswith(('.md', '.docx')):
-                    file.save(os.path.join(doc_repo_path, filename))
+                    doc_file_path = os.path.join(doc_repo_path, filename)
+                    file.save(doc_file_path)
                     if filename.endswith('.docx'):
-                        has_docx = True
-
-            if has_docx:
-                convert_doc_to_markdown(doc_repo_path, parseDocMethod)
+                        convert_docfile_to_markdown(doc_file_path, doc_repo_path, parseDocMethod)
 
             metadata['doc_files'] = get_all_files_with_relative_paths(doc_repo_path, type='doc')
 
@@ -1853,13 +1850,13 @@ def align_requirement_to_project_addprompt():
     """
     data = request.json
     doc_ranges = data.get('docRanges', [])
-    file_abstract = data.get('codeFileAbstract', {})
+    abstract = data.get('codeFileAbstract', {})
     project_path = data.get('projectPath', '')
     codeRanges_aligned = data.get('codeRanges', [])
     userPrompt = data.get('userInputPrompt', [])
     project_id = data.get('project_id')
     print('/api/align-requirement-to-project-addprompt, project_id', project_id)
-    # file_abstract = get_project_abstract(project_id)
+    # abstract = get_project_abstract(project_id)
 
     doc_name = doc_ranges[0]['filename']
 
@@ -1875,10 +1872,43 @@ def align_requirement_to_project_addprompt():
         return jsonify({"status": "error", "message": "缺少需求内容或项目路径参数"}), 400
 
     # 如果有多个代码文件，执行检索代码摘要
+    file_abstract = abstract.get('data', abstract) if isinstance(abstract, dict) else abstract
     if len(all_files) > 1:
         # 基于需求，利用大模型检索代码摘要，先定位代码文件
         # 调用llm
         file_name_list = query_codefile_from_abstract(requirement_text, file_abstract)
+        
+        # 解析异常，返回空列表时
+        # 过滤掉含有乱码的代码摘要（作为被定位的代码文件防止遗漏），重新调用大模型定位代码文件
+        FILE_MAX_LIMIT = 40
+        if not file_name_list:
+            filter_non_file, filter_file_abstract, file_cnt = filter_non_abstract_files(file_abstract)
+            
+            # 代码摘要数量小于阈值时，可以直接调用
+            if file_cnt <=FILE_MAX_LIMIT:
+                # 调用llm
+                file_name_list = query_codefile_from_abstract(requirement_text, filter_file_abstract)
+                #print(file_name_list)
+            
+            # 可能由于代码摘要过多，影响大模型分析理解而报错
+            else:
+                # 对代码摘要分批次处理
+                file_name_list = []
+                file_cnt = 0
+                batch_file_abstract = {}
+                for key, value in filter_file_abstract.items():
+                    file_cnt += 1
+                    batch_file_abstract[key] = value
+                    if file_cnt >= FILE_MAX_LIMIT:
+                        file_cnt = 0
+                        batch_file_name_list = query_codefile_from_abstract(requirement_text, batch_file_abstract)
+                        file_name_list += batch_file_name_list
+            
+            # 谨防遗漏，将有摘要是乱码的代码文件全部放入候选区
+            if not file_name_list:
+                file_name_list += filter_non_file 
+            #print(file_name_list)
+        
     # 如果只有一个代码文件，就不检索代码摘要
     else:
         file_name_list = all_files
@@ -1894,6 +1924,8 @@ def align_requirement_to_project_addprompt():
         # 遍历经过代码摘要筛选的代码文件
         for file_name in file_name_list:
             # 为代码进行分块或读取分块结果
+            if not os.path.exists(os.path.join(code_repo_path, file_name)):
+                continue
             all_code_blocks = get_codefile_blocks(code_repo_path, file_name, code_block_base_path)
 
             # 调用对齐函数获取相关代码
@@ -4916,7 +4948,43 @@ def get_user_projects():
             'path': paths
         })
     
-      
+def contains_chinese(text):
+    # 匹配中文字符的正则模式（包括常见汉字）
+    # \u4e00-\u9fff 是基本汉字范围
+    pattern = r'[\u4e00-\u9fff]'
+    if text is None:
+        return False
+    if not isinstance(text, str):
+        try:
+            text = str(text)
+        except:
+            return False
+    # 查找所有中文字符
+    chinese_chars = re.findall(pattern, text)
+    
+    # 防止有乱码，如果中文字符数量 >= 10，则返回 True，否则 False
+    return len(chinese_chars) >= 10
+
+# 过滤代码摘要，输出代码摘要有乱码的文件名、无乱码的摘要字典、无乱码的摘要数量
+def filter_non_abstract_files(file_abstract):
+    filter_non_file = []
+    filter_file_abstract = {}
+    cnt = 0
+    for key, value in file_abstract.items():
+        if not isinstance(value, str):
+            # print('************************************')
+            # print(value)
+            # print(type(value))
+            # print('======================================')
+            continue
+        if not contains_chinese(value): 
+            filter_non_file.append(key)
+        else:
+            filter_file_abstract[key] = value
+            cnt += 1
+            
+    return filter_non_file, filter_file_abstract, cnt
+    
 # if __name__ == '__main__':
 #     start_port = 5056
 #     available_port = find_available_port(start_port)

@@ -25,11 +25,13 @@ API_KEY = os.environ.get("API_KEY", "0")
 # MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
 
-# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-# MODEL_NAME = "Qwen3-32B"
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+MODEL_NAME = "Qwen3-32B"
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
-MODEL_NAME = "/llm"
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
+# MODEL_NAME = "/llm"
+
+MAX_REQ = 3 # 最大重复次数
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -327,6 +329,8 @@ def query_codefile_from_abstract(requirement, file_abstract):
         max_sim_results = []
         max_sim = -1.0
         for item in parsed_output:
+            if not isinstance(item, dict):
+                continue
             if item['similarity'] >= max_sim:
                 max_sim = item['similarity']
                 if item['similarity'] == max_sim:
@@ -468,7 +472,7 @@ def query_related_code_block(
         )
 
     # 多次解析回复
-    max_req = 5
+    max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
         response = query_llm(prompt)
@@ -517,6 +521,8 @@ def query_related_code(
             max_sim_results = []
             max_sim = -1.0
             for item in related_code_blocks:
+                if not isinstance(item, dict):
+                    continue
                 if item['similarity'] >= max_sim:
                     max_sim = item['similarity']
                     if item['similarity'] == max_sim:
@@ -608,14 +614,12 @@ def query_related_code_block_by_feedback(
     
 
     # 多次解析回复
-    max_req = 5
+    max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
         response = query_llm(prompt)
         llm_output = response.content
         #print("original llm output: ", llm_output)
-        parsed_output = parse_alignment_output(llm_output)
-
         try:
             parsed_output = parse_alignment_output(llm_output)
             # print("parsed llm output: ", parsed_output)
@@ -663,6 +667,8 @@ def query_related_code_by_feedback(
             max_sim_results = []
             max_sim = -1.0
             for item in related_code_blocks:
+                if not isinstance(item, dict):
+                    continue
                 if item['similarity'] >= max_sim:
                     max_sim = item['similarity']
                     if item['similarity'] == max_sim:
@@ -741,11 +747,29 @@ def query_related_requirement_block(
     )
 
     # 解析回复
-    response = query_llm(prompt)
-    llm_output = response.content
+    #response = query_llm(prompt)
+    #llm_output = response.content
     #print("original llm output (req): ", llm_output)
-    parsed_output = parse_output(llm_output)
+    #parsed_output = parse_output(llm_output)
     #print("parsed llm output (req): ", parsed_output)
+    
+    # 多次解析回复
+    max_req = MAX_REQ
+    parsed_output = ""
+    for attempt in range(max_req):
+        response = query_llm(prompt)
+        llm_output = response.content
+
+        # print("original llm output: ", llm_output)
+        try:
+            parsed_output = parse_output(llm_output)
+            # print("parsed llm output: ", parsed_output)
+            return parsed_output
+        except Exception as e:
+            print(f"第{attempt+1}次调用大模型输出解析失败")
+            print(e)
+    print('已尝试多次，无法正确输出和解析结果')        
+    
     
     return parsed_output
 
@@ -781,6 +805,8 @@ def query_related_requirement(
             max_sim_results = []
             max_sim = -1.0
             for item in related_req_blocks:
+                if not isinstance(item, dict):
+                    continue
                 if item.get('similarity', 0) >= max_sim:
                     max_sim = item.get('similarity', 0)
                     if item.get('similarity', 0) == max_sim:
@@ -872,14 +898,12 @@ def query_related_requirement_block_by_feedback(
     
  
     # 多次解析回复
-    max_req = 5
+    max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
         response = query_llm(prompt)
         llm_output = response.content
         #print("original llm output: ", llm_output)
-        parsed_output = parse_alignment_output(llm_output)
-
         try:
             parsed_output = parse_alignment_output(llm_output)
             # print("parsed llm output: ", parsed_output)
@@ -928,6 +952,8 @@ def query_related_requirement_by_feedback(
             max_sim_results = []
             max_sim = -1.0
             for item in related_req_blocks:
+                if not isinstance(item, dict):
+                    continue
                 if item.get('similarity', 0) >= max_sim:
                     max_sim = item.get('similarity', 0)
                     if item.get('similarity', 0) == max_sim:
@@ -1123,7 +1149,7 @@ def query_review_result_by_feedback(
         #parsed_output = parse_review_output(response.content)
         
         # 多次解析回复
-        max_req = 5
+        max_req = MAX_REQ
         parsed_output = ""
         for attempt in range(max_req):
             response = query_llm(prompt)
@@ -1244,7 +1270,7 @@ def query_review_result(
         #parsed_output = parse_review_output(response.content)
         
         # 多次解析回复
-        max_req = 5
+        max_req = MAX_REQ
         parsed_output = ""
         for attempt in range(max_req):
             response = query_llm(prompt)

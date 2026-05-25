@@ -282,6 +282,11 @@ def convert_doc_to_markdown(doc_repo_path, parseDocMethod):
                 continue
             #freeze_numbering(os.path.join(root, file))
             docToMd.convertDocToMarkdown(os.path.join(root, file), converted_repo_path, parseDocMethod)
+            
+def convert_docfile_to_markdown(doc_file_path, doc_repo_path, parseDocMethod):
+    converted_repo_path = os.path.join(os.path.dirname(doc_repo_path), "doc_repo_converted")
+    os.makedirs(converted_repo_path, exist_ok=True)
+    docToMd.convertDocToMarkdown(doc_file_path, converted_repo_path, parseDocMethod)
 
 def get_filename_without_extension(filepath):
     """获取不带扩展名的文件名"""

@@ -211,7 +211,7 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
                             
                             # 提取代码块内容
                             code = '\n'.join(lines[start_idx:end_idx+1])
-                            print('end_idx======',end_idx)
+                            # print('end_idx======',end_idx)
                             #print(code)
                             # sys.exit()
                         

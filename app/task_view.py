@@ -18,7 +18,7 @@ def get_progress(task_id):
         "state": task_result.state,
         "meta": task_result.info
     }
-    # print(f'response============================{response}')
+    #print(f'response============================{response}')
     return jsonify(response)
 
 
