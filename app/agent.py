@@ -22,16 +22,23 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 API_KEY = os.environ.get("API_KEY", "0")
-# MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
-# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-MODEL_NAME = "Qwen3-32B"
-
-# API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
-# MODEL_NAME = "/llm"
-
+MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen3-32B")
 MAX_REQ = 3 # 最大重复次数
+
+PROMPT_TYPE_KBS_MAP = {
+    'Req2CodeAlign': 'Req2CodeAlignKbs',
+    'Code2ReqAlign': 'Code2ReqAlignKbs',
+    'review': 'reviewKbs',
+    'reviewCode': 'reviewCodeKbs',
+}
+
+PROMPT_TYPE_FALLBACK_MAP = {
+    'Req2CodeAlignKbs': 'Req2CodeAlign',
+    'Code2ReqAlignKbs': 'Code2ReqAlign',
+    'reviewKbs': 'review',
+    'reviewCodeKbs': 'reviewCode',
+}
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -138,6 +145,47 @@ def _pick_template(
     if row and row.get(normal_key):
         return row.get(normal_key)
     return normal_default
+
+
+def _pick_template_with_meta(
+    row: Optional[Dict[str, Any]],
+    use_kbs_template: bool,
+    normal_key: str,
+    kbs_key: str,
+    normal_default: str,
+    kbs_default: str
+):
+    if use_kbs_template:
+        if row and row.get(kbs_key):
+            return row.get(kbs_key), kbs_key, "db"
+        return kbs_default, kbs_key, "default"
+    if row and row.get(normal_key):
+        return row.get(normal_key), normal_key, "db"
+    return normal_default, normal_key, "default"
+
+
+def _resolve_prompt_type_for_kbs(prompt_type: Optional[str], project_path: Optional[str]) -> Optional[str]:
+    if not prompt_type:
+        return prompt_type
+    if _has_any_selected_kb(project_path):
+        return PROMPT_TYPE_KBS_MAP.get(prompt_type, prompt_type)
+    return prompt_type
+
+
+def _debug_print_review_prompt(stage: str, template_key: str, template_source: str, prompt: str,
+                               use_kbs_template: bool, is_code_only_review: bool,
+                               prompt_type: Optional[str] = None, project_path: Optional[str] = None):
+    print("\n================ REVIEW PROMPT DEBUG BEGIN ================")
+    print(f"stage={stage}")
+    print(f"project_path={project_path or ''}")
+    print(f"is_code_only_review={is_code_only_review}")
+    print(f"use_kbs_template={use_kbs_template}")
+    print(f"requested_prompt_type={prompt_type or ''}")
+    print(f"resolved_template_key={template_key}")
+    print(f"template_source={template_source}")
+    print("prompt_content:")
+    print(prompt)
+    print("================= REVIEW PROMPT DEBUG END =================\n")
 
 def _load_user_prompt_row(user_id: Optional[int], requested_fields: List[str]) -> Dict[str, Any]:
     if user_id is None:
@@ -1110,21 +1158,30 @@ def query_review_result_by_feedback(
         reference_reviews = "无可用历史审查/对齐记录"
 
     # 3. 构造提示词
-    # template = REVIEW_PROMPT_TEMPLATE
-    # original_template = THINKING_PROMPT_TEMPLATE
     resolved_user_id = _resolve_user_id(user_id)
-    
     use_kbs_template = _has_any_selected_kb(project_path)
-    row = _load_user_prompt_row(resolved_user_id, ['review', 'reviewKbs'])
+    is_code_only_review = not requirement and bool(related_code)
 
-    original_template = _pick_template(
-        row=row,
-        use_kbs_template=use_kbs_template,
-        normal_key='review',
-        kbs_key='reviewKbs',
-        normal_default=REVIEW_PROMPT_TEMPLATE,
-        kbs_default=REVIEW_PROMPT_TEMPLATE_KBS
-    )
+    if is_code_only_review:
+        row = _load_user_prompt_row(resolved_user_id, ['reviewCode', 'reviewCodeKbs'])
+        original_template, original_template_key, original_template_source = _pick_template_with_meta(
+            row=row,
+            use_kbs_template=use_kbs_template,
+            normal_key='reviewCode',
+            kbs_key='reviewCodeKbs',
+            normal_default=CODE_THINKING_PROMPT_TEMPLATE,
+            kbs_default=CODE_THINKING_PROMPT_TEMPLATE_KBS
+        )
+    else:
+        row = _load_user_prompt_row(resolved_user_id, ['review', 'reviewKbs'])
+        original_template, original_template_key, original_template_source = _pick_template_with_meta(
+            row=row,
+            use_kbs_template=use_kbs_template,
+            normal_key='review',
+            kbs_key='reviewKbs',
+            normal_default=REVIEW_PROMPT_TEMPLATE,
+            kbs_default=REVIEW_PROMPT_TEMPLATE_KBS
+        )
     
     original_prompt = original_template.format(
         requirement=requirement_context,
@@ -1140,7 +1197,15 @@ def query_review_result_by_feedback(
         review_thought=review_thought,
         user_feedback=user_prompt
     )
-    #print(prompt)
+    _debug_print_review_prompt(
+        stage="query_review_result_by_feedback",
+        template_key=original_template_key,
+        template_source=original_template_source,
+        prompt=prompt,
+        use_kbs_template=use_kbs_template,
+        is_code_only_review=is_code_only_review,
+        project_path=project_path
+    )
     
     # 4. 调用LLM
     try:
@@ -1236,17 +1301,31 @@ def query_review_result(
         reference_reviews = "无可用历史审查/对齐记录"
 
     # 3. 构造提示词
-    # template = REVIEW_PROMPT_TEMPLATE
-    # template = THINKING_PROMPT_TEMPLATE
     resolved_user_id = _resolve_user_id(user_id)
     use_kbs_template = _has_any_selected_kb(project_path)
-    row = _load_user_prompt_row(resolved_user_id, ['review', 'reviewKbs'])
-    # print('use_kbs_template==============', use_kbs_template)
-    # print('row=======================', row)
-    if prompt_type:
-        template = get_prompt(prompt_type, resolved_user_id)
+    is_code_only_review = not requirement and bool(related_code)
+    resolved_prompt_type = _resolve_prompt_type_for_kbs(prompt_type, project_path)
+
+    if is_code_only_review:
+        row = _load_user_prompt_row(resolved_user_id, ['reviewCode', 'reviewCodeKbs'])
     else:
-        template = _pick_template(
+        row = _load_user_prompt_row(resolved_user_id, ['review', 'reviewKbs'])
+
+    if resolved_prompt_type:
+        template = get_prompt(resolved_prompt_type, resolved_user_id)
+        template_key = resolved_prompt_type
+        template_source = "db_or_default_by_prompt_type"
+    elif is_code_only_review:
+        template, template_key, template_source = _pick_template_with_meta(
+            row=row,
+            use_kbs_template=use_kbs_template,
+            normal_key='reviewCode',
+            kbs_key='reviewCodeKbs',
+            normal_default=CODE_THINKING_PROMPT_TEMPLATE,
+            kbs_default=CODE_THINKING_PROMPT_TEMPLATE_KBS
+        )
+    else:
+        template, template_key, template_source = _pick_template_with_meta(
             row=row,
             use_kbs_template=use_kbs_template,
             normal_key='review',
@@ -1261,6 +1340,16 @@ def query_review_result(
         reference_rules=reference_rules,
         reference_issues=reference_issues,
         reference_reviews=reference_reviews
+    )
+    _debug_print_review_prompt(
+        stage="query_review_result",
+        template_key=template_key,
+        template_source=template_source,
+        prompt=prompt,
+        use_kbs_template=use_kbs_template,
+        is_code_only_review=is_code_only_review,
+        prompt_type=prompt_type,
+        project_path=project_path
     )
     
     # 4. 调用LLM
@@ -1297,12 +1386,19 @@ def get_prompt(prompt_type, user_id):
     """
     db = get_db_celery()
     c = db.cursor()
-    sql = f"select {prompt_type} from prompt where user_id={user_id}"
+    effective_field = prompt_type
     row = None
     try:
-        c.execute(sql)
+        c.execute("SHOW COLUMNS FROM prompt")
+        columns_rows = c.fetchall() or []
+        existing_columns = {item.get("Field") for item in columns_rows if item and item.get("Field")}
+        if effective_field not in existing_columns:
+            effective_field = PROMPT_TYPE_FALLBACK_MAP.get(prompt_type, prompt_type)
+
+        sql = f"select {effective_field} from prompt where user_id=%s"
+        c.execute(sql, (user_id,))
         row = c.fetchone()
-        row = row.get(prompt_type)
+        row = row.get(effective_field) if row else None
 
     except Exception as e:
         print(f'查询出错:{e}')

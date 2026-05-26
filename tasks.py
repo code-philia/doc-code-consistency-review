@@ -51,6 +51,14 @@ def _normalize_kb_type_for_use(raw_type):
         return "align"
     return "other"
 
+
+def _safe_first_range_field(ranges, field, default=''):
+    if isinstance(ranges, list) and ranges:
+        first = ranges[0] or {}
+        if isinstance(first, dict):
+            return first.get(field, default) or default
+    return default
+
 @celery.task(name="user_bp.task.add")
 def add(x, y):
     time.sleep(10)
@@ -143,12 +151,24 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
 @celery.task(bind=True)
 def review_alignment_task(self, project_path, project_id, user_id, files, code_blocks=None, prompt_type=None):
     try:
-        result = [{"doc_file": doc_file, "alignment": item}
-                  for doc_file, alignments in files.items()
-                  for item in alignments]
+        result = []
+        if isinstance(files, dict):
+            result.extend(
+                {"doc_file": doc_file, "alignment": item}
+                for doc_file, alignments in files.items()
+                for item in (alignments or [])
+            )
         if code_blocks:
-            result = [{"doc_file": item['codeRanges'][0]['filename'], "alignment": item}
-                      for item in code_blocks]
+            result = [
+                {
+                    "doc_file": _safe_first_range_field(item.get('codeRanges', []), 'filename'),
+                    "alignment": item
+                }
+                for item in code_blocks
+                if item.get('codeRanges')
+            ]
+        if not result:
+            raise ValueError("缺少可审查的数据：既没有需求-代码对齐，也没有代码块列表")
         # print('result===============', result)
         total = len(result)
         for i, item in enumerate(result, 1):
@@ -283,7 +303,7 @@ def review_alignment_task(self, project_path, project_id, user_id, files, code_b
                     else:
                         content = ''
                     brief_req = content or ''
-                    brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
+                    brief_code = _safe_first_range_field(alignment.get('codeRanges', []), 'content')
 
                     for one in issues_list:
                         display_id = f"ISSUE-{next_number:03d}"
@@ -336,7 +356,7 @@ def review_alignment_task(self, project_path, project_id, user_id, files, code_b
 
 
 @celery.task
-def review_alignment_addprompt_task(project_path, alignment, project_id, user_id, doc_file, user_prompt):
+def review_alignment_addprompt_task(project_path, alignment, project_id, user_id, doc_file=None, user_prompt=None):
     # 获取选定的 knowledge base
     selected_rule_kbs = []
     selected_issue_kbs = []
@@ -433,8 +453,13 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
 
             next_number = (max(used) + 1) if used else 1
 
-            brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
-            brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
+            brief_req = _safe_first_range_field(alignment.get('docRanges', []), 'content')
+            brief_code = _safe_first_range_field(alignment.get('codeRanges', []), 'content')
+            related_doc_file = (
+                doc_file
+                or _safe_first_range_field(alignment.get('docRanges', []), 'filename')
+                or _safe_first_range_field(alignment.get('codeRanges', []), 'filename')
+            )
 
             for one in issues_list:
                 display_id = f"ISSUE-{next_number:03d}"
@@ -458,7 +483,7 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
                         title,
                         content,
                         status,
-                        doc_file,
+                        related_doc_file,
                         alignment.get('id'),
                         brief_req,
                         brief_code

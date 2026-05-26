@@ -417,6 +417,7 @@ const app = createApp({
         const isGeneratingReverse = ref(false);
         const reverseError = ref(null);
         const isViewingFlowchart = ref(false);
+        let reverseRequestSeq = 0;
 
         // 进度显示相关状态
         const showProgress = ref(false);
@@ -5967,21 +5968,85 @@ const app = createApp({
         /***********************
          * 需求反生成相关方法
          ***********************/
-        const generateReverseRequirement = async () => {
-            if (!selectedReviewAlignment.value) {
+        const clearReverseRequirementState = () => {
+            currentReverseRequirement.value = null;
+            currentFlowchart.value = null;
+            reverseError.value = null;
+        };
+
+        const renderMermaidFlowchart = async (mermaidCode) => {
+            if (!mermaidCode) return;
+            await nextTick();
+            try {
+                const element = document.getElementById('mermaid-flowchart');
+                if (element) {
+                    element.innerHTML = '';
+                    const { svg } = await mermaid.render(`mermaid-graph-${Date.now()}`, mermaidCode);
+                    element.innerHTML = svg;
+                }
+            } catch (mermaidError) {
+                console.error('Mermaid渲染错误:', mermaidError);
+                reverseError.value = 'Mermaid图表渲染失败: ' + mermaidError.message;
+            }
+        };
+
+        const loadReverseRequirementCache = async (alignment = selectedReviewAlignment.value) => {
+            if (!alignment) {
+                clearReverseRequirementState();
+                return;
+            }
+
+            const requestSeq = ++reverseRequestSeq;
+            clearReverseRequirementState();
+
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const response = await axios.post('/api/generate-reverse-requirement', {
+                    alignment_id: alignment.id,
+                    project_id: projectId,
+                    cacheOnly: true
+                });
+
+                if (
+                    requestSeq !== reverseRequestSeq ||
+                    !showReviewDialog.value ||
+                    !selectedReviewAlignment.value ||
+                    selectedReviewAlignment.value.id !== alignment.id
+                ) {
+                    return;
+                }
+
+                if (response.data.status === 'success' && response.data.cached) {
+                    currentReverseRequirement.value = response.data.generatedRequirement;
+                    if (response.data.mermaidCode) {
+                        currentFlowchart.value = response.data.mermaidCode.replace(/\\n/g, '\n').trim();
+                        await renderMermaidFlowchart(currentFlowchart.value);
+                    }
+                }
+            } catch (error) {
+                if (requestSeq !== reverseRequestSeq) return;
+                console.error('加载需求反生成缓存失败:', error);
+                reverseError.value = '加载需求反生成缓存失败';
+            }
+        };
+
+        const generateReverseRequirement = async (options = {}) => {
+            const { forceRegenerate = false } = options;
+            const alignment = selectedReviewAlignment.value;
+            if (!alignment) {
                 ElMessage.error('未选择对齐关系');
                 return;
             }
 
+            const requestSeq = ++reverseRequestSeq;
             isGeneratingReverse.value = true;
-            reverseError.value = null;
-            currentReverseRequirement.value = null;
-            currentFlowchart.value = null;
+            clearReverseRequirementState();
 
             try {
                 // 构建需求和代码内容
-                const docRanges = selectedReviewAlignment.value.docRanges || [];
-                const codeRanges = selectedReviewAlignment.value.codeRanges || [];
+                const docRanges = alignment.docRanges || [];
+                const codeRanges = alignment.codeRanges || [];
                 
                 if (codeRanges.length === 0) {
                     reverseError.value = '未找到相关代码范围';
@@ -6005,10 +6070,21 @@ const app = createApp({
                 const projectId = urlParams.get('project_id');
 
                 const response = await axios.post('/api/generate-reverse-requirement', {
+                    alignment_id: alignment.id,
                     requirementContent: requirementContent,
                     codeContent: codeContent,
-                    project_id: projectId
+                    project_id: projectId,
+                    forceRegenerate: forceRegenerate
                 });
+
+                if (
+                    requestSeq !== reverseRequestSeq ||
+                    !showReviewDialog.value ||
+                    !selectedReviewAlignment.value ||
+                    selectedReviewAlignment.value.id !== alignment.id
+                ) {
+                    return;
+                }
 
                 if (response.data.status === 'success') {
                     currentReverseRequirement.value = response.data.generatedRequirement;
@@ -6017,20 +6093,7 @@ const app = createApp({
                     if (response.data.mermaidCode) {
                         let mermaidCode = response.data.mermaidCode.replace(/\\n/g, '\n').trim();
                         currentFlowchart.value = mermaidCode;
-                        
-                        // 等待DOM更新后渲染Mermaid图表
-                        await nextTick();
-                        try {
-                            const element = document.getElementById('mermaid-flowchart');
-                            if (element) {
-                                element.innerHTML = '';
-                                const { svg } = await mermaid.render('mermaid-graph', mermaidCode);
-                                element.innerHTML = svg;
-                            }
-                        } catch (mermaidError) {
-                            console.error('Mermaid渲染错误:', mermaidError);
-                            reverseError.value = 'Mermaid图表渲染失败: ' + mermaidError.message;
-                        }
+                        await renderMermaidFlowchart(mermaidCode);
                     }
                     
                 } else {
@@ -6042,14 +6105,14 @@ const app = createApp({
                 reverseError.value = '网络错误或服务器异常';
                 ElMessage.error('需求反生成失败');
             } finally {
-                isGeneratingReverse.value = false;
+                if (requestSeq === reverseRequestSeq) {
+                    isGeneratingReverse.value = false;
+                }
             }
         };
 
         const regenerateReverseRequirement = () => {
-            currentReverseRequirement.value = null;
-            currentFlowchart.value = null;
-            generateReverseRequirement();
+            generateReverseRequirement({ forceRegenerate: true });
         };
 
         /***********************
@@ -6255,8 +6318,12 @@ const app = createApp({
 
             const nextAlignment = alignmentResults.value[newIndex];
             selectedReviewAlignment.value = nextAlignment;
+            clearReverseRequirementState();
             // 同步更新外部选中状态
             handleAlignmentItemClick(nextAlignment);
+            if (activeReviewTab.value === 'requirement-reverse') {
+                loadReverseRequirementCache(nextAlignment);
+            }
         };
 
         /***********************
@@ -6265,13 +6332,7 @@ const app = createApp({
         // 监听选项卡切换，当切换到需求反生成选项卡时自动发送请求
         watch(activeReviewTab, (newTab, oldTab) => {
             if (newTab === 'requirement-reverse' && selectedReviewAlignment.value) {
-                // 清除之前的状态
-                currentReverseRequirement.value = null;
-                currentFlowchart.value = null;
-                reverseError.value = null;
-                
-                // 自动发送请求
-                generateReverseRequirement();
+                loadReverseRequirementCache(selectedReviewAlignment.value);
             }
         });
 
@@ -6280,6 +6341,9 @@ const app = createApp({
             if (oldValue === true && newValue === false) {
                 // 弹窗从打开状态变为关闭状态，重置选项卡
                 activeReviewTab.value = 'issues';
+                reverseRequestSeq += 1;
+                isGeneratingReverse.value = false;
+                clearReverseRequirementState();
             }
         });
 

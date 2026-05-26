@@ -1,4 +1,4 @@
-﻿from celery.result import AsyncResult
+from celery.result import AsyncResult
 from flask import Blueprint, jsonify
 
 from app.db import get_db
@@ -11,12 +11,18 @@ def get_progress(task_id):
     from tasks import celery
     task_result = celery.AsyncResult(task_id)
     # print(f'task_result======================={task_result}')
+    meta = task_result.info
+    if isinstance(meta, BaseException):
+        meta = {
+            "error_type": type(meta).__name__,
+            "message": str(meta)
+        }
 
     response = {
         "code": 0,
         "task_id": task_id,
         "state": task_result.state,
-        "meta": task_result.info
+        "meta": meta
     }
     #print(f'response============================{response}')
     return jsonify(response)

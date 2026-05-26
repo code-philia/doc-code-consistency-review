@@ -2022,19 +2022,40 @@ def generate_reverse_requirement():
         requirement_content = data.get('requirementContent')
         code_content = data.get('codeContent')
         project_id = data.get('project_id')
+        alignment_id = data.get('alignment_id')
+        cache_only = bool(data.get('cacheOnly', False))
+        force_regenerate = bool(data.get('forceRegenerate', False))
 
-        if not code_content:
+        if not project_id or not alignment_id:
+            return jsonify({"status": "error", "message": "Missing project_id or alignment_id"}), 400
+        if not cache_only and not code_content:
             return jsonify({"status": "error", "message": "Missing code content"}), 400
 
         db = get_db()
         cur = db.cursor()
-        cur.execute(f"select GenReq, GenMermaid from alignments where project_id={project_id}")
+        cur.execute(
+            'SELECT GenReq, GenMermaid FROM alignments WHERE id=%s AND project_id=%s',
+            (alignment_id, project_id)
+        )
         row = cur.fetchone()
+        has_cached_reverse = False
         if row is not None:
+            has_cached_reverse = bool((row.get('GenReq') or '').strip()) or bool((row.get('GenMermaid') or '').strip())
+
+        if has_cached_reverse and not force_regenerate:
             return jsonify({
                 "status": "success",
-                "generatedRequirement": row['GenReq'],
-                "mermaidCode": row['GenMermaid']
+                "cached": True,
+                "generatedRequirement": row.get('GenReq'),
+                "mermaidCode": row.get('GenMermaid')
+            })
+
+        if cache_only:
+            return jsonify({
+                "status": "success",
+                "cached": False,
+                "generatedRequirement": None,
+                "mermaidCode": None
             })
 
         # 构建代码块列表，格式与现有函数兼容
@@ -2059,8 +2080,14 @@ def generate_reverse_requirement():
         mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else
                                        '\n\n'.join([block.get('content', '') for block in code_content]))
 
+        cur.execute(
+            'UPDATE alignments SET GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP WHERE id=%s AND project_id=%s',
+            (generated_requirement or '', mermaid_code or '', alignment_id, project_id)
+        )
+
         return jsonify({
             "status": "success",
+            "cached": False,
             "generatedRequirement": generated_requirement,
             "mermaidCode": mermaid_code
         })
@@ -2082,7 +2109,10 @@ def review_alignment():
     code_blocks = data.get('code_blocks')
     prompt_type = data.get('promptType', '')
 
-    if not all([project_path, project_id]) and not (files and code_blocks):
+    has_requirement_files = isinstance(files, dict) and any(files.values())
+    has_code_blocks = isinstance(code_blocks, list) and len(code_blocks) > 0
+
+    if not all([project_path, project_id]) or not (has_requirement_files or has_code_blocks):
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
     # 尝试初始化RAG引擎
@@ -2108,7 +2138,7 @@ def review_alignment_addprompt():
     userPrompt = data.get('userInputPrompt', [])
     project_id = data.get('project_id')
 
-    if not all([project_path, doc_file, alignment]):
+    if not all([project_path, project_id, alignment]):
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
     # 尝试初始化RAG引擎
@@ -2216,8 +2246,15 @@ def review_alignment_addprompt():
 
             next_number = (max(used) + 1) if used else 1
 
-            brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
-            brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
+            doc_ranges_safe = alignment.get('docRanges', []) or []
+            code_ranges_safe = alignment.get('codeRanges', []) or []
+            brief_req = doc_ranges_safe[0].get('content', '') if doc_ranges_safe else ''
+            brief_code = code_ranges_safe[0].get('content', '') if code_ranges_safe else ''
+            related_doc_file = (
+                doc_file
+                or (doc_ranges_safe[0].get('filename', '') if doc_ranges_safe else '')
+                or (code_ranges_safe[0].get('filename', '') if code_ranges_safe else '')
+            )
 
             for one in issues_list:
                 display_id = f"ISSUE-{next_number:03d}"
@@ -2241,7 +2278,7 @@ def review_alignment_addprompt():
                         title,
                         content,
                         status,
-                        doc_file,
+                        related_doc_file,
                         alignment.get('id'),
                         brief_req,
                         brief_code
@@ -2302,28 +2339,25 @@ def get_alignments():
     try:
         conn = get_db()
         cur = conn.cursor()
-
-        # if file_path:
-            # target = file_path
-            # col = 'docRanges' if kind == 'doc' else 'codeRanges'
-
-            # query = '''
-                # SELECT id, name, isReviewed, reviewThoughts, docRanges, codeRanges 
-                # FROM alignments 
-                # WHERE project_id = %s 
-                  # AND JSON_SEARCH(alignments.`{col}`, 'one', %s, NULL, '$[*].documentId') IS NOT NULL
-            # '''.format(col=col)
-            # cur.execute(query, (project_id, file_path))
-        
-        # else:
-            # query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments where project_id={project_id}"
-            # cur.execute(query)
-        
-        query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments where project_id={project_id}"
-        cur.execute(query)
+        cur.execute(
+            "SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments WHERE project_id=%s",
+            (project_id,)
+        )
 
         rows = cur.fetchall()
         result = {}
+
+        def _matches_target_file(ranges, target_file):
+            if not target_file:
+                return True
+            if not isinstance(ranges, list):
+                return False
+            for one in ranges:
+                if not isinstance(one, dict):
+                    continue
+                if one.get('filename') == target_file or one.get('documentId') == target_file:
+                    return True
+            return False
         
         for r in rows:
             alignment = {
@@ -2334,6 +2368,15 @@ def get_alignments():
                 'docRanges': pyjson.loads(r['docRanges'] or '[]'),
                 'codeRanges': pyjson.loads(r['codeRanges'] or '[]')
             }
+
+            if file_path:
+                if kind == 'code':
+                    if not _matches_target_file(alignment['codeRanges'], file_path):
+                        continue
+                else:
+                    if not _matches_target_file(alignment['docRanges'], file_path):
+                        continue
+
             result[alignment['id']] = alignment
         # print(result)
         return jsonify({"status": "success", "data": result}), 200
