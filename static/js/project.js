@@ -1538,26 +1538,38 @@ const app = createApp({
         // 加载所有文档的对齐数据用于统计
         const fetchAllAlignments = async () => {
 
-            if (!projectPath.value || !projectFiles.value.doc_files.length) return;
+            if (!projectPath.value) return;
 
             const alignments = {};
+            projectFiles.value.doc_files.forEach(docFile => {
+                alignments[docFile] = [];
+            });
 
-            for (const docFile of projectFiles.value.doc_files) {
-                try {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const projectId = urlParams.get('project_id');
-                    const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFile)}&kind=doc&project_id=${projectId}`);
-                    
-                    if (response.data.status === 'success' && response.data.data) {
-                        alignments[docFile] = Object.values(response.data.data);
-                    } else {
-                        alignments[docFile] = [];
-                    }
+            const pickRangeFile = (ranges = []) => {
+                if (!Array.isArray(ranges)) return '';
+                const firstRange = ranges.find(item => item && typeof item === 'object');
+                if (!firstRange) return '';
+                return firstRange.filename || firstRange.documentId || '';
+            };
 
-                } catch (err) {
-                    // 如果是404或空文件，静默处理
-                    alignments[docFile] = [];
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`);
+
+                if (response.data.status === 'success' && response.data.data) {
+                    Object.values(response.data.data).forEach(alignment => {
+                        const docFile = pickRangeFile(alignment.docRanges);
+                        const codeFile = pickRangeFile(alignment.codeRanges);
+                        const bucketKey = docFile || codeFile || '__ungrouped__';
+
+                        if (!alignments[bucketKey]) {
+                            alignments[bucketKey] = [];
+                        }
+                        alignments[bucketKey].push(alignment);
+                    });
                 }
+            } catch (err) {
             }
             
             allAlignments.value = alignments;

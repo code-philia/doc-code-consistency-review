@@ -2359,10 +2359,8 @@ def get_filename_without_extension(filename):
 @bp.route('/project/alignments', methods=['GET'])
 def get_alignments():
     #print("request.args:", request.args)
-    """按文件筛选获取对齐关系，支持 doc 或 code 文件"""
+    """获取项目内所有对齐关系"""
     project_path = request.args.get('path')
-    file_path = request.args.get('file')
-    kind = request.args.get('kind', 'doc')
     project_id = request.args.get('project_id')
     print('get(`/project/alignments, project_id:', project_id)
     
@@ -2373,29 +2371,11 @@ def get_alignments():
         conn = get_db()
         cur = conn.cursor()
         
-        #query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments where project_id={project_id}"
-        #cur.execute(query)
-        cur.execute(
-            "SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments WHERE project_id=%s",
-            (project_id,)
-        )
+        query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments where project_id={project_id}"
+        cur.execute(query)
 
         rows = cur.fetchall()
         result = {}
-
-        def _matches_target_file(ranges, target_file):
-            if len(ranges) == 0:
-                return True
-            if not target_file:
-                return True
-            if not isinstance(ranges, list):
-                return False
-            for one in ranges:
-                if not isinstance(one, dict):
-                    continue
-                if one.get('filename') == target_file or one.get('documentId') == target_file:
-                    return True
-            return False
         
         for r in rows:
             alignment = {
@@ -2407,15 +2387,6 @@ def get_alignments():
                 'codeRanges': pyjson.loads(r['codeRanges'] or '[]'),
                 'isCodeReview': r['is_code_review']
             }
-
-            if file_path:
-                if kind == 'code':
-                    if not _matches_target_file(alignment['codeRanges'], file_path):
-                        continue
-                else:
-                    if not _matches_target_file(alignment['docRanges'], file_path):
-                        continue
-						
             result[alignment['id']] = alignment
         # print(result)
         return jsonify({"status": "success", "data": result}), 200
