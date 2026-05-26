@@ -33,7 +33,8 @@ class LocalM3EFunction(chromadb.EmbeddingFunction):
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
         self.model = AutoModel.from_pretrained(model_path, trust_remote_code=True)
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Celery 默认使用 fork worker；为避免子进程里重新初始化 CUDA，RAG 检索暂时固定走 CPU。
+        self.device = torch.device("cpu")
         print(f"[RAG] 运行设备: {self.device}")
         
         self.model.to(self.device)
