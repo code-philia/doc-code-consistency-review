@@ -22,9 +22,17 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 API_KEY = os.environ.get("API_KEY", "0")
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen3-32B")
+# MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+# MODEL_NAME = "Qwen3-32B"
+
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
+MODEL_NAME = "/llm"
+
 MAX_REQ = 3 # 最大重复次数
+
 
 PROMPT_TYPE_KBS_MAP = {
     'Req2CodeAlign': 'Req2CodeAlignKbs',
@@ -32,13 +40,13 @@ PROMPT_TYPE_KBS_MAP = {
     'review': 'reviewKbs',
     'reviewCode': 'reviewCodeKbs',
 }
-
 PROMPT_TYPE_FALLBACK_MAP = {
     'Req2CodeAlignKbs': 'Req2CodeAlign',
     'Code2ReqAlignKbs': 'Code2ReqAlign',
     'reviewKbs': 'review',
     'reviewCodeKbs': 'reviewCode',
 }
+
 
 def query_llm(message, history=None):
     client = OpenAI(
@@ -186,7 +194,8 @@ def _debug_print_review_prompt(stage: str, template_key: str, template_source: s
     print("prompt_content:")
     print(prompt)
     print("================= REVIEW PROMPT DEBUG END =================\n")
-
+	
+	
 def _load_user_prompt_row(user_id: Optional[int], requested_fields: List[str]) -> Dict[str, Any]:
     if user_id is None:
         return {}
@@ -1099,7 +1108,8 @@ def query_review_result_by_feedback(
     issues=None,
     user_id=None,
     project_path=None,
-    reference_reviews=None
+    reference_reviews=None,
+    prompt_type=None
 ):
     """
     执行代码一致性审查
@@ -1160,8 +1170,8 @@ def query_review_result_by_feedback(
     # 3. 构造提示词
     resolved_user_id = _resolve_user_id(user_id)
     use_kbs_template = _has_any_selected_kb(project_path)
-    is_code_only_review = not requirement and bool(related_code)
 
+    is_code_only_review = not requirement and bool(related_code)
     if is_code_only_review:
         row = _load_user_prompt_row(resolved_user_id, ['reviewCode', 'reviewCodeKbs'])
         original_template, original_template_key, original_template_source = _pick_template_with_meta(
@@ -1182,7 +1192,8 @@ def query_review_result_by_feedback(
             normal_default=REVIEW_PROMPT_TEMPLATE,
             kbs_default=REVIEW_PROMPT_TEMPLATE_KBS
         )
-    
+	
+	
     original_prompt = original_template.format(
         requirement=requirement_context,
         related_code=code_context,
@@ -1197,15 +1208,17 @@ def query_review_result_by_feedback(
         review_thought=review_thought,
         user_feedback=user_prompt
     )
-    _debug_print_review_prompt(
-        stage="query_review_result_by_feedback",
-        template_key=original_template_key,
-        template_source=original_template_source,
-        prompt=prompt,
-        use_kbs_template=use_kbs_template,
-        is_code_only_review=is_code_only_review,
-        project_path=project_path
-    )
+    #print(prompt)
+	
+    # _debug_print_review_prompt(
+        # stage="query_review_result_by_feedback",
+        # template_key=original_template_key,
+        # template_source=original_template_source,
+        # prompt=prompt,
+        # use_kbs_template=use_kbs_template,
+        # is_code_only_review=is_code_only_review,
+        # project_path=project_path
+    # )
     
     # 4. 调用LLM
     try:
@@ -1303,9 +1316,11 @@ def query_review_result(
     # 3. 构造提示词
     resolved_user_id = _resolve_user_id(user_id)
     use_kbs_template = _has_any_selected_kb(project_path)
+
     is_code_only_review = not requirement and bool(related_code)
     resolved_prompt_type = _resolve_prompt_type_for_kbs(prompt_type, project_path)
-
+	
+	
     if is_code_only_review:
         row = _load_user_prompt_row(resolved_user_id, ['reviewCode', 'reviewCodeKbs'])
     else:
@@ -1341,16 +1356,17 @@ def query_review_result(
         reference_issues=reference_issues,
         reference_reviews=reference_reviews
     )
-    _debug_print_review_prompt(
-        stage="query_review_result",
-        template_key=template_key,
-        template_source=template_source,
-        prompt=prompt,
-        use_kbs_template=use_kbs_template,
-        is_code_only_review=is_code_only_review,
-        prompt_type=prompt_type,
-        project_path=project_path
-    )
+	
+	# _debug_print_review_prompt(
+        # stage="query_review_result",
+        # template_key=template_key,
+        # template_source=template_source,
+        # prompt=prompt,
+        # use_kbs_template=use_kbs_template,
+        # is_code_only_review=is_code_only_review,
+        # prompt_type=prompt_type,
+        # project_path=project_path
+    # )
     
     # 4. 调用LLM
     try:
@@ -1386,18 +1402,21 @@ def get_prompt(prompt_type, user_id):
     """
     db = get_db_celery()
     c = db.cursor()
+    #sql = f"select {prompt_type} from prompt where user_id={user_id}"
     effective_field = prompt_type
     row = None
     try:
+        #c.execute(sql)
+		#row = row.get(prompt_type)
         c.execute("SHOW COLUMNS FROM prompt")
         columns_rows = c.fetchall() or []
         existing_columns = {item.get("Field") for item in columns_rows if item and item.get("Field")}
         if effective_field not in existing_columns:
             effective_field = PROMPT_TYPE_FALLBACK_MAP.get(prompt_type, prompt_type)
-
         sql = f"select {effective_field} from prompt where user_id=%s"
         c.execute(sql, (user_id,))
         row = c.fetchone()
+
         row = row.get(effective_field) if row else None
 
     except Exception as e:

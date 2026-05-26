@@ -95,7 +95,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="dropdown-item" @click="toggleAutoReview">
+                    <div class="dropdown-item" @click="isAutoReviewing ? toggleAutoReview() : showReview = true">
                         <i class="fas fa-tasks"></i>
                         <span v-if="!isAutoReviewing">自动审查</span>
                         <span v-else>停止审查</span>
@@ -103,7 +103,7 @@
                     <div class="dropdown-item" @click="restartAlignment">
                         <i class="fas fa-redo"></i> 重新对齐
                     </div>
-                    <div class="dropdown-item" @click="restartReview">
+                    <div class="dropdown-item" @click="isAutoReviewing ? restartReview() : showRestartReview = true">
                         <i class="fas fa-redo-alt"></i> 重新审查
                     </div>
                 </div>
@@ -229,6 +229,13 @@
                                 :expand-on-click-node="false"
                                 node-key="path"
                                 empty-text="">
+                                <!-- <template #default="{ node, data }">
+                                    <span class="file-item req-file" :class="{ 'selected': data.path === selectedDocFile && data.type === 'file' }">
+                                        <i :class="data.icon"></i>
+                                        <span class="file-name">${ node.label }</span>
+                                    </span>
+                                </template>  -->
+
 								<template #default="{ node, data }">
                                     <div class="tree-node" :class="{ 'is-selected': data.path === selectedDocFile && data.type === 'file' }">
                                         <div class="tree-node-main">
@@ -247,7 +254,7 @@
                                 </template>
                             </el-tree>
                         </div>
-                        </div>
+                    </div>
 
                     <div class="file-category">
                         <div class="category-header">
@@ -768,6 +775,16 @@
                                                            </template>
                                                        </el-popconfirm>
                                                    </div>
+                                                     <div v-if="blockType === 'code' && hasCodeReview" style="display: flex; align-items: center; gap: 4px;">
+                                                            <el-tag
+                                                                :type="getBlockStatus(block, blockType, true).type"
+                                                                size="small"
+                                                                class="review-tag"
+                                                                effect="plain"
+                                                            >
+                                                                ${ getBlockStatus(block, blockType, true).text }
+                                                            </el-tag>
+                                                     </div>
                                                 </div>
                                             </div>
                                             <div v-else class="sidebar-empty-message">
@@ -854,6 +871,9 @@
                         <template v-if="contextMenu.selectedAlignment">
                             <div class="context-menu-item" @click="PromptAlignment">
                                 <i class="fas fa-link"></i> 对齐
+                            </div>
+                            <div class="context-menu-item" @click="manualAlignBlockFromContextMenu">
+                                <i class="fas fa-hand-pointer"></i> 手动对齐
                             </div>
                             <div class="context-menu-item" @click="PromptReview">
                                 <i class="fas fa-tasks"></i> 审查
@@ -1178,8 +1198,61 @@
             <!-- 底部按钮 -->
             <template #footer>
                 <el-button @click="closeReviewPromptModal">关闭</el-button>
-                <el-button @click="executeReview" type="success" style="margin-left: 10px;">应用并审查</el-button>
+                <el-button @click="showSingleReview = true" type="success" style="margin-left: 10px;">应用并审查</el-button>
             </template>
+
+        </el-dialog>
+        <!-- 单个纯代码审查弹窗 -->
+        <el-dialog
+            v-model="showSingleReview"
+            title="选择审查类型"
+            width="360px"
+            align-center
+            close-on-click-model="false"
+    >
+        <div style="display: flex; gap: 12px; justify-content: center; padding:10px 0;">
+            <el-button
+                size="small"
+                type="success"
+                plain
+                @click="executeReview()">
+                文实一致性审查
+            </el-button>
+            <el-button
+                size="small"
+                type="success"
+                plain
+                @click="executeReview('reviewCodeKbs')">
+                纯代码审查
+            </el-button>
+        </div>
+
+        </el-dialog>
+        <!-- 重新审查弹窗 -->
+        <el-dialog
+            v-model="showRestartReview"
+            title="选择审查类型"
+            width="360px"
+            align-center
+            close-on-click-model="false"
+    >
+        <div style="display: flex; gap: 12px; justify-content: center; padding:10px 0;">
+            <el-button
+                size="small"
+                type="success"
+                plain
+                @click="restartReview()">
+                文实一致性审查
+            </el-button>
+            <el-button
+                size="small"
+                type="success"
+                plain
+                @click="restartReview('reviewCode')">
+                纯代码审查
+            </el-button>
+        </div>
+
         </el-dialog>
 
         <!-- 审查结果详情弹窗 -->

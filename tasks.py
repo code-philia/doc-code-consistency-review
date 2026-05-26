@@ -51,14 +51,13 @@ def _normalize_kb_type_for_use(raw_type):
         return "align"
     return "other"
 
-
 def _safe_first_range_field(ranges, field, default=''):
     if isinstance(ranges, list) and ranges:
         first = ranges[0] or {}
         if isinstance(first, dict):
             return first.get(field, default) or default
-    return default
-
+    return default	
+	
 @celery.task(name="user_bp.task.add")
 def add(x, y):
     time.sleep(10)
@@ -149,7 +148,7 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
 
 
 @celery.task(bind=True)
-def review_alignment_task(self, project_path, project_id, user_id, files, code_blocks=None, prompt_type=None):
+def review_alignment_task(self, project_path, project_id, user_id, files, prompt_type=None):
     try:
         result = []
         if isinstance(files, dict):
@@ -158,17 +157,10 @@ def review_alignment_task(self, project_path, project_id, user_id, files, code_b
                 for doc_file, alignments in files.items()
                 for item in (alignments or [])
             )
-        if code_blocks:
-            result = [
-                {
-                    "doc_file": _safe_first_range_field(item.get('codeRanges', []), 'filename'),
-                    "alignment": item
-                }
-                for item in code_blocks
-                if item.get('codeRanges')
-            ]
+
         if not result:
             raise ValueError("缺少可审查的数据：既没有需求-代码对齐，也没有代码块列表")
+
         # print('result===============', result)
         total = len(result)
         for i, item in enumerate(result, 1):
@@ -259,8 +251,8 @@ def review_alignment_task(self, project_path, project_id, user_id, files, code_b
 
                 cur.execute(
                     'INSERT INTO alignments(id,user_id,project_id,name,isReviewed,reviewThoughts,docRanges,codeRanges,'
-                    'createdAt,updatedAt,GenReq,GenMermaid) '
-                    'VALUES(%s,%s,%s,%s,1,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,%s,%s) '
+                    'createdAt,updatedAt,GenReq,GenMermaid,is_code_review) '
+                    'VALUES(%s,%s,%s,%s,1,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,%s,%s,%s) '
                     'ON DUPLICATE KEY UPDATE '
                     'isReviewed=1,'
                     'reviewThoughts=VALUES(reviewThoughts),'
@@ -277,6 +269,7 @@ def review_alignment_task(self, project_path, project_id, user_id, files, code_b
                         json.dumps(code_ranges or []),
                         generated_requirement or '',
                         mermaid_code or '',
+                        0 if not prompt_type else 1
                     )
                 )
 
@@ -303,8 +296,8 @@ def review_alignment_task(self, project_path, project_id, user_id, files, code_b
                     else:
                         content = ''
                     brief_req = content or ''
+                    #brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
                     brief_code = _safe_first_range_field(alignment.get('codeRanges', []), 'content')
-
                     for one in issues_list:
                         display_id = f"ISSUE-{next_number:03d}"
                         next_number += 1
@@ -327,7 +320,7 @@ def review_alignment_task(self, project_path, project_id, user_id, files, code_b
                                 title,
                                 content,
                                 status,
-                                item['doc_file'],
+                                item['doc_file'] if not prompt_type else '',
                                 alignment.get('id'),
                                 brief_req,
                                 brief_code

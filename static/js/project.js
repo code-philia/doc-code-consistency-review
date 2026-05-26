@@ -119,6 +119,8 @@ const app = createApp({
         const defaultCode2ReqAlignPromptKbs = ref('');
         const showReviewPromptDialog = ref(false); // 控制审查提示词设置弹窗
         const AddReviewPrompt = ref('');
+        const showRestartReview = ref(false)
+        const showSingleReview = ref(false)
         const showReview = ref(false)
         const reviewMode = ref('default')
         const reviewModeKbs = ref('default')
@@ -417,7 +419,7 @@ const app = createApp({
         const isGeneratingReverse = ref(false);
         const reverseError = ref(null);
         const isViewingFlowchart = ref(false);
-        let reverseRequestSeq = 0;
+		let reverseRequestSeq = 0;
 
         // 进度显示相关状态
         const showProgress = ref(false);
@@ -1442,56 +1444,54 @@ const app = createApp({
 
             try {
                 let groupedByDoc = {}
-                let codeBlocks = []
                 let total = 0
                 let promptType = ''
-//                ElMessage.info(`"${projectFiles.value.doc_files.length}"`)
+                let unreviewed = [];
+
+                await fetchAllAlignments();
+
                 if (reviewType === 'reviewCode'){
-                    // 1. 获取代码分块
-                    const chunksResponse = await axios.get('/api/get-code-chunks', {
-                        params: { projectPath: projectPath.value }
-                    });
-                    codeBlocks = chunksResponse.data.data || [];
-                    total = codeBlocks.length;
-                    if (codeBlocks.length === 0) {
-                        ElMessage.warning('未找到代码分块，请检查代码分解结果');
-                        return;
-                    }
                     promptType = reviewType
-                } else {
 
-                    await fetchAllAlignments();
-
-                    // 收集所有已对齐但未审查的需求点
-                    const unreviewed = [];
+                    // 收集所有已对齐但未审查的需求点 纯代码审查
                     Object.keys(allAlignments.value).forEach(docFile => {
                         const alignments = allAlignments.value[docFile] || [];
-
                         alignments.forEach(alignment => {
-                            if (alignment.codeRanges && alignment.codeRanges.length > 0 && !alignment.isReviewed) {
+                            if (alignment.codeRanges && alignment.codeRanges.length > 0 && !alignment.isReviewed &&
+                                alignment.isCodeReview === 1) {
                                 unreviewed.push({ docFile, alignment });
                             }
                         });
                     });
-
-    //                reviewProgress.value.total = unreviewed.length;
-                    total = unreviewed.length;
-                    if (unreviewed.length === 0)
-                    {
-                        ElMessage.success(`所有对齐块均已审查完成！`);
-                        isAutoReviewing.value = false;
-                        return;
-                    }
-
-                    // 按文档分组处理
-//                    const groupedByDoc = {};
-                    unreviewed.forEach(({ docFile, alignment }) => {
-                        if (!groupedByDoc[docFile]) {
-                            groupedByDoc[docFile] = [];
-                        }
-                        groupedByDoc[docFile].push(alignment);
+                } else {
+                    // 收集所有已对齐但未审查的需求点 文实一致性审查
+                    Object.keys(allAlignments.value).forEach(docFile => {
+                        const alignments = allAlignments.value[docFile] || [];
+                        alignments.forEach(alignment => {
+                            if (alignment.codeRanges && alignment.codeRanges.length > 0 && !alignment.isReviewed &&
+                                alignment.isCodeReview === 0) {
+                                unreviewed.push({ docFile, alignment });
+                            }
+                        });
                     });
                 }
+
+
+                total = unreviewed.length;
+                if (unreviewed.length === 0)
+                {
+                    ElMessage.success(`所有对齐块均已审查完成！`);
+                    isAutoReviewing.value = false;
+                    return;
+                }
+
+                // 按文档分组处理
+                unreviewed.forEach(({ docFile, alignment }) => {
+                    if (!groupedByDoc[docFile]) {
+                        groupedByDoc[docFile] = [];
+                    }
+                    groupedByDoc[docFile].push(alignment);
+                });
 
 
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1499,12 +1499,9 @@ const app = createApp({
                 // 调用后端进行审查
                 const reviewResponse = await axios.post('/api/review-alignment', {
                     projectPath: projectPath.value,
-//                    docFile: docFile,
-//                    alignments: alignments,
                     project_id: projectId,
                     requirement_files: groupedByDoc,
-                    code_blocks: codeBlocks,
-                    promptType: promptType
+                    promptType: promptType,
                 });
 
                 if (reviewResponse.data.status === 'success'){
@@ -2256,6 +2253,30 @@ const app = createApp({
                 console.error('代码分解过程中出现错误:', error);
                 ElMessage.error(`代码分解失败: ${error.message}`);
             }
+            // 获取所有代码块，进行入库操作，方便单个的纯代码审查
+            try {
+                // 1. 获取代码分块
+                const chunksResponse = await axios.get('/api/get-code-chunks', {
+                    params: { projectPath: projectPath.value }
+                });
+                const codeBlocks = chunksResponse.data.data || [];
+                if (codeBlocks.length === 0) {
+                    ElMessage.warning('未找到代码分块，请检查代码分解结果');
+                    return;
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+
+                // 调用后端添加数据
+                const result = await axios.post('/api/add-code-data', {
+                    project_id: projectId,
+                    code_blocks: codeBlocks,
+                });
+
+            } catch (error) {
+                ElMessage.error(`代码块入库失败: ${error.message}`);
+            }
         };
 
         /***********************
@@ -2852,6 +2873,37 @@ const app = createApp({
         /***********************
          * 状态计算函数
          ***********************/
+        const getBlockStatus = (block, type, requireCodeReview) => {
+
+            const matchedAlignment = findAlignmentForSidebarBlock(block, type, requireCodeReview);
+//            console.info(`"${matchedAlignment},${block},${type}"`);
+            if (!matchedAlignment) {
+                return {
+                    status: 'unaligned',
+                    text: '未分解',
+                    type: 'warning'
+                };
+            }
+            if (matchedAlignment.isReviewed) {
+                return {
+                    status: 'reviewed',
+                    text: '已审查',
+                    type: 'success'
+                };
+            } else {
+                return {
+                    status: 'unreviewed',
+                    text: '未审查',
+                    type: 'warning'
+                };
+            }
+        };
+
+        const hasCodeReview = computed(() => {
+            return (alignmentResults.value || []).some(alignment => alignment.isCodeReview === 1);
+        })
+
+
         const getAlignmentStatus = (alignment) => {
             const noDoc = !alignment.docRanges || alignment.docRanges.length === 0;
             const noCode = !alignment.codeRanges || alignment.codeRanges.length === 0;
@@ -2880,6 +2932,8 @@ const app = createApp({
 
         const sidebarAlignments = computed(() => {
             let source = alignmentResults.value;
+            // 新增：过滤掉 isCodeReview为1的数据
+            source = source.filter(item => item.isCodeReview !== 1);
 
             if (isFiltered.value && filteredAlignments.value) {
                 return filteredAlignments.value;
@@ -3448,7 +3502,7 @@ const app = createApp({
             return raw.length > 50 ? `${raw.substring(0, 50)}...` : raw;
         };
 
-        const findAlignmentForSidebarBlock = (block, type) => {
+        const findAlignmentForSidebarBlock = (block, type, requireCodeReview = false) => {
             if (!block) return null;
             if (type === 'doc') {
                 const filename = block.filename || block.documentId;
@@ -3467,6 +3521,7 @@ const app = createApp({
             const startLine = Array.isArray(block.range) ? Number(block.range[0]) : NaN;
             const endLine = Array.isArray(block.range) ? Number(block.range[1]) : NaN;
             return alignmentResults.value.find(alignment =>
+                (!requireCodeReview || alignment.isCodeReview === 1) &&
                 (alignment.codeRanges || []).some(codeRange => {
                     const codeFile = codeRange.documentId || codeRange.filename;
                     if (codeFile !== filename) return false;
@@ -3482,7 +3537,7 @@ const app = createApp({
         const handleBlockItemContextMenu = async (event, block, index, type) => {
             event.preventDefault();
             await handleBlockItemClick(block, index);
-            const matchedAlignment = findAlignmentForSidebarBlock(block, type);
+            const matchedAlignment = findAlignmentForSidebarBlock(block, type, true);
             if (matchedAlignment) {
                 showContextMenu(event, matchedAlignment);
             } else {
@@ -4679,7 +4734,7 @@ const app = createApp({
             openAlignmentDirectionDialog('restart');
         };
 
-        const restartReview = async () => {
+        const restartReview = async (reviewType) => {
             try {
                 const result = await ElMessageBox.confirm(
                     '这将清除已有的审查结果，然后重新开始自动审查。确认继续？',
@@ -4697,7 +4752,8 @@ const app = createApp({
                     // 调用后端清除审查结果
                     const response = await axios.post('/api/clear-review-results', {
                         projectPath: projectPath.value,
-                        project_id: projectId
+                        project_id: projectId,
+                        reviewType: reviewType || ''
                     });
                     
                     if (response.data.status === 'success') {
@@ -4710,7 +4766,7 @@ const app = createApp({
                         await fetchAlignments();
                                                 
                         // 开始自动审查
-                        await startAutoReview();
+                        await startAutoReview(reviewType);
                     } else {
                         throw new Error(response.data.message || '清除审查结果失败');
                     }
@@ -5306,26 +5362,31 @@ const app = createApp({
         }
 
         // 执行审查（在应用后）
-        async function executeReview() {
+        async function executeReview(promptType) {
           // 1. 获取用户的输入
           const userPrompt= AddReviewPrompt.value;
 
           // 2. 执行对齐逻辑
-          await singleReview(userPrompt)
+          await singleReview(userPrompt, promptType)
+
+          // 3. 关闭弹窗
+          showSingleReview.value = false
         }
         //=======================
         
         
         // 单独审查功能
-        const singleReview = async (userPrompt) => {
+        const singleReview = async (userPrompt, promptType) => {
             if (!contextMenu.value.selectedAlignment) return;
-            const alignment = contextMenu.value.selectedAlignment;
-
-            // 检查是否有代码对齐
-            if (!alignment.codeRanges || alignment.codeRanges.length === 0) {
-                ElMessage.warning('该对齐关系还没有代码对齐，请先进行对齐');
-                return;
+                const alignment = contextMenu.value.selectedAlignment;
+            if (!promptType){
+                // 检查是否有代码对齐
+                if (!alignment.codeRanges || alignment.codeRanges.length === 0) {
+                    ElMessage.warning('该对齐关系还没有代码对齐，请先进行对齐');
+                    return;
+                }
             }
+
 
             // 检查是否已审查
             if (alignment.isReviewed) {
@@ -5362,19 +5423,19 @@ const app = createApp({
                         await fetchIssues();
 
                         // Then perform re-review
-                        await performSingleReview(alignment, userPrompt);
+                        await performSingleReview(alignment, userPrompt, promptType);
                     } catch (err) {
                         console.error('清理并重新审查失败:', err);
                         ElMessage.error(`清理或重新审查失败: ${err.message}`);
                     }
                 }).catch(() => {});
             } else {
-                await performSingleReview(alignment, userPrompt);
+                await performSingleReview(alignment, userPrompt, promptType);
             }
         };
 
         // 执行单独审查
-        const performSingleReview = async (alignment, userPrompt) => {
+        const performSingleReview = async (alignment, userPrompt, promptType) => {
             try {
                 ElMessage.info(`开始为 "${alignment.name}" 进行审查...`);
                 const urlParams = new URLSearchParams(window.location.search);
@@ -5385,7 +5446,8 @@ const app = createApp({
                     docFile: selectedDocFile.value,
                     alignment: alignment,
                     project_id: projectId,
-                    userInputPrompt: userPrompt //增加用户的输入作为提示词
+                    userInputPrompt: userPrompt, //增加用户的输入作为提示词
+                    promptType: promptType
                 });
                 
                 
@@ -5968,12 +6030,14 @@ const app = createApp({
         /***********************
          * 需求反生成相关方法
          ***********************/
-        const clearReverseRequirementState = () => {
+        //const generateReverseRequirement = async () => {
+        //    if (!selectedReviewAlignment.value) {
+			
+		const clearReverseRequirementState = () => {
             currentReverseRequirement.value = null;
             currentFlowchart.value = null;
             reverseError.value = null;
         };
-
         const renderMermaidFlowchart = async (mermaidCode) => {
             if (!mermaidCode) return;
             await nextTick();
@@ -5989,16 +6053,13 @@ const app = createApp({
                 reverseError.value = 'Mermaid图表渲染失败: ' + mermaidError.message;
             }
         };
-
         const loadReverseRequirementCache = async (alignment = selectedReviewAlignment.value) => {
             if (!alignment) {
                 clearReverseRequirementState();
                 return;
             }
-
             const requestSeq = ++reverseRequestSeq;
             clearReverseRequirementState();
-
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
@@ -6007,7 +6068,6 @@ const app = createApp({
                     project_id: projectId,
                     cacheOnly: true
                 });
-
                 if (
                     requestSeq !== reverseRequestSeq ||
                     !showReviewDialog.value ||
@@ -6016,7 +6076,6 @@ const app = createApp({
                 ) {
                     return;
                 }
-
                 if (response.data.status === 'success' && response.data.cached) {
                     currentReverseRequirement.value = response.data.generatedRequirement;
                     if (response.data.mermaidCode) {
@@ -6030,7 +6089,6 @@ const app = createApp({
                 reverseError.value = '加载需求反生成缓存失败';
             }
         };
-
         const generateReverseRequirement = async (options = {}) => {
             const { forceRegenerate = false } = options;
             const alignment = selectedReviewAlignment.value;
@@ -6038,8 +6096,8 @@ const app = createApp({
                 ElMessage.error('未选择对齐关系');
                 return;
             }
-
-            const requestSeq = ++reverseRequestSeq;
+            
+			const requestSeq = ++reverseRequestSeq;
             isGeneratingReverse.value = true;
             clearReverseRequirementState();
 
@@ -6069,15 +6127,17 @@ const app = createApp({
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
 
+                // 获取当前选中对齐块的id
+                const alignId = selectedReviewAlignment.value.id
                 const response = await axios.post('/api/generate-reverse-requirement', {
                     alignment_id: alignment.id,
-                    requirementContent: requirementContent,
+					requirementContent: requirementContent,
                     codeContent: codeContent,
                     project_id: projectId,
                     forceRegenerate: forceRegenerate
                 });
-
-                if (
+				
+				if (
                     requestSeq !== reverseRequestSeq ||
                     !showReviewDialog.value ||
                     !selectedReviewAlignment.value ||
@@ -6093,6 +6153,7 @@ const app = createApp({
                     if (response.data.mermaidCode) {
                         let mermaidCode = response.data.mermaidCode.replace(/\\n/g, '\n').trim();
                         currentFlowchart.value = mermaidCode;
+                        
                         await renderMermaidFlowchart(mermaidCode);
                     }
                     
@@ -6318,10 +6379,10 @@ const app = createApp({
 
             const nextAlignment = alignmentResults.value[newIndex];
             selectedReviewAlignment.value = nextAlignment;
-            clearReverseRequirementState();
+			clearReverseRequirementState();
             // 同步更新外部选中状态
             handleAlignmentItemClick(nextAlignment);
-            if (activeReviewTab.value === 'requirement-reverse') {
+			if (activeReviewTab.value === 'requirement-reverse') {
                 loadReverseRequirementCache(nextAlignment);
             }
         };
@@ -6341,7 +6402,7 @@ const app = createApp({
             if (oldValue === true && newValue === false) {
                 // 弹窗从打开状态变为关闭状态，重置选项卡
                 activeReviewTab.value = 'issues';
-                reverseRequestSeq += 1;
+				reverseRequestSeq += 1;
                 isGeneratingReverse.value = false;
                 clearReverseRequirementState();
             }
@@ -6700,6 +6761,8 @@ const app = createApp({
             renameAlignment,
             deleteAlignment,
             removeRange,
+            getBlockStatus,
+            hasCodeReview,
             getAlignmentStatus,
             handleCodeSelection,
             addToAlignment,
@@ -6766,6 +6829,8 @@ const app = createApp({
             currentReq2CodeAlignPrompt,
             currentCode2ReqAlignPrompt,
             showReview,
+            showSingleReview,
+            showRestartReview,
             reviewMode,
             reviewModeKbs,
             currentReviewPrompt,

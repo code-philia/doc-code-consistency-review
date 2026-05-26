@@ -2033,6 +2033,7 @@ def generate_reverse_requirement():
 
         db = get_db()
         cur = db.cursor()
+        #cur.execute(f"select GenReq, GenMermaid from alignments where project_id={project_id} and id='{align_id}'")
         cur.execute(
             'SELECT GenReq, GenMermaid FROM alignments WHERE id=%s AND project_id=%s',
             (alignment_id, project_id)
@@ -2041,7 +2042,6 @@ def generate_reverse_requirement():
         has_cached_reverse = False
         if row is not None:
             has_cached_reverse = bool((row.get('GenReq') or '').strip()) or bool((row.get('GenMermaid') or '').strip())
-
         if has_cached_reverse and not force_regenerate:
             return jsonify({
                 "status": "success",
@@ -2049,7 +2049,7 @@ def generate_reverse_requirement():
                 "generatedRequirement": row.get('GenReq'),
                 "mermaidCode": row.get('GenMermaid')
             })
-
+			
         if cache_only:
             return jsonify({
                 "status": "success",
@@ -2084,10 +2084,9 @@ def generate_reverse_requirement():
             'UPDATE alignments SET GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP WHERE id=%s AND project_id=%s',
             (generated_requirement or '', mermaid_code or '', alignment_id, project_id)
         )
-
         return jsonify({
             "status": "success",
-            "cached": False,
+			"cached": False,
             "generatedRequirement": generated_requirement,
             "mermaidCode": mermaid_code
         })
@@ -2096,6 +2095,35 @@ def generate_reverse_requirement():
         print(f"Error generating reverse requirement: {str(e)}")
         return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
 
+
+# 将代码块数据写入对齐表，方便单个的纯代码审查
+@bp.route('/api/add-code-data', methods=['POST'])
+def add_code_data():
+    data = request.json
+    project_id = data.get('project_id')
+    code_blocks = data.get('code_blocks')
+    result = [{"doc_file": item['codeRanges'][0]['filename'], "alignment": item}
+              for item in code_blocks]
+
+    sql = "INSERT INTO alignments(id,user_id,project_id,name,reviewThoughts,docRanges,codeRanges," \
+          "createdAt,updatedAt,is_code_review)" \
+          "VALUES(%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,1)"
+    rows = [(item['alignment'].get('id'),
+             current_user.user_id,
+             project_id,
+             item['alignment'].get('name'),
+             item['alignment'].get('reviewThoughts'),
+             json.dumps(item['alignment'].get('docRanges')),
+             json.dumps(item['alignment'].get('codeRanges'))) for item in result]
+
+    db = get_db()
+
+    with db.cursor() as cursor:
+        for i in range(0, len(rows), 500):
+            batch = rows[i: i + 500]
+            cursor.executemany(sql, batch)
+
+    return jsonify({"status": "success", "message": "写入代码块成功"}), 200
 
 # 审查 需要异步处理
 @bp.route('/api/review-alignment', methods=['POST'])
@@ -2109,9 +2137,9 @@ def review_alignment():
     code_blocks = data.get('code_blocks')
     prompt_type = data.get('promptType', '')
 
+    #if not all([project_path, project_id, files]) and not prompt_type:
     has_requirement_files = isinstance(files, dict) and any(files.values())
     has_code_blocks = isinstance(code_blocks, list) and len(code_blocks) > 0
-
     if not all([project_path, project_id]) or not (has_requirement_files or has_code_blocks):
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
@@ -2122,7 +2150,7 @@ def review_alignment():
         # print(f"[Review] RAG initialize failed: {e}")
 
     from tasks import review_alignment_task
-    task = review_alignment_task.delay(project_path, project_id, current_user.user_id, files, code_blocks, prompt_type)
+    task = review_alignment_task.delay(project_path, project_id, current_user.user_id, files, prompt_type)
 
     return jsonify({"status": "success", "task_id": task.id})
 
@@ -2137,8 +2165,9 @@ def review_alignment_addprompt():
     alignment = data.get('alignment')
     userPrompt = data.get('userInputPrompt', [])
     project_id = data.get('project_id')
+    prompt_type = data.get('promptType')
 
-    if not all([project_path, project_id, alignment]):
+    if not all([project_path, project_id, alignment]) and not prompt_type:
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
     # 尝试初始化RAG引擎
@@ -2205,8 +2234,8 @@ def review_alignment_addprompt():
         rules=retrieved_rules,
         issues=retrieved_issues,
         user_id=current_user.user_id,
-        project_path=project_path
-    )
+        project_path=project_path,
+        prompt_type=prompt_type)
 
     # 2. 更新对齐关系
     alignment['isReviewed'] = True
@@ -2246,6 +2275,9 @@ def review_alignment_addprompt():
 
             next_number = (max(used) + 1) if used else 1
 
+            #brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
+            #brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
+
             doc_ranges_safe = alignment.get('docRanges', []) or []
             code_ranges_safe = alignment.get('codeRanges', []) or []
             brief_req = doc_ranges_safe[0].get('content', '') if doc_ranges_safe else ''
@@ -2278,7 +2310,7 @@ def review_alignment_addprompt():
                         title,
                         content,
                         status,
-                        related_doc_file,
+                        related_doc_file if related_doc_file else alignment.get('codeRanges').get('filename'),
                         alignment.get('id'),
                         brief_req,
                         brief_code
@@ -2307,7 +2339,8 @@ def clear_alignment_review():
         # conn = get_db_conn(project_path)
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('UPDATE alignments SET isReviewed=0, reviewThoughts="" WHERE id=%s and project_id=%s', (alignment_id, project_id))
+        cur.execute('UPDATE alignments SET isReviewed=0, reviewThoughts="" WHERE id=%s and project_id=%s',
+                    (alignment_id, project_id))
         cur.execute('DELETE FROM issues WHERE alignmentId=%s and project_id=%s', (alignment_id, project_id))
         removed = cur.rowcount
         # conn.commit()
@@ -2339,8 +2372,11 @@ def get_alignments():
     try:
         conn = get_db()
         cur = conn.cursor()
+        
+        #query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments where project_id={project_id}"
+        #cur.execute(query)
         cur.execute(
-            "SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments WHERE project_id=%s",
+            "SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments WHERE project_id=%s",
             (project_id,)
         )
 
@@ -2348,6 +2384,8 @@ def get_alignments():
         result = {}
 
         def _matches_target_file(ranges, target_file):
+            if len(ranges) == 0:
+                return True
             if not target_file:
                 return True
             if not isinstance(ranges, list):
@@ -2366,7 +2404,8 @@ def get_alignments():
                 'isReviewed': bool(r['isReviewed']),
                 'reviewThoughts': r['reviewThoughts'] or '',
                 'docRanges': pyjson.loads(r['docRanges'] or '[]'),
-                'codeRanges': pyjson.loads(r['codeRanges'] or '[]')
+                'codeRanges': pyjson.loads(r['codeRanges'] or '[]'),
+                'isCodeReview': r['is_code_review']
             }
 
             if file_path:
@@ -2376,7 +2415,7 @@ def get_alignments():
                 else:
                     if not _matches_target_file(alignment['docRanges'], file_path):
                         continue
-
+						
             result[alignment['id']] = alignment
         # print(result)
         return jsonify({"status": "success", "data": result}), 200
@@ -2755,7 +2794,7 @@ def clear_project_results():
 
 @bp.route('/api/clear-code-ranges', methods=['POST'])
 def clear_code_ranges():
-    """清空项目中的所有对齐关系"""
+    """清空项目中的所有对齐关系(id_code_review = 0)"""
     data = request.json
     project_path = data.get('projectPath')
     project_id = data.get('project_id')
@@ -2769,7 +2808,7 @@ def clear_code_ranges():
         conn = get_db()
 
         cur = conn.cursor()
-        cur.execute(f'DELETE FROM alignments where project_id={project_id}')
+        cur.execute(f'DELETE FROM alignments where project_id={project_id} and is_code_review=0')
         # conn.commit()
 
         # finally:
@@ -2788,7 +2827,9 @@ def clear_review_results():
         data = request.get_json()
         project_path = data.get('projectPath')
         project_id = data.get('project_id')
+        review_type = data.get('reviewType')
 
+        is_code_review = 1 if review_type else 0
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
 
@@ -2800,7 +2841,7 @@ def clear_review_results():
         conn = get_db()
         cur = conn.cursor()
         cur.execute(f'DELETE FROM issues where project_id={project_id}')
-        cur.execute(f'UPDATE alignments SET isReviewed=0, reviewThoughts="" where project_id={project_id}')
+        cur.execute(f'UPDATE alignments SET isReviewed=0, reviewThoughts="" where project_id={project_id} and is_code_review={is_code_review}')
         # try:
         #conn.execute(f'DELETE FROM issues where project_id={project_id}')
         #conn.execute(f'UPDATE alignments SET isReviewed=0, reviewThoughts="" where project_id={project_id}')
