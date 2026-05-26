@@ -16,6 +16,7 @@ flask-login
 supervisor
 waitress
 pymysql
+cryptography
 pandas
 chromadb
 torch
