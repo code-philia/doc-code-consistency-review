@@ -152,10 +152,12 @@ def parseMathtype(file_path, saved_dir):
             with zipfile.ZipFile(file_path, 'w') as docx_out:
                 for filename, content in file_dict.items():
                     docx_out.writestr(filename, content)
+            
     except Exception as e:
         print(f"word文档 mathtype提取失败！，错误原因是：{str(e)}")
 
 if __name__ == '__main__':
-    filePath = '相机重构软核功能说明.docx'
-    targetFolder = './test_convert'
-    convertDocToMarkdown(filePath, targetFolder)
+    filePath = '/data03/A版.docx'
+    targetFolder = '/data03/doc_repo_converted'
+    parseDocMethod = 'default'
+    convertDocToMarkdown(filePath, targetFolder, parseDocMethod)

@@ -6,6 +6,7 @@ from lxml import etree
 
 from . import utils
 from ..dwml import omml
+import traceback
 
 class Converter:
     def __init__(self, xml_text, media, use_md_table, parseDocMethod):
@@ -59,7 +60,9 @@ class Converter:
     ]
 
     def parse_node(self, of, node):
+        #print(f"parse_node: 处理节点 {node.tag}")
         for child in node.getchildren():
+            #print(f"  子节点: {child.tag}")
             tag_name = child.tag
             if tag_name in self.BODY_IGNORE:
                 continue
@@ -214,7 +217,7 @@ class Converter:
                 # 解析并转换
                 xml_string = self.convert_omml_namespaces(xml_string)
                 # print(xml_string)
-                from dwml import omml
+                
                 xml_string = xml_string.lstrip('')
                 # tmpInfo = omml.load_string(xml_string)
                 try:

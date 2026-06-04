@@ -20,6 +20,7 @@ def do_convert(docx_file: str, parseDocMethod: str, target_dir="", use_md_table=
         media = DocxMedia(docx)
         if target_dir:
             media.save(target_dir)
+
         converter = Converter(docx.document(), media, use_md_table, parseDocMethod)
         path = os.path.join(target_dir,savedMdName)
         try:
