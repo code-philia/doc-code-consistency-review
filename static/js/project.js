@@ -3551,7 +3551,7 @@ const app = createApp({
             await handleBlockItemClick(block, index);
             const matchedAlignment = findAlignmentForSidebarBlock(block, type, true);
             if (matchedAlignment) {
-                showContextMenu(event, matchedAlignment);
+                showContextMenu(event, matchedAlignment, block, type);
             } else {
                 showBlockContextMenu(event, block, type);
             }
@@ -3940,9 +3940,9 @@ const app = createApp({
 
             // 查找与此高亮块对应的对齐关系
             const correspondingAlignment = findAlignmentByDocRange(rangeStart, rangeEnd);
+            const block = findDocBlockByRange(rangeStart, rangeEnd);
             
             if (!correspondingAlignment) {
-                const block = findDocBlockByRange(rangeStart, rangeEnd);
                 if (block) {
                     showBlockContextMenu(event, block, 'doc');
                 }
@@ -3953,7 +3953,7 @@ const app = createApp({
             }
 
             // 显示右键菜单
-            showContextMenu(event, correspondingAlignment);
+            showContextMenu(event, correspondingAlignment, block, 'doc');
 
             // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
             handleHighlightBlockClick(event);
@@ -3988,9 +3988,9 @@ const app = createApp({
 
             // 查找与此高亮块对应的对齐关系（返回第一个匹配的）
             const correspondingAlignment = findAlignmentByCodeRange(rangeStart, rangeEnd);
+            const block = findCodeBlockByRange(rangeStart, rangeEnd);
             
             if (!correspondingAlignment) {
-                const block = findCodeBlockByRange(rangeStart, rangeEnd);
                 if (block) {
                     showBlockContextMenu(event, block, 'code');
                 }
@@ -4001,7 +4001,7 @@ const app = createApp({
             }
 
             // 显示右键菜单
-            showContextMenu(event, correspondingAlignment);
+            showContextMenu(event, correspondingAlignment, block, 'code');
 
             // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
             handleHighlightBlockClick(event);
@@ -4266,14 +4266,37 @@ const app = createApp({
             }
         };
 
+        const isSameRangeEntry = (existingRange, nextRange) => {
+            if (!existingRange || !nextRange) return false;
+            const existingFile = existingRange.documentId || existingRange.filename || '';
+            const nextFile = nextRange.documentId || nextRange.filename || '';
+            if (existingFile !== nextFile) return false;
+
+            const existingStart = Number(existingRange.start);
+            const existingEnd = Number(existingRange.end);
+            const nextStart = Number(nextRange.start);
+            const nextEnd = Number(nextRange.end);
+            if (Number.isFinite(existingStart) && Number.isFinite(existingEnd) &&
+                Number.isFinite(nextStart) && Number.isFinite(nextEnd)) {
+                return existingStart === nextStart && existingEnd === nextEnd;
+            }
+
+            const existingStartLine = Number(existingRange.startLine);
+            const existingEndLine = Number(existingRange.endLine);
+            const nextStartLine = Number(nextRange.startLine);
+            const nextEndLine = Number(nextRange.endLine);
+            return Number.isFinite(existingStartLine) && Number.isFinite(existingEndLine) &&
+                Number.isFinite(nextStartLine) && Number.isFinite(nextEndLine) &&
+                existingStartLine === nextStartLine && existingEndLine === nextEndLine;
+        };
+
         // 添加到现有对齐关系
         const addToAlignment = async (alignment) => {
             if (!currentSelection.value || !alignment) return;
 
             if (currentSelection.value.type === 'code') {
                 const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
-
-                alignment.codeRanges.push({
+                const codeRange = {
                     documentId: currentSelection.value.documentId,
                     filename: currentSelection.value.documentId, // 文件名
                     start: start,
@@ -4281,7 +4304,17 @@ const app = createApp({
                     startLine: startLine, // 起始行号
                     endLine: endLine, // 结束行号
                     content: currentSelection.value.content
-                });
+                };
+
+                if ((alignment.codeRanges || []).some(range => isSameRangeEntry(range, codeRange))) {
+                    showCodeSelectionDialog.value = false;
+                    resetManualAlignFromBlock();
+                    currentSelection.value = null;
+                    ElMessage.info('该代码块已存在于当前对齐关系中');
+                    return;
+                }
+
+                alignment.codeRanges.push(codeRange);
             }
 
             showCodeSelectionDialog.value = false;
@@ -4324,6 +4357,14 @@ const app = createApp({
                 endLine: endLine, // 结束行号
                 content: currentSelection.value.content
             };
+
+            if ((alignment.docRanges || []).some(range => isSameRangeEntry(range, docRange))) {
+                showAlignmentDialog.value = false;
+                resetManualAlignFromBlock();
+                currentSelection.value = null;
+                ElMessage.info('该需求块已存在于当前对齐关系中');
+                return;
+            }
 
             alignment.docRanges.push(docRange);
             
@@ -4803,14 +4844,14 @@ const app = createApp({
             selectedBlockType: null,
         });
 
-        const showContextMenu = (event, alignment) => {
+        const showContextMenu = (event, alignment, block = null, blockType = null) => {
             // 触发左键选中逻辑
             handleAlignmentItemClick(alignment);
 
             contextMenu.value.visible = true;
             contextMenu.value.selectedAlignment = alignment;
-            contextMenu.value.selectedBlock = null;
-            contextMenu.value.selectedBlockType = null;
+            contextMenu.value.selectedBlock = block;
+            contextMenu.value.selectedBlockType = blockType;
 
             // 先设置菜单可见，以便获取菜单尺寸
             nextTick(() => {
@@ -5643,7 +5684,11 @@ const app = createApp({
         const manualAlignBlockFromContextMenu = async () => {
             const block = contextMenu.value.selectedBlock;
             const blockTypeForMenu = contextMenu.value.selectedBlockType;
-            if (!block || !blockTypeForMenu) return;
+            if (!block || !blockTypeForMenu) {
+                ElMessage.warning('请从需求块或代码块上使用手动对齐');
+                hideContextMenu();
+                return;
+            }
 
             try {
                 if (blockTypeForMenu === 'doc') {
