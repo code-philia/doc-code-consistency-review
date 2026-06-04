@@ -785,6 +785,12 @@ def get_codefile_blocks(code_base_path, file_name, code_block_base_path):
             return all_code_blocks
 
     # 获取原始块
+    if not os.path.exists(os.path.join(code_base_path, file_name)):
+        print(file_name)
+        print(os.path.join(code_base_path, file_name))
+        print(code_base_path)
+        print('====================================')
+    
     code_blocks = chunk_cpp_code(file_name, os.path.join(code_base_path, file_name))
     global index
     for item in code_blocks:

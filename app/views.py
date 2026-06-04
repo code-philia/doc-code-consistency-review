@@ -1721,7 +1721,7 @@ def abstract_code_from_project():
         # 排除无关文件夹/目录
         exclude_folders = ['.git', '.idea']
         # 基于文件名后缀，指定文件类型
-        include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html']
+        include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html', '.vhd', '.v', '.sv']
         # 遍历文件夹
         file_abstract = {}
         for root, dirs, files in os.walk(code_file_path):
@@ -2509,40 +2509,40 @@ def add_alignment():
     mermaid_code = ''
 
     # 反生成需求+流程图
-    try:
-        requirement_content = new_alignment.get('docRanges')
-        code_content = new_alignment.get('codeRanges')
+    # try:
+        # requirement_content = new_alignment.get('docRanges')
+        # code_content = new_alignment.get('codeRanges')
 
-        # if not code_content:
-        #     return jsonify({"status": "error", "message": "Missing code content"}), 400
+        # # if not code_content:
+        # #     return jsonify({"status": "error", "message": "Missing code content"}), 400
 
-        # 构建代码块列表，格式与现有函数兼容
-        code_blocks = []
-        if isinstance(code_content, list):
-            for code_block in code_content:
-                code_blocks.append({
-                    'filename': code_block.get('filename', 'unknown'),
-                    'content': code_block.get('content', '')
-                })
-        else:
-            # 如果是字符串，创建单个代码块
-            code_blocks.append({
-                'filename': 'code',
-                'content': code_content
-            })
+        # # 构建代码块列表，格式与现有函数兼容
+        # code_blocks = []
+        # if isinstance(code_content, list):
+            # for code_block in code_content:
+                # code_blocks.append({
+                    # 'filename': code_block.get('filename', 'unknown'),
+                    # 'content': code_block.get('content', '')
+                # })
+        # else:
+            # # 如果是字符串，创建单个代码块
+            # code_blocks.append({
+                # 'filename': 'code',
+                # 'content': code_content
+            # })
 
-        # 调用LLM生成需求，传入参考需求内容
-        generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
+        # # 调用LLM生成需求，传入参考需求内容
+        # generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
 
-        # 调用LLM生成流程图
-        mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else
-                                       '\n\n'.join([block.get('content', '') for block in code_content]))
+        # # 调用LLM生成流程图
+        # mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else
+                                       # '\n\n'.join([block.get('content', '') for block in code_content]))
 
 
-    except Exception as e:
-        print(f"Error generating reverse requirement: {str(e)}")
-        logger.info(f"Error generating reverse requirement: {str(e)}")
-        #return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
+    # except Exception as e:
+        # print(f"Error generating reverse requirement: {str(e)}")
+        # logger.info(f"Error generating reverse requirement: {str(e)}")
+        # #return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
 
     try:
         # conn = get_db_conn(project_path)
@@ -2551,8 +2551,8 @@ def add_alignment():
         
         cur.execute(
             '''
-            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, GenReq, GenMermaid, createdAt, updatedAt) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, GenReq, GenMermaid, createdAt, updatedAt, is_code_review) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s) 
             ON DUPLICATE KEY UPDATE 
                 name = VALUES(name),
                 isReviewed = VALUES(isReviewed),
@@ -2573,7 +2573,8 @@ def add_alignment():
                 json.dumps(new_alignment.get('docRanges') or []),
                 json.dumps(code_ranges or []),
                 generated_requirement or '',
-                mermaid_code or ''
+                mermaid_code or '',
+                0
             )
         )
 
@@ -4542,6 +4543,7 @@ def get_alignments_from_sqlite(project_id):
             pool_pre_ping=True
         )
         df = pd.read_sql(query_sql, engine)
+        df.index = df.index + 1
         
         
         
@@ -4650,14 +4652,11 @@ def export_project_results():
             # 流程图
             replacements["FFFFF"] = df.loc[number, "GenMermaid"] if df.loc[number, "GenMermaid"] is not None else ""
 
-            number += 1
-            category_id += 1
-
             # 替换第一个文档的占位符
             replace_text_in_docx(merged_doc, replacements)
             #logger.info(replacements)
             # 处理剩余的表单
-            for i in range(0, total_num-2):
+            for i in range(0, total_num):
                 # 添加分页符
                 # merged_doc.add_page_break()
 

@@ -254,9 +254,10 @@ def create_chunk(filename, start, end, lines):
 def get_all_files_with_relative_paths(base_path, type = 'code'):
     """递归遍历目录，获取所有文件的相对路径"""
     all_files = []
+    # 基于文件名后缀，指定文件类型
     for root, _, files in os.walk(base_path):
         for file in files:
-            if type == 'code' and not (file.endswith('.py') or file.endswith('.java') or file.endswith('.cpp') or file.endswith('.js') or file.endswith('.c') or file.endswith('.h')):
+            if type == 'code' and not (file.endswith('.py') or file.endswith('.java') or file.endswith('.cpp') or file.endswith('.hpp') or file.endswith('.js') or file.endswith('.c') or file.endswith('.h') or file.endswith('.vhd') or file.endswith('.v') or file.endswith('.sv')):
                 continue
             if type == 'doc' and not (file.endswith('.docx') or file.endswith('.md')):
                 continue

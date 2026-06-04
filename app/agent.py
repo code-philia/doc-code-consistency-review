@@ -16,7 +16,7 @@ from .prompt import Combine_Req2Code_Align_UserPrompt, Combine_Code2Req_Align_Us
 from openai import OpenAI
 from .utils import chunk_list
 from .db import get_db_celery
-
+import traceback
 # 从项目根目录加载 .env
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
@@ -25,11 +25,11 @@ API_KEY = os.environ.get("API_KEY", "0")
 # MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
 
-# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-# MODEL_NAME = "Qwen3-32B"
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+MODEL_NAME = "Qwen3-32B"
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
-MODEL_NAME = "/llm"
+#API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
+#MODEL_NAME = "/llm"
 
 MAX_REQ = 3 # 最大重复次数
 
@@ -387,7 +387,7 @@ def query_codefile_from_abstract(requirement, file_abstract):
         max_sim = -1.0
         for item in parsed_output:
             if not isinstance(item, dict):
-                continue
+                continue    
             if item['similarity'] >= max_sim:
                 max_sim = item['similarity']
                 if item['similarity'] == max_sim:
@@ -1243,6 +1243,7 @@ def query_review_result_by_feedback(
         return parsed_output.get('review_process'), parsed_output.get('issue')
         
     except Exception as e:
+        traceback.print_exc()
         print(f"审查过程中出错: {str(e)}")
         return f"审查过程中发生错误: {e}", None        
  
