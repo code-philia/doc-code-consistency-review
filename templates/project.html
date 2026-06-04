@@ -44,9 +44,9 @@
             <div class="menu-item">
                 文件
                 <div class="dropdown">
-                    <div class="dropdown-item" @click="addFile('doc', 'file')"><i class="fas fa-file-alt"></i> 添加需求文档 (单个)</div>
+                    <div class="dropdown-item" @click="addFile('doc', 'file')"><i class="fas fa-file-alt"></i> 添加需求文档 (文件)</div>
                     <div class="dropdown-item" @click="addFile('doc', 'folder')"><i class="fas fa-folder"></i> 添加需求文档 (文件夹)</div>
-                    <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (单个)</div>
+                    <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (文件)</div>
                     <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (文件夹)</div>
                 </div>
 
@@ -607,7 +607,7 @@
                                              取消选中
                                         </el-button>
                                         <el-button
-                                            @click="refreshBlocks"
+                                            @click="refreshBlocksAndAlignments"
                                             size="small"
                                             text
                                             plain
@@ -1313,22 +1313,77 @@
                     </div>
 
                     <!-- 代码信息 -->
-                    <div class="review-left-section">
+                    <div class="review-left-section" ref="sectionRef">
                         <h4><i class="fas fa-code"></i> 关联代码</h4>
-                        <div class="code-ranges-container">
-                            <div v-for="range in selectedReviewAlignment.codeRanges" :key="range.id" class="code-range">
-                                <div class="code-file-info">
-                                    <span class="file-name">${ range.filename }</span>
-                                    <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                        <!-- ============================= 目录导航(2个以上才显示) ============================== -->
+                        <div v-if="selectedReviewAlignment.codeRanges?.length > 1"
+                             class="code-toc"
+                             ref="tocRef"
+                             :class="{ collapsed: isTocCollapsed }"
+                        >
+                            <div class="toc-header" @click="isTocCollapsed = !isTocCollapsed">
+                                <span><i class="fas fa-list"></i> 代码片段目录</span>
+                                <span class="toc-badge">${ selectedReviewAlignment.codeRanges.length } 个文件</span>
+                                <i class="fas" :class="isTocCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                            </div>
+                            <div v-show="!isTocCollapsed" class="toc-body">
+                                <div
+                                    v-for="(range, index) in selectedReviewAlignment.codeRanges"
+                                    :key="'toc-' + index"
+                                    class="toc-item"
+                                    :class="{ active: activeRangeId === String(index) }"
+                                    @click="scrollToRange(index)"
+                                >
+                                    <span class="toc-num">${ index + 1 }</span>
+                                    <span class="toc-name" :title="range.filename">${ range.filename }</span>
+                                    <span class="toc-lines">第${ range.startLine }-${ range.endLine }行</span>
                                 </div>
-                                <pre class="code-content-with-lines">
+                            </div>
+                        </div>
+
+                        <!-- ============================ 代码片段列表 ====================================== -->
+                        <div class="code-ranges-container">
+                            <div
+                                v-for="(range, index) in selectedReviewAlignment.codeRanges"
+                                :key="index"
+                                :id="'range-' + index"
+                                class="code-range"
+                            >
+                                <!-- 文件信息栏: 左侧文件名, 右侧返回目录 -->
+                                <div class="code-file-info">
+                                    <div class="file-info-left">
+                                        <i class="fas fa-file-code"></i>
+                                        <span class="file-name">${ range.filename }</span>
+                                        <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                                    </div>
+<!--                                    <button class="btn-back" @click="scrollToToc" title="返回目录">-->
+<!--                                        <i class="fas fa-arrow-up"></i> 返回目录-->
+<!--                                    </button>-->
+                                </div>
+
+                                <!-- 代码内容 -->
+                                <div class="code-content-with-lines">
+
                                     <div class="line-numbers">
                                         <span v-for="lineNum in getLineNumbers(range.startLine, range.endLine)" :key="lineNum" class="line-number">${ lineNum }</span>
                                     </div>
-                                    <code class="code-text">${ range.content }</code>
-                                </pre>
+                                    <pre class="code-content"><code class="code-text">${ range.content }</code></pre>
+                                </div>
+
                             </div>
                         </div>
+
+                        <!-- =========================== 悬浮返回目录按钮 =================================== -->
+<!--                        <transition name="fade">-->
+<!--                            <button-->
+<!--                               v-show="showFloatBtn"-->
+<!--                               class="float-back-btn"-->
+<!--                               @click="scrollToToc"-->
+<!--                            >-->
+<!--                               <i class="fas fa-arrow-up"></i>目录-->
+<!--                            </button>-->
+<!--                        </transition>-->
+
                     </div>
                 </div>
 

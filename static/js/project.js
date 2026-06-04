@@ -3,7 +3,7 @@
  ****************************/
 let activeView = 'alignmentView'; // 当前活动视图
 
-const { createApp, ref, onMounted, onBeforeUnmount, computed, nextTick, watch } = Vue;
+const { createApp, ref, onMounted, onUnmounted, onBeforeUnmount, computed, nextTick, watch } = Vue;
 const { ElMessage, ElMessageBox, ElLoading } = ElementPlus;
 import {
     regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers,  generateUUIDLike, updateHighlightPositions, extractPlainTextFromMarkdown, removeAllHighlights,
@@ -45,18 +45,24 @@ const app = createApp({
         /***********************
          * 基础状态
          ***********************/
+        const sectionRef = ref(null);
+        const tocRef = ref(null);
+        const activeRangeId = ref(null);
+        const isTocCollapsed = ref(false)
         const urlParams = new URLSearchParams(window.location.search);
         const projectName = ref(urlParams.get('name') || '未命名项目');
         
         const projectPath = ref(urlParams.get('path') || '未知路径');
+        const errorMax = 0.5 * 60 * 5
+        const errorCount = ref(0)
         const AlignTaskId = ref(null);
         const ReviewTaskId = ref(null);
         const nextTaskId = ref(null);
         const AlignCurrentTotal = ref(0);
         const ReviewCurrentTotal = ref(0);
         const nextTaskTotal = ref(0);
-        const STORAGE_ALIGN_KEY = 'align_task_state'
-        const STORAGE_REVIEW_KEY = 'review_task_state'
+        const STORAGE_ALIGN_KEY = () => `align_task_state_${getProjectId()}`
+        const STORAGE_REVIEW_KEY = () => `review_task_state_${getProjectId()}`
         const pollingTimer = ref(null);
         const pollingTimerReview = ref(null);
         const pollCount = ref(0);
@@ -1218,6 +1224,7 @@ const app = createApp({
          */
         const saveReviewTaskState = () => {
             const state = {
+                projectId: getProjectId(),
                 taskId: ReviewTaskId.value,
                 nextTaskId: nextTaskId.value,
                 currentTotal: ReviewCurrentTotal.value,
@@ -1227,7 +1234,7 @@ const app = createApp({
                 isRunning: isAutoReviewing.value,
                 timestamp: Date.now()
             }
-            localStorage.setItem(STORAGE_REVIEW_KEY, JSON.stringify(state))
+            localStorage.setItem(STORAGE_REVIEW_KEY(), JSON.stringify(state))
         }
 
         /**
@@ -1235,7 +1242,20 @@ const app = createApp({
          *
          */
         const clearReviewTaskState = () => {
-            localStorage.removeItem(STORAGE_REVIEW_KEY)
+            localStorage.removeItem(STORAGE_REVIEW_KEY())
+        }
+
+        const forceResetReviewState = () => {
+            if (pollingTimerReview.value) {
+                clearInterval(pollingTimerReview.value)
+                pollingTimerReview.value = null
+            }
+            ReviewTaskId.value = ''
+            nextTaskId.value = null
+            nextTaskTotal.value = 0
+            ReviewCurrentTotal.value = 0
+            isAutoReviewing.value = false
+            stopProgress()
         }
 
         /**
@@ -1243,7 +1263,8 @@ const app = createApp({
          * 先读 localStorage, 在调后端 //get-progress/<task_id> 确认Celery任务还活着
          */
         const restoreReviewTaskState = async () => {
-            const raw = localStorage.getItem(STORAGE_REVIEW_KEY)
+            const currentProjectId = getProjectId()
+            const raw = localStorage.getItem(STORAGE_REVIEW_KEY())
             if (!raw) return
 
             let state
@@ -1251,6 +1272,11 @@ const app = createApp({
                 state = JSON.parse(raw)
             } catch {
                 clearReviewTaskState()
+                return
+            }
+
+            if (state.projectId !== currentProjectId) {
+                // clearTaskState()
                 return
             }
 
@@ -1288,7 +1314,9 @@ const app = createApp({
                     isAutoReviewing.value = true
 
                     saveReviewTaskState() // 重新存一下(刷新时间戳)
-                    pollingTimerReview.value = setInterval(getReviewProgress, 2000)
+                    if (!pollingTimerReview.value) {
+                        pollingTimerReview.value = setInterval(getReviewProgress, 2000)
+                    }
                     return
                 }
 
@@ -1316,7 +1344,9 @@ const app = createApp({
                             isAutoReviewing.value = true
 
                             saveReviewTaskState()
-                            pollingTimerReview.value = setInterval(getReviewProgress, 2000)
+                            if (!pollingTimerReview.value) {
+                                pollingTimerReview.value = setInterval(getReviewProgress, 2000)
+                            }
                             return
                         }
 
@@ -1365,7 +1395,7 @@ const app = createApp({
                 return
             }
 
-
+            pollCountReview.value++
             if (pollCountReview.value >= MAX_POLL_COUNT) {
                 ElMessage.info('轮询次数已达上限，已停止轮询');
                 clearInterval(pollingTimerReview.value)
@@ -1420,15 +1450,20 @@ const app = createApp({
                     }
                 }
             } catch (error) {
-                clearInterval(pollingTimerReview.value)
-                pollingTimerReview.value = null
-                isAutoReviewing.value = false;
-                reviewProgress.value = { current: 0, total: 0 };
-                stopProgress();
-                clearReviewTaskState()
-                ElMessage.warning(`查询进度失败: ${error.message}`);
+                if (errorCount.value >= errorMax) {
+                    clearInterval(pollingTimerReview.value)
+                    pollingTimerReview.value = null
+                    isAutoReviewing.value = false;
+                    reviewProgress.value = { current: 0, total: 0 };
+                    stopProgress();
+                    clearReviewTaskState()
+                    ElMessage.warning(`查询进度失败: ${error.message}`);
+                }
+//                console.log(errorCount.value)
+//                console.log(errorMax)
+                errorCount.value++
             } finally {
-                pollCountReview.value++
+//                pollCountReview.value++
             }
         }
 
@@ -1480,7 +1515,7 @@ const app = createApp({
                 total = unreviewed.length;
                 if (unreviewed.length === 0)
                 {
-                    ElMessage.success(`所有对齐块均已审查完成！`);
+                    ElMessage.success(`所有块均已审查完成！`);
                     isAutoReviewing.value = false;
                     return;
                 }
@@ -2442,6 +2477,10 @@ const app = createApp({
             }
         };
 
+        const getProjectId = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('project_id') || ''
+        }
 
         /**
          * 把当前任务状态持久化到 localStorage
@@ -2449,6 +2488,7 @@ const app = createApp({
          */
         const saveTaskState = () => {
             const state = {
+                projectId: getProjectId(),
                 taskId: AlignTaskId.value,
                 nextTaskId: nextTaskId.value,
                 currentTotal: AlignCurrentTotal.value,
@@ -2458,7 +2498,7 @@ const app = createApp({
                 isRunning: isAutoAligning.value,
                 timestamp: Date.now()
             }
-            localStorage.setItem(STORAGE_ALIGN_KEY, JSON.stringify(state))
+            localStorage.setItem(STORAGE_ALIGN_KEY(), JSON.stringify(state))
         }
 
         /**
@@ -2466,7 +2506,20 @@ const app = createApp({
          *
          */
         const clearTaskState = () => {
-            localStorage.removeItem(STORAGE_ALIGN_KEY)
+            localStorage.removeItem(STORAGE_ALIGN_KEY())
+        }
+
+        const forceResetState = () => {
+            if (pollingTimer.value) {
+                clearInterval(pollingTimer.value)
+                pollingTimer.value = null
+            }
+            AlignTaskId.value = ''
+            nextTaskId.value = null
+            nextTaskTotal.value = 0
+            AlignCurrentTotal.value = 0
+            isAutoAligning.value = false
+            stopProgress()
         }
 
         /**
@@ -2474,7 +2527,9 @@ const app = createApp({
          * 先读 localStorage, 在调后端 //get-progress/<task_id> 确认Celery任务还活着
          */
         const restoreTaskState = async () => {
-            const raw = localStorage.getItem(STORAGE_ALIGN_KEY)
+            const currentProjectId = getProjectId()
+
+            const raw = localStorage.getItem(STORAGE_ALIGN_KEY())
             if (!raw) return
 
             let state
@@ -2482,6 +2537,11 @@ const app = createApp({
                 state = JSON.parse(raw)
             } catch {
                 clearTaskState()
+                return
+            }
+
+            if (state.projectId !== currentProjectId) {
+                // clearTaskState()
                 return
             }
 
@@ -2494,8 +2554,14 @@ const app = createApp({
             // 恢复变量
             AlignTaskId.value = state.taskId ?? ''
             nextTaskId.value = state.nextTaskId ?? null
-            AlignCurrentTotal.value = state.currentTotal ?? 0
+            // AlignCurrentTotal.value = state.currentTotal ?? 0
             nextTaskTotal.value = state.nextTaskTotal ?? 0
+
+            if (!state.nextTaskId && (state.nextTaskTotal ?? 0) > 0) {
+                AlignCurrentTotal.value = state.nextTaskTotal
+            } else {
+                AlignCurrentTotal.value = state.currentTotal ?? 0
+            }
 
             if (!AlignTaskId.value) {
                 clearTaskState()
@@ -2519,7 +2585,9 @@ const app = createApp({
                     isAutoAligning.value = true
 
                     saveTaskState() // 重新存一下(刷新时间戳)
-                    pollingTimer.value = setInterval(getProgress, 2000)
+                    if (!pollingTimer.value) {
+                        pollingTimer.value = setInterval(getProgress, 2000)
+                    }
                     return
                 }
 
@@ -2547,7 +2615,9 @@ const app = createApp({
                             isAutoAligning.value = true
 
                             saveTaskState()
-                            pollingTimer.value = setInterval(getProgress, 2000)
+                            if (!pollingTimer.value) {
+                                pollingTimer.value = setInterval(getProgress, 2000)
+                            }
                             return
                         }
 
@@ -2660,14 +2730,18 @@ const app = createApp({
 
 
             } catch (error) {
-                clearInterval(pollingTimer.value)
-                pollingTimer.value = null
-                isAutoAligning.value = false;
-                stopProgress();
-                ElMessageBox.alert('查询进度失败!', '提示', {
-                        confirmButtonText: '知道了',
-                        type: 'error'
-                });
+                if (errorCount.value >= errorMax) {
+                    clearInterval(pollingTimer.value)
+                    pollingTimer.value = null
+                    isAutoAligning.value = false;
+                    stopProgress();
+                    ElMessageBox.alert('查询进度失败!', '提示', {
+                            confirmButtonText: '知道了',
+                            type: 'error'
+                    });
+                }
+                errorCount.value++
+
 //                ElMessage.warning(`查询进度失败: ${error.message}`);
             }
         }
@@ -3233,7 +3307,13 @@ const app = createApp({
             }
         };
 
-
+        // 同时刷新块列表和对齐关系
+        const refreshBlocksAndAlignments = async () => {
+             // 强制重新加载并渲染
+             await refreshAlignments();
+             await refreshBlocks();
+             // ElMessage.success('块列表已刷新');
+        };
 
         // 刷新筛选状态下的对齐列表
         const refreshFilteredAlignments = () => {
@@ -4265,7 +4345,8 @@ const app = createApp({
                 }
             }
         };
-
+        
+        
         const isSameRangeEntry = (existingRange, nextRange) => {
             if (!existingRange || !nextRange) return false;
             const existingFile = existingRange.documentId || existingRange.filename || '';
@@ -4289,13 +4370,14 @@ const app = createApp({
                 Number.isFinite(nextStartLine) && Number.isFinite(nextEndLine) &&
                 existingStartLine === nextStartLine && existingEndLine === nextEndLine;
         };
-
+        
         // 添加到现有对齐关系
         const addToAlignment = async (alignment) => {
             if (!currentSelection.value || !alignment) return;
 
             if (currentSelection.value.type === 'code') {
                 const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
+
                 const codeRange = {
                     documentId: currentSelection.value.documentId,
                     filename: currentSelection.value.documentId, // 文件名
@@ -4305,7 +4387,7 @@ const app = createApp({
                     endLine: endLine, // 结束行号
                     content: currentSelection.value.content
                 };
-
+                
                 if ((alignment.codeRanges || []).some(range => isSameRangeEntry(range, codeRange))) {
                     showCodeSelectionDialog.value = false;
                     resetManualAlignFromBlock();
@@ -4357,7 +4439,7 @@ const app = createApp({
                 endLine: endLine, // 结束行号
                 content: currentSelection.value.content
             };
-
+            
             if ((alignment.docRanges || []).some(range => isSameRangeEntry(range, docRange))) {
                 showAlignmentDialog.value = false;
                 resetManualAlignFromBlock();
@@ -5021,6 +5103,29 @@ const app = createApp({
           innerActiveA.value = 'req-code-align'
           innerActiveB.value = 'req-code-align-kbs'
           loadDefaultPrompt()
+          // restoreTaskState()
+          // restoreReviewTaskState()
+
+          //读取localStorage 里存的是哪个项目
+          const alignRaw = localStorage.getItem(STORAGE_ALIGN_KEY())
+          const reviewRaw = localStorage.getItem(STORAGE_REVIEW_KEY())
+          let savedProjectId = ''
+          if (alignRaw || reviewRaw) {
+            try {
+                const state = JSON.parse(alignRaw) || JSON.parse(reviewRaw)
+                savedProjectId = state.projectId || ''
+            } catch {}
+          }
+
+          const currentProjectId = getProjectId()
+
+          //如果项目变了, 强制清掉上一个项目的定时器和状态
+          if (savedProjectId && savedProjectId !== currentProjectId) {
+            forceResetState()
+            forceResetReviewState()
+            // clearTaskState()
+          }
+          // 恢复当前项目的任务
           restoreTaskState()
           restoreReviewTaskState()
         })
@@ -6400,6 +6505,87 @@ const app = createApp({
             return numbers;
         };
 
+        // 点击目录项，平滑滚动到对应代码块
+        const scrollToRange = (index) => {
+
+            // console.log('scrollToRange被调用，index=',index)
+            if (index == null) return
+            const el = document.getElementById('range-' + index)
+            // console.log('查到的元素，el=',el)
+            // console.log('sectionRef.value', sectionRef.value)
+            if (el && sectionRef.value) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start'})
+                activeRangeId.value = String(index)
+            } else {
+                console.log('条件不满足, el 或 sectionRef.value为空')
+            }
+        }
+
+        const initScrollListener = () => {
+
+            if (!sectionRef.value) return
+
+            const container = sectionRef.value
+            const ranges = document.querySelectorAll('.code-range')
+            if (!ranges.length) return
+
+            if (container._scrollHandler) {
+                container.removeEventListener('scroll', container._scrollHandler)
+            }
+
+            const onScroll = () => {
+                const containerTop = container.scrollTop
+                const containerCenter = containerTop + container.clientHeight / 2
+
+                let closestId = null
+                let minDistance = Infinity
+                for (const range of ranges) {
+                    const rangeTop = range.offsetTop
+                    const rangeCenter = rangeTop + range.clientHeight / 2
+                    const distance = Math.abs(rangeCenter - containerCenter)
+
+                    if (distance < minDistance) {
+                        minDistance = distance
+                        closestId = range.id.replace('range-', '')
+                    }
+                }
+
+                if (closestId !== null){
+                    activeRangeId.value = String(closestId)
+                }
+            }
+            container.addEventListener('scroll', onScroll)
+            container._scrollHandler = onScroll
+        }
+
+        watch(() => selectedReviewAlignment.value?.codeRanges, (newVal) => {
+            if (newVal && newVal.length > 0){
+                setTimeout(() => {
+                    initScrollListener()
+                }, 300)
+
+
+
+
+            }
+        }, { deep: true})
+
+
+        onMounted(() => {
+            if (selectedReviewAlignment.value?.codeRanges?.length > 0){
+                nextTick(() => initScrollListener())
+            }
+        })
+
+        onUnmounted(() => {
+            const container = sectionRef.value
+            if (container && container._onScroll){
+                container.removeEventListener('scroll', container._onScroll)
+            }
+        })
+
+
+
         // 刷新高亮
         const refreshHighlights = () => {
             try {
@@ -6779,6 +6965,11 @@ const app = createApp({
          * 暴露到模板
          ***********************/
         return {
+            sectionRef,
+            tocRef,
+            activeRangeId,
+            scrollToRange,
+            isTocCollapsed,
             projectName,
             projectFiles,
             selectedDocFile,
@@ -6950,6 +7141,7 @@ const app = createApp({
             blockType,
             displayedBlocks,
             refreshBlocks,
+            refreshBlocksAndAlignments,
             currentSelectedBlockIndex,
             handleBlockItemClick,
             handleBlockItemContextMenu,

@@ -77,7 +77,7 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
         # 排除无关文件夹/目录
         exclude_folders = ['.git', '.idea']
         # 基于文件名后缀，指定文件类型
-        include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html']
+        include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html', '.vhd', '.v', '.sv']
         # 遍历文件夹
         file_abstract = {}
         for root, dirs, files in os.walk(code_file_path):
@@ -965,8 +965,8 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
         # conn = get_db_conn(project_path)
         cur.execute(
             '''
-            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, createdAt, updatedAt) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) 
+            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, createdAt, updatedAt, is_code_review) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s) 
             ON DUPLICATE KEY UPDATE 
                 name = VALUES(name),
                 isReviewed = VALUES(isReviewed),
@@ -983,7 +983,8 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
                 1 if new_alignment.get('isReviewed') else 0,
                 new_alignment.get('reviewThoughts') or '',
                 json.dumps(new_alignment.get('docRanges') or []),
-                json.dumps(code_ranges or [])
+                json.dumps(code_ranges or []),
+                0
                 # generated_requirement or ''
                 # mermaid_code or ''
             )
