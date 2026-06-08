@@ -2356,39 +2356,192 @@ def get_filename_without_extension(filename):
     """去掉文件名的扩展名"""
     return os.path.splitext(filename)[0]
 
+
+def _parse_csv_query_arg(value):
+    if not value:
+        return []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    return [item.strip() for item in str(value).split(',') if item.strip()]
+
+
+def _safe_json_loads(value, default):
+    try:
+        return pyjson.loads(value or '[]')
+    except Exception:
+        return default
+
+
+def _normalize_alignment_row(row):
+    return {
+        'id': row['id'],
+        'name': row['name'],
+        'isReviewed': bool(row['isReviewed']),
+        'reviewThoughts': row['reviewThoughts'] or '',
+        'docRanges': _safe_json_loads(row.get('docRanges'), []),
+        'codeRanges': _safe_json_loads(row.get('codeRanges'), []),
+        'isCodeReview': row.get('is_code_review', 0)
+    }
+
+
+def _matches_range_file(ranges, target_file):
+    if not target_file:
+        return True
+    if not isinstance(ranges, list):
+        return False
+    for one in ranges:
+        if not isinstance(one, dict):
+            continue
+        if one.get('filename') == target_file or one.get('documentId') == target_file:
+            return True
+    return False
+
+
+def _alignment_status(alignment):
+    no_doc = not alignment.get('docRanges')
+    no_code = not alignment.get('codeRanges')
+    if no_doc or no_code:
+        return 'unaligned'
+    if alignment.get('isReviewed'):
+        return 'reviewed'
+    return 'unreviewed'
+
+
+def _sort_alignments(items):
+    def _sort_key(item):
+        item_id = item.get('id') or ''
+        is_auto = item_id.startswith('auto_')
+        name = item.get('name') or ''
+        if is_auto:
+            start = 0
+            if item.get('docRanges'):
+                start = item['docRanges'][0].get('start', 0)
+            return (1, 0, start, name)
+
+        num_match = re.match(r'^(\d+)', name)
+        if num_match:
+            return (0, 0, int(num_match.group(1)), name)
+        return (0, 1, name, item_id)
+
+    return sorted(items, key=_sort_key)
+
+
+def _paginate_items(items, page, page_size):
+    total = len(items)
+    safe_page_size = max(1, min(page_size, 500))
+    total_pages = max(1, (total + safe_page_size - 1) // safe_page_size)
+    safe_page = min(max(page, 1), total_pages)
+    start = (safe_page - 1) * safe_page_size
+    end = start + safe_page_size
+    return {
+        'items': items[start:end],
+        'pagination': {
+            'total': total,
+            'page': safe_page,
+            'page_size': safe_page_size,
+            'total_pages': total_pages
+        }
+    }
+
+
+def _load_project_alignments(project_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments WHERE project_id=%s",
+        (project_id,)
+    )
+    rows = cur.fetchall()
+    return [_normalize_alignment_row(row) for row in rows]
+
+
+def _filter_alignments(items, *, file_path=None, kind='doc', selected_doc_file=None,
+                       selected_code_file=None, view_mode=None, status_filters=None,
+                       include_code_review=None):
+    result = items
+
+    if include_code_review is not None:
+        include_flag = str(include_code_review).lower() in ('1', 'true', 'yes')
+        result = [item for item in result if bool(item.get('isCodeReview')) == include_flag]
+
+    if file_path:
+        if kind == 'code':
+            result = [item for item in result if _matches_range_file(item.get('codeRanges'), file_path)]
+        else:
+            result = [item for item in result if _matches_range_file(item.get('docRanges'), file_path)]
+
+    if view_mode == 'current':
+        result = [
+            item for item in result
+            if (selected_doc_file and _matches_range_file(item.get('docRanges'), selected_doc_file)) or
+               (selected_code_file and _matches_range_file(item.get('codeRanges'), selected_code_file))
+        ]
+    elif view_mode in (None, '', 'all'):
+        # “全部数据”模式下不要再叠加当前文件过滤，否则前端切换按钮看起来会失效。
+        pass
+
+    if status_filters:
+        allowed = set(status_filters)
+        result = [item for item in result if _alignment_status(item) in allowed]
+
+    return _sort_alignments(result)
+
+
+def _ranges_overlap(a_start, a_end, b_start, b_end):
+    try:
+        return max(float(a_start), float(b_start)) < min(float(a_end), float(b_end))
+    except Exception:
+        return False
+
+
+def _line_ranges_overlap(a_start, a_end, b_start, b_end):
+    try:
+        return max(int(a_start), int(b_start)) <= min(int(a_end), int(b_end))
+    except Exception:
+        return False
+
 @bp.route('/project/alignments', methods=['GET'])
 def get_alignments():
     #print("request.args:", request.args)
-    """获取项目内所有对齐关系"""
+    """获取项目对齐关系，支持分页和过滤"""
     project_path = request.args.get('path')
+    file_path = request.args.get('file')
+    kind = request.args.get('kind', 'doc')
     project_id = request.args.get('project_id')
+    selected_doc_file = request.args.get('selected_doc_file')
+    selected_code_file = request.args.get('selected_code_file')
+    view_mode = request.args.get('view_mode')
+    status_filters = _parse_csv_query_arg(request.args.get('status_filters'))
+    include_code_review = request.args.get('include_code_review')
+    page = request.args.get('page', type=int)
+    page_size = request.args.get('page_size', type=int)
     print('get(`/project/alignments, project_id:', project_id)
     
     if not project_path:
         return jsonify({"status": "error", "message": "缺少项目路径参数。"}), 400
 
     try:
-        conn = get_db()
-        cur = conn.cursor()
-        
-        query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments where project_id={project_id}"
-        cur.execute(query)
+        alignments = _load_project_alignments(project_id)
+        filtered = _filter_alignments(
+            alignments,
+            file_path=file_path,
+            kind=kind,
+            selected_doc_file=selected_doc_file,
+            selected_code_file=selected_code_file,
+            view_mode=view_mode,
+            status_filters=status_filters,
+            include_code_review=include_code_review
+        )
 
-        rows = cur.fetchall()
-        result = {}
-        
-        for r in rows:
-            alignment = {
-                'id': r['id'],
-                'name': r['name'],
-                'isReviewed': bool(r['isReviewed']),
-                'reviewThoughts': r['reviewThoughts'] or '',
-                'docRanges': pyjson.loads(r['docRanges'] or '[]'),
-                'codeRanges': pyjson.loads(r['codeRanges'] or '[]'),
-                'isCodeReview': r['is_code_review']
-            }
-            result[alignment['id']] = alignment
-        # print(result)
+        if page or page_size:
+            paged = _paginate_items(filtered, page or 1, page_size or 50)
+            return jsonify({
+                "status": "success",
+                "data": paged['items'],
+                "pagination": paged['pagination']
+            }), 200
+
+        result = {alignment['id']: alignment for alignment in filtered}
         return jsonify({"status": "success", "data": result}), 200
     except Exception as e:
 
@@ -2693,6 +2846,8 @@ def update_issue(issue_id):
         project_id = request.args.get('project_id')
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
+        if not project_id:
+            return jsonify({'status': 'error', 'message': '缺少 project_id 参数'})
         issue_data = request.json or {}
         # init_project_db(project_path)
         # conn = get_db_conn(project_path)
@@ -2706,7 +2861,10 @@ def update_issue(issue_id):
             issue_id,
             project_id
         ))
-        # conn.commit()
+        if cur.rowcount == 0:
+            conn.rollback()
+            return jsonify({'status': 'error', 'message': '未找到要更新的问题单'}), 404
+        conn.commit()
         # conn.close()
         return jsonify({'status': 'success', 'message': '问题单更新成功'})
     except Exception as e:
@@ -2903,21 +3061,13 @@ def get_alignment_by_id():
     if not project_path or not alignment_id:
         return jsonify({'status': 'error', 'message': '缺少项目路径或对齐ID'}), 400
     try:
-        conn = get_db_conn(project_path)
+        conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges FROM alignments WHERE id=%s', (alignment_id,))
+        cur.execute('SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments WHERE id=%s', (alignment_id,))
         r = cur.fetchone()
-        conn.close()
         if not r:
             return jsonify({'status': 'error', 'message': '未找到对齐关系'}), 404
-        alignment = {
-            'id': r['id'],
-            'name': r['name'],
-            'isReviewed': bool(r['isReviewed']),
-            'reviewThoughts': r['reviewThoughts'] or '',
-            'docRanges': pyjson.loads(r['docRanges'] or '[]'),
-            'codeRanges': pyjson.loads(r['codeRanges'] or '[]')
-        }
+        alignment = _normalize_alignment_row(r)
         return jsonify({'status': 'success', 'data': alignment})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
@@ -2929,6 +3079,10 @@ def get_doc_blocks():
     """获取需求分块列表"""
     try:
         project_path = request.args.get('projectPath')
+        filename = request.args.get('filename')
+        project_id = request.args.get('project_id')
+        page = request.args.get('page', type=int)
+        page_size = request.args.get('page_size', type=int)
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
 
@@ -2942,7 +3096,31 @@ def get_doc_blocks():
         with open(doc_block_file_path, 'r', encoding='utf-8') as f:
             for line in f:
                 if line.strip():
-                    doc_blocks.append(json.loads(line.strip()))
+                    block = json.loads(line.strip())
+                    if filename and block.get('filename') != filename:
+                        continue
+                    doc_blocks.append(block)
+
+        if project_id:
+            alignments = _load_project_alignments(project_id)
+            for block in doc_blocks:
+                block_file = block.get('filename')
+                block_start = block.get('start')
+                block_end = block.get('end')
+                matched_alignment = next((
+                    alignment for alignment in alignments
+                    if any(
+                        (doc_range.get('documentId') == block_file or doc_range.get('filename') == block_file) and
+                        _ranges_overlap(doc_range.get('start'), doc_range.get('end'), block_start, block_end)
+                        for doc_range in alignment.get('docRanges', [])
+                    )
+                ), None)
+                block['matchedAlignmentId'] = matched_alignment.get('id') if matched_alignment else None
+                block['matchedAlignmentReviewed'] = bool(matched_alignment.get('isReviewed')) if matched_alignment else False
+
+        if page or page_size:
+            paged = _paginate_items(doc_blocks, page or 1, page_size or 100)
+            return jsonify({'status': 'success', 'data': paged['items'], 'pagination': paged['pagination']})
 
         return jsonify({'status': 'success', 'data': doc_blocks})
     except Exception as e:
@@ -2954,6 +3132,9 @@ def get_code_blocks():
     try:
         project_path = request.args.get('projectPath')
         filename = request.args.get('filename') # 可选：按文件名筛选
+        project_id = request.args.get('project_id')
+        page = request.args.get('page', type=int)
+        page_size = request.args.get('page_size', type=int)
 
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
@@ -2978,7 +3159,41 @@ def get_code_blocks():
                             code_blocks.append(block)
                     except json.JSONDecodeError:
                         continue
-        # print(code_blocks)
+
+        if project_id:
+            alignments = _load_project_alignments(project_id)
+            for block in code_blocks:
+                block_file = block.get('file')
+                line_range = block.get('range') if isinstance(block.get('range'), list) else []
+                start_line = line_range[0] if len(line_range) == 2 else block.get('startLine')
+                end_line = line_range[1] if len(line_range) == 2 else block.get('endLine')
+
+                matched_alignment = None
+                matched_code_review_alignment = None
+                for alignment in alignments:
+                    has_overlap = any(
+                        (code_range.get('documentId') == block_file or code_range.get('filename') == block_file) and
+                        _line_ranges_overlap(code_range.get('startLine'), code_range.get('endLine'), start_line, end_line)
+                        for code_range in alignment.get('codeRanges', [])
+                    )
+                    if not has_overlap:
+                        continue
+                    if matched_alignment is None:
+                        matched_alignment = alignment
+                    if alignment.get('isCodeReview') and matched_code_review_alignment is None:
+                        matched_code_review_alignment = alignment
+                    if matched_alignment and matched_code_review_alignment:
+                        break
+
+                block['matchedAlignmentId'] = matched_alignment.get('id') if matched_alignment else None
+                block['matchedAlignmentReviewed'] = bool(matched_alignment.get('isReviewed')) if matched_alignment else False
+                block['matchedCodeReviewAlignmentId'] = matched_code_review_alignment.get('id') if matched_code_review_alignment else None
+                block['matchedCodeReviewReviewed'] = bool(matched_code_review_alignment.get('isReviewed')) if matched_code_review_alignment else False
+
+        if page or page_size:
+            paged = _paginate_items(code_blocks, page or 1, page_size or 100)
+            return jsonify({'status': 'success', 'data': paged['items'], 'pagination': paged['pagination']})
+
         return jsonify({'status': 'success', 'data': code_blocks})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})

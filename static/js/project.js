@@ -82,9 +82,14 @@ const app = createApp({
         const selectedCodeRawContent = ref('');
         const docPages = ref([]);
         const currentDocPage = ref(1);
+        const codePages = ref([]);
+        const currentCodePage = ref(1);
         const DOC_PAGE_TARGET_CHARS = 12000;
         const DOC_PAGE_MIN_CHARS = 8000;
         const DOC_PAGE_MAX_CHARS = 18000;
+        const CODE_PAGE_TARGET_CHARS = 12000;
+        const CODE_PAGE_MIN_CHARS = 8000;
+        const CODE_PAGE_MAX_CHARS = 18000;
         
         const dialogParseDocMethodVisible = ref(false);
         const parseDocMethod = ref('default');
@@ -92,6 +97,7 @@ const app = createApp({
         const codeFileTree = ref([]);
 
         const alignmentResults = ref([]);
+        const sidebarAlignmentItems = ref([]);
         const isAutoAligning = ref(false);
         const isAutoReviewing = ref(false);
         const alignmentProgress = ref({ current: 0, total: 0 });
@@ -156,6 +162,17 @@ const app = createApp({
         // 分解块数据
         const docBlocks = ref([]);
         const codeBlocks = ref([]);
+        const currentDocBlocksForHighlight = ref([]);
+        const currentCodeBlocksForHighlight = ref([]);
+        const alignmentPage = ref(1);
+        const alignmentPageSize = ref(50);
+        const alignmentTotal = ref(0);
+        const docBlockPage = ref(1);
+        const docBlockPageSize = ref(100);
+        const docBlockTotal = ref(0);
+        const codeBlockPage = ref(1);
+        const codeBlockPageSize = ref(100);
+        const codeBlockTotal = ref(0);
         
         // KB Application State
         const showKbAppDialog = ref(false);
@@ -330,24 +347,7 @@ const app = createApp({
 
         // 计算属性：当前显示的块列表
         const displayedBlocks = computed(() => {
-            let blocks = [];
-            if (blockType.value === 'doc') {
-                blocks = docBlocks.value || [];
-                // 过滤掉无效数据
-                blocks = blocks.filter(b => b);
-                
-                if (viewMode.value === 'current' && selectedDocFile.value) {
-                    blocks = blocks.filter(b => b.filename === selectedDocFile.value);
-                }
-            } else {
-                blocks = codeBlocks.value || [];
-                blocks = blocks.filter(b => b);
-                
-                if (viewMode.value === 'current' && selectedCodeFile.value) {
-                    blocks = blocks.filter(b => b.file === selectedCodeFile.value);
-                }
-            }
-            return blocks;
+            return (blockType.value === 'doc' ? docBlocks.value : codeBlocks.value).filter(Boolean);
         });
         
         
@@ -397,6 +397,8 @@ const app = createApp({
                     selectedCodeFile.value = '';
                     selectedCodeContent.value = '';
                     selectedCodeRawContent.value = '';
+                    codePages.value = [];
+                    currentCodePage.value = 1;
                 }
 
                 await fetchProjectMetadata();
@@ -454,17 +456,110 @@ const app = createApp({
                 await loadAndRenderCodeBlocks(false);
             }
         }, { deep: true });
+
+        const fetchAlignmentSidebarPage = async (resetPage = false) => {
+            if (!projectPath.value) return;
+            if (resetPage) alignmentPage.value = 1;
+
+            if (statusFilters.value.length === 0) {
+                sidebarAlignmentItems.value = [];
+                alignmentTotal.value = 0;
+                return;
+            }
+
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const response = await axios.get('/project/alignments', {
+                    params: {
+                        path: projectPath.value,
+                        project_id: projectId,
+                        page: alignmentPage.value,
+                        page_size: alignmentPageSize.value,
+                        view_mode: viewMode.value,
+                        selected_doc_file: selectedDocFile.value || '',
+                        selected_code_file: selectedCodeFile.value || '',
+                        status_filters: statusFilters.value.join(','),
+                        include_code_review: 0
+                    }
+                });
+
+                if (response.data.status === 'success') {
+                    sidebarAlignmentItems.value = response.data.data || [];
+                    alignmentTotal.value = response.data.pagination?.total || 0;
+                } else {
+                    sidebarAlignmentItems.value = [];
+                    alignmentTotal.value = 0;
+                }
+            } catch (error) {
+                console.error('获取对齐分页数据出错:', error);
+                sidebarAlignmentItems.value = [];
+                alignmentTotal.value = 0;
+            }
+        };
+
+        const fetchSidebarBlocksPage = async (resetPage = false) => {
+            if (!projectPath.value) return;
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            const isDoc = blockType.value === 'doc';
+            const pageRef = isDoc ? docBlockPage : codeBlockPage;
+            const pageSizeRef = isDoc ? docBlockPageSize : codeBlockPageSize;
+            const totalRef = isDoc ? docBlockTotal : codeBlockTotal;
+            const targetRef = isDoc ? docBlocks : codeBlocks;
+            const currentFile = isDoc ? selectedDocFile.value : selectedCodeFile.value;
+
+            if (resetPage) pageRef.value = 1;
+            if (viewMode.value === 'current' && !currentFile) {
+                targetRef.value = [];
+                totalRef.value = 0;
+                return;
+            }
+
+            try {
+                const endpoint = isDoc ? '/api/get-doc-blocks' : '/api/get-code-blocks';
+                const response = await axios.get(endpoint, {
+                    params: {
+                        projectPath: projectPath.value,
+                        project_id: projectId,
+                        page: pageRef.value,
+                        page_size: pageSizeRef.value,
+                        filename: viewMode.value === 'current' ? currentFile : ''
+                    }
+                });
+
+                if (response.data.status === 'success') {
+                    targetRef.value = response.data.data || [];
+                    totalRef.value = response.data.pagination?.total || 0;
+                } else {
+                    targetRef.value = [];
+                    totalRef.value = 0;
+                }
+            } catch (error) {
+                console.error('获取块分页数据失败:', error);
+                targetRef.value = [];
+                totalRef.value = 0;
+            }
+        };
          
         // 加载并渲染需求分解块
         const loadAndRenderDocBlocks = async (reload = true) => {
             if (!projectPath.value) return;
             try {
-                let blocks = docBlocks.value;
+                let blocks = currentDocBlocksForHighlight.value;
                 if (reload || !blocks || blocks.length === 0) {
-                    const response = await axios.get(`/api/get-doc-blocks?projectPath=${encodeURIComponent(projectPath.value)}`);
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    const response = await axios.get('/api/get-doc-blocks', {
+                        params: {
+                            projectPath: projectPath.value,
+                            project_id: projectId,
+                            filename: selectedDocFile.value || ''
+                        }
+                    });
                     if (response.data.status === 'success') {
                         blocks = response.data.data;
-                        docBlocks.value = blocks; // Store for other uses if needed
+                        currentDocBlocksForHighlight.value = blocks;
                     }
                 }
                 
@@ -476,9 +571,7 @@ const app = createApp({
                     if (selectedDocFile.value) {
                         const currentFileBlocks = blocks.filter(b => b.filename === selectedDocFile.value);
                         
-                        // 获取当前文件的对齐信息
                         const alignedRanges = new Set();
-                        // Use alignmentResults directly as it contains all alignments
                         if (alignmentResults.value) {
                             alignmentResults.value.forEach(alignment => {
                                 if (alignment.docRanges) {
@@ -543,12 +636,20 @@ const app = createApp({
         const loadAndRenderCodeBlocks = async (reload = true) => {
             if (!projectPath.value) return;
             try {
-                let blocks = codeBlocks.value;
+                let blocks = currentCodeBlocksForHighlight.value;
                 if (reload || !blocks || blocks.length === 0) {
-                    const response = await axios.get(`/api/get-code-blocks?projectPath=${encodeURIComponent(projectPath.value)}`);
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    const response = await axios.get('/api/get-code-blocks', {
+                        params: {
+                            projectPath: projectPath.value,
+                            project_id: projectId,
+                            filename: selectedCodeFile.value || ''
+                        }
+                    });
                     if (response.data.status === 'success') {
                         blocks = response.data.data;
-                        codeBlocks.value = blocks; // Store
+                        currentCodeBlocksForHighlight.value = blocks;
                     }
                 }
                 
@@ -558,13 +659,9 @@ const app = createApp({
                     
                     // Render highlights for current file
                     if (selectedCodeFile.value) {
-                        // Filter blocks for the current file
-                        // The JSON structure has "file" property
                         const currentFileBlocks = blocks.filter(b => b.file === selectedCodeFile.value);
                         
-                        // 获取当前代码文件的对齐信息
                         const alignedCodeRanges = [];
-                        // Use alignmentResults directly as it contains all alignments
                         if (alignmentResults.value) {
                             alignmentResults.value.forEach(alignment => {
                                 if (alignment.codeRanges) {
@@ -632,9 +729,9 @@ const app = createApp({
         };
 
         const refreshBlocks = async () => {
-             // 强制重新加载并渲染
-             await loadAndRenderDocBlocks(true);
-             await loadAndRenderCodeBlocks(true);
+             await fetchSidebarBlocksPage(true);
+             if (selectedDocFile.value) await loadAndRenderDocBlocks(true);
+             if (selectedCodeFile.value) await loadAndRenderCodeBlocks(true);
              ElMessage.success('块列表已刷新');
         };
 
@@ -659,8 +756,9 @@ const app = createApp({
                     } else {
                         await loadAndRenderCodeBlocks(true);
                     }
-                    // Refresh alignments
+                    await fetchSidebarBlocksPage(false);
                     await fetchAlignments();
+                    await fetchAlignmentSidebarPage(false);
                 } else {
                     ElMessage.warning(response.data.message);
                 }
@@ -676,59 +774,17 @@ const app = createApp({
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
-                // 始终获取项目所有对齐关系，不传递file参数
-                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`);
+                const response = await axios.get('/project/alignments', {
+                    params: {
+                        path: projectPath.value,
+                        project_id: projectId,
+                        view_mode: 'current',
+                        selected_doc_file: selectedDocFile.value || '',
+                        selected_code_file: selectedCodeFile.value || ''
+                    }
+                });
                 if (response.data.status === 'success' && response.data.data) {
-                    // 后端返回的是以ID为键的对象，转换为数组以便渲染
-                    let alignments = Object.values(response.data.data);
-                    
-                    // 对对齐关系进行排序
-                    alignments.sort((a, b) => {
-                        // 判断是否为自动分解生成的对齐关系（ID以"auto_"开头）
-                        const isAutoA = a.id && a.id.startsWith('auto_');
-                        const isAutoB = b.id && b.id.startsWith('auto_');
-                        
-                        if (isAutoA && isAutoB) {
-                            // 两个都是自动分解：按起始位置排序
-                            const startA = a.docRanges && a.docRanges.length > 0 ? a.docRanges[0].start : 0;
-                            const startB = b.docRanges && b.docRanges.length > 0 ? b.docRanges[0].start : 0;
-                            return startA - startB;
-                        } else if (!isAutoA && !isAutoB) {
-                            // 两个都是标注文件：按名称（category）排序，数字开头的优先
-                            const nameA = a.name || '';
-                            const nameB = b.name || '';
-                            
-                            // 检查是否以数字开头
-                            const numMatchA = nameA.match(/^(\d+)/);
-                            const numMatchB = nameB.match(/^(\d+)/);
-                            
-                            if (numMatchA && numMatchB) {
-                                // 两个都以数字开头，按数字大小排序
-                                const numA = parseInt(numMatchA[1]);
-                                const numB = parseInt(numMatchB[1]);
-                                return numA - numB;
-                            } else if (numMatchA && !numMatchB) {
-                                // A以数字开头，B不是，A排在前面
-                                return -1;
-                            } else if (!numMatchA && numMatchB) {
-                                // B以数字开头，A不是，B排在前面
-                                return 1;
-                            } else {
-                                // 两个都不以数字开头，按字母顺序排序
-                                return nameA.localeCompare(nameB);
-                            }
-                        } else {
-                            // 混合情况：标注文件排在前面，自动分解排在后面
-                            return isAutoA ? 1 : -1;
-                        }
-                    });
-                    
-                    alignmentResults.value = alignments;
-                    
-                    // 在下一个tick中添加高亮，确保DOM已更新
-                    await nextTick(() => {
-                         // reloadHighlights(); (Removed)
-                    });
+                    alignmentResults.value = Object.values(response.data.data || {});
                 } else {
                     alignmentResults.value = [];
                     ElMessage.warning(response.data.message || '获取对齐关系失败');
@@ -738,6 +794,29 @@ const app = createApp({
                 alignmentResults.value = [];
                 ElMessage.error('获取对齐关系出错: ' + error.message);
             }
+        };
+
+        const fetchAlignmentById = async (alignmentId) => {
+            if (!alignmentId || !projectPath.value) return null;
+            const existing = (alignmentResults.value || []).find(item => item.id === alignmentId) ||
+                (sidebarAlignmentItems.value || []).find(item => item.id === alignmentId) ||
+                (filteredAlignments.value || []).find(item => item.id === alignmentId);
+            if (existing) return existing;
+
+            try {
+                const response = await axios.get('/project/alignment-by-id', {
+                    params: {
+                        path: projectPath.value,
+                        id: alignmentId
+                    }
+                });
+                if (response.data.status === 'success') {
+                    return response.data.data || null;
+                }
+            } catch (error) {
+                console.error('按 ID 获取对齐关系失败:', error);
+            }
+            return null;
         };
         
         
@@ -948,6 +1027,10 @@ const app = createApp({
         };
 
         const totalDocPages = computed(() => docPages.value.length || 1);
+        const totalCodePages = computed(() => codePages.value.length || 1);
+        const alignmentTotalPages = computed(() => Math.max(1, Math.ceil(alignmentTotal.value / alignmentPageSize.value)));
+        const docBlockTotalPages = computed(() => Math.max(1, Math.ceil(docBlockTotal.value / docBlockPageSize.value)));
+        const codeBlockTotalPages = computed(() => Math.max(1, Math.ceil(codeBlockTotal.value / codeBlockPageSize.value)));
 
         const buildDocPages = (content) => {
             if (!content) return [];
@@ -1045,6 +1128,41 @@ const app = createApp({
             });
         };
 
+        const buildCodePages = (content) => {
+            if (!content) return [];
+
+            const pages = [];
+            let start = 0;
+            const length = content.length;
+
+            while (start < length) {
+                let end = Math.min(start + CODE_PAGE_TARGET_CHARS, length);
+                if (end < length) {
+                    const minEnd = Math.min(start + CODE_PAGE_MIN_CHARS, length);
+                    const maxEnd = Math.min(start + CODE_PAGE_MAX_CHARS, length);
+                    const nextLineBreak = content.lastIndexOf('\n', maxEnd);
+                    if (nextLineBreak >= minEnd) {
+                        end = nextLineBreak + 1;
+                    } else {
+                        const forwardBreak = content.indexOf('\n', end);
+                        if (forwardBreak !== -1 && forwardBreak < maxEnd) {
+                            end = forwardBreak + 1;
+                        }
+                    }
+                }
+
+                if (end <= start) break;
+                pages.push({
+                    start,
+                    end,
+                    content: content.slice(start, end)
+                });
+                start = end;
+            }
+
+            return pages;
+        };
+
         const renderDocPage = async (pageNumber = 1) => {
             const pages = docPages.value;
             if (!pages || pages.length === 0) {
@@ -1062,6 +1180,25 @@ const app = createApp({
 
             await nextTick();
             await loadAndRenderDocBlocks(false);
+        };
+
+        const renderCodePage = async (pageNumber = 1) => {
+            const pages = codePages.value;
+            if (!pages || pages.length === 0) {
+                currentCodePage.value = 1;
+                selectedCodeContent.value = '';
+                return;
+            }
+
+            const safePage = Math.min(Math.max(pageNumber, 1), pages.length);
+            const page = pages[safePage - 1];
+            const renderedHtml = formatCodeWithLineNumbers(page.content);
+
+            currentCodePage.value = safePage;
+            selectedCodeContent.value = shiftMarkdownParseOffsets(renderedHtml, page.start);
+
+            await nextTick();
+            await loadAndRenderCodeBlocks(false);
         };
 
         const goToDocFirstPage = async () => {
@@ -1082,6 +1219,26 @@ const app = createApp({
         const goToDocLastPage = async () => {
             if (currentDocPage.value === totalDocPages.value) return;
             await renderDocPage(totalDocPages.value);
+        };
+
+        const goToCodeFirstPage = async () => {
+            if (currentCodePage.value === 1) return;
+            await renderCodePage(1);
+        };
+
+        const goToCodePrevPage = async () => {
+            if (currentCodePage.value <= 1) return;
+            await renderCodePage(currentCodePage.value - 1);
+        };
+
+        const goToCodeNextPage = async () => {
+            if (currentCodePage.value >= totalCodePages.value) return;
+            await renderCodePage(currentCodePage.value + 1);
+        };
+
+        const goToCodeLastPage = async () => {
+            if (currentCodePage.value === totalCodePages.value) return;
+            await renderCodePage(totalCodePages.value);
         };
 
         const getDocRangeFile = (docRange) => {
@@ -1178,14 +1335,55 @@ const app = createApp({
             return [...new Set([...blockElements, ...highlightElements])];
         };
 
+        const getCodePageIndicesForRange = (start, end) => {
+            const pages = codePages.value || [];
+            if (!pages.length) return [0];
+
+            const effectiveStart = Number.isFinite(Number(start)) ? Number(start) : 0;
+            const effectiveEnd = Number.isFinite(Number(end)) ? Number(end) : effectiveStart;
+            const indices = [];
+
+            pages.forEach((page, index) => {
+                if (effectiveStart < page.end && effectiveEnd > page.start) {
+                    indices.push(index);
+                }
+            });
+
+            if (indices.length) return indices;
+
+            const containingIndex = pages.findIndex(page => effectiveStart >= page.start && effectiveStart < page.end);
+            if (containingIndex !== -1) return [containingIndex];
+            if (effectiveStart <= pages[0].start) return [0];
+            return [pages.length - 1];
+        };
+
         const ensureCodeFileForRange = async (codeRange) => {
             const fileName = getCodeRangeFile(codeRange);
             if (!fileName) return [];
             if (selectedCodeFile.value !== fileName) {
                 await fetchFileContent(fileName, 'code');
-            } else {
-                await nextTick();
             }
+
+            const candidatePages = getCodePageIndicesForRange(codeRange.start, codeRange.end);
+            const currentIndex = currentCodePage.value - 1;
+            const orderedPages = candidatePages.includes(currentIndex)
+                ? [currentIndex, ...candidatePages.filter(index => index !== currentIndex)]
+                : candidatePages;
+
+            for (const pageIndex of orderedPages) {
+                if (currentCodePage.value !== pageIndex + 1) {
+                    await renderCodePage(pageIndex + 1);
+                } else {
+                    await nextTick();
+                }
+
+                const elements = getCodeElementsInCurrentFileForRange(codeRange);
+                if (elements.length > 0) {
+                    return elements;
+                }
+            }
+
+            await nextTick();
             return getCodeElementsInCurrentFileForRange(codeRange);
         };
 
@@ -1625,24 +1823,15 @@ const app = createApp({
                         if (issue._isEditing === undefined) issue._isEditing = false;
                         if (!issue.briefRequirement || !issue.briefCode) {
                             try {
-//                                const urlParams = new URLSearchParams(window.location.search);
-//                                const projectId = urlParams.get('project_id');
-                                // Lookup alignment by alignmentId to fill brief info
-                                const alignmentResponse = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(issue.relatedDocFile)}&kind=doc&project_id=${projectId}`);
-                                if (alignmentResponse.data.status === 'success') {
-                                    const alignments = alignmentResponse.data.data || {};
-                                    const alignment = alignments[issue.alignmentId];
+                                const alignment = await fetchAlignmentById(issue.alignmentId);
+                                if (alignment) {
+                                    issue.briefRequirement = alignment.docRanges && alignment.docRanges[0]
+                                        ? alignment.docRanges[0].content.substring(0, 100) + (alignment.docRanges[0].content.length > 100 ? '...' : '')
+                                        : '无相关需求';
 
-                                    if (alignment) {
-                                        // 提取缩略信息
-                                        issue.briefRequirement = alignment.docRanges && alignment.docRanges[0]
-                                            ? alignment.docRanges[0].content.substring(0, 100) + (alignment.docRanges[0].content.length > 100 ? '...' : '')
-                                            : '无相关需求';
-
-                                        issue.briefCode = alignment.codeRanges && alignment.codeRanges[0]
-                                            ? alignment.codeRanges[0].content.substring(0, 100) + (alignment.codeRanges[0].content.length > 100 ? '...' : '')
-                                            : '无相关代码';
-                                    }
+                                    issue.briefCode = alignment.codeRanges && alignment.codeRanges[0]
+                                        ? alignment.codeRanges[0].content.substring(0, 100) + (alignment.codeRanges[0].content.length > 100 ? '...' : '')
+                                        : '无相关代码';
                                 }
                             } catch (err) {
                                 // 如果获取对齐关系失败，使用默认值
@@ -1682,10 +1871,10 @@ const app = createApp({
                     codeFileLines.value = metadata.code_file_lines || {};
                     codeScale.value = metadata.code_scale || 0;
 
-                    // 加载所有文档的对齐数据用于统计
-                    await fetchAllAlignments();
-                    // 如果有选中的文档，加载其对齐数据
+                    allAlignments.value = {};
                     await fetchAlignments();
+                    await fetchAlignmentSidebarPage(true);
+                    await fetchSidebarBlocksPage(true);
                 } else {
                     ElMessage.error(`加载项目元数据失败: ${response.data.message}`);
                 }
@@ -1724,16 +1913,27 @@ const app = createApp({
                             
                             // 当选择文档时，获取该文档的对齐结果
                             await fetchAlignments();
+                            if (rightSidebarMode.value === 'alignment') {
+                                await fetchAlignmentSidebarPage(true);
+                            } else if (blockType.value === 'doc' || viewMode.value === 'current') {
+                                await fetchSidebarBlocksPage(true);
+                            }
                         } else if (fileType === 'code') {
                             selectedCodeFile.value = fileName;
                             selectedCodeRawContent.value = content;
-                            selectedCodeContent.value = formatCodeWithLineNumbers(content);
+                            codePages.value = buildCodePages(content);
+                            await renderCodePage(1);
                             
                             // Load and render decomposition blocks
-                            await loadAndRenderCodeBlocks();
+                            await loadAndRenderCodeBlocks(false);
 
                             // 当选择代码文件时，重新获取所有对齐结果，由前端筛选
                             await fetchAlignments();
+                            if (rightSidebarMode.value === 'alignment') {
+                                await fetchAlignmentSidebarPage(true);
+                            } else if (blockType.value === 'code' || viewMode.value === 'current') {
+                                await fetchSidebarBlocksPage(true);
+                            }
                         }
                     } catch (e) {
                         renderError.value = e.message;
@@ -2959,18 +3159,25 @@ const app = createApp({
         /***********************
          * 状态计算函数
          ***********************/
-        const getBlockStatus = (block, type, requireCodeReview) => {
+        const getMatchedAlignmentIdForBlock = (block, type, requireCodeReview = false) => {
+            if (!block) return null;
+            if (type === 'code' && requireCodeReview) {
+                return block.matchedCodeReviewAlignmentId || null;
+            }
+            return block.matchedAlignmentId || null;
+        };
 
-            const matchedAlignment = findAlignmentForSidebarBlock(block, type, requireCodeReview);
-//            console.info(`"${matchedAlignment},${block},${type}"`);
-            if (!matchedAlignment) {
+        const getBlockStatus = (block, type, requireCodeReview) => {
+            const matchedAlignmentId = getMatchedAlignmentIdForBlock(block, type, requireCodeReview);
+            const reviewed = requireCodeReview ? block?.matchedCodeReviewReviewed : block?.matchedAlignmentReviewed;
+            if (!matchedAlignmentId) {
                 return {
                     status: 'unaligned',
                     text: '未分解',
                     type: 'warning'
                 };
             }
-            if (matchedAlignment.isReviewed) {
+            if (reviewed) {
                 return {
                     status: 'reviewed',
                     text: '已审查',
@@ -2986,7 +3193,8 @@ const app = createApp({
         };
 
         const hasCodeReview = computed(() => {
-            return (alignmentResults.value || []).some(alignment => alignment.isCodeReview === 1);
+            return (codeBlocks.value || []).some(block => !!block.matchedCodeReviewAlignmentId) ||
+                (currentCodeBlocksForHighlight.value || []).some(block => !!block.matchedCodeReviewAlignmentId);
         })
 
 
@@ -3017,33 +3225,10 @@ const app = createApp({
         };
 
         const sidebarAlignments = computed(() => {
-            let source = alignmentResults.value;
-            // 新增：过滤掉 isCodeReview为1的数据
-            source = source.filter(item => item.isCodeReview !== 1);
-
             if (isFiltered.value && filteredAlignments.value) {
                 return filteredAlignments.value;
             }
-
-            // Apply View Mode
-            if (viewMode.value === 'current') {
-                source = source.filter(a =>
-                    (a.docRanges && a.docRanges.some(r => r.documentId === selectedDocFile.value)) ||
-                    (a.codeRanges && a.codeRanges.some(r => r.documentId === selectedCodeFile.value))
-                );
-            }
-
-            // Apply Status Filter
-            if (statusFilters.value.length > 0) {
-                source = source.filter(a => {
-                    const statusObj = getAlignmentStatus(a);
-                    return statusFilters.value.includes(statusObj.status);
-                });
-            } else {
-                return []; 
-            }
-
-            return source;
+            return sidebarAlignmentItems.value || [];
         });
 
         /***********************
@@ -3280,6 +3465,8 @@ const app = createApp({
 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
+                await fetchAlignmentSidebarPage(false);
+                await fetchSidebarBlocksPage(false);
 
                 ElMessage.success('对齐关系创建成功');
             } catch (err) {
@@ -3299,8 +3486,8 @@ const app = createApp({
         // 刷新对齐关系和高亮
         const refreshAlignments = async () => {
             try {                
-                // 重新获取对齐关系
                 await fetchAlignments();
+                await fetchAlignmentSidebarPage(false);
             } catch (error) {
                 console.error('刷新对齐关系失败:', error);
                 ElMessage.error(`刷新失败: ${error.message}`);
@@ -3309,10 +3496,53 @@ const app = createApp({
 
         // 同时刷新块列表和对齐关系
         const refreshBlocksAndAlignments = async () => {
-             // 强制重新加载并渲染
              await refreshAlignments();
              await refreshBlocks();
-             // ElMessage.success('块列表已刷新');
+        };
+
+        watch(statusFilters, async () => {
+            if (rightSidebarMode.value === 'alignment') {
+                await fetchAlignmentSidebarPage(true);
+            }
+        }, { deep: true });
+
+        watch([viewMode, rightSidebarMode, blockType], async () => {
+            currentSelectedBlockIndex.value = -1;
+            if (rightSidebarMode.value === 'alignment') {
+                await fetchAlignmentSidebarPage(true);
+            } else {
+                await fetchSidebarBlocksPage(true);
+            }
+        });
+
+        watch([selectedDocFile, selectedCodeFile], async () => {
+            currentDocBlocksForHighlight.value = [];
+            currentCodeBlocksForHighlight.value = [];
+            if (rightSidebarMode.value === 'alignment') {
+                await fetchAlignmentSidebarPage(true);
+            } else {
+                await fetchSidebarBlocksPage(true);
+            }
+        });
+
+        const goToAlignmentPage = async (page) => {
+            const targetPage = Math.min(Math.max(page, 1), alignmentTotalPages.value);
+            if (targetPage === alignmentPage.value) return;
+            alignmentPage.value = targetPage;
+            if (rightSidebarMode.value === 'alignment') {
+                await fetchAlignmentSidebarPage(false);
+            }
+        };
+
+        const goToBlockPage = async (page) => {
+            const totalPages = blockType.value === 'doc' ? docBlockTotalPages.value : codeBlockTotalPages.value;
+            const pageRef = blockType.value === 'doc' ? docBlockPage : codeBlockPage;
+            const targetPage = Math.min(Math.max(page, 1), totalPages);
+            if (targetPage === pageRef.value) return;
+            pageRef.value = targetPage;
+            if (rightSidebarMode.value === 'block') {
+                await fetchSidebarBlocksPage(false);
+            }
         };
 
         // 刷新筛选状态下的对齐列表
@@ -3504,7 +3734,13 @@ const app = createApp({
         const handleBlockItemClick = async (block, index) => {
             currentSelectedBlockIndex.value = index;
 
-            const matchedAlignment = findAlignmentForSidebarBlock(block, blockType.value);
+            let matchedAlignment = findAlignmentForSidebarBlock(block, blockType.value);
+            if (!matchedAlignment) {
+                const matchedId = getMatchedAlignmentIdForBlock(block, blockType.value);
+                if (matchedId) {
+                    matchedAlignment = await fetchAlignmentById(matchedId);
+                }
+            }
             if (matchedAlignment) {
                 const { docIndex, codeIndex } = getAlignmentIndicesForBlock(matchedAlignment, block, blockType.value);
                 await selectAlignment(matchedAlignment, docIndex, codeIndex);
@@ -3596,6 +3832,12 @@ const app = createApp({
 
         const findAlignmentForSidebarBlock = (block, type, requireCodeReview = false) => {
             if (!block) return null;
+            const matchedId = getMatchedAlignmentIdForBlock(block, type, requireCodeReview);
+            if (matchedId) {
+                return (alignmentResults.value || []).find(alignment => alignment.id === matchedId) ||
+                    (sidebarAlignmentItems.value || []).find(alignment => alignment.id === matchedId) ||
+                    null;
+            }
             if (type === 'doc') {
                 const filename = block.filename || block.documentId;
                 const start = Number(block.start);
@@ -3629,7 +3871,13 @@ const app = createApp({
         const handleBlockItemContextMenu = async (event, block, index, type) => {
             event.preventDefault();
             await handleBlockItemClick(block, index);
-            const matchedAlignment = findAlignmentForSidebarBlock(block, type, true);
+            let matchedAlignment = findAlignmentForSidebarBlock(block, type, true);
+            if (!matchedAlignment) {
+                const matchedId = getMatchedAlignmentIdForBlock(block, type, true);
+                if (matchedId) {
+                    matchedAlignment = await fetchAlignmentById(matchedId);
+                }
+            }
             if (matchedAlignment) {
                 showContextMenu(event, matchedAlignment, block, type);
             } else {
@@ -4416,6 +4664,9 @@ const app = createApp({
                 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
+                await fetchAlignments();
+                await fetchAlignmentSidebarPage(false);
+                await fetchSidebarBlocksPage(false);
                 
                 ElMessage.success('已添加到对齐关系');
             } catch (err) {
@@ -4467,6 +4718,9 @@ const app = createApp({
                 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
+                await fetchAlignments();
+                await fetchAlignmentSidebarPage(false);
+                await fetchSidebarBlocksPage(false);
                 
                 ElMessage.success('已添加到对齐关系');
             } catch (err) {
@@ -4490,14 +4744,13 @@ const app = createApp({
         });
 
         // 选择导出文件夹
-        // 导出非误报的问题单
+        // 仅导出已确认的问题单
         const exportConfirmedIssues = async () => {
             try {
-                // 筛选非误报的问题单
-                const confirmedIssues = issues.value.filter(issue => issue.status === 'confirmed' || issue.status === 'unconfirmed');
+                const exportableIssues = issues.value.filter(issue => issue.status === 'confirmed');
                 
-                if (confirmedIssues.length === 0) {
-                    ElMessage.warning('没有可导出（非误报）的问题单');
+                if (exportableIssues.length === 0) {
+                    ElMessage.warning('没有已确认的问题单可导出');
                     return;
                 }
 
@@ -4512,18 +4765,17 @@ const app = createApp({
         // 确认导出
         const confirmExport = async () => {
             try {
-                // 筛选出非误报的问题单
-                const confirmedIssues = issues.value.filter(issue => issue.status === 'confirmed' || issue.status === 'unconfirmed');
+                const exportableIssues = issues.value.filter(issue => issue.status === 'confirmed');
                 
-                if (confirmedIssues.length === 0) {
-                    ElMessage.warning('没有非误报的问题单可导出');
+                if (exportableIssues.length === 0) {
+                    ElMessage.warning('没有已确认的问题单可导出');
                     showExportDialog.value = false;
                     return;
                 }
 
                 // 调用后端API生成docx文件
                 const response = await axios.post('/project/export-issues-download', {
-                    issues: confirmedIssues,
+                    issues: exportableIssues,
                     formData: exportForm.value,
                     projectPath: projectPath.value
                 });
@@ -4597,6 +4849,25 @@ const app = createApp({
             selectedIssue.value = issue;
         };
 
+        const syncIssueStatusLocally = (issueId, newStatus) => {
+            const idx = issues.value.findIndex(i => i.id === issueId);
+            if (idx > -1) {
+                const updatedIssue = { ...issues.value[idx], status: newStatus };
+                issues.value.splice(idx, 1, updatedIssue);
+                if (selectedIssue.value && selectedIssue.value.id === issueId) {
+                    selectedIssue.value = updatedIssue;
+                }
+                return updatedIssue;
+            }
+
+            if (selectedIssue.value && selectedIssue.value.id === issueId) {
+                selectedIssue.value = { ...selectedIssue.value, status: newStatus };
+                return selectedIssue.value;
+            }
+
+            return null;
+        };
+
         const confirmIssue = async () => {
             if (!selectedIssue.value) {
                 ElMessage.warning('请先选择一个问题单。');
@@ -4609,15 +4880,12 @@ const app = createApp({
                 // 更新问题单状态为已确认
                 const updatedIssue = { ...selectedIssue.value, status: 'confirmed' };
                 const response = await axios.put(
-                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`,
+                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
                     updatedIssue
                 );
 
                 if (response.data.status === 'success') {
-                    // 更新本地数据
-                    const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
-                    if (idx > -1) issues.value[idx].status = 'confirmed';
-                    selectedIssue.value.status = 'confirmed';
+                    syncIssueStatusLocally(selectedIssue.value.id, 'confirmed');
                 } else {
                     ElMessage.error('确认失败：' + response.data.message);
                 }
@@ -4639,14 +4907,12 @@ const app = createApp({
                 const projectId = urlParams.get('project_id');
                 const updatedIssue = { ...selectedIssue.value, status: 'false_positive' };
                 const response = await axios.put(
-                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}`,
+                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
                     updatedIssue
                 );
 
                 if (response.data.status === 'success') {
-                    const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
-                    if (idx > -1) issues.value[idx].status = 'false_positive';
-                    selectedIssue.value.status = 'false_positive';
+                    syncIssueStatusLocally(selectedIssue.value.id, 'false_positive');
                 } else {
                     ElMessage.error('标记失败：' + response.data.message);
                 }
@@ -4682,25 +4948,17 @@ const app = createApp({
                 const projectId = urlParams.get('project_id');
                 const updatedIssue = { ...issue, status: newStatus };
                 const response = await axios.put(
-                    `/project/issues/${issue.id}?path=${encodeURIComponent(projectPath.value)}`,
+                    `/project/issues/${issue.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
                     updatedIssue
                 );
 
                 if (response.data.status === 'success') {
-                    // 更新本地数据
-                    const idx = issues.value.findIndex(i => i.id === issue.id);
-                    if (idx > -1) {
-                        issues.value[idx].status = newStatus;
+                    const syncedIssue = syncIssueStatusLocally(issue.id, newStatus);
+                    if (syncedIssue) {
+                        issue.status = syncedIssue.status;
+                    } else {
+                        issue.status = newStatus;
                     }
-                    issue.status = newStatus;
-                    
-                    // 如果是当前选中的问题单，也要更新
-                    if (selectedIssue.value && selectedIssue.value.id === issue.id) {
-                        selectedIssue.value.status = newStatus;
-                    }
-                    
-                    const statusText = newStatus === 'confirmed' ? '已确认' : 
-                                     newStatus === 'false_positive' ? '误报' : '未确认';
                 } else {
                     ElMessage.error('状态更新失败：' + response.data.message);
                 }
@@ -6002,30 +6260,12 @@ const app = createApp({
             if (!issue) return;
 
             try {
-                // 根据问题单的docFilename构造对齐关系文件路径
-                const docFilename = issue.relatedDocFile;
-                if (!docFilename) {
-                    ElMessage.error('问题单缺少关联的文档信息');
-                    return;
-                }
-                const urlParams = new URLSearchParams(window.location.search);
-                const projectId = urlParams.get('project_id');
-                // 使用新的API端点加载对齐关系数据
-                const response = await axios.get(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&file=${encodeURIComponent(docFilename)}&kind=doc&project_id=${projectId}`);
-                if (response.data.status === 'success') {
-                    const alignments = response.data.data || {};
-
-                    // 直接通过alignmentId作为键索引找到对应的对齐关系
-                    const targetAlignment = alignments[issue.alignmentId];
-
-                    if (targetAlignment) {
-                        selectedReviewAlignment.value = targetAlignment;
-                        showReviewDialog.value = true;
-                    } else {
-                        ElMessage.warning(`未找到ID为 ${issue.alignmentId} 的对齐关系`);
-                    }
+                const targetAlignment = await fetchAlignmentById(issue.alignmentId);
+                if (targetAlignment) {
+                    selectedReviewAlignment.value = targetAlignment;
+                    showReviewDialog.value = true;
                 } else {
-                    ElMessage.error(`加载对齐关系文件失败: ${response.data.message || '未知错误'}`);
+                    ElMessage.warning(`未找到ID为 ${issue.alignmentId} 的对齐关系`);
                 }
             } catch (error) {
                 console.error('加载对齐关系详情失败:', error);
@@ -6119,6 +6359,8 @@ const app = createApp({
             selectedCodeFile.value = '';
             selectedDocContent.value = '';
             selectedCodeContent.value = '';
+            codePages.value = [];
+            currentCodePage.value = 1;
             selectedDocRawContent.value = '';
             selectedCodeRawContent.value = '';
             docPages.value = [];
@@ -6977,12 +7219,30 @@ const app = createApp({
             selectedDocContent,
             selectedCodeContent,
             selectedDocRawContent,
+            selectedCodeRawContent,
             currentDocPage,
             totalDocPages,
             goToDocFirstPage,
             goToDocPrevPage,
             goToDocNextPage,
             goToDocLastPage,
+            currentCodePage,
+            totalCodePages,
+            goToCodeFirstPage,
+            goToCodePrevPage,
+            goToCodeNextPage,
+            goToCodeLastPage,
+            alignmentPage,
+            alignmentTotal,
+            alignmentTotalPages,
+            docBlockPage,
+            docBlockTotal,
+            docBlockTotalPages,
+            codeBlockPage,
+            codeBlockTotal,
+            codeBlockTotalPages,
+            goToAlignmentPage,
+            goToBlockPage,
             handleDocSelection,
             showAlignmentDialog,
             showAlignmentDirectionDialog,

@@ -658,9 +658,10 @@
 .content-text-code {
     position: relative;
     background-color: var(--bg-code);
-    height: 100%;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: auto;
     counter-reset: listing;
@@ -1776,7 +1777,8 @@
 .content-text-code {
     position: relative;
     width: 100%;
-    min-height: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 .code-content,
@@ -2719,7 +2721,7 @@
     color: #444444;
 }
 
-.toc-item: hover {
+.toc-item:hover {
     background: #e9ecef;
 }
 
@@ -2729,7 +2731,7 @@
 }
 
 .toc-item.active .toc-lines {
-    color: $75beff;
+    color: #75beff;
 }
 
 .toc-num {

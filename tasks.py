@@ -287,17 +287,18 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
 
                     next_number = (max(used) + 1) if used else 1
 
-                    #brief_req = alignment.get('docRanges', [{}])[0].get('content', '') or ''
-                    # 安全获取 docRanges
                     doc_ranges = alignment.get('docRanges', [])
-                    # 如果 docRanges 不为空，取第一个的 content
                     if doc_ranges:
                         content = doc_ranges[0].get('content', '')
                     else:
                         content = ''
                     brief_req = content or ''
-                    #brief_code = alignment.get('codeRanges', [{}])[0].get('content', '') or ''
                     brief_code = _safe_first_range_field(alignment.get('codeRanges', []), 'content')
+                    related_doc_file = (
+                        item.get('doc_file')
+                        or _safe_first_range_field(alignment.get('docRanges', []), 'filename')
+                        or _safe_first_range_field(alignment.get('codeRanges', []), 'filename')
+                    )
                     for one in issues_list:
                         display_id = f"ISSUE-{next_number:03d}"
                         next_number += 1
@@ -320,7 +321,7 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
                                 title,
                                 content,
                                 status,
-                                item['doc_file'] if not prompt_type else '',
+                                related_doc_file,
                                 alignment.get('id'),
                                 brief_req,
                                 brief_code

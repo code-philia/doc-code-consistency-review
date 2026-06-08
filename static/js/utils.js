@@ -352,7 +352,7 @@ const currentTemporaryHighlights = {
 };
 
 export function scrollToRange(targetStart, targetEnd, type = 'doc') {
-    const editorDiv = document.querySelector(`.content-text-${type}`);
+    const editorDiv = getEditorContainer(type);
     if (!editorDiv) return;
 
     removeTemporaryHighlights(type);
@@ -519,9 +519,16 @@ const currentHighlightBlocks = {
     code: new Map()
 };
 
+function getEditorContainer(type = 'doc') {
+    if (type === 'doc') {
+        return document.querySelector('.doc-content-scroll') || document.querySelector('.content-text-doc');
+    }
+    return document.querySelector(`.content-text-${type}`);
+}
+
 // 高亮指定范围
 export function highlightRange(start, end, type = 'doc', annotationId = null) {
-    const editorDiv = document.querySelector(`.content-text-${type}`);
+    const editorDiv = getEditorContainer(type);
     if (!editorDiv) return [];
 
     // 创建高亮块
@@ -546,7 +553,7 @@ export function highlightRange(start, end, type = 'doc', annotationId = null) {
 
 // 创建高亮块
 function createHighlightBlock(start, end, type, annotationId) {
-    const editorDiv = document.querySelector(`.content-text-${type}`);
+    const editorDiv = getEditorContainer(type);
     if (!editorDiv) return null;
 
     // 计算高亮块的位置和尺寸
@@ -577,7 +584,7 @@ function createHighlightBlock(start, end, type, annotationId) {
 
 // 计算高亮块的位置信息
 function calculateHighlightBlockPosition(start, end, type) {
-    const editorDiv = document.querySelector(`.content-text-${type}`);
+    const editorDiv = getEditorContainer(type);
     if (!editorDiv) return null;
 
     const elements = editorDiv.querySelectorAll('[parse-start][parse-end]');
@@ -617,7 +624,7 @@ function calculateHighlightBlockPosition(start, end, type) {
 }
 
 export function renderDecompositionBlock(start, end, type = 'doc', isAligned = false) {
-    const editorDiv = document.querySelector(`.content-text-${type}`);
+    const editorDiv = getEditorContainer(type);
     if (!editorDiv) return;
 
     const blockInfo = calculateHighlightBlockPosition(start, end, type);
@@ -642,8 +649,9 @@ export function renderDecompositionBlock(start, end, type = 'doc', isAligned = f
 }
 
 export function updateDecompositionPositions(type) {
-    const selector = type ? `.content-text-${type} .decomposition-highlight` : '.decomposition-highlight';
-    const highlights = document.querySelectorAll(selector);
+    const highlights = type
+        ? (getEditorContainer(type)?.querySelectorAll('.decomposition-highlight') || [])
+        : document.querySelectorAll('.decomposition-highlight');
     
     highlights.forEach(div => {
         const start = parseInt(div.getAttribute('data-range-start'));
@@ -668,13 +676,16 @@ export function renderCodeBlockHighlight(startLine, endLine) {
 
 
 export function clearDecompositionHighlights(type) {
-    const selector = type ? `.content-text-${type} .decomposition-highlight` : '.decomposition-highlight';
-    document.querySelectorAll(selector).forEach(el => el.remove());
+    if (type) {
+        getEditorContainer(type)?.querySelectorAll('.decomposition-highlight').forEach(el => el.remove());
+        return;
+    }
+    document.querySelectorAll('.decomposition-highlight').forEach(el => el.remove());
 }
 
 // 移除所有高亮
 export function removeAllHighlights(type = 'doc') {
-    const editorDiv = document.querySelector(`.content-text-${type}`);
+    const editorDiv = getEditorContainer(type);
     if (!editorDiv) return;
 
     // 移除所有高亮块
@@ -725,8 +736,8 @@ export function updateHighlightPositions(type = 'doc') {
 
 // 确保编辑器容器具有相对定位
 export function ensureEditorPositioning() {
-    const docEditor = document.querySelector('.content-text-doc');
-    const codeEditor = document.querySelector('.content-text-code');
+    const docEditor = getEditorContainer('doc');
+    const codeEditor = getEditorContainer('code');
     
     if (docEditor) {
         docEditor.style.position = 'relative';

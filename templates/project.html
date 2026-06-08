@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -542,7 +542,18 @@
                                         </div>
                                     </div>
                                     <div class="content-card">
-                                        <pre class="content-text-code" v-html="selectedCodeContent" @mouseup="handleCodeSelection"></pre>
+                                        <div class="content-text-code" v-html="selectedCodeContent" @mouseup="handleCodeSelection"></div>
+                                        <div class="doc-pagination-bar" v-if="selectedCodeFile">
+                                            <div class="doc-pagination-info">
+                                                第 ${ currentCodePage } / ${ totalCodePages } 页
+                                            </div>
+                                            <div class="doc-pagination-actions">
+                                                <el-button size="small" text :disabled="currentCodePage <= 1" @click="goToCodeFirstPage">首页</el-button>
+                                                <el-button size="small" text :disabled="currentCodePage <= 1" @click="goToCodePrevPage">上一页</el-button>
+                                                <el-button size="small" text :disabled="currentCodePage >= totalCodePages" @click="goToCodeNextPage">下一页</el-button>
+                                                <el-button size="small" text :disabled="currentCodePage >= totalCodePages" @click="goToCodeLastPage">尾页</el-button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel right-sidebar" collapsible>
@@ -718,6 +729,17 @@
                                                 暂无对齐结果
                                             </div>
                                         </div>
+                                        <div class="doc-pagination-bar" v-if="alignmentTotal > 0">
+                                            <div class="doc-pagination-info">
+                                                第 ${ alignmentPage } / ${ alignmentTotalPages } 页，共 ${ alignmentTotal } 条
+                                            </div>
+                                            <div class="doc-pagination-actions">
+                                                <el-button size="small" text :disabled="alignmentPage <= 1" @click="goToAlignmentPage(1)">首页</el-button>
+                                                <el-button size="small" text :disabled="alignmentPage <= 1" @click="goToAlignmentPage(alignmentPage - 1)">上一页</el-button>
+                                                <el-button size="small" text :disabled="alignmentPage >= alignmentTotalPages" @click="goToAlignmentPage(alignmentPage + 1)">下一页</el-button>
+                                                <el-button size="small" text :disabled="alignmentPage >= alignmentTotalPages" @click="goToAlignmentPage(alignmentTotalPages)">尾页</el-button>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- 块视图 -->
@@ -791,6 +813,17 @@
                                                 暂无${ blockType === 'doc' ? '需求' : '代码' }块数据
                                             </div>
                                         </div>
+                                        <div class="doc-pagination-bar" v-if="(blockType === 'doc' ? docBlockTotal : codeBlockTotal) > 0">
+                                            <div class="doc-pagination-info">
+                                                第 ${ blockType === 'doc' ? docBlockPage : codeBlockPage } / ${ blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages } 页，共 ${ blockType === 'doc' ? docBlockTotal : codeBlockTotal } 条
+                                            </div>
+                                            <div class="doc-pagination-actions">
+                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) <= 1" @click="goToBlockPage(1)">首页</el-button>
+                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) <= 1" @click="goToBlockPage((blockType === 'doc' ? docBlockPage : codeBlockPage) - 1)">上一页</el-button>
+                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) >= (blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)" @click="goToBlockPage((blockType === 'doc' ? docBlockPage : codeBlockPage) + 1)">下一页</el-button>
+                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) >= (blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)" @click="goToBlockPage(blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)">尾页</el-button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </el-splitter-panel>
                             </el-splitter>
@@ -801,7 +834,7 @@
                                 <div class="issue-header-bar">
                                     <div class="issue-title-bar">
                                         <h3><i class="fas fa-exclamation-triangle"></i> 问题单列表 (${issues ? issues.length : 0})</h3>
-                                        <button class="export-btn" @click="exportConfirmedIssues" title="导出已确认的问题单">
+                                        <button class="export-btn" @click="exportConfirmedIssues" title="仅导出已确认的问题单">
                                             <i class="fas fa-download"></i> 导出问题单
                                         </button>
                                     </div>
