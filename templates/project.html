@@ -658,6 +658,12 @@
                                                     <el-radio-button label="current">当前文件</el-radio-button>
                                                 </el-radio-group>
                                             </div>
+                                            <div class="filter-row sidebar-controls-group">
+                                                <el-radio-group v-model="alignType" size="small" class="custom-segmented-control">
+                                                    <el-radio-button label="req2code">需求 -> 代码</el-radio-button>
+                                                    <el-radio-button label="code2req">代码 -> 需求</el-radio-button>
+                                                </el-radio-group>
+                                            </div>
                                             <div class="filter-row sidebar-controls-group sidebar-controls-group--status">
                                                 <el-checkbox-group v-model="statusFilters" class="status-checkbox-group">
                                                     <el-checkbox label="unaligned">未对齐</el-checkbox>
