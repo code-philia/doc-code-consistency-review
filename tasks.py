@@ -148,7 +148,7 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
 
 
 @celery.task(bind=True)
-def review_alignment_task(self, project_path, project_id, user_id, files, prompt_type=None):
+def review_alignment_task(self, project_path, project_id, user_id, files, prompt_type=None, reviewed_count=None):
     try:
         result = []
         if isinstance(files, dict):
@@ -163,7 +163,10 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
 
         # print('result===============', result)
         total = len(result)
-        for i, item in enumerate(result, 1):
+        # print('reviewed_count===============',reviewed_count)
+        if not reviewed_count or not isinstance(reviewed_count, int):
+            reviewed_count = 0
+        for i, item in enumerate(result, reviewed_count):
             alignment = item['alignment']
             self.update_state(
                 state="PROGRESS",
@@ -500,10 +503,11 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
     project_path = params.get('projectPath', '')
     project_id = params.get('project_id')
     chunks = params.get('requirements')
+    y_align = params.get('y_align')
     total = len(chunks)
     try:
 
-        for i, chunk in enumerate(chunks, 1):
+        for i, chunk in enumerate(chunks, y_align):
             self.update_state(
                 state="PROGRESS",
                 meta={
@@ -650,10 +654,10 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
 
 
 @celery.task(bind=True)
-def align_code_to_requirements_task(self, project_path, code_blocks, project_id, user_id):
+def align_code_to_requirements_task(self, project_path, code_blocks, project_id, user_id, y_align):
     total = len(code_blocks)
     try:
-        for i, code_block in enumerate(code_blocks, 1):
+        for i, code_block in enumerate(code_blocks, y_align):
             self.update_state(
                 state="PROGRESS",
                 meta={
@@ -966,15 +970,16 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
         # conn = get_db_conn(project_path)
         cur.execute(
             '''
-            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, createdAt, updatedAt, is_code_review) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s) 
+            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, createdAt, updatedAt, is_code_review, is_alignment) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s, 1) 
             ON DUPLICATE KEY UPDATE 
                 name = VALUES(name),
                 isReviewed = VALUES(isReviewed),
                 reviewThoughts = VALUES(reviewThoughts),
                 docRanges = VALUES(docRanges),
                 codeRanges = VALUES(codeRanges),
-                updatedAt = CURRENT_TIMESTAMP
+                updatedAt = CURRENT_TIMESTAMP,
+                is_alignment = 1
             ''',
             (
                 new_alignment.get('id'),
