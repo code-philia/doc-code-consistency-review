@@ -9,7 +9,8 @@ DATABASE = os.path.join(BASE_DIR, 'doc_code_sql.db')
 def create_app():
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
     app.config['SECRET_KEY'] = '0GWEjZKPQXpu3vaviTpLJ9nTohOYD29299Vg_jD1h73tI4ceyBocFiPnFskVvJdCdh8'
-
+    app.config['MAX_CONTEBT_LENGTH'] = 1024*1024*1024 # 1GB
+    
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'user.login'

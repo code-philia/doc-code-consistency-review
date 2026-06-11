@@ -17,13 +17,17 @@ from openai import OpenAI
 from .utils import chunk_list
 from .db import get_db_celery
 import traceback
+
 # 从项目根目录加载 .env
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 API_KEY = os.environ.get("API_KEY", "0")
-MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen3-8B")
+# MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+MODEL_NAME = "Qwen3-32B"
 
 #API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
 #MODEL_NAME = "/llm"
@@ -369,9 +373,9 @@ def query_codefile_from_abstract(requirement, file_abstract):
     # 解析回复
     response = query_llm(prompt)
     llm_output = response.content
-    #print("original llm output: ", llm_output)
+    # print("original llm output: ", llm_output)
     parsed_output = parse_abstract_output(llm_output)
-    #print("requirement: ", requirement)
+    # print("requirement: ", requirement)
     # print("parse output: ", parsed_output)
     
     file_list = []
@@ -816,7 +820,7 @@ def query_related_requirement_block(
 
         # print("original llm output: ", llm_output)
         try:
-            parsed_output = parse_output(llm_output)
+            parsed_output = parse_alignment_output(llm_output)
             # print("parsed llm output: ", parsed_output)
             return parsed_output
         except Exception as e:
@@ -1242,7 +1246,7 @@ def query_review_result_by_feedback(
     except Exception as e:
         traceback.print_exc()
         print(f"审查过程中出错: {str(e)}")
-        return f"审查过程中发生错误: {e}", None        
+        return f"审查过程中发生错误，请在右键菜单选择“审查”，将执行重新审查。", None        
  
  
  
@@ -1390,7 +1394,8 @@ def query_review_result(
         
     except Exception as e:
         print(f"审查过程中出错: {str(e)}")
-        return f"审查过程中发生错误: {e}", None
+        #return f"审查过程中发生错误: {e}", None
+        return f"审查过程中发生错误，请在右键菜单选择“审查”，将执行重新审查。", None 
 
 
 def get_prompt(prompt_type, user_id):

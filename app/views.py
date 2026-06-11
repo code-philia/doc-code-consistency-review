@@ -1721,7 +1721,7 @@ def abstract_code_from_project():
         # 排除无关文件夹/目录
         exclude_folders = ['.git', '.idea']
         # 基于文件名后缀，指定文件类型
-        include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html', '.vhd', '.v', '.sv']
+        include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html', '.vhd', '.v', '.sv', '.adb', '.ads']
         # 遍历文件夹
         file_abstract = {}
         for root, dirs, files in os.walk(code_file_path):
@@ -2136,6 +2136,7 @@ def review_alignment():
     files = data.get('requirement_files')
     code_blocks = data.get('code_blocks')
     prompt_type = data.get('promptType', '')
+    reviewed_count = data.get('reviewedCount', '')
 
     #if not all([project_path, project_id, files]) and not prompt_type:
     has_requirement_files = isinstance(files, dict) and any(files.values())
@@ -2150,7 +2151,7 @@ def review_alignment():
         # print(f"[Review] RAG initialize failed: {e}")
 
     from tasks import review_alignment_task
-    task = review_alignment_task.delay(project_path, project_id, current_user.user_id, files, prompt_type)
+    task = review_alignment_task.delay(project_path, project_id, current_user.user_id, files, prompt_type, reviewed_count)
 
     return jsonify({"status": "success", "task_id": task.id})
 
@@ -2380,7 +2381,9 @@ def _normalize_alignment_row(row):
         'reviewThoughts': row['reviewThoughts'] or '',
         'docRanges': _safe_json_loads(row.get('docRanges'), []),
         'codeRanges': _safe_json_loads(row.get('codeRanges'), []),
-        'isCodeReview': row.get('is_code_review', 0)
+        'isCodeReview': row.get('is_code_review', 0),
+        'is_alignment': row.get('is_alignment', 0),
+        'align_type': row['align_type']
     }
 
 
@@ -2448,7 +2451,8 @@ def _load_project_alignments(project_id):
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
-        "SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments WHERE project_id=%s",
+        "SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review,is_alignment,align_type "
+        "FROM alignments WHERE project_id=%s",
         (project_id,)
     )
     rows = cur.fetchall()
@@ -2515,6 +2519,7 @@ def get_alignments():
     include_code_review = request.args.get('include_code_review')
     page = request.args.get('page', type=int)
     page_size = request.args.get('page_size', type=int)
+    align_type = request.args.get('align_type')
     print('get(`/project/alignments, project_id:', project_id)
     
     if not project_path:
@@ -2533,6 +2538,8 @@ def get_alignments():
             include_code_review=include_code_review
         )
 
+        if align_type:
+            filtered = [item for item in filtered if item.get('align_type') == align_type]
         if page or page_size:
             paged = _paginate_items(filtered, page or 1, page_size or 50)
             return jsonify({
@@ -2542,6 +2549,30 @@ def get_alignments():
             }), 200
 
         result = {alignment['id']: alignment for alignment in filtered}
+        # conn = get_db()
+        # cur = conn.cursor()
+        #
+        # query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review,is_alignment,align_type " \
+        #         f"FROM alignments where project_id={project_id}"
+        # cur.execute(query)
+        #
+        # rows = cur.fetchall()
+        # result = {}
+        #
+        # for r in rows:
+        #     alignment = {
+        #         'id': r['id'],
+        #         'name': r['name'],
+        #         'isReviewed': bool(r['isReviewed']),
+        #         'reviewThoughts': r['reviewThoughts'] or '',
+        #         'docRanges': pyjson.loads(r['docRanges'] or '[]'),
+        #         'codeRanges': pyjson.loads(r['codeRanges'] or '[]'),
+        #         'isCodeReview': r['is_code_review'],
+        #         'is_alignment': r['is_alignment'],
+        #         'align_type': r['align_type']
+        #     }
+        #     result[alignment['id']] = alignment
+        # print(result)
         return jsonify({"status": "success", "data": result}), 200
     except Exception as e:
 
@@ -2555,6 +2586,12 @@ def add_alignment():
     new_alignment = request.json
     if not project_path or not new_alignment or 'id' not in new_alignment:
         return jsonify({"status": "error", "message": "缺少项目路径或无效的对齐数据。"}), 400
+
+    is_alignment = 0
+    if new_alignment.get('is_alignment'):
+        is_alignment = new_alignment.get('is_alignment')
+    if new_alignment.get('docRanges') and new_alignment.get('codeRanges'):
+        is_alignment = 1
 
     # --- 自动创建块的逻辑 ---
     try:
@@ -2704,8 +2741,9 @@ def add_alignment():
         
         cur.execute(
             '''
-            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, GenReq, GenMermaid, createdAt, updatedAt, is_code_review) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s) 
+            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, 
+            GenReq, GenMermaid, createdAt, updatedAt, is_code_review, is_alignment, align_type) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s, %s, %s) 
             ON DUPLICATE KEY UPDATE 
                 name = VALUES(name),
                 isReviewed = VALUES(isReviewed),
@@ -2714,7 +2752,8 @@ def add_alignment():
                 codeRanges = VALUES(codeRanges),
                 GenReq = VALUES(GenReq),
                 GenMermaid = VALUES(GenMermaid),
-                updatedAt = CURRENT_TIMESTAMP
+                updatedAt = CURRENT_TIMESTAMP,
+                is_alignment = VALUES(is_alignment)
             ''',
             (
                 new_alignment.get('id'),
@@ -2727,7 +2766,9 @@ def add_alignment():
                 json.dumps(code_ranges or []),
                 generated_requirement or '',
                 mermaid_code or '',
-                0
+                0,
+                is_alignment,
+                'req2code' if new_alignment.get('docRanges') else 'code2req'
             )
         )
 
@@ -3063,13 +3104,14 @@ def get_alignment_by_id():
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review FROM alignments WHERE id=%s', (alignment_id,))
+        cur.execute('SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review,is_alignment,align_type FROM alignments WHERE id=%s', (alignment_id,))
         r = cur.fetchone()
         if not r:
             return jsonify({'status': 'error', 'message': '未找到对齐关系'}), 404
         alignment = _normalize_alignment_row(r)
         return jsonify({'status': 'success', 'data': alignment})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)})
 
 
@@ -3289,72 +3331,152 @@ def _compact_title_from_text(text: str, max_len: int = 24):
     return t[:max_len].rstrip() + '…'
 
 
-@bp.route('/api/get-requirement-chunks', methods=['GET'])
-def get_requirement_chunks():
-    try:
-        project_path = request.args.get('projectPath')
+def gen_req_chunks(project_path):
+    """
+    原逻辑: 读取文件，生成需求快数据
+    """
+    doc_block_file_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
+    if not os.path.exists(doc_block_file_path):
+        return jsonify({'status': 'success', 'data': []})
 
+    chunks = []
+    with open(doc_block_file_path, 'r', encoding='utf-8') as f:
+        for i, line in enumerate(f):
+            if not line.strip():
+                continue
+            try:
+                block = pyjson.loads(line.strip())
+            except Exception:
+                continue
 
-        if not project_path:
-            return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
+            filename = block.get('filename') or block.get('documentId') or ''
+            content = block.get('content') or ''
+            start = block.get('start') if block.get('start') is not None else 0
+            end = block.get('end') if block.get('end') is not None else 0
 
-        doc_block_file_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
-        if not os.path.exists(doc_block_file_path):
-            return jsonify({'status': 'success', 'data': []})
+            raw_doc = _read_doc_raw_content(project_path, filename)
+            start_line, end_line = _offset_to_line_numbers(raw_doc, start, end)
 
-        chunks = []
-        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-            for i, line in enumerate(f):
-                if not line.strip():
-                    continue
-                try:
-                    block = pyjson.loads(line.strip())
-                except Exception:
-                    continue
+            doc_range = {
+                'documentId': filename,
+                'filename': filename,
+                'start': start,
+                'end': end,
+                'content': content,
+                'startLine': start_line,
+                'endLine': end_line
+            }
 
-                filename = block.get('filename') or block.get('documentId') or ''
-                content = block.get('content') or ''
-                start = block.get('start') if block.get('start') is not None else 0
-                end = block.get('end') if block.get('end') is not None else 0
+            chunk_id = f"auto_req_{uuid.uuid4().hex}"
 
-                raw_doc = _read_doc_raw_content(project_path, filename)
-                start_line, end_line = _offset_to_line_numbers(raw_doc, start, end)
-
-                doc_range = {
-                    'documentId': filename,
-                    'filename': filename,
-                    'start': start,
-                    'end': end,
-                    'content': content,
-                    'startLine': start_line,
-                    'endLine': end_line
-                }
-
-                chunk_id = f"auto_req_{uuid.uuid4().hex}"
-
-                if 'name' in block:
-                    chunk_name = block.get('name')
+            if 'name' in block:
+                chunk_name = block.get('name')
+            else:
+                if '#' in content:
+                    first_line = content.split('\n')[0]
+                    chunk_name = first_line.lstrip('#')
                 else:
-                    if  '#' in content:
-                        first_line = content.split('\n')[0]
-                        chunk_name = first_line.lstrip('#')
-                    else:
-                        chunk_name = _compact_title_from_text(content, 24)
+                    chunk_name = _compact_title_from_text(content, 24)
 
-                chunks.append({
-                    'id': chunk_id,
-                    'name': chunk_name,
-                    'isReviewed': False,
-                    'reviewThoughts': '',
-                    'docRanges': [doc_range],
-                    'codeRanges': []
-                })
+            chunks.append({
+                'id': chunk_id,
+                'name': chunk_name,
+                'isReviewed': False,
+                'reviewThoughts': '',
+                'docRanges': [doc_range],
+                'codeRanges': []
+            })
 
-        chunks.sort(key=lambda x: ((x.get('docRanges') or [{}])[0].get('filename') or '', (x.get('docRanges') or [{}])[0].get('start') or 0))
-        return jsonify({'status': 'success', 'data': chunks})
+    chunks.sort(key=lambda x: (
+    (x.get('docRanges') or [{}])[0].get('filename') or '', (x.get('docRanges') or [{}])[0].get('start') or 0))
+
+    return chunks
+
+
+def query_by_project_id(project_id, align_type):
+    db = get_db()
+    c = db.cursor()
+
+    c.execute(f"select codeRanges,docRanges,id,isReviewed,name,reviewThoughts,is_alignment from alignments "
+              f"where project_id={project_id} and align_type='{align_type}'")
+    rows = c.fetchall()
+    return rows
+
+
+def save_align_to_db(project_id, data, align_type):
+    db = get_db()
+    c = db.cursor()
+
+    try:
+        sql = """
+                INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges, 
+                                       createdAt, updatedAt, align_type) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s) 
+              """
+        values = []
+        for item in data:
+            values.append((
+                item.get('id'),
+                current_user.user_id,
+                project_id,
+                item.get('name'),
+                0,
+                item.get('reviewThoughts') or '',
+                json.dumps(item.get('docRanges') or []),
+                json.dumps(item.get('codeRanges') or []),
+                align_type
+            ))
+
+        if values:
+            c.executemany(sql, values)
 
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)})
+        db.rollback()
+        raise e
+
+
+@bp.route('/api/get-requirement-chunks', methods=['GET'])
+def get_requirement_chunks():
+    project_path = request.args.get('projectPath')
+    project_id = request.args.get('projectId')
+    need_save = False
+
+    if not project_path:
+        return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
+
+    if project_id:
+        all_align = query_by_project_id(project_id, 'req2code')
+        if len(all_align) != 0:
+            no_align = []
+            y_align_count = 0
+            for item in all_align:
+                item['docRanges'] = json.loads(item['docRanges'])
+                item['codeRanges'] = json.loads(item['codeRanges'])
+                if item['is_alignment'] == 0:
+                    no_align.append(item)
+                else:
+                    y_align_count += 1
+
+            return jsonify({'status': 'success', 'data': no_align,
+                            'y_align_count': y_align_count,
+                            'all_align_count': len(all_align),
+                            'n_align_count': len(no_align)})
+
+        need_save = True
+
+    try:
+        chunks = gen_req_chunks(project_path)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f"文件处理失败:{str(e)}"})
+
+    if need_save:
+        try:
+            save_align_to_db(project_id, chunks, 'req2code')
+        except Exception as e:
+            logger.info(f'对齐数据(req2code)入库失败:{e}')
+
+    return jsonify({'status': 'success', 'data': chunks})
+
 
 
 @bp.route('/api/add-block', methods=['POST'])
@@ -3365,6 +3487,7 @@ def add_block():
         project_path = data.get('projectPath')
         block_type = data.get('blockType')  # 'doc' or 'code'
         block_data = data.get('blockData')
+        # project_id = data.get('projectId')
 
         if not project_path or not block_type or not block_data:
             return jsonify({'status': 'error', 'message': '缺少必要参数'})
@@ -3432,6 +3555,7 @@ def add_block():
             if not exists:
                 with open(code_block_path, 'a', encoding='utf-8') as f:
                     f.write(json.dumps(block_data, ensure_ascii=False) + '\n')
+                # save_code_block(project_path, project_id)
                 return jsonify({'status': 'success', 'message': '代码块添加成功'})
             else:
                 return jsonify({'status': 'warning', 'message': '该代码块已存在'})
@@ -3441,6 +3565,34 @@ def add_block():
     except Exception as e:
         print(f"Error adding block: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
+
+
+# def save_code_block(project_path, project_id):
+#     """
+#     在add-block后面调用，取最后面新添加的block，存到alignments表，用来纯代码审查
+#     """
+#
+#     try:
+#         chunk = gen_code_chunks(project_path, True)
+#     except Exception as e:
+#         logger.info(f'文件处理失败:{e}')
+#         return
+#     db = get_db()
+#     c = db.cursor()
+#     try:
+#         c.execute("INSERT INTO alignments(id,user_id,project_id,name,reviewThoughts,docRanges,codeRanges,createdAt,"
+#                   "updatedAt,is_code_review) "
+#                   "VALUES(%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,1)",
+#                   (chunk.get('id'),
+#                    current_user.user_id,
+#                    project_id,
+#                    chunk.get('name'),
+#                    chunk.get('reviewThoughts'),
+#                    chunk.get('docRanges')),
+#                   chunk.get('codeRanges'))
+#     except Exception as e:
+#         db.rollback()
+#         logger.info(f'纯代码审查数据入库失败:{e}')
 
 
 @bp.route('/api/delete-block', methods=['POST'])
@@ -3606,79 +3758,117 @@ def delete_block():
         return jsonify({'status': 'error', 'message': str(e)})
 
 
+def gen_code_chunks(project_path, end=False):
+    code_block_file_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
+    if not os.path.exists(code_block_file_path):
+        return jsonify({'status': 'success', 'data': []})
+
+    code_repo_path = os.path.join(project_path, 'code_repo')
+    chunks = []
+    with open(code_block_file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.strip():
+                continue
+            try:
+                block = pyjson.loads(line.strip())
+            except Exception:
+                continue
+
+            file_rel = block.get('file') or ''
+            rng = block.get('range') or []
+            if not (isinstance(rng, list) and len(rng) == 2):
+                continue
+            start_line = int(rng[0])
+            end_line = int(rng[1])
+            content = block.get('code') or block.get('content') or ''
+
+            abs_code_path = os.path.join(code_repo_path, file_rel) if file_rel else None
+            raw_code = _read_text_file(abs_code_path)
+            char_start, char_end = _line_range_to_char_offsets(raw_code, start_line, end_line)
+
+            # 优先使用首个“非注释、非空”行作为名称；否则回退为文件+行号，避免空块/注释块导致未定义错误
+            chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
+            code_lines = [line.strip() for line in content.splitlines()]
+            for code_line in code_lines:
+                if not code_line:
+                    continue
+                if code_line.startswith('//') or code_line.startswith('/*') or code_line.startswith('*'):
+                    continue
+                chunk_name = code_line
+                break
+
+            code_range = {
+                'name': chunk_name,
+                'documentId': file_rel,
+                'filename': file_rel,
+                'start': char_start,
+                'end': char_end,
+                'content': content,
+                'startLine': start_line,
+                'endLine': end_line
+            }
+
+            chunk_id = f"auto_code_{uuid.uuid4().hex}"
+
+            # chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
+
+            chunks.append({
+                'id': chunk_id,
+                'name': chunk_name,
+                'isReviewed': False,
+                'reviewThoughts': '',
+                'docRanges': [],
+                'codeRanges': [code_range]
+            })
+
+    if end:
+        return chunks[-1]
+
+    chunks.sort(key=lambda x: (
+    (x.get('codeRanges') or [{}])[0].get('filename') or '', (x.get('codeRanges') or [{}])[0].get('startLine') or 0))
+
+    return chunks
+
+
 @bp.route('/api/get-code-chunks', methods=['GET'])
 def get_code_chunks():
+    project_path = request.args.get('projectPath')
+    project_id = request.args.get('projectId')
+    need_save = False
+
+    if not project_path:
+        return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
+    if project_id:
+        all_align = query_by_project_id(project_id, 'code2req')
+        if len(all_align) != 0:
+            no_align = []
+            y_align_count = 0
+            for item in all_align:
+                item['docRanges'] = json.loads(item['docRanges'])
+                item['codeRanges'] = json.loads(item['codeRanges'])
+                if item['is_alignment'] == 0:
+                    no_align.append(item)
+                else:
+                    y_align_count += 1
+
+            return jsonify({'status': 'success', 'data': no_align,
+                            'y_align_count': y_align_count,
+                            'all_align_count': len(all_align)})
+
+        need_save = True
+
     try:
-        project_path = request.args.get('projectPath')
-        if not project_path:
-            return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
-
-        code_block_file_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
-        if not os.path.exists(code_block_file_path):
-            return jsonify({'status': 'success', 'data': []})
-
-        code_repo_path = os.path.join(project_path, 'code_repo')
-        chunks = []
-        with open(code_block_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    block = pyjson.loads(line.strip())
-                except Exception:
-                    continue
-
-                file_rel = block.get('file') or ''
-                rng = block.get('range') or []
-                if not (isinstance(rng, list) and len(rng) == 2):
-                    continue
-                start_line = int(rng[0])
-                end_line = int(rng[1])
-                content = block.get('code') or block.get('content') or ''
-
-                abs_code_path = os.path.join(code_repo_path, file_rel) if file_rel else None
-                raw_code = _read_text_file(abs_code_path)
-                char_start, char_end = _line_range_to_char_offsets(raw_code, start_line, end_line)
-
-                # 优先使用首个“非注释、非空”行作为名称；否则回退为文件+行号，避免空块/注释块导致未定义错误
-                chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
-                code_lines = [line.strip() for line in content.splitlines()]
-                for code_line in code_lines:
-                    if not code_line:
-                        continue
-                    if code_line.startswith('//') or code_line.startswith('/*') or code_line.startswith('*'):
-                        continue
-                    chunk_name = code_line
-                    break
-
-                code_range = {
-                    'name': chunk_name,
-                    'documentId': file_rel,
-                    'filename': file_rel,
-                    'start': char_start,
-                    'end': char_end,
-                    'content': content,
-                    'startLine': start_line,
-                    'endLine': end_line
-                }
-
-                chunk_id = f"auto_code_{uuid.uuid4().hex}"
-
-                #chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
-
-                chunks.append({
-                    'id': chunk_id,
-                    'name': chunk_name,
-                    'isReviewed': False,
-                    'reviewThoughts': '',
-                    'docRanges': [],
-                    'codeRanges': [code_range]
-                })
-
-        chunks.sort(key=lambda x: ((x.get('codeRanges') or [{}])[0].get('filename') or '', (x.get('codeRanges') or [{}])[0].get('startLine') or 0))
-        return jsonify({'status': 'success', 'data': chunks})
+        chunks = gen_code_chunks(project_path)
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'status': 'error', 'message': f"文件处理失败:{str(e)}"})
+
+    if need_save:
+        try:
+            save_align_to_db(project_id, chunks, 'code2req')
+        except Exception as e:
+            logger.info(f'对齐数据(code2req)入库失败:{e}')
+
+    return jsonify({'status': 'success', 'data': chunks})
 
 
 @bp.route('/api/align-code-to-requirement-for', methods=['POST'])
@@ -3688,11 +3878,12 @@ def align_code_to_requirements():
     code_blocks = data.get('codeBlocks', [])
     project_path = data.get('projectPath', '')
     project_id = data.get('project_id', '')
+    y_align = data.get('y_align', '')
     if not project_path:
         return jsonify({"status": "error", "message": "缺少项目路径参数"}), 400
 
     from tasks import align_code_to_requirements_task
-    task = align_code_to_requirements_task.delay(project_path, code_blocks, project_id, current_user.user_id)
+    task = align_code_to_requirements_task.delay(project_path, code_blocks, project_id, current_user.user_id, y_align)
 
     return jsonify({"status": "success", "task_id": task.id})
 
@@ -4980,7 +5171,7 @@ def export_project_results():
 def delete_export_project_results():
     try:        
         data = request.json
-        filename = data.get('filename', [])
+        filename = data.get('filename', '')
         # 删除文件（从文件系统中删除）
         temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
         docx_path = os.path.join(temp_dir, filename)

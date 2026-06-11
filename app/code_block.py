@@ -41,6 +41,8 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
     """
     global index
     
+    if os.path.isdir(file_path):
+        return []
     # 读取文件内容，保留原始行（不包括空行）
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
         lines = [line.rstrip('\n') for line in f.readlines()]
