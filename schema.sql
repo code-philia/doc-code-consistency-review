@@ -48,6 +48,8 @@ CREATE TABLE `alignments` (
   `name` text DEFAULT NULL,
   `isReviewed` int DEFAULT '0',
   `is_code_review` int DEFAULT '0',
+  `align_type` char(20) DEFAULT NULL,
+  `is_alignment` int DEFAULT '0',
   `reviewThoughts` text,
   `docRanges` MEDIUMTEXT NOT NULL,
   `codeRanges` MEDIUMTEXT NOT NULL COMMENT '代码',
