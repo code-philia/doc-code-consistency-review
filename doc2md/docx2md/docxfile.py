@@ -28,6 +28,20 @@ class DocxFile:
             raise FileNotFoundError
         return self.docx.read("word/_rels/document.xml.rels")
 
+    def styles(self):
+        if self.docx is None:
+            raise FileNotFoundError
+        if "word/styles.xml" not in self.namelist():
+            return None
+        return self.docx.read("word/styles.xml")
+
+    def numbering(self):
+        if self.docx is None:
+            raise FileNotFoundError
+        if "word/numbering.xml" not in self.namelist():
+            return None
+        return self.docx.read("word/numbering.xml")
+
     def namelist(self):
         if self.docx is None:
             raise FileNotFoundError

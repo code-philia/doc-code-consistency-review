@@ -9,14 +9,150 @@ from ..dwml import omml
 import traceback
 
 class Converter:
-    def __init__(self, xml_text, media, use_md_table, parseDocMethod):
+    def __init__(self, xml_text, styles_xml ,numbering_xml, media, use_md_table, parseDocMethod):
         self.tree = etree.fromstring(xml_text)
         utils.strip_ns_prefix(self.tree)
+        self.parseDocMethod = parseDocMethod
+
+        # 深度解析样式表，构建样式映射
+        self.styles_tree = None
+        self.styles_map = {}
+        if styles_xml:
+            self.styles_tree = etree.fromstring(styles_xml)
+            utils.strip_ns_prefix(self.styles_tree)
+            self._build_styles_map()
+
+        # 深度解析编号表，构建编号映射
+        self.numbering_tree = None
+        self.numbering_map = {}
+        if numbering_xml:
+            self.numbering_tree = etree.fromstring(numbering_xml)
+            utils.strip_ns_prefix(self.numbering_tree)
+            self._build_numbering_map()
+
+        # (numId, ilvl)
+        self.list_counters = {}
+
         self.media = media
         self.image_counter = self.counter()
         self.table_counter = self.counter()
+
         self.use_md_table = use_md_table
-        self.parseDocMethod = parseDocMethod
+        # 记录公式集
+        self.mathText = []
+        self.isMathText = False
+
+    def _build_styles_map(self):
+        # 建立以outline数值为key的样式字典
+        self.styles_map = {}
+        for style in self.styles_tree.xpath("//style"):
+            style_id = style.attrib.get("styleId")
+            if not style_id:
+                continue
+
+            based_on = self.get_first_element(style, "./basedOn")
+            outline_lvl = self.get_first_element(style, "./pPr/outlineLvl")
+
+            numId_el = self.get_first_element(style, "./pPr/numPr/numId")
+            ilvl_el = self.get_first_element(style, "./pPr/numPr/ilvl")
+
+            self.styles_map[style_id] = {
+                "basedOn": based_on.attrib.get("val") if based_on is not None else None,
+                "outlineLvl": int(outline_lvl.attrib.get("val")) if outline_lvl is not None and outline_lvl.attrib.get(
+                    "val", "").isdigit() else None,
+                "type": style.attrib.get("type"),
+                "hasNumPr": numId_el is not None or ilvl_el is not None,
+                "numId": numId_el.attrib.get("val") if numId_el is not None else None,
+                "ilvl": int(ilvl_el.attrib.get("val")) if ilvl_el is not None and ilvl_el.attrib.get("val",
+                                                                                                     "").isdigit() else None,
+            }
+
+    def _build_numbering_map(self):
+        # 建立编号映射：numId -> (ilvl -> numFmt)
+        abstract_map = {}
+        for abstract in self.numbering_tree.xpath("//abstractNum"):
+            abs_id = abstract.attrib.get("abstractNumId")
+            levels = {}
+            for lvl in abstract.xpath("./lvl"):
+                ilvl = lvl.attrib.get("ilvl")
+                try:
+                    ilvl_i = int(ilvl) if ilvl is not None else 0
+                except:
+                    ilvl_i = 0
+                numFmt_el = self.get_first_element(lvl, "./numFmt")
+                numFmt = numFmt_el.attrib.get("val") if numFmt_el is not None else "bullet"
+                levels[ilvl_i] = numFmt
+            abstract_map[abs_id] = levels
+
+        # map numId -> abstractNum levels
+        for num in self.numbering_tree.xpath("//num"):
+            numId = num.attrib.get("numId")
+            abs_ref = self.get_first_element(num, "./abstractNumId")
+            abs_val = abs_ref.attrib.get("val") if abs_ref is not None else None
+            if abs_val and abs_val in abstract_map:
+                self.numbering_map[numId] = abstract_map[abs_val]
+            else:
+                self.numbering_map[numId] = {}
+
+    def _get_para_num_info(self, node, style_id=None):
+        # 建立缩进的映射
+        numId_el = self.get_first_element(node, "./pPr/numPr/numId")
+        ilvl_el = self.get_first_element(node, "./pPr/numPr/ilvl")
+        if numId_el is not None:
+            numId = numId_el.attrib.get("val")
+            try:
+                ilvl = int(ilvl_el.attrib.get("val")) if ilvl_el is not None and ilvl_el.attrib.get("val",
+                                                                                                    "").isdigit() else 0
+            except:
+                ilvl = 0
+            return (numId, ilvl)
+
+        if style_id:
+            style_info = self.styles_map.get(style_id)
+            if style_info and style_info.get("hasNumPr"):
+                return (style_info.get("numId"), style_info.get("ilvl") or 0)
+
+        return (None, None)
+
+    def _is_ordered_numfmt(self, fmt):
+        if not fmt:
+            return False
+        return fmt.lower() in {"decimal", "lowerLetter", "upperLetter", "lowerRoman", "upperRoman"}
+
+    def _inc_counter(self, numId, ilvl):
+        key = (numId, ilvl)
+        self.list_counters[key] = self.list_counters.get(key, 0) + 1
+        return self.list_counters[key]
+
+    def resolve_heading_level(self, style_id, visited=None):
+        if not style_id:
+            return None
+        if visited is None:
+            visited = set()
+        if style_id in visited:
+            return None
+        visited.add(style_id)
+
+        style_info = self.styles_map.get(style_id)
+        if not style_info:
+            return None
+
+        outline_lvl = style_info.get("outlineLvl")
+        if outline_lvl is not None:
+            return outline_lvl + 1
+
+        based_on = style_info.get("basedOn")
+        if based_on:
+            return self.resolve_heading_level(based_on, visited)
+
+        return None
+
+    def resolve_list_level(self, node):
+        ilvl = self.get_first_element(node, ".//ilvl")
+        if ilvl is None:
+            return None
+        val = ilvl.attrib.get("val")
+        return int(val) if val and val.isdigit() else None
 
     def counter(self, start=1):
         count = start - 1
@@ -32,8 +168,12 @@ class Converter:
         self.in_list = False
 
         of = io.StringIO()
-        body = self.get_first_element(self.tree, "//body")
-        self.parse_node(of, body)
+        body = self.get_first_element(self.tree, ".//*[local-name()='body']")
+        if body is not None:
+            self.parse_node(of, body)
+        else:
+            self.parse_node(of,self.tree)
+        # self.parse_node(of, body)
 
         return re.sub(r"\n{2,}", "\n\n", of.getvalue()).strip()
 
@@ -60,9 +200,7 @@ class Converter:
     ]
 
     def parse_node(self, of, node):
-        #print(f"parse_node: 处理节点 {node.tag}")
         for child in node.getchildren():
-            #print(f"  子节点: {child.tag}")
             tag_name = child.tag
             if tag_name in self.BODY_IGNORE:
                 continue
@@ -70,17 +208,23 @@ class Converter:
                 self.parse_p(of, child)
             elif tag_name == "tbl":
                 self.parse_tbl(of, child)
+            else:
+                self.parse_node(of,child)
+            if child.tail:
+                print(child.tail, end="", file = of)
+        if node.tail:
+            print(node.tail, end="", file = of)
             # else:
             #     # if self.is_formula(r):
             #     #     formula = self.extract_formula(r)
             #     #     if formula:
             #     #         text = f"$$ {formula} $$"
             #     print("# ** skip", tag_name)
-
+            #
             # elif tag_name == "br":
             #     if child.attrib.get("type") == "page":
             #         print('\n<div class="break"></div>\n', file=of)
-            
+            #
             #     else:
             #         print("<br>", end="", file=of)
             # elif tag_name == "t":
@@ -110,8 +254,8 @@ class Converter:
     ]
 
     #记录公式集
-    mathText = []
-    isMathText = False
+    # mathText = []
+    # isMathText = False
     starRe = r'\{array\}{\*\{(\d+)\}\{([clr])\}'
     def parse_p(self, of, node):
         def out_p(text):
@@ -124,7 +268,7 @@ class Converter:
         else: 
             sub_text = self.parse_p_text(node).lstrip()
         
-        
+        #sub_text = self.parse_p_text(node).lstrip()
         subtextsum = str(sub_text).count('$')
         if subtextsum and subtextsum % 2 != 0 and self.isMathText == False:
             self.mathText.clear()
@@ -172,6 +316,17 @@ class Converter:
                         afterinfo = "{array}{" + tempstr +"}"
                         sub_text = sub_text.replace(beforinfo,afterinfo)
 
+        pOutlinelevel = self.get_first_element(node,'./pPr/outlineLvl')
+        if pOutlinelevel is not None:
+            heading_str = pOutlinelevel.attrib.get("val","0")
+            try:
+                heading_level = int(heading_str)
+                md_tag = "#"*(heading_level + 1)
+            except ValueError:
+                md_tag = ""
+            if md_tag:
+                sub_text = f"{md_tag} {sub_text}"
+
         pStyle = self.get_first_element(node, "./pPr/pStyle")
         if pStyle is None:
             if self.in_list:
@@ -184,27 +339,53 @@ class Converter:
         # 將<oMathPara> 转换成 <m:oMathPara>
         # 解析并转换
         # xml_string = self.convert_omml_namespaces(xml_string)
-        style = pStyle.attrib["val"]
-        if style.isdigit():
-            if int(style) > 8:
-                print("",sub_text, file=of)
-            else:
-                print("#" * (int(style)), sub_text, file=of)
-        elif style[0] == "a":
-            ilvl = self.get_first_element(node, ".//ilvl")
+        # style = pStyle.attrib["val"]
+        # if style.isdigit():
+        #     if int(style) > 8:
+        #         print("",sub_text, file=of)
+        #     else:
+        #         print("#" * (int(style)), sub_text, file=of)
+        # elif style[0] == "a":
+        #     ilvl = self.get_first_element(node, ".//ilvl")
+        #     if ilvl is None:
+        #         out_p(sub_text)
+        #         return
+        #     level = int(ilvl.attrib["val"])
+        #     print("    " * level + "*", sub_text, file=of)
+        # else:
+        #     out_p(sub_text)
+        style_id = pStyle.attrib.get("val")
+        heading_level = self.resolve_heading_level(style_id)
+
+        if heading_level is not None:
+            # of.write(("#" * heading_level) + " " + sub_text.rstrip() + "\n\n")
+            print("#" * (int(heading_level)), sub_text, file=of)
+            return
+
+        numId, ilvl = self._get_para_num_info(node, style_id)
+        if numId:
             if ilvl is None:
-                out_p(sub_text)
-                return
-            level = int(ilvl.attrib["val"])
-            print("    " * level + "*", sub_text, file=of)
-        else:
-            out_p(sub_text)
+                ilvl = 0
+            num_levels = self.numbering_map.get(numId, {})
+            numFmt = num_levels.get(ilvl)
+            indent = "    " * ilvl
+            if self._is_ordered_numfmt(numFmt):
+                cnt = self._inc_counter(numId, ilvl)
+                marker = f"{cnt}."
+            else:
+                marker = "*"
+            # of.write(f"{indent}{marker} {sub_text}")
+            print(f"{indent}{marker} ", sub_text, file=of)
+            return
+
+        out_p(sub_text)
 
     def parse_p_text(self, node):
         of = io.StringIO()
         xml_string = etree.tostring(node, encoding="unicode", pretty_print=True)
         #支持数学公式过滤
-        for r in node.xpath("./r|./ins/r|./oMathPara|./oMath|./smartTag/r"):
+        runs = node.xpath(".//r|.//ins/r|.//oMathPara|.//oMath")
+        for r in runs:
             if r.tag == 'oMath':
                 # 保证段落里面的公式只会被处理一次
                 OMML_NS = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
@@ -217,7 +398,6 @@ class Converter:
                 # 解析并转换
                 xml_string = self.convert_omml_namespaces(xml_string)
                 # print(xml_string)
-                
                 xml_string = xml_string.lstrip('')
                 # tmpInfo = omml.load_string(xml_string)
                 try:
@@ -265,7 +445,6 @@ class Converter:
             else:
                 self.parse_r(of, r)
         return of.getvalue()
-    
     
     R_IGNORE = [
         # "pict", "t", "br", "drawing",

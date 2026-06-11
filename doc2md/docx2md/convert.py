@@ -4,7 +4,7 @@ from .converter import Converter
 from .docxfile import DocxFile
 from .docxmedia import DocxMedia
 
-def do_convert(docx_file: str, parseDocMethod: str, target_dir="", use_md_table=False,savedMdName="")  -> str:
+def do_convert(docx_file: str, parseDocMethod: str, target_dir="", use_md_table=False, savedMdName="")  -> str:
     """
     convert docx_file to Markdown text and return it
     
@@ -20,8 +20,17 @@ def do_convert(docx_file: str, parseDocMethod: str, target_dir="", use_md_table=
         media = DocxMedia(docx)
         if target_dir:
             media.save(target_dir)
+        try:
+            styles_xml = docx.styles()
+        except Exception:
+            styles_xml = None
 
-        converter = Converter(docx.document(), media, use_md_table, parseDocMethod)
+        try:
+            numbering_xml = docx.numbering()
+        except Exception:
+            numbering_xml = None
+
+        converter = Converter(docx.document(), styles_xml, numbering_xml, media, use_md_table, parseDocMethod)
         path = os.path.join(target_dir,savedMdName)
         try:
             with open(path, 'w', encoding='utf-8') as md_file:

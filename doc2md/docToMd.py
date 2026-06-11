@@ -29,10 +29,10 @@ def convertDocToMarkdown(filePath, targetFolder, parseDocMethod):
     do_convert(filePath, parseDocMethod, target_dir=savedDir, use_md_table=True, savedMdName=savedFilePath)
     
     # 清除转换过程中产生的临时文件及log，debug时请注释
-    repo_root = Path(__file__).resolve().parent
-    output_workspace = os.path.join(repo_root, 'docx2tex', 'output_workspace')
-    if os.path.exists(output_workspace):
-        clear_folder(output_workspace)
+    # repo_root = Path(__file__).resolve().parent
+    # output_workspace = os.path.join(repo_root, 'docx2tex', 'output_workspace')
+    # if os.path.exists(output_workspace):
+        # clear_folder(output_workspace)
 
 def clear_folder(folder_path):
     """
