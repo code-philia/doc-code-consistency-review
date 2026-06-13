@@ -15,4 +15,6 @@ rag_database/
 .idea/
 .vscode/
 
+CLAUDE.md
+
 git-diff-report.html
