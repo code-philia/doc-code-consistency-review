@@ -1249,15 +1249,168 @@ def remove_file_content():
         return jsonify({"status": "error", "message": str(e)}), 404
 
         
+DOC_PAGE_TARGET_CHARS = 12000
+DOC_PAGE_MIN_CHARS = 8000
+DOC_PAGE_MAX_CHARS = 18000
+CODE_PAGE_TARGET_CHARS = 12000
+CODE_PAGE_MIN_CHARS = 8000
+CODE_PAGE_MAX_CHARS = 18000
+
+
+def _regularize_file_content(content, file_type):
+    if content is None:
+        return ''
+    content = content.replace('\r\n', '\n').replace('\r', '\n')
+    content = content.replace('\u200b', '')
+    if file_type == 'doc':
+        content = re.sub(r'(?<=\S)\$\$(?=\S)', '$ $', content)
+    return content
+
+
+def _count_occurrences(text, token):
+    if not text or not token:
+        return 0
+    count = 0
+    start = 0
+    while True:
+        idx = text.find(token, start)
+        if idx == -1:
+            break
+        count += 1
+        start = idx + len(token)
+    return count
+
+
+def _build_doc_page_ranges(content):
+    if not content:
+        return []
+
+    markers = ['\n# ', '\n## ', '\n### ', '\n#### ', '\n\n']
+    pages = []
+    start = 0
+
+    def normalize_break_point(segment_start, candidate_end):
+        safe_end = candidate_end
+        segment = content[segment_start:safe_end]
+        if _count_occurrences(segment, '```') % 2 != 0:
+            closing_fence = content.find('```', safe_end)
+            if closing_fence != -1:
+                safe_end = closing_fence + 3
+
+        if _count_occurrences(content[segment_start:safe_end], '$$') % 2 != 0:
+            closing_math = content.find('$$', safe_end)
+            if closing_math != -1:
+                safe_end = closing_math + 2
+
+        return min(safe_end, len(content))
+
+    def pick_break_point(segment_start):
+        remaining = len(content) - segment_start
+        if remaining <= DOC_PAGE_MAX_CHARS:
+            return len(content)
+
+        min_end = min(len(content), segment_start + DOC_PAGE_MIN_CHARS)
+        ideal_end = min(len(content), segment_start + DOC_PAGE_TARGET_CHARS)
+        max_end = min(len(content), segment_start + DOC_PAGE_MAX_CHARS)
+
+        def resolve_break(index, marker):
+            if index < min_end:
+                return None
+            return index + (2 if marker == '\n\n' else 1)
+
+        for marker in markers:
+            backward_index = content.rfind(marker, segment_start, ideal_end + len(marker))
+            break_point = resolve_break(backward_index, marker)
+            if break_point is not None:
+                return normalize_break_point(segment_start, break_point)
+
+        for marker in markers:
+            forward_index = content.find(marker, ideal_end)
+            if forward_index != -1 and forward_index <= max_end:
+                return normalize_break_point(segment_start, forward_index + (2 if marker == '\n\n' else 1))
+
+        return normalize_break_point(segment_start, max_end)
+
+    while start < len(content):
+        end = pick_break_point(start)
+        pages.append({'start': start, 'end': end})
+        if end <= start:
+            break
+        start = end
+
+    return pages
+
+
+def _build_code_page_ranges(content):
+    if not content:
+        return []
+
+    pages = []
+    start = 0
+    length = len(content)
+
+    while start < length:
+        end = min(start + CODE_PAGE_TARGET_CHARS, length)
+        if end < length:
+            min_end = min(start + CODE_PAGE_MIN_CHARS, length)
+            max_end = min(start + CODE_PAGE_MAX_CHARS, length)
+            next_line_break = content.rfind('\n', start, max_end + 1)
+            if next_line_break >= min_end:
+                end = next_line_break + 1
+            else:
+                forward_break = content.find('\n', end)
+                if forward_break != -1 and forward_break < max_end:
+                    end = forward_break + 1
+
+        if end <= start:
+            break
+        pages.append({'start': start, 'end': end})
+        start = end
+
+    return pages
+
+
+def _resolve_project_file_path(project_path, filename, file_type):
+    metadata_file = os.path.join(project_path, 'metadata.json')
+    with open(metadata_file, 'r', encoding='utf-8') as f:
+        metadata = json.load(f)
+
+    if file_type == 'code':
+        repo_path = metadata.get('code_repo')
+        return os.path.join(repo_path, filename)
+
+    file_name_prefix = filename.split('.')[0]
+    if filename.endswith('.md'):
+        repo_path = metadata.get('doc_repo')
+        file_path = os.path.join(repo_path, filename)
+        if not os.path.exists(file_path):
+            file_path = os.path.join(project_path, 'doc_repo_converted', file_name_prefix, file_name_prefix + '.md')
+        return file_path
+
+    return os.path.join(project_path, 'doc_repo_converted', file_name_prefix, file_name_prefix + '.md')
+
+
+def _read_text_file_with_fallback(file_path):
+    encodings = ['utf-8', 'gbk', 'gb2312', 'iso-8859-1']
+    with open(file_path, 'rb') as f:
+        content = f.read()
+    for enc in encodings:
+        try:
+            return content.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return content.decode('utf-8', errors='ignore')
+
+
         
         
 @bp.route('/project/file-content', methods=['GET'])
 def get_file_content():
     """根据项目路径、文件名和文件类型获取文件内容"""
     project_path = request.args.get('path')
+    page = request.args.get('page', type=int)
     filename = request.args.get('filename')
     file_type = request.args.get('type') # 'doc' or 'code'
-    # print(111,project_path,filename,file_type)
 
     if not project_path or not filename or not file_type:
         return jsonify({"status": "error", "message": "缺少必要的参数"}), 400
@@ -1271,46 +1424,42 @@ def get_file_content():
         return jsonify({"status": "error", "message": "无效的文件类型"}), 400
 
     try:
-        # 获取项目元数据以确定文件仓库路径
-        metadata_file = os.path.join(project_path, 'metadata.json')
-        with open(metadata_file, 'r', encoding='utf-8') as f:
-            metadata = json.load(f)
-
-        if file_type == 'code':
-            repo_path = metadata.get(repo_map[file_type])
-            file_path = os.path.join(repo_path, filename)
-        else: # 'doc'
-            file_name_prefix = filename.split('.')[0]
-            if filename.endswith('.md'):
-                repo_path = metadata.get(repo_map[file_type])
-                file_path = os.path.join(repo_path, filename)
-                if not os.path.exists(file_path):
-                    file_path = os.path.join(project_path, 'doc_repo_converted', file_name_prefix, file_name_prefix + '.md')
-                # print(222, repo_path, file_path)
-            else: # docx类型，读取转换后的md文件
-                file_path = os.path.join(project_path, 'doc_repo_converted', file_name_prefix, file_name_prefix + '.md')
-                # print(333, file_name_prefix, file_path)
+        file_path = _resolve_project_file_path(project_path, filename, file_type)
 
         if not os.path.exists(file_path):
             print(file_path)
             return jsonify({"status": "error", "message": "文件未找到"}), 404
 
-        # 读取文件内容
-        #with open(file_path, 'r', encoding='utf-8') as f:
-        #    content = f.read()
-        
-        
-        # 遍历可能的文件编码格式，读取文件内容
-        encodings = ['utf-8', 'gbk', 'gb2312', 'iso-8859-1']
-        with open(file_path, 'rb') as f:
-            content = f.read()
-        for enc in encodings:
-            try:
-                content = content.decode(enc)
-                break
-            except UnicodeDecodeError:
-                continue
-        
+        content = _read_text_file_with_fallback(file_path)
+
+        if page:
+            normalized_content = _regularize_file_content(content, file_type)
+            page_ranges = _build_doc_page_ranges(normalized_content) if file_type == 'doc' else _build_code_page_ranges(normalized_content)
+            total_pages = max(len(page_ranges), 1)
+            safe_page = min(max(page, 1), total_pages)
+            if page_ranges:
+                current_range = page_ranges[safe_page - 1]
+                page_content = normalized_content[current_range['start']:current_range['end']]
+                page_start = current_range['start']
+                page_end = current_range['end']
+            else:
+                page_content = ''
+                page_start = 0
+                page_end = 0
+
+            return jsonify({
+                "status": "success",
+                "content": page_content,
+                "pagination": {
+                    "page": safe_page,
+                    "pages": total_pages,
+                    "total_pages": total_pages,
+                    "page_ranges": page_ranges
+                },
+                "page_start": page_start,
+                "page_end": page_end
+            }), 200
+
         return jsonify({"status": "success", "content": content}), 200
 
     except Exception as e:

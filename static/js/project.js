@@ -81,16 +81,10 @@ const app = createApp({
         const selectedCodeContent = ref('');
         const selectedDocRawContent = ref('');
         const selectedCodeRawContent = ref('');
-        const docPages = ref([]);
+        const docPageRanges = ref([]);
         const currentDocPage = ref(1);
-        const codePages = ref([]);
+        const codePageRanges = ref([]);
         const currentCodePage = ref(1);
-        const DOC_PAGE_TARGET_CHARS = 12000;
-        const DOC_PAGE_MIN_CHARS = 8000;
-        const DOC_PAGE_MAX_CHARS = 18000;
-        const CODE_PAGE_TARGET_CHARS = 12000;
-        const CODE_PAGE_MIN_CHARS = 8000;
-        const CODE_PAGE_MAX_CHARS = 18000;
         
         const dialogParseDocMethodVisible = ref(false);
         const parseDocMethod = ref('default');
@@ -390,7 +384,7 @@ const app = createApp({
                     selectedDocFile.value = '';
                     selectedDocContent.value = '';
                     selectedDocRawContent.value = '';
-                    docPages.value = [];
+                    docPageRanges.value = [];
                     currentDocPage.value = 1;
                 }
 
@@ -398,7 +392,7 @@ const app = createApp({
                     selectedCodeFile.value = '';
                     selectedCodeContent.value = '';
                     selectedCodeRawContent.value = '';
-                    codePages.value = [];
+                    codePageRanges.value = [];
                     currentCodePage.value = 1;
                 }
 
@@ -706,6 +700,7 @@ const app = createApp({
                             });
                         }
 
+                        const codeFileContent = await ensureCurrentRawFileContent('code');
                         await nextTick(() => {
                             currentFileBlocks.forEach(block => {
                                 let start, end;
@@ -713,7 +708,7 @@ const app = createApp({
 
                                 if (block.range && Array.isArray(block.range) && block.range.length === 2) {
                                     const [startLine, endLine] = block.range;
-                                    const offsets = getOffsetsFromLineRange(selectedCodeRawContent.value, startLine, endLine);
+                                    const offsets = getOffsetsFromLineRange(codeFileContent, startLine, endLine);
                                     start = offsets.start;
                                     end = offsets.end;
                                     
@@ -1060,100 +1055,11 @@ const app = createApp({
             }
         };
 
-        const totalDocPages = computed(() => docPages.value.length || 1);
-        const totalCodePages = computed(() => codePages.value.length || 1);
+        const totalDocPages = computed(() => docPageRanges.value.length || 1);
+        const totalCodePages = computed(() => codePageRanges.value.length || 1);
         const alignmentTotalPages = computed(() => Math.max(1, Math.ceil(alignmentTotal.value / alignmentPageSize.value)));
         const docBlockTotalPages = computed(() => Math.max(1, Math.ceil(docBlockTotal.value / docBlockPageSize.value)));
         const codeBlockTotalPages = computed(() => Math.max(1, Math.ceil(codeBlockTotal.value / codeBlockPageSize.value)));
-
-        const buildDocPages = (content) => {
-            if (!content) return [];
-
-            const pages = [];
-            let start = 0;
-            const markers = ['\n# ', '\n## ', '\n### ', '\n#### ', '\n\n'];
-            const countOccurrences = (text, token) => {
-                if (!text || !token) return 0;
-                let count = 0;
-                let fromIndex = 0;
-                while (true) {
-                    const foundIndex = text.indexOf(token, fromIndex);
-                    if (foundIndex === -1) break;
-                    count += 1;
-                    fromIndex = foundIndex + token.length;
-                }
-                return count;
-            };
-
-            const normalizeBreakPoint = (segmentStart, candidateEnd) => {
-                let safeEnd = candidateEnd;
-                const segment = content.slice(segmentStart, safeEnd);
-                const fenceCount = countOccurrences(segment, '```');
-                if (fenceCount % 2 !== 0) {
-                    const closingFence = content.indexOf('```', safeEnd);
-                    if (closingFence !== -1) {
-                        safeEnd = closingFence + 3;
-                    }
-                }
-
-                const blockMathCount = countOccurrences(content.slice(segmentStart, safeEnd), '$$');
-                if (blockMathCount % 2 !== 0) {
-                    const closingMath = content.indexOf('$$', safeEnd);
-                    if (closingMath !== -1) {
-                        safeEnd = closingMath + 2;
-                    }
-                }
-
-                return Math.min(safeEnd, content.length);
-            };
-
-            const pickBreakPoint = (segmentStart) => {
-                const remaining = content.length - segmentStart;
-                if (remaining <= DOC_PAGE_MAX_CHARS) {
-                    return content.length;
-                }
-
-                const minEnd = Math.min(content.length, segmentStart + DOC_PAGE_MIN_CHARS);
-                const idealEnd = Math.min(content.length, segmentStart + DOC_PAGE_TARGET_CHARS);
-                const maxEnd = Math.min(content.length, segmentStart + DOC_PAGE_MAX_CHARS);
-
-                const resolveBreak = (index, marker) => {
-                    if (index < minEnd) return null;
-                    return index + (marker === '\n\n' ? 2 : 1);
-                };
-
-                for (const marker of markers) {
-                    const backwardIndex = content.lastIndexOf(marker, idealEnd);
-                    const breakPoint = resolveBreak(backwardIndex, marker);
-                    if (breakPoint !== null) {
-                        return normalizeBreakPoint(segmentStart, breakPoint);
-                    }
-                }
-
-                for (const marker of markers) {
-                    const forwardIndex = content.indexOf(marker, idealEnd);
-                    if (forwardIndex !== -1 && forwardIndex <= maxEnd) {
-                        return normalizeBreakPoint(segmentStart, forwardIndex + (marker === '\n\n' ? 2 : 1));
-                    }
-                }
-
-                return normalizeBreakPoint(segmentStart, maxEnd);
-            };
-
-            while (start < content.length) {
-                const end = pickBreakPoint(start);
-                pages.push({
-                    start,
-                    end,
-                    content: content.slice(start, end)
-                });
-
-                if (end <= start) break;
-                start = end;
-            }
-
-            return pages;
-        };
 
         const shiftMarkdownParseOffsets = (html, offsetBase) => {
             if (!html || !offsetBase) return html;
@@ -1162,74 +1068,65 @@ const app = createApp({
             });
         };
 
-        const buildCodePages = (content) => {
-            if (!content) return [];
-
-            const pages = [];
-            let start = 0;
-            const length = content.length;
-
-            while (start < length) {
-                let end = Math.min(start + CODE_PAGE_TARGET_CHARS, length);
-                if (end < length) {
-                    const minEnd = Math.min(start + CODE_PAGE_MIN_CHARS, length);
-                    const maxEnd = Math.min(start + CODE_PAGE_MAX_CHARS, length);
-                    const nextLineBreak = content.lastIndexOf('\n', maxEnd);
-                    if (nextLineBreak >= minEnd) {
-                        end = nextLineBreak + 1;
-                    } else {
-                        const forwardBreak = content.indexOf('\n', end);
-                        if (forwardBreak !== -1 && forwardBreak < maxEnd) {
-                            end = forwardBreak + 1;
-                        }
-                    }
+        const fetchFilePage = async (fileName, fileType, pageNumber = 1) => {
+            const response = await axios.get('/project/file-content', {
+                params: {
+                    path: projectPath.value,
+                    filename: fileName,
+                    type: fileType,
+                    page: pageNumber
                 }
-
-                if (end <= start) break;
-                pages.push({
-                    start,
-                    end,
-                    content: content.slice(start, end)
-                });
-                start = end;
+            });
+            if (response.data.status !== 'success') {
+                throw new Error(response.data.message || '加载分页内容失败');
             }
-
-            return pages;
+            return response.data;
         };
 
-        const renderDocPage = async (pageNumber = 1) => {
-            const pages = docPages.value;
-            if (!pages || pages.length === 0) {
+        const ensureCurrentRawFileContent = async (fileType) => {
+            if (fileType === 'doc') {
+                if (!selectedDocFile.value) return '';
+                if (!selectedDocRawContent.value) {
+                    selectedDocRawContent.value = await fetchRawFileContentOnly(selectedDocFile.value, 'doc');
+                }
+                return selectedDocRawContent.value;
+            }
+            if (!selectedCodeFile.value) return '';
+            if (!selectedCodeRawContent.value) {
+                selectedCodeRawContent.value = await fetchRawFileContentOnly(selectedCodeFile.value, 'code');
+            }
+            return selectedCodeRawContent.value;
+        };
+
+        const renderDocPage = async (pageNumber = 1, targetFile = null) => {
+            const fileName = targetFile || selectedDocFile.value;
+            if (!fileName) {
                 currentDocPage.value = 1;
                 selectedDocContent.value = '';
                 return;
             }
-
-            const safePage = Math.min(Math.max(pageNumber, 1), pages.length);
-            const page = pages[safePage - 1];
-            const renderedHtml = await renderMarkdown(page.content);
-
-            currentDocPage.value = safePage;
-            selectedDocContent.value = shiftMarkdownParseOffsets(renderedHtml, page.start);
+            const pageResponse = await fetchFilePage(fileName, 'doc', pageNumber);
+            const renderedHtml = await renderMarkdown(pageResponse.content || '');
+            docPageRanges.value = pageResponse.pagination?.page_ranges || [];
+            currentDocPage.value = pageResponse.pagination?.page || 1;
+            selectedDocContent.value = shiftMarkdownParseOffsets(renderedHtml, pageResponse.page_start || 0);
 
             await nextTick();
             await loadAndRenderDocBlocks(false);
         };
 
-        const renderCodePage = async (pageNumber = 1) => {
-            const pages = codePages.value;
-            if (!pages || pages.length === 0) {
+        const renderCodePage = async (pageNumber = 1, targetFile = null) => {
+            const fileName = targetFile || selectedCodeFile.value;
+            if (!fileName) {
                 currentCodePage.value = 1;
                 selectedCodeContent.value = '';
                 return;
             }
-
-            const safePage = Math.min(Math.max(pageNumber, 1), pages.length);
-            const page = pages[safePage - 1];
-            const renderedHtml = formatCodeWithLineNumbers(page.content);
-
-            currentCodePage.value = safePage;
-            selectedCodeContent.value = shiftMarkdownParseOffsets(renderedHtml, page.start);
+            const pageResponse = await fetchFilePage(fileName, 'code', pageNumber);
+            const renderedHtml = formatCodeWithLineNumbers(pageResponse.content || '');
+            codePageRanges.value = pageResponse.pagination?.page_ranges || [];
+            currentCodePage.value = pageResponse.pagination?.page || 1;
+            selectedCodeContent.value = shiftMarkdownParseOffsets(renderedHtml, pageResponse.page_start || 0);
 
             await nextTick();
             await loadAndRenderCodeBlocks(false);
@@ -1284,7 +1181,7 @@ const app = createApp({
         };
 
         const getDocPageIndicesForRange = (start, end) => {
-            const pages = docPages.value || [];
+            const pages = docPageRanges.value || [];
             if (!pages.length) return [0];
 
             const rangeStart = Number(start);
@@ -1370,7 +1267,7 @@ const app = createApp({
         };
 
         const getCodePageIndicesForRange = (start, end) => {
-            const pages = codePages.value || [];
+            const pages = codePageRanges.value || [];
             if (!pages.length) return [0];
 
             const effectiveStart = Number.isFinite(Number(start)) ? Number(start) : 0;
@@ -1960,53 +1857,40 @@ const app = createApp({
                     switchView('alignment');
                 }
 
-                const response = await axios.get(`/project/file-content?path=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(fileName)}&type=${fileType}`);
-                if (response.data.status === 'success') {
-                    const content = regularizeFileContent(response.data.content, fileType);
-                    try {
-                        if (fileType === 'doc') {
-                            selectedDocFile.value = fileName;
-                            selectedDocRawContent.value = content;
-                            docPages.value = buildDocPages(content);
-                            await renderDocPage(1);
-                            
-                            // 切换文档时自动退出筛选模式
-                            if (isFiltered.value) {
-                                filteredAlignments.value = null;
-                                isFiltered.value = false;
-                            }
-                            
-                            // 当选择文档时，获取该文档的对齐结果
-                            await fetchAlignments();
-                            if (rightSidebarMode.value === 'alignment') {
-                                await fetchAlignmentSidebarPage(true, alignType.value);
-                            } else if (blockType.value === 'doc' || viewMode.value === 'current') {
-                                await fetchSidebarBlocksPage(true);
-                            }
-                        } else if (fileType === 'code') {
-                            selectedCodeFile.value = fileName;
-                            selectedCodeRawContent.value = content;
-                            codePages.value = buildCodePages(content);
-                            await renderCodePage(1);
-                            
-                            // Load and render decomposition blocks
-                            await loadAndRenderCodeBlocks(false);
+                try {
+                    if (fileType === 'doc') {
+                        selectedDocFile.value = fileName;
+                        selectedDocRawContent.value = '';
+                        docPageRanges.value = [];
+                        await renderDocPage(1, fileName);
 
-                            // 当选择代码文件时，重新获取所有对齐结果，由前端筛选
-                            await fetchAlignments();
-                            if (rightSidebarMode.value === 'alignment') {
-                                await fetchAlignmentSidebarPage(true, alignType.value);
-                            } else if (blockType.value === 'code' || viewMode.value === 'current') {
-                                await fetchSidebarBlocksPage(true);
-                            }
+                        if (isFiltered.value) {
+                            filteredAlignments.value = null;
+                            isFiltered.value = false;
                         }
-                    } catch (e) {
-                        renderError.value = e.message;
-                        renderedDocument = '<div class="render-error">渲染失败，请检查源文件格式。</div>';
-                        console.error(e);
+
+                        await fetchAlignments();
+                        if (rightSidebarMode.value === 'alignment') {
+                            await fetchAlignmentSidebarPage(true, alignType.value);
+                        } else if (blockType.value === 'doc' || viewMode.value === 'current') {
+                            await fetchSidebarBlocksPage(true);
+                        }
+                    } else if (fileType === 'code') {
+                        selectedCodeFile.value = fileName;
+                        selectedCodeRawContent.value = '';
+                        codePageRanges.value = [];
+                        await renderCodePage(1, fileName);
+
+                        await fetchAlignments();
+                        if (rightSidebarMode.value === 'alignment') {
+                            await fetchAlignmentSidebarPage(true, alignType.value);
+                        } else if (blockType.value === 'code' || viewMode.value === 'current') {
+                            await fetchSidebarBlocksPage(true);
+                        }
                     }
-                } else {
-                    ElMessage.error(`加载文件内容失败: ${response.data.message}`);
+                } catch (e) {
+                    console.error(e);
+                    ElMessage.error(`渲染失败: ${e.message}`);
                 }
             } catch (err) {
                 console.error("Error fetching file content:", err);
@@ -3240,7 +3124,7 @@ const app = createApp({
         /***********************
          * 对齐关系创建
          ***********************/
-        const handleDocSelection = (event) => {
+        const handleDocSelection = async (event) => {
             const selection = window.getSelection();
             //console.log("User selection:", selection ? selection.toString() : 'null');
             if (!selection || selection.toString().trim() === '') return;
@@ -3251,12 +3135,13 @@ const app = createApp({
             if (editorDiv && editorDiv.contains(range.commonAncestorContainer)) {
                 const [start, end] = getSourceDocumentRange(editorDiv, range);
                 if (end - start > 0) {
+                    const docContent = await ensureCurrentRawFileContent('doc');
                     currentSelection.value = {
                         type: 'doc',
                         documentId: selectedDocFile.value,
                         start,
                         end,
-                        content: selectedDocRawContent.value.slice(start, end)
+                        content: docContent.slice(start, end)
                     };
                     resetManualAlignFromBlock();
                     showAlignmentDialog.value = true;
@@ -3270,6 +3155,7 @@ const app = createApp({
                 ElMessage.warning('请先选择文本。');
                 return;
             }
+            const currentCodeContent = type === 'code' ? await ensureCurrentRawFileContent('code') : '';
 
             const buildBlockDataFromSelection = (selectionType) => {
                 let blockData = {};
@@ -3281,9 +3167,8 @@ const app = createApp({
                         content: currentSelection.value.content
                     };
                 } else if (selectionType === 'code') {
-                    const codeFileContent = selectedCodeRawContent.value;
                     const { startLine, endLine } = convertOffsetToLineNumbers(
-                        codeFileContent,
+                        currentCodeContent,
                         currentSelection.value.start,
                         currentSelection.value.end
                     );
@@ -3327,7 +3212,7 @@ const app = createApp({
             }
         };
 
-        const buildBlockDataFromCurrentSelection = () => {
+        const buildBlockDataFromCurrentSelection = async () => {
             if (!currentSelection.value) return null;
             const selectionType = currentSelection.value.type === 'code' ? 'code' : 'doc';
             if (selectionType === 'doc') {
@@ -3342,7 +3227,7 @@ const app = createApp({
                 };
             }
 
-            const codeFileContent = selectedCodeRawContent.value;
+            const codeFileContent = await ensureCurrentRawFileContent('code');
             const { startLine, endLine } = convertOffsetToLineNumbers(
                 codeFileContent,
                 currentSelection.value.start,
@@ -3382,7 +3267,7 @@ const app = createApp({
                             const [startOffset, endOffset] = getSourceDocumentRange(docElement, range);
                             
                             // 从原始文档内容中提取对应范围的文本
-                            const docFileContent = selectedDocRawContent.value;
+                            const docFileContent = await ensureCurrentRawFileContent('doc');
                             const selectedText = docFileContent.substring(startOffset, endOffset);
                             const extractedName = extractPlainTextFromMarkdown(selectedText, 20);
                             newAlignmentName.value = extractedName;
@@ -3439,7 +3324,7 @@ const app = createApp({
 
                     const urlParams = new URLSearchParams(window.location.search);
                     const projectId = urlParams.get('project_id');
-                    const blockPayload = buildBlockDataFromCurrentSelection();
+                    const blockPayload = await buildBlockDataFromCurrentSelection();
                     if (blockPayload) {
                         const blockResp = await axios.post('/api/add-block', {
                             projectPath: projectPath.value,
@@ -3663,7 +3548,7 @@ const app = createApp({
             }
             await nextTick();
 
-            const content = selectedCodeRawContent.value;
+            const content = await ensureCurrentRawFileContent('code');
             if (!content) return;
 
             const offsets = getOffsetsFromLineRange(content, block.range[0], block.range[1]);
@@ -3867,7 +3752,8 @@ const app = createApp({
                      );
                  } else {
                      // 代码块匹配：将偏移量转换为行号进行比较
-                     const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, rangeStart, rangeEnd);
+                     const codeFileContent = await ensureCurrentRawFileContent('code');
+                     const { startLine, endLine } = convertOffsetToLineNumbers(codeFileContent, rangeStart, rangeEnd);
                      
                      index = blocks.findIndex(b => {
                          if (b.file !== selectedCodeFile.value) return false;
@@ -3898,7 +3784,7 @@ const app = createApp({
 
             if (!alignment) {
                 if (type === 'code') {
-                    alignment = findAlignmentByCodeRange(rangeStart, rangeEnd);
+                    alignment = await findAlignmentByCodeRange(rangeStart, rangeEnd);
                 } else if (type === 'doc') {
                     alignment = findAlignmentByDocRange(rangeStart, rangeEnd);
                 }
@@ -3919,7 +3805,8 @@ const app = createApp({
                 if (idx !== -1) docIndex = idx;
             } else if (type === 'code' && alignment.codeRanges) {
                  // Convert clicked range offsets to line numbers for better matching
-                 const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, rangeStart, rangeEnd);
+                 const codeFileContent = await ensureCurrentRawFileContent('code');
+                 const { startLine, endLine } = convertOffsetToLineNumbers(codeFileContent, rangeStart, rangeEnd);
                  
                  const idx = alignment.codeRanges.findIndex(r => {
                     if (getCodeRangeFile(r) !== selectedCodeFile.value) return false;
@@ -4194,7 +4081,7 @@ const app = createApp({
         };
 
         // 代码高亮块右键菜单处理函数
-        const handleCodeHighlightBlockRightClick = (event) => {
+        const handleCodeHighlightBlockRightClick = async (event) => {
             event.preventDefault(); // 阻止默认右键菜单
             
             const target = getHighlightBlockAtEvent(event);
@@ -4209,8 +4096,9 @@ const app = createApp({
 
             if (isNaN(rangeStart) || isNaN(rangeEnd)) return;
 
+            await ensureCurrentRawFileContent('code');
             // 查找与此高亮块对应的对齐关系（返回第一个匹配的）
-            const correspondingAlignment = findAlignmentByCodeRange(rangeStart, rangeEnd);
+            const correspondingAlignment = await findAlignmentByCodeRange(rangeStart, rangeEnd);
             const block = findCodeBlockByRange(rangeStart, rangeEnd);
             
             if (!correspondingAlignment) {
@@ -4258,9 +4146,10 @@ const app = createApp({
         };
 
         // 根据代码范围查找对应的对齐关系（返回第一个匹配的）
-        const findAlignmentByCodeRange = (rangeStart, rangeEnd) => {
+        const findAlignmentByCodeRange = async (rangeStart, rangeEnd) => {
             // 尝试转换为行号进行查找
-            const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, rangeStart, rangeEnd);
+            const codeFileContent = await ensureCurrentRawFileContent('code');
+            const { startLine, endLine } = convertOffsetToLineNumbers(codeFileContent, rangeStart, rangeEnd);
 
             return alignmentResults.value.find(alignment => {
                 return alignment.codeRanges && alignment.codeRanges.some(codeRange => {
@@ -4466,7 +4355,7 @@ const app = createApp({
         };
 
         // 处理代码选择
-        const handleCodeSelection = (event) => {
+        const handleCodeSelection = async (event) => {
             const selection = window.getSelection();
             //console.log("Code selection:", selection ? selection.toString() : 'null');
             if (!selection || selection.toString().trim() === '') return;
@@ -4477,12 +4366,13 @@ const app = createApp({
             if (editorDiv && editorDiv.contains(range.commonAncestorContainer)) {
                 const [start, end] = getSourceDocumentRange(editorDiv, range);
                 if (end - start > 0) {
+                    const codeContent = await ensureCurrentRawFileContent('code');
                     currentSelection.value = {
                         type: 'code',
                         documentId: selectedCodeFile.value,
                         start,
                         end,
-                        content: selectedCodeRawContent.value.slice(start, end)
+                        content: codeContent.slice(start, end)
                     };
                     resetManualAlignFromBlock();
                     showCodeSelectionDialog.value = true;
@@ -5876,7 +5766,7 @@ const app = createApp({
             return (currentCodeBlocksForHighlight.value || []).find(block => {
                 if (block.file !== selectedCodeFile.value) return false;
                 if (!Array.isArray(block.range) || block.range.length !== 2) return false;
-                const offsets = getOffsetsFromLineRange(selectedCodeRawContent.value, block.range[0], block.range[1]);
+                const offsets = getOffsetsFromLineRange(selectedCodeRawContent.value || '', block.range[0], block.range[1]);
                 return offsets.start === rangeStart && offsets.end === rangeEnd;
             }) || null;
         };
@@ -5900,8 +5790,9 @@ const app = createApp({
 
             if (blockTypeForMenu === 'doc') {
                 const content = block.content || '';
+                const docContent = await ensureCurrentRawFileContent('doc');
                 const { startLine, endLine } = convertOffsetToLineNumbers(
-                    selectedDocRawContent.value,
+                    docContent,
                     block.start,
                     block.end
                 );
@@ -5915,7 +5806,7 @@ const app = createApp({
                     endLine: endLine
                 });
             } else {
-                const content = selectedCodeRawContent.value;
+                const content = await ensureCurrentRawFileContent('code');
                 const startLine = block.range[0];
                 const endLine = block.range[1];
                 const offsets = getOffsetsFromLineRange(content, startLine, endLine);
@@ -6283,11 +6174,11 @@ const app = createApp({
             selectedCodeFile.value = '';
             selectedDocContent.value = '';
             selectedCodeContent.value = '';
-            codePages.value = [];
+            codePageRanges.value = [];
             currentCodePage.value = 1;
             selectedDocRawContent.value = '';
             selectedCodeRawContent.value = '';
-            docPages.value = [];
+            docPageRanges.value = [];
             currentDocPage.value = 1;
 
             // 对齐与审查状态
