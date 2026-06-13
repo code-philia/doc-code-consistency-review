@@ -70,6 +70,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
+ALIGNMENT_SIDEBAR_PAGE_SIZE = 100
 BLOCK_SIDEBAR_PAGE_SIZE = 100
 
 
@@ -2519,7 +2520,8 @@ def _paginate_items(items, page, page_size):
             'total': total,
             'page': safe_page,
             'page_size': safe_page_size,
-            'total_pages': total_pages
+            'total_pages': total_pages,
+            'pages': total_pages
         }
     }
 
@@ -2595,7 +2597,6 @@ def get_alignments():
     status_filters = _parse_csv_query_arg(request.args.get('status_filters'))
     include_code_review = request.args.get('include_code_review')
     page = request.args.get('page', type=int)
-    page_size = request.args.get('page_size', type=int)
     align_type = request.args.get('align_type')
     print('get(`/project/alignments, project_id:', project_id)
     
@@ -2617,8 +2618,8 @@ def get_alignments():
 
         if align_type:
             filtered = [item for item in filtered if item.get('align_type') == align_type]
-        if page or page_size:
-            paged = _paginate_items(filtered, page or 1, page_size or 50)
+        if page:
+            paged = _paginate_items(filtered, page or 1, ALIGNMENT_SIDEBAR_PAGE_SIZE)
             return jsonify({
                 "status": "success",
                 "data": paged['items'],

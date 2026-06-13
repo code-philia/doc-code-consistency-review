@@ -460,8 +460,7 @@ const app = createApp({
 
         const fetchAlignmentSidebarPage = async (resetPage = false, alignType = null) => {
             if (!projectPath.value) return;
-            // 先注释了，翻页之后点击对齐数据会强制刷新成第一页
-//            if (resetPage) alignmentPage.value = 1;
+            if (resetPage) alignmentPage.value = 1;
 
             if (statusFilters.value.length === 0) {
                 sidebarAlignmentItems.value = [];
@@ -477,7 +476,6 @@ const app = createApp({
                         path: projectPath.value,
                         project_id: projectId,
                         page: alignmentPage.value,
-                        page_size: alignmentPageSize.value,
                         view_mode: viewMode.value,
                         selected_doc_file: selectedDocFile.value || '',
                         selected_code_file: selectedCodeFile.value || '',
@@ -488,8 +486,24 @@ const app = createApp({
                 });
 
                 if (response.data.status === 'success') {
+                    const pagination = response.data.pagination || {};
+                    const serverPageSize = Number(pagination.page_size) || alignmentPageSize.value;
+                    const serverTotal = Number(pagination.total) || 0;
+                    const serverTotalPages = Math.max(0, Number(pagination.pages) || Number(pagination.total_pages) || 0);
+
+                    alignmentPageSize.value = serverPageSize;
                     sidebarAlignmentItems.value = response.data.data || [];
-                    alignmentTotal.value = response.data.pagination?.total || 0;
+                    alignmentTotal.value = serverTotal;
+
+                    if (serverTotalPages > 0 && alignmentPage.value > serverTotalPages) {
+                        alignmentPage.value = serverTotalPages;
+                        await fetchAlignmentSidebarPage(false, alignType);
+                        return;
+                    }
+
+                    if (serverTotal === 0) {
+                        alignmentPage.value = 1;
+                    }
                 } else {
                     sidebarAlignmentItems.value = [];
                     alignmentTotal.value = 0;
@@ -3216,55 +3230,11 @@ const app = createApp({
             alignmentPage.value = 1;
             fetchAlignmentSidebarPage(true, newType)
         })
-
-        const filteredSidebarItems = computed(() => {
-
-            console.log('=== filteredSidebarItems ===');
-            console.log('isFiltered:', isFiltered.value);
-            console.log('filteredAlignments.length:',filteredAlignments.value?.length);
-            if (isFiltered.value && filteredAlignments.value) {
-                    console.log('走isFiltered分支');
-                    return filteredAlignments.value;
-            }
-            let items = sidebarAlignmentItems.value || [];
-            console.log('原始数据条数:', items.length);
-            console.log('当前alignType:', alignType.value);
-            console.log('原始数据的align_type:', items.map(i => i.align_type));
-            if (alignType.value === 'req2code') {
-                items = items.filter(item => item.align_type !== 'code2req');
-                console.log('过滤掉code2req后:', items.length);
-            } else {
-                items = items.filter(item => item.align_type !== 'req2code');
-                console.log('过滤掉req2code后:', items.length);
-            }
-            console.log(items)
-            return items
-        })
-
-
-
         const sidebarAlignments = computed(() => {
-
-            return sidebarAlignmentItems.value || [];
-            console.log('=== sidebarAlignments ===');
-            console.log('filteredSidebarItems.value.length', filteredSidebarItems.value.length);
-            console.log('alignmentPage.value', alignmentPage.value);
-            console.log('alignmentPageSize.value', alignmentPageSize.value);
-
-
-            alignmentTotal.value = filteredSidebarItems.value.length;
-            alignmentTotalPages.value = Math.ceil(filteredSidebarItems.value.length / alignmentPageSize.value) || 1;
-            console.log('alignmentTotal.value', alignmentTotal.value);
-            // 页码越界重置
-            if (alignmentPage.value > alignmentTotalPages.value){
-                alignmentPage.value = 1;
-                console.log('页码越界，重置到1');
+            if (isFiltered.value && filteredAlignments.value) {
+                return filteredAlignments.value;
             }
-
-            const start = (alignmentPage.value - 1) * alignmentPageSize.value;
-            console.log('start:',start,'end:',start + alignmentPageSize.value);
-            console.log('result.length:', filteredSidebarItems.value.slice(start, start + alignmentPageSize.value));
-            return filteredSidebarItems.value.slice(start, start + alignmentPageSize.value);
+            return sidebarAlignmentItems.value || [];
         });
 
         /***********************
