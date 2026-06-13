@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Git Diff Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --panel: #ffffff;
+      --panel-soft: #fcfcfe;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      --add-bg: #ecfdf3;
+      --add-border: #b7ebc6;
+      --add-text: #166534;
+      --del-bg: #fff1f2;
+      --del-border: #fecdd3;
+      --del-text: #be123c;
+      --ctx-bg: #f8fafc;
+      --accent: #2563eb;
+      --copy-bg: #eff6ff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(180deg, #f9fafb 0%, #f3f6fb 100%);
+      color: var(--text);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+    .sidebar {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      overflow: auto;
+      padding: 24px 18px;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(14px);
+      border-right: 1px solid var(--border);
+    }
+    .brand {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .nav-title {
+      margin: 0 0 14px;
+      font-size: 20px;
+      line-height: 1.3;
+    }
+    .file-link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      transition: 0.2s ease;
+    }
+    .file-link:hover {
+      background: var(--panel);
+      border-color: var(--border);
+      box-shadow: var(--shadow);
+      transform: translateY(-1px);
+    }
+    .file-link .path {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .file-link .meta {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    main {
+      padding: 24px;
+      min-width: 0;
+    }
+    .empty, .file-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+    .empty {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .file-card {
+      padding: 22px;
+      margin-bottom: 24px;
+    }
+    .file-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+    .file-title {
+      margin: 0;
+      font-size: 22px;
+      word-break: break-all;
+    }
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .pill {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel-soft);
+      color: var(--muted);
+    }
+    .pill.add {
+      background: var(--add-bg);
+      border-color: var(--add-border);
+      color: var(--add-text);
+    }
+    .pill.del {
+      background: var(--del-bg);
+      border-color: var(--del-border);
+      color: var(--del-text);
+    }
+    .hunk {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--panel-soft);
+      margin-top: 18px;
+    }
+    .hunk-head {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 14px 16px;
+      background: #f9fafb;
+      border-bottom: 1px solid var(--border);
+    }
+    .hunk-title {
+      margin: 0;
+      font-size: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .hunk-sub {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .copy-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .copy-btn {
+      border: 1px solid #bfdbfe;
+      background: var(--copy-bg);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .copy-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    }
+    .copy-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      box-shadow: none;
+      transform: none;
+    }
+    .diff-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .diff-table td {
+      vertical-align: top;
+      padding: 0;
+      border-top: 1px solid rgba(229,231,235,0.7);
+    }
+    .diff-table tr:first-child td { border-top: none; }
+    .ln {
+      width: 68px;
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #94a3b8;
+      padding: 10px 12px;
+      user-select: none;
+      background: rgba(248,250,252,0.9);
+    }
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 10px 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    tr.context { background: var(--ctx-bg); }
+    tr.add { background: var(--add-bg); }
+    tr.del { background: var(--del-bg); }
+    tr.meta { background: #fff7ed; }
+    tr.add .code { color: #14532d; }
+    tr.del .code { color: #9f1239; }
+    tr.meta .code { color: #9a3412; font-style: italic; }
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      background: rgba(17,24,39,0.92);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.28);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.25s ease;
+      pointer-events: none;
+      font-size: 13px;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    @media (max-width: 1080px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: relative;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      main { padding: 18px; }
+      .file-header, .hunk-head { flex-direction: column; }
+      .copy-row { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">Git Diff</div>
+      <h1 class="nav-title">文件变更</h1>
+      <div id="file-nav"></div>
+    </aside>
+    <main>
+      <div id="report-root"></div>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script>
+    const REPORT_DATA = __REPORT_DATA_JSON__;
+
+    const navEl = document.getElementById('file-nav');
+    const rootEl = document.getElementById('report-root');
+    const toastEl = document.getElementById('toast');
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showToast(message) {
+      toastEl.textContent = message;
+      toastEl.classList.add('show');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+    }
+
+    async function copyText(text) {
+      await navigator.clipboard.writeText(text);
+    }
+
+    function renderNav(files) {
+      navEl.innerHTML = files.map((file, index) => `
+        <a class="file-link" href="#file-${index}">
+          <span class="path">${escapeHtml(file.path)}</span>
+          <span class="meta">${file.hunks.length} 个变更块 · +${file.additions} / -${file.deletions}</span>
+        </a>
+      `).join('');
+    }
+
+    function renderDiffTable(lines) {
+      return `
+        <table class="diff-table">
+          <tbody>
+            ${lines.map(line => `
+              <tr class="${line.type}">
+                <td class="ln">${line.old_lineno ?? ''}</td>
+                <td class="ln">${line.new_lineno ?? ''}</td>
+                <td class="code">${escapeHtml(line.text)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderFiles(files) {
+      if (!files.length) {
+        rootEl.innerHTML = '<div class="empty">当前没有未提交修改，`git diff` 为空。</div>';
+        return;
+      }
+
+      rootEl.innerHTML = files.map((file, fileIndex) => `
+        <section class="file-card" id="file-${fileIndex}">
+          <div class="file-header">
+            <div>
+              <h2 class="file-title">${escapeHtml(file.path)}</h2>
+            </div>
+            <div class="pill-row">
+              <span class="pill">${file.hunks.length} 个块</span>
+              <span class="pill add">+${file.additions}</span>
+              <span class="pill del">-${file.deletions}</span>
+            </div>
+          </div>
+          ${file.hunks.map(hunk => `
+            <article class="hunk">
+              <div class="hunk-head">
+                <div>
+                  <p class="hunk-title">@@ -${hunk.old_start},${hunk.old_count} +${hunk.new_start},${hunk.new_count} @@</p>
+                  <p class="hunk-sub">${hunk.header ? escapeHtml(hunk.header) : '未命名上下文'}</p>
+                </div>
+                <div class="copy-row">
+                  <button class="copy-btn" data-copy-kind="added" data-copy="${encodeURIComponent(hunk.added_text)}" ${hunk.added_text ? '' : 'disabled'}>复制新增</button>
+                  <button class="copy-btn" data-copy-kind="removed" data-copy="${encodeURIComponent(hunk.removed_text)}" ${hunk.removed_text ? '' : 'disabled'}>复制删除</button>
+                </div>
+              </div>
+              ${renderDiffTable(hunk.lines)}
+            </article>
+          `).join('')}
+        </section>
+      `).join('');
+
+      document.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+          const text = decodeURIComponent(button.dataset.copy || '');
+          if (!text) return;
+          try {
+            await copyText(text);
+            showToast(button.dataset.copyKind === 'added' ? '新增内容已复制' : '删除内容已复制');
+          } catch (error) {
+            showToast('复制失败，请检查浏览器权限');
+          }
+        });
+      });
+    }
+
+    renderNav(REPORT_DATA.files);
+    renderFiles(REPORT_DATA.files);
+  </script>
+</body>
+</html>
