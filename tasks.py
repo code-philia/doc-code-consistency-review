@@ -8,11 +8,23 @@ from celery import Celery
 from app import create_app
 from app.agent import query_review_result, query_review_result_by_feedback, query_codefile_from_abstract, \
     query_related_code, query_generated_requirement, query_flow_chart, query_related_requirement
-from app.code_block import get_codefile_blocks
-from app.db import get_db_celery
+from app.db import (
+    get_db_celery,
+    append_missing_doc_blocks,
+    append_missing_code_blocks,
+)
 from app.rag_chroma import rag_engine
 from app.utils import get_all_files_with_relative_paths, include_related_blocks
-from app.views import logger, get_abstracts_from_sqlite, generate_abstract, save_abstract_to_db, filter_non_abstract_files
+from app.views import (
+    logger,
+    get_abstracts_from_sqlite,
+    generate_abstract,
+    save_abstract_to_db,
+    filter_non_abstract_files,
+    _get_doc_blocks_for_matching,
+    _match_doc_ranges_from_related_reqs,
+    _get_or_build_code_blocks_for_file,
+)
 
 celery = Celery(
     'app',
@@ -521,7 +533,6 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
             doc_ranges = chunk['docRanges']
             # 获取项目中所有代码文件
             code_repo_path = os.path.join(project_path, 'code_repo')
-            code_block_base_path = os.path.join(project_path, 'code_block_repo')
             all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
 
             # 拼接所有docRanges的content作为requirement_text
@@ -582,11 +593,9 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
 
             # 遍历经过代码摘要筛选的代码文件
             for file_name in file_name_list:
-
-                # 为代码进行分块或读取分块结果
-                if not os.path.exists(os.path.join(code_repo_path, file_name)):
+                all_code_blocks = _get_or_build_code_blocks_for_file(project_path, file_name, project_id)
+                if not all_code_blocks:
                     continue
-                all_code_blocks = get_codefile_blocks(code_repo_path, file_name, code_block_base_path)
 
                 # 调用对齐函数获取相关代码
                 related_code = query_related_code(
@@ -657,6 +666,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
 def align_code_to_requirements_task(self, project_path, code_blocks, project_id, user_id, y_align):
     total = len(code_blocks)
     try:
+        all_doc_blocks, _, blocks_by_file = _get_doc_blocks_for_matching(project_path, project_id)
         for i, code_block in enumerate(code_blocks, y_align):
             self.update_state(
                 state="PROGRESS",
@@ -681,28 +691,13 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
             except Exception:
                 pass
 
+            if not all_doc_blocks:
+                code_block['docRanges'] = []
+                add_alignment_data(project_path, code_block, project_id, user_id)
+                continue
+
             # 如果没有选择任何 align 知识库，使用原来的 LLM 逻辑
             if not selected_align_kbs:
-                # 原有的 LLM 逻辑
-                # 获取需求块
-                doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
-                doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
-
-                if not os.path.exists(doc_block_file_path):
-                    return {"status": "success", "docRanges": []}  # 没有需求文件，无法对齐
-
-                all_doc_blocks = []
-                all_original_doc_blocks = []
-                with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if line.strip():
-                            original_doc_block = json.loads(line.strip())
-                            all_doc_blocks.append({
-                                "file": original_doc_block.get("filename", ''),
-                                "range": [original_doc_block.get("start", 0), original_doc_block.get("end", 0)],
-                                "content": original_doc_block.get("content", '')
-                            })
-                            all_original_doc_blocks.append(original_doc_block)
 
                 code_content = '\n\n'.join(
                     [code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
@@ -716,21 +711,7 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
                     project_path=project_path
                 )
 
-                # 转换结果为docRanges
-                doc_ranges = []
-
-                # 通过文件名和起止范围匹配
-                blocks_by_file = defaultdict(list)
-                for block in all_original_doc_blocks:
-                    blocks_by_file[block.get("filename", "default")].append(block)
-
-                for req in related_reqs:
-                    req_start, req_end = req.get("range", [0, 0])
-                    target_file = req.get("file", "default")
-                    candidates = blocks_by_file.get(target_file, [])
-                    for block in candidates:
-                        if block.get("start", 0) <= req_start and block.get("end", 0) >= req_end:
-                            doc_ranges.append(block)
+                doc_ranges = _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file)
 
                 code_block['docRanges'] = doc_ranges
                 add_alignment_data(project_path, code_block, project_id, user_id)
@@ -789,28 +770,6 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
             history_doc_contents = [item['content'] for item in top_items]
             combined_history_content = "\n".join(history_doc_contents)
 
-            # 再次读取当前项目的需求块
-            doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
-            doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
-
-            if not os.path.exists(doc_block_file_path):
-                code_block['docRanges'] = []
-                add_alignment_data(project_path, code_block, project_id, user_id)
-                continue
-
-            all_doc_blocks = []
-            all_original_doc_blocks = []
-            with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if line.strip():
-                        original_doc_block = json.loads(line.strip())
-                        all_doc_blocks.append({
-                            "file": original_doc_block.get("filename", ''),
-                            "range": [original_doc_block.get("start", 0), original_doc_block.get("end", 0)],
-                            "content": original_doc_block.get("content", '')
-                        })
-                        all_original_doc_blocks.append(original_doc_block)
-
             # 使用历史需求内容 + 代码内容 共同作为 Query 去查询当前项目需求
             enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
 
@@ -822,18 +781,7 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
                 project_path=project_path
             )
 
-            doc_ranges = []
-            blocks_by_file = defaultdict(list)
-            for block in all_original_doc_blocks:
-                blocks_by_file[block.get("filename", "default")].append(block)
-
-            for req in related_reqs:
-                req_start, req_end = req.get("range", [0, 0])
-                target_file = req.get("file", "default")
-                candidates = blocks_by_file.get(target_file, [])
-                for block in candidates:
-                    if block.get("start", 0) <= req_start and block.get("end", 0) >= req_end:
-                        doc_ranges.append(block)
+            doc_ranges = _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file)
 
             code_block['docRanges'] = doc_ranges
             add_alignment_data(project_path, code_block, project_id, user_id)
@@ -859,104 +807,12 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
     code_ranges = new_alignment['codeRanges']
     # --- 自动创建块的逻辑 ---
     try:
-        # 1. 处理需求块
         doc_ranges = new_alignment.get('docRanges', [])
         if doc_ranges:
-            doc_block_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
-            os.makedirs(os.path.dirname(doc_block_path), exist_ok=True)
+            append_missing_doc_blocks(project_path, doc_ranges)
 
-            # 读取现有块以避免重复
-            existing_doc_blocks = set()
-            if os.path.exists(doc_block_path):
-                with open(doc_block_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if not line.strip():
-                            continue
-                        try:
-                            b = json.loads(line.strip())
-                            # 使用 tuple 作为 key
-                            key = (b.get('filename'), b.get('start'), b.get('end'))
-                            existing_doc_blocks.add(key)
-                        except Exception as e:
-                            logger.error(str(e), exc_info=True)
-
-            blocks_to_add = []
-            for dr in doc_ranges:
-                # docRange结构通常包含 filename, start, end, content
-                key = (dr.get('filename'), dr.get('start'), dr.get('end'))
-                if key not in existing_doc_blocks:
-                    # 构造标准块数据
-                    block_data = {
-                        "filename": dr.get('filename'),
-                        "start": dr.get('start'),
-                        "end": dr.get('end'),
-                        "content": dr.get('content', '')
-                    }
-                    blocks_to_add.append(block_data)
-                    existing_doc_blocks.add(key)  # 防止同一次请求中有重复
-
-            '''if blocks_to_add:
-                with open(doc_block_path, 'a', encoding='utf-8') as f:
-                    for b in blocks_to_add:
-                        f.write(json.dumps(b, ensure_ascii=False) + '\n')'''
-
-        # 2. 处理代码块
-        # code_ranges = code_ranges if code_ranges else []
         if code_ranges:
-            code_block_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
-            os.makedirs(os.path.dirname(code_block_path), exist_ok=True)
-
-            # 读取现有块并获取最大ID
-            existing_code_blocks = set()
-            max_id = 0
-            if os.path.exists(code_block_path):
-                with open(code_block_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if not line.strip():
-                            continue
-                        try:
-                            b = json.loads(line.strip())
-                            # 匹配逻辑：file + range
-                            b_range = b.get('range', [])
-                            if len(b_range) == 2:
-                                key = (b.get('file'), b_range[0], b_range[1])
-                                existing_code_blocks.add(key)
-
-                            bid = int(b.get('id', 0))
-                            if bid > max_id: max_id = bid
-                        except Exception as e:
-                            logger.error(str(e), exc_info=True)
-
-            blocks_to_add = []
-            for cr in code_ranges:
-                # codeRange结构通常包含 filename(or documentId), start, end, startLine, endLine, content
-                # code_block需要: id, file, range[startLine, endLine], content
-                # 注意：这里我们假设 codeRange 中的 startLine/endLine 是可靠的。
-                # 如果 codeRange 中只有 start/end (offset)，我们需要转换吗？
-                # 前端通常会发送 startLine/endLine。如果缺失，这里可能无法准确创建行级块。
-                # 假设前端传了 startLine/endLine
-
-                c_file = cr.get('filename') or cr.get('documentId')
-                c_start_line = cr.get('startLine')
-                c_end_line = cr.get('endLine')
-
-                if c_file and c_start_line is not None and c_end_line is not None:
-                    key = (c_file, c_start_line, c_end_line)
-                    if key not in existing_code_blocks:
-                        max_id += 1
-                        block_data = {
-                            "id": max_id,
-                            "file": c_file,
-                            "range": [c_start_line, c_end_line],
-                            "content": cr.get('content', '')
-                        }
-                        blocks_to_add.append(block_data)
-                        existing_code_blocks.add(key)
-
-            if blocks_to_add:
-                with open(code_block_path, 'a', encoding='utf-8') as f:
-                    for b in blocks_to_add:
-                        f.write(json.dumps(b, ensure_ascii=False) + '\n')
+            append_missing_code_blocks(project_path, code_ranges)
 
     except Exception as e:
         # print(f"Error auto-creating blocks: {e}")

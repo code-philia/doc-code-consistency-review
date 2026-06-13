@@ -773,19 +773,7 @@ def chunk_codes(name, cpp_file, output_json_path): #读入存放代码的工程�
     return code_data # output_file
 
 
-def get_codefile_blocks(code_base_path, file_name, code_block_base_path):
-    
-    file_name_wo = file_name.replace('/', '_')
-    code_block_file_path = os.path.join(code_block_base_path, file_name_wo + '_code_blocks.jsonl')
-
-    all_code_blocks = []
-    # 已经有分块结果
-    if os.path.exists(code_block_file_path):
-        with open(code_block_file_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            all_code_blocks = [json.loads(line.strip()) for line in lines]
-            return all_code_blocks
-
+def get_codefile_blocks(code_base_path, file_name):
     # 获取原始块
     if not os.path.exists(os.path.join(code_base_path, file_name)):
         print(file_name)
@@ -808,25 +796,11 @@ def get_codefile_blocks(code_base_path, file_name, code_block_base_path):
     processor.extract_carrier_ranges()
     all_code_blocks = processor.extract_func_relations()
 
-    # 保存最终结果
-    os.makedirs(code_block_base_path, exist_ok=True)  
-    with open(code_block_file_path, "a", encoding="utf-8") as f:
-        for block in all_code_blocks:
-            f.write(json.dumps(block, ensure_ascii=False) + "\n")
-
     return all_code_blocks
     
     
-def get_all_code_blocks(code_base_path, all_rel_code_paths, code_block_base_path):
+def get_all_code_blocks(code_base_path, all_rel_code_paths):
     all_code_blocks = []
-    code_block_file_path = os.path.join(code_block_base_path, f'code_blocks.jsonl')
-
-    # 已经有分块结果
-    if os.path.exists(code_block_file_path):
-        with open(code_block_file_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            all_code_blocks = [json.loads(line.strip()) for line in lines]
-            return all_code_blocks
 
     all_code_blocks_raw = []
     for rel_code_path in all_rel_code_paths:
@@ -846,12 +820,6 @@ def get_all_code_blocks(code_base_path, all_rel_code_paths, code_block_base_path
     processor.load_blocks(all_code_blocks_raw)
     processor.extract_carrier_ranges()
     all_code_blocks = processor.extract_func_relations()
-
-    # 保存最终结果
-    os.makedirs(code_block_base_path, exist_ok=True)
-    with open(code_block_file_path, "a", encoding="utf-8") as f:
-        for block in all_code_blocks:
-            f.write(json.dumps(block, ensure_ascii=False) + "\n")
 
     return all_code_blocks
     

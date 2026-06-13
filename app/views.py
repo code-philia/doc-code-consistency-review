@@ -2,7 +2,20 @@ import os
 
 from celery import chain
 from flask_login import login_manager, login_required, current_user
-from .db import DB_CONFIG
+from .db import (
+    DB_CONFIG,
+    get_db,
+    get_db_celery,
+    get_project_id_by_path,
+    resolve_project_id,
+    get_doc_blocks_by_project,
+    get_code_blocks_by_project,
+    save_code_blocks_for_file,
+    replace_doc_blocks,
+    replace_code_blocks,
+    append_missing_doc_blocks,
+    append_missing_code_blocks,
+)
 
 os.environ["OPENBLAS_NUM_THREADS"] = "128"
 os.environ["OMP_NUM_THREADS"]="128"
@@ -10,7 +23,6 @@ os.environ["OMP_NUM_THREADS"]="128"
 import time
 import traceback
 from .project import project_access, get_project_id_by_name
-from .db import get_db, get_db_celery
 from flask import Flask, json, render_template, request, jsonify, send_file, Blueprint
 import sqlite3
 import json as pyjson
@@ -33,7 +45,7 @@ import shutil
 import re
 import zipfile
 
-from .code_block import get_all_code_blocks, chunk_cpp_code, get_codefile_blocks
+from .code_block import get_all_code_blocks, get_codefile_blocks
 
 import logging
 import chromadb
@@ -59,6 +71,82 @@ logger.setLevel(logging.INFO)
 
 def project_now_str():
     return datetime.now(ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _build_doc_block_lookup(doc_blocks):
+    llm_blocks = []
+    blocks_by_file = defaultdict(list)
+    for block in doc_blocks:
+        filename = block.get('filename') or block.get('documentId') or ''
+        start = _safe_int(block.get('start'))
+        end = _safe_int(block.get('end'))
+        content = block.get('content') or ''
+        normalized = {
+            'id': _safe_int(block.get('id')),
+            'name': block.get('name') or block.get('type') or _compact_title_from_text(content, 24),
+            'type': block.get('type') or '',
+            'filename': filename,
+            'documentId': filename,
+            'content': content,
+            'start': start,
+            'end': end
+        }
+        llm_blocks.append({
+            'file': filename,
+            'range': [start, end],
+            'content': content
+        })
+        blocks_by_file[filename].append(normalized)
+    return llm_blocks, blocks_by_file
+
+
+def _get_doc_blocks_for_matching(project_path, project_id=None):
+    doc_blocks = get_doc_blocks_by_project(project_path, project_id)
+    llm_blocks, blocks_by_file = _build_doc_block_lookup(doc_blocks)
+    return llm_blocks, doc_blocks, blocks_by_file
+
+
+def _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file):
+    doc_ranges = []
+    seen = set()
+    for req in related_reqs or []:
+        req_range = req.get('range') or [0, 0]
+        req_start = _safe_int(req_range[0] if len(req_range) >= 1 else 0)
+        req_end = _safe_int(req_range[1] if len(req_range) >= 2 else req_start)
+        target_file = req.get('file', 'default')
+        candidates = blocks_by_file.get(target_file, [])
+        for block in candidates:
+            block_start = _safe_int(block.get('start'))
+            block_end = _safe_int(block.get('end'))
+            if block_start <= req_start and block_end >= req_end:
+                key = (block.get('filename') or '', block_start, block_end)
+                if key not in seen:
+                    doc_ranges.append(block)
+                    seen.add(key)
+    return doc_ranges
+
+
+def _get_or_build_code_blocks_for_file(project_path, file_name, project_id=None):
+    existing_blocks = get_code_blocks_by_project(project_path, project_id, filename=file_name)
+    if existing_blocks:
+        return existing_blocks
+
+    code_repo_path = os.path.join(project_path, 'code_repo')
+    file_path = os.path.join(code_repo_path, file_name)
+    if not os.path.exists(file_path):
+        return []
+
+    computed_blocks = get_codefile_blocks(code_repo_path, file_name)
+    if not computed_blocks:
+        return []
+    return save_code_blocks_for_file(project_path, file_name, computed_blocks, project_id)
 
 # 定义全局历史文件路径
 HISTORY_FILE = 'app/history.json'
@@ -1078,6 +1166,7 @@ def remove_file_content():
         repo_root = os.path.abspath(os.path.join(project_path, repo_name))
         target_rel_path = filename.replace('\\', '/').strip('/')
         target_abs_path = os.path.abspath(os.path.join(repo_root, target_rel_path))
+        project_id = get_project_id_by_path(project_path)
 
         if os.path.commonpath([repo_root, target_abs_path]) != repo_root:
             return jsonify({"status": "error", "message": "非法路径"}), 400
@@ -1118,25 +1207,26 @@ def remove_file_content():
                             except Exception as e:
                                 print(f"删除失败: {folder_path}，错误: {e}")
 
-            project_path_block = os.path.join(project_path, 'doc_block_repo')
-            if matched_files and os.path.exists(project_path_block):
-                file_block = os.path.join(project_path_block, 'doc_blocks.jsonl')
-                if os.path.exists(file_block):
-                    os.remove(file_block)
+            if project_id and matched_files:
+                db = get_db()
+                cur = db.cursor()
+                placeholders = ','.join(['%s'] * len(matched_files))
+                cur.execute(
+                    f'DELETE FROM doc_blocks WHERE project_id=%s AND filename IN ({placeholders})',
+                    tuple([project_id] + matched_files)
+                )
 
             if "doc_files" in metadata:
                 metadata["doc_files"] = [f for f in metadata["doc_files"] if f not in matched_files]
         else:
-            project_path_block = os.path.join(project_path, 'code_block_repo')
-            if os.path.exists(project_path_block):
-                for file_path in matched_files:
-                    block_file_name = f"{file_path.replace('/', '_')}_code_blocks.jsonl"
-                    file_block = os.path.join(project_path_block, block_file_name)
-                    if os.path.exists(file_block):
-                        os.remove(file_block)
-                all_blocks_file = os.path.join(project_path_block, 'code_blocks.jsonl')
-                if matched_files and os.path.exists(all_blocks_file):
-                    os.remove(all_blocks_file)
+            if project_id and matched_files:
+                db = get_db()
+                cur = db.cursor()
+                placeholders = ','.join(['%s'] * len(matched_files))
+                cur.execute(
+                    f'DELETE FROM code_blocks WHERE project_id=%s AND file IN ({placeholders})',
+                    tuple([project_id] + matched_files)
+                )
 
             if "code_files" in metadata:
                 metadata["code_files"] = [f for f in metadata["code_files"] if f not in matched_files]
@@ -1225,7 +1315,7 @@ def get_file_content():
 
 @bp.route('/api/requirement-decomposition', methods=['POST'])
 def requirement_decomposition():
-    """处理需求分解请求 - 保存到JSONL文件"""
+    """处理需求分解请求 - 保存到JSONL文件并同步数据库"""
     try:
         data = request.get_json()
         project_path = data.get('projectPath')
@@ -1256,9 +1346,9 @@ def requirement_decomposition():
         req_blocks = []
 
 
+        next_block_id = 1
         for annotation in annotations:
             doc_ranges = annotation.get('docRanges', [])
-            req_id = annotation.get('id')
             category = annotation.get('category')
 
 
@@ -1272,7 +1362,9 @@ def requirement_decomposition():
             # 构建需求块对象 (扁平化，每个docRange作为一个独立的块)
             for doc_range in doc_ranges:
                 req_block = {
+                    'id': next_block_id,
                     'name':category,
+                    'type': category,
                     'filename': doc_name,
                     'documentId': doc_name,
                     'content': doc_range.get('content'),
@@ -1281,19 +1373,9 @@ def requirement_decomposition():
                 }
                 req_blocks.append(req_block)
                 processed_count += 1
+                next_block_id += 1
 
-        # 保存到 doc_block_repo/doc_blocks.jsonl
-        doc_block_repo = os.path.join(project_path, 'doc_block_repo')
-        os.makedirs(doc_block_repo, exist_ok=True)
-        doc_blocks_file = os.path.join(doc_block_repo, 'doc_blocks.jsonl')
-
-        # 如果文件存在，先删除
-        if os.path.exists(doc_blocks_file):
-            os.remove(doc_blocks_file)
-
-        with open(doc_blocks_file, 'w', encoding='utf-8') as f:
-            for block in req_blocks:
-                f.write(json.dumps(block, ensure_ascii=False) + '\n')
+        replace_doc_blocks(project_path, req_blocks)
 
         return jsonify({
             'status': 'success',
@@ -1307,7 +1389,7 @@ def requirement_decomposition():
 
 @bp.route('/api/auto-markdown-split', methods=['POST'])
 def auto_markdown_split():
-    """处理自动Markdown分解请求 - 保存到JSONL文件"""
+    """处理自动Markdown分解请求 - 保存到JSONL文件并同步数据库"""
     try:
         data = request.get_json()
         project_path = data.get('projectPath')
@@ -1347,6 +1429,7 @@ def auto_markdown_split():
         req_blocks = []
 
         # 处理每个markdown文件
+        next_block_id = 1
         for md_file in md_files:
             with open(md_file, 'r', encoding='utf-8') as f:
                 md_content = f.read()
@@ -1369,7 +1452,9 @@ def auto_markdown_split():
                     chunk_name = _compact_title_from_text(content, 24)
 
                 req_block = {
+                    'id': next_block_id,
                     'name': chunk_name,
+                    'type': block_info.get('type') or chunk_name,
                     'filename': doc_name,
                     'documentId': doc_name,
                     'content': block_info['content'],
@@ -1378,19 +1463,9 @@ def auto_markdown_split():
                 }
                 req_blocks.append(req_block)
                 processed_count += 1
+                next_block_id += 1
 
-        # 保存到 doc_block_repo/doc_blocks.jsonl
-        doc_block_repo = os.path.join(project_path, 'doc_block_repo')
-        os.makedirs(doc_block_repo, exist_ok=True)
-        doc_blocks_file = os.path.join(doc_block_repo, 'doc_blocks.jsonl')
-
-        # 如果文件存在，先删除
-        if os.path.exists(doc_blocks_file):
-            os.remove(doc_blocks_file)
-
-        with open(doc_blocks_file, 'w', encoding='utf-8') as f:
-            for block in req_blocks:
-                f.write(json.dumps(block, ensure_ascii=False) + '\n')
+        replace_doc_blocks(project_path, req_blocks)
 
         return jsonify({
             'status': 'success',
@@ -1863,7 +1938,6 @@ def align_requirement_to_project_addprompt():
 
     # 获取项目中所有代码文件
     code_repo_path = os.path.join(project_path, 'code_repo')
-    code_block_base_path = os.path.join(project_path, 'code_block_repo')
     all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
 
     # 拼接所有docRanges的content作为requirement_text
@@ -1923,10 +1997,9 @@ def align_requirement_to_project_addprompt():
         code_ranges = []
         # 遍历经过代码摘要筛选的代码文件
         for file_name in file_name_list:
-            # 为代码进行分块或读取分块结果
-            if not os.path.exists(os.path.join(code_repo_path, file_name)):
+            all_code_blocks = _get_or_build_code_blocks_for_file(project_path, file_name, project_id)
+            if not all_code_blocks:
                 continue
-            all_code_blocks = get_codefile_blocks(code_repo_path, file_name, code_block_base_path)
 
             # 调用对齐函数获取相关代码
             related_code = query_related_code_by_feedback(
@@ -2598,97 +2671,12 @@ def add_alignment():
         # 1. 处理需求块
         doc_ranges = new_alignment.get('docRanges', [])
         if doc_ranges:
-            doc_block_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
-            os.makedirs(os.path.dirname(doc_block_path), exist_ok=True)
-
-            # 读取现有块以避免重复
-            existing_doc_blocks = set()
-            if os.path.exists(doc_block_path):
-                with open(doc_block_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if not line.strip(): continue
-                        try:
-                            b = json.loads(line.strip())
-                            # 使用 tuple 作为 key
-                            key = (b.get('filename'), b.get('start'), b.get('end'))
-                            existing_doc_blocks.add(key)
-                        except: pass
-
-            blocks_to_add = []
-            for dr in doc_ranges:
-                # docRange结构通常包含 filename, start, end, content
-                key = (dr.get('filename'), dr.get('start'), dr.get('end'))
-                if key not in existing_doc_blocks:
-                    # 构造标准块数据
-                    block_data = {
-                        "filename": dr.get('filename'),
-                        "start": dr.get('start'),
-                        "end": dr.get('end'),
-                        "content": dr.get('content', '')
-                    }
-                    blocks_to_add.append(block_data)
-                    existing_doc_blocks.add(key) # 防止同一次请求中有重复
-
-            '''if blocks_to_add:
-                with open(doc_block_path, 'a', encoding='utf-8') as f:
-                    for b in blocks_to_add:
-                        f.write(json.dumps(b, ensure_ascii=False) + '\n')'''
+            append_missing_doc_blocks(project_path, doc_ranges)
 
         # 2. 处理代码块
         code_ranges = new_alignment.get('codeRanges', [])
         if code_ranges:
-            code_block_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
-            os.makedirs(os.path.dirname(code_block_path), exist_ok=True)
-
-            # 读取现有块并获取最大ID
-            existing_code_blocks = set()
-            max_id = 0
-            if os.path.exists(code_block_path):
-                with open(code_block_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if not line.strip(): continue
-                        try:
-                            b = json.loads(line.strip())
-                            # 匹配逻辑：file + range
-                            b_range = b.get('range', [])
-                            if len(b_range) == 2:
-                                key = (b.get('file'), b_range[0], b_range[1])
-                                existing_code_blocks.add(key)
-
-                            bid = int(b.get('id', 0))
-                            if bid > max_id: max_id = bid
-                        except: pass
-
-            blocks_to_add = []
-            for cr in code_ranges:
-                # codeRange结构通常包含 filename(or documentId), start, end, startLine, endLine, content
-                # code_block需要: id, file, range[startLine, endLine], content
-                # 注意：这里我们假设 codeRange 中的 startLine/endLine 是可靠的。
-                # 如果 codeRange 中只有 start/end (offset)，我们需要转换吗？
-                # 前端通常会发送 startLine/endLine。如果缺失，这里可能无法准确创建行级块。
-                # 假设前端传了 startLine/endLine
-
-                c_file = cr.get('filename') or cr.get('documentId')
-                c_start_line = cr.get('startLine')
-                c_end_line = cr.get('endLine')
-
-                if c_file and c_start_line is not None and c_end_line is not None:
-                    key = (c_file, c_start_line, c_end_line)
-                    if key not in existing_code_blocks:
-                        max_id += 1
-                        block_data = {
-                            "id": max_id,
-                            "file": c_file,
-                            "range": [c_start_line, c_end_line],
-                            "content": cr.get('content', '')
-                        }
-                        blocks_to_add.append(block_data)
-                        existing_code_blocks.add(key)
-
-            if blocks_to_add:
-                with open(code_block_path, 'a', encoding='utf-8') as f:
-                    for b in blocks_to_add:
-                        f.write(json.dumps(b, ensure_ascii=False) + '\n')
+            append_missing_code_blocks(project_path, code_ranges)
 
     except Exception as e:
         print(f"Error auto-creating blocks: {e}")
@@ -3065,7 +3053,7 @@ def update_issue_content():
 
 @bp.route('/api/code-decomposition', methods=['POST'])
 def code_decomposition():
-    """将代码分块为仅包含代码范围的对齐关系并保存到文件"""
+    """将代码分块为仅包含代码范围的对齐关系并同步到数据库"""
     try:
         data = request.get_json()
         project_path = data.get('projectPath')
@@ -3077,17 +3065,9 @@ def code_decomposition():
             return jsonify({'status': 'error', 'message': '代码目录不存在'})
 
         all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
-        code_block_base_path = os.path.join(project_path, 'code_block_repo')
-        os.makedirs(code_block_base_path, exist_ok=True)
+        all_code_blocks = get_all_code_blocks(code_repo_path, all_files)
+        replace_code_blocks(project_path, all_code_blocks)
 
-        # 删除现有的 code_blocks.jsonl
-        code_blocks_file = os.path.join(code_block_base_path, 'code_blocks.jsonl')
-        if os.path.exists(code_blocks_file):
-            os.remove(code_blocks_file)
-
-        all_code_blocks = get_all_code_blocks(code_repo_path, all_files, code_block_base_path)
-
-        # 仅确保文件生成，不写入数据库
         processed_count = len(all_code_blocks)
 
         return jsonify({'status': 'success', 'message': '代码分解完成，结果已保存', 'processedCount': processed_count})
@@ -3128,23 +3108,11 @@ def get_doc_blocks():
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
 
-        doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
-        doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
+        resolved_project_id = resolve_project_id(project_path, project_id)
+        doc_blocks = get_doc_blocks_by_project(project_path, resolved_project_id, filename)
 
-        if not os.path.exists(doc_block_file_path):
-             return jsonify({'status': 'success', 'data': []})
-
-        doc_blocks = []
-        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip():
-                    block = json.loads(line.strip())
-                    if filename and block.get('filename') != filename:
-                        continue
-                    doc_blocks.append(block)
-
-        if project_id:
-            alignments = _load_project_alignments(project_id)
+        if resolved_project_id:
+            alignments = _load_project_alignments(resolved_project_id)
             for block in doc_blocks:
                 block_file = block.get('filename')
                 block_start = block.get('start')
@@ -3181,29 +3149,11 @@ def get_code_blocks():
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
 
-        code_block_base_path = os.path.join(project_path, 'code_block_repo')
-        code_block_file_path = os.path.join(code_block_base_path, 'code_blocks.jsonl')
+        resolved_project_id = resolve_project_id(project_path, project_id)
+        code_blocks = get_code_blocks_by_project(project_path, resolved_project_id, filename)
 
-        if not os.path.exists(code_block_file_path):
-             return jsonify({'status': 'success', 'data': []})
-
-        code_blocks = []
-        with open(code_block_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip():
-                    try:
-                        block = json.loads(line.strip())
-                        # 如果提供了文件名，则进行筛选
-                        if filename:
-                            if block.get('file') == filename:
-                                code_blocks.append(block)
-                        else:
-                            code_blocks.append(block)
-                    except json.JSONDecodeError:
-                        continue
-
-        if project_id:
-            alignments = _load_project_alignments(project_id)
+        if resolved_project_id:
+            alignments = _load_project_alignments(resolved_project_id)
             for block in code_blocks:
                 block_file = block.get('file')
                 line_range = block.get('range') if isinstance(block.get('range'), list) else []
@@ -3333,59 +3283,45 @@ def _compact_title_from_text(text: str, max_len: int = 24):
 
 def gen_req_chunks(project_path):
     """
-    原逻辑: 读取文件，生成需求快数据
+    从数据库中的需求块生成需求对齐候选数据
     """
-    doc_block_file_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
-    if not os.path.exists(doc_block_file_path):
-        return jsonify({'status': 'success', 'data': []})
-
     chunks = []
-    with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-        for i, line in enumerate(f):
-            if not line.strip():
-                continue
-            try:
-                block = pyjson.loads(line.strip())
-            except Exception:
-                continue
+    for block in get_doc_blocks_by_project(project_path):
+        filename = block.get('filename') or block.get('documentId') or ''
+        content = block.get('content') or ''
+        start = block.get('start') if block.get('start') is not None else 0
+        end = block.get('end') if block.get('end') is not None else 0
 
-            filename = block.get('filename') or block.get('documentId') or ''
-            content = block.get('content') or ''
-            start = block.get('start') if block.get('start') is not None else 0
-            end = block.get('end') if block.get('end') is not None else 0
+        raw_doc = _read_doc_raw_content(project_path, filename)
+        start_line, end_line = _offset_to_line_numbers(raw_doc, start, end)
 
-            raw_doc = _read_doc_raw_content(project_path, filename)
-            start_line, end_line = _offset_to_line_numbers(raw_doc, start, end)
+        doc_range = {
+            'documentId': filename,
+            'filename': filename,
+            'start': start,
+            'end': end,
+            'content': content,
+            'startLine': start_line,
+            'endLine': end_line
+        }
 
-            doc_range = {
-                'documentId': filename,
-                'filename': filename,
-                'start': start,
-                'end': end,
-                'content': content,
-                'startLine': start_line,
-                'endLine': end_line
-            }
-
-            chunk_id = f"auto_req_{uuid.uuid4().hex}"
-
-            if 'name' in block:
-                chunk_name = block.get('name')
+        chunk_id = f"auto_req_{uuid.uuid4().hex}"
+        chunk_name = block.get('name')
+        if not chunk_name:
+            if '#' in content:
+                first_line = content.split('\n')[0]
+                chunk_name = first_line.lstrip('#')
             else:
-                if '#' in content:
-                    first_line = content.split('\n')[0]
-                    chunk_name = first_line.lstrip('#')
-                else:
-                    chunk_name = _compact_title_from_text(content, 24)
+                chunk_name = _compact_title_from_text(content, 24)
 
-            chunks.append({
-                'id': chunk_id,
-                'name': chunk_name,
-                'isReviewed': False,
-                'reviewThoughts': '',
-                'docRanges': [doc_range],
-                'codeRanges': []
-            })
+        chunks.append({
+            'id': chunk_id,
+            'name': chunk_name,
+            'isReviewed': False,
+            'reviewThoughts': '',
+            'docRanges': [doc_range],
+            'codeRanges': []
+        })
 
     chunks.sort(key=lambda x: (
     (x.get('docRanges') or [{}])[0].get('filename') or '', (x.get('docRanges') or [{}])[0].get('start') or 0))
@@ -3487,78 +3423,100 @@ def add_block():
         project_path = data.get('projectPath')
         block_type = data.get('blockType')  # 'doc' or 'code'
         block_data = data.get('blockData')
-        # project_id = data.get('projectId')
+        project_id = resolve_project_id(project_path, data.get('projectId') or data.get('project_id'))
 
         if not project_path or not block_type or not block_data:
             return jsonify({'status': 'error', 'message': '缺少必要参数'})
+        if not project_id:
+            return jsonify({'status': 'error', 'message': '未找到项目ID'}), 400
 
         if block_type == 'doc':
-            doc_block_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
-            # 确保目录存在
-            os.makedirs(os.path.dirname(doc_block_path), exist_ok=True)
+            filename = block_data.get('filename') or block_data.get('documentId') or ''
+            start = _safe_int(block_data.get('start'))
+            end = _safe_int(block_data.get('end'))
+            content = block_data.get('content') or ''
 
-            # 检查是否已存在
-            exists = False
-            if os.path.exists(doc_block_path):
-                with open(doc_block_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if not line.strip(): continue
-                        b = json.loads(line.strip())
-                        if (b.get('filename') == block_data.get('filename') and
-                            b.get('start') == block_data.get('start') and
-                            b.get('end') == block_data.get('end')):
-                            exists = True
-                            break
-
-            if not exists:
-                with open(doc_block_path, 'a', encoding='utf-8') as f:
-                    f.write(json.dumps(block_data, ensure_ascii=False) + '\n')
-                return jsonify({'status': 'success', 'message': '需求块添加成功'})
-            else:
+            db = get_db()
+            cur = db.cursor()
+            cur.execute(
+                'SELECT id FROM doc_blocks WHERE project_id=%s AND filename=%s AND start=%s AND end=%s LIMIT 1',
+                (project_id, filename, start, end)
+            )
+            existing = cur.fetchone()
+            if existing:
                 return jsonify({'status': 'warning', 'message': '该需求块已存在'})
 
+            block_id = block_data.get('id')
+            if block_id in (None, ''):
+                block_id = _get_next_block_id('doc_blocks', project_id)
+                block_data['id'] = block_id
+
+            block_data['filename'] = filename
+            block_data['documentId'] = filename
+            block_data['start'] = start
+            block_data['end'] = end
+            block_data['content'] = content
+            block_data['type'] = block_data.get('type') or block_data.get('name') or ''
+
+            cur.execute(
+                'INSERT INTO doc_blocks(project_id, id, filename, type, content, start, end, createdAt, updatedAt) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+                (project_id, _safe_int(block_id), filename, block_data.get('type') or '', content, start, end)
+            )
+            return jsonify({'status': 'success', 'message': '需求块添加成功'})
+
         elif block_type == 'code':
-            code_block_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
-            os.makedirs(os.path.dirname(code_block_path), exist_ok=True)
+            target_range = block_data.get('range', [])
+            if not (isinstance(target_range, list) and len(target_range) == 2):
+                return jsonify({'status': 'error', 'message': '代码块缺少有效范围'}), 400
 
-            # 生成新ID (如果前端没传)
-            if 'id' not in block_data:
-                max_id = 0
-                if os.path.exists(code_block_path):
-                    with open(code_block_path, 'r', encoding='utf-8') as f:
-                        for line in f:
-                            if not line.strip(): continue
-                            b = json.loads(line.strip())
-                            try:
-                                bid = int(b.get('id', 0))
-                                if bid > max_id: max_id = bid
-                            except:
-                                pass
-                block_data['id'] = max_id + 1
+            file_name = block_data.get('file') or block_data.get('filename') or block_data.get('documentId') or ''
+            start_line = _safe_int(target_range[0])
+            end_line = _safe_int(target_range[1])
+            code_content = block_data.get('code') or block_data.get('content') or ''
 
-            # 检查重复 (基于文件和范围)
-            exists = False
-            if os.path.exists(code_block_path):
-                with open(code_block_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if not line.strip(): continue
-                        b = json.loads(line.strip())
-
-                        b_range = b.get('range', [])
-                        t_range = block_data.get('range', [])
-                        if (b.get('file') == block_data.get('file') and
-                            len(b_range) == 2 and len(t_range) == 2 and
-                            b_range[0] == t_range[0] and b_range[1] == t_range[1]):
-                            exists = True
-                            break
-
-            if not exists:
-                with open(code_block_path, 'a', encoding='utf-8') as f:
-                    f.write(json.dumps(block_data, ensure_ascii=False) + '\n')
-                # save_code_block(project_path, project_id)
-                return jsonify({'status': 'success', 'message': '代码块添加成功'})
-            else:
+            db = get_db()
+            cur = db.cursor()
+            cur.execute(
+                'SELECT id FROM code_blocks WHERE project_id=%s AND file=%s AND start_line=%s AND end_line=%s LIMIT 1',
+                (project_id, file_name, start_line, end_line)
+            )
+            existing = cur.fetchone()
+            if existing:
                 return jsonify({'status': 'warning', 'message': '该代码块已存在'})
+
+            block_id = block_data.get('id')
+            if block_id in (None, ''):
+                block_id = _get_next_block_id('code_blocks', project_id)
+                block_data['id'] = block_id
+
+            block_data['file'] = file_name
+            block_data['filename'] = file_name
+            block_data['documentId'] = file_name
+            block_data['range'] = [start_line, end_line]
+            block_data['startLine'] = start_line
+            block_data['endLine'] = end_line
+            block_data['code'] = code_content
+            block_data['content'] = code_content
+            block_data['related_id'] = block_data.get('related_id') or []
+            block_data['related_range'] = block_data.get('related_range') or {}
+
+            cur.execute(
+                'INSERT INTO code_blocks(project_id, id, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+                (
+                    project_id,
+                    _safe_int(block_id),
+                    file_name,
+                    start_line,
+                    end_line,
+                    block_data.get('type') or '',
+                    code_content,
+                    pyjson.dumps(block_data.get('related_id') or [], ensure_ascii=False),
+                    pyjson.dumps(block_data.get('related_range') or {}, ensure_ascii=False)
+                )
+            )
+            return jsonify({'status': 'success', 'message': '代码块添加成功'})
 
         return jsonify({'status': 'error', 'message': '无效的块类型'})
 
@@ -3603,76 +3561,46 @@ def delete_block():
         project_path = data.get('projectPath')
         block_type = data.get('blockType')  # 'doc' or 'code'
         block_data = data.get('blockData')
-        project_id = data.get('project_id')
+        project_id = resolve_project_id(project_path, data.get('project_id') or data.get('projectId'))
 
         if not project_path or not block_type or not block_data:
             return jsonify({'status': 'error', 'message': '缺少必要参数'})
 
-        # 1. 从对应的JSONL文件中删除块
+        # 1. 删除块数据
         deleted = False
+        conn = get_db()
+        cur = conn.cursor()
         if block_type == 'doc':
-            doc_block_path = os.path.join(project_path, 'doc_block_repo', 'doc_blocks.jsonl')
-            if os.path.exists(doc_block_path):
-                new_blocks = []
-                with open(doc_block_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if not line.strip(): continue
-                        b = json.loads(line.strip())
-                        # 匹配逻辑：根据 filename, start, end 匹配
-                        if (b.get('filename') == block_data.get('filename') and
-                            b.get('start') == block_data.get('start') and
-                            b.get('end') == block_data.get('end')):
-                            deleted = True
-                            continue # 跳过（删除）
-                        new_blocks.append(b)
-
-                if deleted:
-                    with open(doc_block_path, 'w', encoding='utf-8') as f:
-                        for b in new_blocks:
-                            f.write(json.dumps(b, ensure_ascii=False) + '\n')
+            target_filename = block_data.get('filename') or block_data.get('documentId')
+            target_start = _safe_int(block_data.get('start'))
+            target_end = _safe_int(block_data.get('end'))
+            cur.execute(
+                'DELETE FROM doc_blocks WHERE project_id=%s AND filename=%s AND start=%s AND end=%s',
+                (project_id, target_filename, target_start, target_end)
+            )
+            deleted = cur.rowcount > 0
 
         elif block_type == 'code':
-            code_block_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
-            if os.path.exists(code_block_path):
-                new_blocks = []
-                with open(code_block_path, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if not line.strip(): continue
-                        b = json.loads(line.strip())
-                        # 匹配逻辑：优先使用 id，或者 file + range
-                        is_match = False
-                        if 'id' in block_data and 'id' in b:
-                            if str(b['id']) == str(block_data['id']):
-                                is_match = True
-                        else:
-                            # 降级匹配
-                            b_range = b.get('range', [])
-                            t_range = block_data.get('range', [])
-                            if (b.get('file') == block_data.get('file') and
-                                len(b_range) == 2 and len(t_range) == 2 and
-                                b_range[0] == t_range[0] and b_range[1] == t_range[1]):
-                                is_match = True
-
-                        if is_match:
-                            deleted = True
-                            continue
-                        new_blocks.append(b)
-
-                if deleted:
-                    with open(code_block_path, 'w', encoding='utf-8') as f:
-                        for b in new_blocks:
-                            f.write(json.dumps(b, ensure_ascii=False) + '\n')
+            target_range = block_data.get('range', [])
+            target_file = block_data.get('file') or block_data.get('filename') or block_data.get('documentId')
+            target_start = _safe_int(target_range[0] if isinstance(target_range, list) and len(target_range) == 2 else block_data.get('startLine'))
+            target_end = _safe_int(target_range[1] if isinstance(target_range, list) and len(target_range) == 2 else block_data.get('endLine'))
+            if block_data.get('id') not in (None, ''):
+                cur.execute(
+                    'DELETE FROM code_blocks WHERE project_id=%s AND id=%s',
+                    (project_id, _safe_int(block_data.get('id')))
+                )
+            else:
+                cur.execute(
+                    'DELETE FROM code_blocks WHERE project_id=%s AND file=%s AND start_line=%s AND end_line=%s',
+                    (project_id, target_file, target_start, target_end)
+                )
+            deleted = cur.rowcount > 0
 
         if not deleted:
             return jsonify({'status': 'warning', 'message': '未找到要删除的块'})
 
         # 2. 清理对齐关系
-        db_path = os.path.join(project_path, 'project.db')
-        # conn = sqlite3.connect(db_path)
-        # conn.row_factory = sqlite3.Row
-        conn = get_db()
-        cur = conn.cursor()
-
         cur.execute(f"SELECT * FROM alignments where project_id={project_id}")
         alignments = cur.fetchall()
 
@@ -3699,21 +3627,17 @@ def delete_block():
                     modified = True
 
             elif block_type == 'code':
-                # 过滤掉匹配的 codeRange
                 original_len = len(code_ranges)
-                # code_ranges 里的结构可能和 code_blocks.jsonl 不完全一样
-                # codeRanges 通常包含 startLine, endLine, filename/documentId
-                # block_data (来自 code_blocks.jsonl) 包含 range [start, end], file
-
-                target_file = block_data.get('file')
-                target_start = block_data.get('range', [0,0])[0]
-                target_end = block_data.get('range', [0,0])[1]
+                target_range = block_data.get('range', [])
+                target_file = block_data.get('file') or block_data.get('filename') or block_data.get('documentId')
+                target_start = _safe_int(target_range[0] if isinstance(target_range, list) and len(target_range) == 2 else block_data.get('startLine'))
+                target_end = _safe_int(target_range[1] if isinstance(target_range, list) and len(target_range) == 2 else block_data.get('endLine'))
 
                 new_code_ranges = []
                 for cr in code_ranges:
                     cr_file = cr.get('filename') or cr.get('documentId')
-                    cr_start = cr.get('startLine')
-                    cr_end = cr.get('endLine')
+                    cr_start = _safe_int(cr.get('startLine'))
+                    cr_end = _safe_int(cr.get('endLine'))
 
                     if (cr_file == target_file and
                         cr_start == target_start and
@@ -3759,70 +3683,54 @@ def delete_block():
 
 
 def gen_code_chunks(project_path, end=False):
-    code_block_file_path = os.path.join(project_path, 'code_block_repo', 'code_blocks.jsonl')
-    if not os.path.exists(code_block_file_path):
-        return jsonify({'status': 'success', 'data': []})
-
     code_repo_path = os.path.join(project_path, 'code_repo')
     chunks = []
-    with open(code_block_file_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            if not line.strip():
+    for block in get_code_blocks_by_project(project_path):
+        file_rel = block.get('file') or ''
+        rng = block.get('range') or []
+        if not (isinstance(rng, list) and len(rng) == 2):
+            continue
+        start_line = int(rng[0])
+        end_line = int(rng[1])
+        content = block.get('code') or block.get('content') or ''
+
+        abs_code_path = os.path.join(code_repo_path, file_rel) if file_rel else None
+        raw_code = _read_text_file(abs_code_path)
+        char_start, char_end = _line_range_to_char_offsets(raw_code, start_line, end_line)
+
+        chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
+        code_lines = [line.strip() for line in content.splitlines()]
+        for code_line in code_lines:
+            if not code_line:
                 continue
-            try:
-                block = pyjson.loads(line.strip())
-            except Exception:
+            if code_line.startswith('//') or code_line.startswith('/*') or code_line.startswith('*'):
                 continue
+            chunk_name = code_line
+            break
 
-            file_rel = block.get('file') or ''
-            rng = block.get('range') or []
-            if not (isinstance(rng, list) and len(rng) == 2):
-                continue
-            start_line = int(rng[0])
-            end_line = int(rng[1])
-            content = block.get('code') or block.get('content') or ''
+        code_range = {
+            'name': chunk_name,
+            'documentId': file_rel,
+            'filename': file_rel,
+            'start': char_start,
+            'end': char_end,
+            'content': content,
+            'startLine': start_line,
+            'endLine': end_line
+        }
 
-            abs_code_path = os.path.join(code_repo_path, file_rel) if file_rel else None
-            raw_code = _read_text_file(abs_code_path)
-            char_start, char_end = _line_range_to_char_offsets(raw_code, start_line, end_line)
-
-            # 优先使用首个“非注释、非空”行作为名称；否则回退为文件+行号，避免空块/注释块导致未定义错误
-            chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
-            code_lines = [line.strip() for line in content.splitlines()]
-            for code_line in code_lines:
-                if not code_line:
-                    continue
-                if code_line.startswith('//') or code_line.startswith('/*') or code_line.startswith('*'):
-                    continue
-                chunk_name = code_line
-                break
-
-            code_range = {
-                'name': chunk_name,
-                'documentId': file_rel,
-                'filename': file_rel,
-                'start': char_start,
-                'end': char_end,
-                'content': content,
-                'startLine': start_line,
-                'endLine': end_line
-            }
-
-            chunk_id = f"auto_code_{uuid.uuid4().hex}"
-
-            # chunk_name = f"{file_rel}:{start_line}-{end_line}" if file_rel else f"代码块:{start_line}-{end_line}"
-
-            chunks.append({
-                'id': chunk_id,
-                'name': chunk_name,
-                'isReviewed': False,
-                'reviewThoughts': '',
-                'docRanges': [],
-                'codeRanges': [code_range]
-            })
+        chunk_id = f"auto_code_{uuid.uuid4().hex}"
+        chunks.append({
+            'id': chunk_id,
+            'name': chunk_name,
+            'isReviewed': False,
+            'reviewThoughts': '',
+            'docRanges': [],
+            'codeRanges': [code_range]
+        })
 
     if end:
-        return chunks[-1]
+        return chunks[-1] if chunks else None
 
     chunks.sort(key=lambda x: (
     (x.get('codeRanges') or [{}])[0].get('filename') or '', (x.get('codeRanges') or [{}])[0].get('startLine') or 0))
@@ -3912,28 +3820,12 @@ def align_code_to_requirement():
         except Exception:
             pass
 
+        all_doc_blocks, all_original_doc_blocks, blocks_by_file = _get_doc_blocks_for_matching(project_path)
+        if not all_doc_blocks:
+            return jsonify({"status": "success", "docRanges": []})
+
         # 如果没有选择任何 align 知识库，使用原来的 LLM 逻辑
         if not selected_align_kbs:
-            # 原有的 LLM 逻辑
-            # 获取需求块
-            doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
-            doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
-
-            if not os.path.exists(doc_block_file_path):
-                return jsonify({"status": "success", "docRanges": []}) # 没有需求文件，无法对齐
-
-            all_doc_blocks = []
-            all_original_doc_blocks = []
-            with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if line.strip():
-                        original_doc_block = json.loads(line.strip())
-                        all_doc_blocks.append({
-                            "file":original_doc_block.get("filename",''),
-                            "range":[original_doc_block.get("start",0),original_doc_block.get("end",0)],
-                            "content":original_doc_block.get("content",'')
-                        })
-                        all_original_doc_blocks.append(original_doc_block)
 
             code_content = '\n\n'.join([code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
 
@@ -3945,21 +3837,7 @@ def align_code_to_requirement():
                 project_path=project_path
             )
 
-            # 转换结果为docRanges
-            doc_ranges = []
-
-            # 通过文件名和起止范围匹配
-            blocks_by_file = defaultdict(list)
-            for block in all_original_doc_blocks:
-                blocks_by_file[block.get("filename","default")].append(block)
-
-            for req in related_reqs:
-                req_start, req_end = req.get("range",[0,0])
-                target_file = req.get("file","default")
-                candidates = blocks_by_file.get(target_file,[])
-                for block in candidates:
-                    if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
-                        doc_ranges.append(block)
+            doc_ranges = _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file)
 
             return jsonify({
                 "status": "success",
@@ -4018,26 +3896,6 @@ def align_code_to_requirement():
         history_doc_contents = [item['content'] for item in top_items]
         combined_history_content = "\n".join(history_doc_contents)
 
-        # 再次读取当前项目的需求块
-        doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
-        doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
-
-        if not os.path.exists(doc_block_file_path):
-             return jsonify({"status": "success", "docRanges": []})
-
-        all_doc_blocks = []
-        all_original_doc_blocks = []
-        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip():
-                    original_doc_block = json.loads(line.strip())
-                    all_doc_blocks.append({
-                        "file":original_doc_block.get("filename",''),
-                        "range":[original_doc_block.get("start",0),original_doc_block.get("end",0)],
-                        "content":original_doc_block.get("content",'')
-                    })
-                    all_original_doc_blocks.append(original_doc_block)
-
         # 使用历史需求内容 + 代码内容 共同作为 Query 去查询当前项目需求
         enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
 
@@ -4050,18 +3908,7 @@ def align_code_to_requirement():
             project_path=project_path
         )
 
-        doc_ranges = []
-        blocks_by_file = defaultdict(list)
-        for block in all_original_doc_blocks:
-            blocks_by_file[block.get("filename","default")].append(block)
-
-        for req in related_reqs:
-            req_start, req_end = req.get("range",[0,0])
-            target_file = req.get("file","default")
-            candidates = blocks_by_file.get(target_file,[])
-            for block in candidates:
-                if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
-                    doc_ranges.append(block)
+        doc_ranges = _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file)
 
         return jsonify({
             "status": "success",
@@ -4101,28 +3948,12 @@ def align_code_to_requirement_addprompt():
         except Exception:
             pass
 
+        all_doc_blocks, all_original_doc_blocks, blocks_by_file = _get_doc_blocks_for_matching(project_path, project_id)
+        if not all_doc_blocks:
+            return jsonify({"status": "success", "docRanges": []})
+
         # 如果没有选择任何 align 知识库，使用原来的 LLM 逻辑
         if not selected_align_kbs:
-            # 原有的 LLM 逻辑
-            # 获取需求块
-            doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
-            doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
-
-            if not os.path.exists(doc_block_file_path):
-                return jsonify({"status": "success", "docRanges": []}) # 没有需求文件，无法对齐
-
-            all_doc_blocks = []
-            all_original_doc_blocks = []
-            with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if line.strip():
-                        original_doc_block = json.loads(line.strip())
-                        all_doc_blocks.append({
-                            "file":original_doc_block.get("filename",''),
-                            "range":[original_doc_block.get("start",0),original_doc_block.get("end",0)],
-                            "content":original_doc_block.get("content",'')
-                        })
-                        all_original_doc_blocks.append(original_doc_block)
 
             code_content = '\n\n'.join([code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
 
@@ -4136,21 +3967,7 @@ def align_code_to_requirement_addprompt():
                 project_path=project_path
             )
 
-            # 转换结果为docRanges
-            doc_ranges = []
-
-            # 通过文件名和起止范围匹配
-            blocks_by_file = defaultdict(list)
-            for block in all_original_doc_blocks:
-                blocks_by_file[block.get("filename","default")].append(block)
-
-            for req in related_reqs:
-                req_start, req_end = req.get("range",[0,0])
-                target_file = req.get("file","default")
-                candidates = blocks_by_file.get(target_file,[])
-                for block in candidates:
-                    if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
-                        doc_ranges.append(block)
+            doc_ranges = _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file)
 
             return jsonify({
                 "status": "success",
@@ -4209,26 +4026,6 @@ def align_code_to_requirement_addprompt():
         history_doc_contents = [item['content'] for item in top_items]
         combined_history_content = "\n".join(history_doc_contents)
 
-        # 再次读取当前项目的需求块
-        doc_block_base_path = os.path.join(project_path, 'doc_block_repo')
-        doc_block_file_path = os.path.join(doc_block_base_path, 'doc_blocks.jsonl')
-
-        if not os.path.exists(doc_block_file_path):
-             return jsonify({"status": "success", "docRanges": []})
-
-        all_doc_blocks = []
-        all_original_doc_blocks = []
-        with open(doc_block_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                if line.strip():
-                    original_doc_block = json.loads(line.strip())
-                    all_doc_blocks.append({
-                        "file":original_doc_block.get("filename",''),
-                        "range":[original_doc_block.get("start",0),original_doc_block.get("end",0)],
-                        "content":original_doc_block.get("content",'')
-                    })
-                    all_original_doc_blocks.append(original_doc_block)
-
         # 使用历史需求内容 + 代码内容 共同作为 Query 去查询当前项目需求
         enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
 
@@ -4241,18 +4038,7 @@ def align_code_to_requirement_addprompt():
             project_path=project_path
         )
 
-        doc_ranges = []
-        blocks_by_file = defaultdict(list)
-        for block in all_original_doc_blocks:
-            blocks_by_file[block.get("filename","default")].append(block)
-
-        for req in related_reqs:
-            req_start, req_end = req.get("range",[0,0])
-            target_file = req.get("file","default")
-            candidates = blocks_by_file.get(target_file,[])
-            for block in candidates:
-                if block.get("start",0) <= req_start and block.get("end",0) >= req_end:
-                    doc_ranges.append(block)
+        doc_ranges = _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file)
 
         return jsonify({
             "status": "success",
