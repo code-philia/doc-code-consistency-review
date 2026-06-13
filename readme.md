@@ -99,6 +99,16 @@ mysql -h 127.0.0.1 -P 3306 -u root -p -e "CREATE DATABASE IF NOT EXISTS doc_code
 mysql -h 127.0.0.1 -P 3306 -u root -p doc_code < schema.sql
 ```
 
+#### 4.4 执行数据库迁移脚本
+
+如果只是增量执行某个迁移脚本，可以直接运行：
+
+```bash
+mysql -h 127.0.0.1 -P 3306 -u root -p123456 doc_code < add_doc_code_blocks_tables.sql
+```
+
+如果后续有新的迁移脚本，只需要把命令最后的脚本文件名替换掉即可。
+
 ### 5. 检查并启动 Redis
 
 Celery 使用的 Redis 地址在 `tasks.py`：

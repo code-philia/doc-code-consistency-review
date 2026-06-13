@@ -35,6 +35,56 @@ CREATE TABLE `abstracts` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `code_blocks`
+--
+
+DROP TABLE IF EXISTS `code_blocks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `code_blocks` (
+  `code_block_row_id` int NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `project_id` int NOT NULL COMMENT '项目id',
+  `id` int NOT NULL COMMENT '代码块原始id',
+  `file` varchar(255) NOT NULL COMMENT '代码文件相对路径',
+  `start_line` int NOT NULL COMMENT '起始行',
+  `end_line` int NOT NULL COMMENT '结束行',
+  `type` varchar(100) DEFAULT NULL COMMENT '代码块类型',
+  `code` MEDIUMTEXT COMMENT '代码块内容',
+  `related_id` json DEFAULT NULL COMMENT '关联代码块id列表',
+  `related_range` json DEFAULT NULL COMMENT '关联范围映射',
+  `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updatedAt` timestamp NULL DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`code_block_row_id`),
+  UNIQUE KEY `code_block_unique` (`project_id`,`id`),
+  KEY `idx_code_blocks_project_file` (`project_id`,`file`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='代码块';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `doc_blocks`
+--
+
+DROP TABLE IF EXISTS `doc_blocks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `doc_blocks` (
+  `doc_block_id` int NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `project_id` int NOT NULL COMMENT '项目id',
+  `id` int NOT NULL COMMENT '需求块原始id',
+  `filename` varchar(255) NOT NULL COMMENT '需求文档相对路径',
+  `type` varchar(100) DEFAULT NULL COMMENT '需求块类型',
+  `content` MEDIUMTEXT COMMENT '需求块内容',
+  `start` int NOT NULL COMMENT '起始字符偏移',
+  `end` int NOT NULL COMMENT '结束字符偏移',
+  `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updatedAt` timestamp NULL DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`doc_block_id`),
+  UNIQUE KEY `doc_block_unique` (`project_id`,`id`),
+  KEY `idx_doc_blocks_project_file` (`project_id`,`filename`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='需求块';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `alignments`
 --
 
