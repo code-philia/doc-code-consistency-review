@@ -169,7 +169,7 @@ const app = createApp({
         const alignmentPageSize = ref(100); // 对齐视图分页的每页展示数量
         const alignmentTotal = ref(0);
         const docBlockPage = ref(1);
-        const docBlockPageSize = ref(100);  // 块视图分页的每页展示数量
+        const docBlockPageSize = ref(100);  // 以后端返回的分页大小为准
         const docBlockTotal = ref(0);
         const codeBlockPage = ref(1);
         const codeBlockPageSize = ref(100);
@@ -526,14 +526,29 @@ const app = createApp({
                         projectPath: projectPath.value,
                         project_id: projectId,
                         page: pageRef.value,
-                        page_size: pageSizeRef.value,
                         filename: viewMode.value === 'current' ? currentFile : ''
                     }
                 });
 
                 if (response.data.status === 'success') {
+                    const pagination = response.data.pagination || {};
+                    const serverPageSize = Number(pagination.page_size) || pageSizeRef.value;
+                    const serverTotal = Number(pagination.total) || 0;
+                    const serverTotalPages = Math.max(0, Number(pagination.pages) || 0);
+
+                    pageSizeRef.value = serverPageSize;
                     targetRef.value = response.data.data || [];
-                    totalRef.value = response.data.pagination?.total || 0;
+                    totalRef.value = serverTotal;
+
+                    if (serverTotalPages > 0 && pageRef.value > serverTotalPages) {
+                        pageRef.value = serverTotalPages;
+                        await fetchSidebarBlocksPage(false);
+                        return;
+                    }
+
+                    if (serverTotal === 0) {
+                        pageRef.value = 1;
+                    }
                 } else {
                     targetRef.value = [];
                     totalRef.value = 0;
@@ -3583,126 +3598,10 @@ const app = createApp({
                 );
             }
         };
-
-
-
-        /***********************
-         * 点击高亮筛选功能
-         ***********************/
-        // 根据需求范围筛选对齐关系
-        const filterAlignmentsByDocRange = (start, end) => {
-            const overlappingAlignments = alignmentResults.value.filter(alignment => {
-                // 检查需求文档范围是否有交集
-                const hasDocOverlap = alignment.docRanges.some(range =>
-                    range.end > start && range.start < end
-                );
-                return hasDocOverlap;
-            });
-
-            filteredAlignments.value = overlappingAlignments;
-            isFiltered.value = true;
-
-            // 如果没有找到匹配的对齐关系，显示提示
-            if (overlappingAlignments.length === 0) {
-                ElMessage.info('未找到包含此范围的对齐关系');
-            }
-        };
-
-        // 根据代码范围筛选对齐关系
-        const filterAlignmentsByCodeRange = (start, end, documentId) => {
-            let startLine, endLine;
-            if (documentId === selectedCodeFile.value) {
-                const lines = convertOffsetToLineNumbers(selectedCodeRawContent.value, start, end);
-                startLine = lines.startLine;
-                endLine = lines.endLine;
-            }
-
-            const overlappingAlignments = alignmentResults.value.filter(alignment => {
-                // 检查代码范围是否有交集
-                const hasCodeOverlap = alignment.codeRanges.some(range => {
-                    if (range.documentId !== documentId) return false;
-
-                    // 优先使用行号交集判断
-                    if (startLine !== undefined && endLine !== undefined && range.startLine !== undefined && range.endLine !== undefined) {
-                        return Math.max(range.startLine, startLine) <= Math.min(range.endLine, endLine);
-                    }
-
-                    // 降级使用偏移量交集判断
-                    return range.end > start && range.start < end;
-                });
-                return hasCodeOverlap;
-            });
-
-            filteredAlignments.value = overlappingAlignments;
-            isFiltered.value = true;
-
-            // 如果没有找到匹配的对齐关系，显示提示
-            if (overlappingAlignments.length === 0) {
-                ElMessage.info('未找到包含此代码范围的对齐关系');
-            }
-        };
-
         // 显示全部对齐关系
         const showAllAlignments = () => {
             filteredAlignments.value = null;
             isFiltered.value = false;
-        };
-
-        // 根据多个文档范围筛选对齐关系（支持重叠高亮块）
-        const filterAlignmentsByMultipleDocRanges = (ranges) => {
-            const overlappingAlignments = alignmentResults.value.filter(alignment => {
-                // 检查是否与任意一个范围有交集
-                return ranges.some(range => {
-                    return alignment.docRanges && alignment.docRanges.some(docRange =>
-                        docRange.documentId === selectedDocFile.value &&
-                        docRange.end > range.start && docRange.start < range.end
-                    );
-                });
-            });
-
-            filteredAlignments.value = overlappingAlignments;
-            isFiltered.value = true;
-
-            // 如果没有找到匹配的对齐关系，显示提示
-            if (overlappingAlignments.length === 0) {
-                ElMessage.info('未找到包含此范围的对齐关系');
-            }
-        };
-
-        // 根据多个代码范围筛选对齐关系（支持重叠高亮块）
-        const filterAlignmentsByMultipleCodeRanges = (ranges, documentId) => {
-            const rangesWithLines = ranges.map(range => {
-                if (documentId === selectedCodeFile.value) {
-                    const { startLine, endLine } = convertOffsetToLineNumbers(selectedCodeRawContent.value, range.start, range.end);
-                    return { ...range, startLine, endLine };
-                }
-                return range;
-            });
-
-            const overlappingAlignments = alignmentResults.value.filter(alignment => {
-                // 检查是否与任意一个范围有交集
-                return rangesWithLines.some(range => {
-                    return alignment.codeRanges && alignment.codeRanges.some(codeRange => {
-                        if (codeRange.documentId !== documentId) return false;
-
-                        // 优先使用行号交集判断
-                        if (range.startLine !== undefined && range.endLine !== undefined && codeRange.startLine !== undefined && codeRange.endLine !== undefined) {
-                            return Math.max(codeRange.startLine, range.startLine) <= Math.min(codeRange.endLine, range.endLine);
-                        }
-
-                        // 降级使用偏移量交集判断
-                        return codeRange.end > range.start && codeRange.start < range.end;
-                    });
-                });
-            });
-
-            filteredAlignments.value = overlappingAlignments;
-            isFiltered.value = true;
-
-            // 如果没有找到匹配的对齐关系，显示提示
-            if (overlappingAlignments.length === 0) {
-                ElMessage.info('未找到包含此范围的对齐关系');
-            }
         };
 
         const currentSelectedBlockIndex = ref(-1);
@@ -4112,23 +4011,6 @@ const app = createApp({
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-        };
-
-        // 临时高亮元素（淡黄色3秒）
-        const highlightTemp = (element) => {
-            if (!element) return;
-            const originalBg = element.style.backgroundColor;
-            const originalTransition = element.style.transition;
-
-            element.style.transition = 'background-color 0.3s ease';
-            element.style.backgroundColor = 'rgba(255, 255, 183, 0.8)';
-
-            setTimeout(() => {
-                element.style.backgroundColor = originalBg;
-                setTimeout(() => {
-                    element.style.transition = originalTransition;
-                }, 300);
-            }, 3000);
         };
 
         // 需求块导航
@@ -6013,7 +5895,7 @@ const app = createApp({
         };
 
         const findDocBlockByRange = (rangeStart, rangeEnd) => {
-            return (docBlocks.value || []).find(block =>
+            return (currentDocBlocksForHighlight.value || []).find(block =>
                 block.filename === selectedDocFile.value &&
                 block.start === rangeStart &&
                 block.end === rangeEnd
@@ -6021,7 +5903,7 @@ const app = createApp({
         };
 
         const findCodeBlockByRange = (rangeStart, rangeEnd) => {
-            return (codeBlocks.value || []).find(block => {
+            return (currentCodeBlocksForHighlight.value || []).find(block => {
                 if (block.file !== selectedCodeFile.value) return false;
                 if (!Array.isArray(block.range) || block.range.length !== 2) return false;
                 const offsets = getOffsetsFromLineRange(selectedCodeRawContent.value, block.range[0], block.range[1]);

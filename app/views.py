@@ -9,7 +9,9 @@ from .db import (
     get_project_id_by_path,
     resolve_project_id,
     get_doc_blocks_by_project,
+    get_paginated_doc_blocks_by_project,
     get_code_blocks_by_project,
+    get_paginated_code_blocks_by_project,
     save_code_blocks_for_file,
     replace_doc_blocks,
     replace_code_blocks,
@@ -67,6 +69,8 @@ handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
+
+BLOCK_SIDEBAR_PAGE_SIZE = 100
 
 
 def project_now_str():
@@ -3109,7 +3113,17 @@ def get_doc_blocks():
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
 
         resolved_project_id = resolve_project_id(project_path, project_id)
-        doc_blocks = get_doc_blocks_by_project(project_path, resolved_project_id, filename)
+        if page or page_size:
+            doc_blocks, pagination = get_paginated_doc_blocks_by_project(
+                project_path,
+                resolved_project_id,
+                filename=filename,
+                page=page or 1,
+                page_size=BLOCK_SIDEBAR_PAGE_SIZE
+            )
+        else:
+            doc_blocks = get_doc_blocks_by_project(project_path, resolved_project_id, filename)
+            pagination = None
 
         if resolved_project_id:
             alignments = _load_project_alignments(resolved_project_id)
@@ -3128,9 +3142,8 @@ def get_doc_blocks():
                 block['matchedAlignmentId'] = matched_alignment.get('id') if matched_alignment else None
                 block['matchedAlignmentReviewed'] = bool(matched_alignment.get('isReviewed')) if matched_alignment else False
 
-        if page or page_size:
-            paged = _paginate_items(doc_blocks, page or 1, page_size or 100)
-            return jsonify({'status': 'success', 'data': paged['items'], 'pagination': paged['pagination']})
+        if pagination is not None:
+            return jsonify({'status': 'success', 'data': doc_blocks, 'pagination': pagination})
 
         return jsonify({'status': 'success', 'data': doc_blocks})
     except Exception as e:
@@ -3150,7 +3163,17 @@ def get_code_blocks():
             return jsonify({'status': 'error', 'message': '缺少项目路径'})
 
         resolved_project_id = resolve_project_id(project_path, project_id)
-        code_blocks = get_code_blocks_by_project(project_path, resolved_project_id, filename)
+        if page or page_size:
+            code_blocks, pagination = get_paginated_code_blocks_by_project(
+                project_path,
+                resolved_project_id,
+                filename=filename,
+                page=page or 1,
+                page_size=BLOCK_SIDEBAR_PAGE_SIZE
+            )
+        else:
+            code_blocks = get_code_blocks_by_project(project_path, resolved_project_id, filename)
+            pagination = None
 
         if resolved_project_id:
             alignments = _load_project_alignments(resolved_project_id)
@@ -3182,9 +3205,8 @@ def get_code_blocks():
                 block['matchedCodeReviewAlignmentId'] = matched_code_review_alignment.get('id') if matched_code_review_alignment else None
                 block['matchedCodeReviewReviewed'] = bool(matched_code_review_alignment.get('isReviewed')) if matched_code_review_alignment else False
 
-        if page or page_size:
-            paged = _paginate_items(code_blocks, page or 1, page_size or 100)
-            return jsonify({'status': 'success', 'data': paged['items'], 'pagination': paged['pagination']})
+        if pagination is not None:
+            return jsonify({'status': 'success', 'data': code_blocks, 'pagination': pagination})
 
         return jsonify({'status': 'success', 'data': code_blocks})
     except Exception as e:

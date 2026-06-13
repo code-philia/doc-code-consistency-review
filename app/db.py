@@ -91,6 +91,42 @@ def _get_next_block_id(table_name, project_id):
     return _safe_int(row.get('max_id'), 0) + 1
 
 
+def _format_doc_block_row(row):
+    content = row.get('content') or ''
+    name = row.get('type') or _compact_title_from_text(content, 24)
+    return {
+        'id': _safe_int(row.get('id')),
+        'name': name,
+        'type': row.get('type') or '',
+        'filename': row.get('filename') or '',
+        'documentId': row.get('filename') or '',
+        'content': content,
+        'start': _safe_int(row.get('start')),
+        'end': _safe_int(row.get('end'))
+    }
+
+
+def _format_code_block_row(row):
+    related_id = _json_load_if_needed(row.get('related_id'), [])
+    related_range = _json_load_if_needed(row.get('related_range'), {})
+    start_line = _safe_int(row.get('start_line'))
+    end_line = _safe_int(row.get('end_line'))
+    code = row.get('code') or ''
+    return {
+        'id': _safe_int(row.get('id')),
+        'file': row.get('file') or '',
+        'filename': row.get('file') or '',
+        'range': [start_line, end_line],
+        'startLine': start_line,
+        'endLine': end_line,
+        'type': row.get('type') or '',
+        'code': code,
+        'content': code,
+        'related_id': related_id if isinstance(related_id, list) else [],
+        'related_range': related_range if isinstance(related_range, dict) else {}
+    }
+
+
 def get_doc_blocks_by_project(project_path, project_id=None, filename=None):
     resolved_project_id = resolve_project_id(project_path, project_id)
     if not resolved_project_id:
@@ -106,21 +142,45 @@ def get_doc_blocks_by_project(project_path, project_id=None, filename=None):
     sql += ' ORDER BY filename ASC, start ASC, id ASC'
     cur.execute(sql, tuple(params))
 
-    blocks = []
-    for row in cur.fetchall():
-        content = row.get('content') or ''
-        name = row.get('type') or _compact_title_from_text(content, 24)
-        blocks.append({
-            'id': _safe_int(row.get('id')),
-            'name': name,
-            'type': row.get('type') or '',
-            'filename': row.get('filename') or '',
-            'documentId': row.get('filename') or '',
-            'content': content,
-            'start': _safe_int(row.get('start')),
-            'end': _safe_int(row.get('end'))
-        })
-    return blocks
+    return [_format_doc_block_row(row) for row in cur.fetchall()]
+
+
+def get_paginated_doc_blocks_by_project(project_path, project_id=None, filename=None, page=1, page_size=100):
+    resolved_project_id = resolve_project_id(project_path, project_id)
+    safe_page = max(_safe_int(page, 1), 1)
+    safe_page_size = max(_safe_int(page_size, 100), 1)
+    if not resolved_project_id:
+        return [], {
+            'page': safe_page,
+            'page_size': safe_page_size,
+            'total': 0,
+            'pages': 0
+        }
+
+    conn = get_db()
+    cur = conn.cursor()
+    where_sql = ' FROM doc_blocks WHERE project_id=%s'
+    params = [resolved_project_id]
+    if filename:
+        where_sql += ' AND filename=%s'
+        params.append(filename)
+
+    cur.execute('SELECT COUNT(*) AS total' + where_sql, tuple(params))
+    row = cur.fetchone() or {}
+    total = _safe_int(row.get('total'))
+    offset = (safe_page - 1) * safe_page_size
+
+    cur.execute(
+        'SELECT id, filename, type, content, start, end' + where_sql +
+        ' ORDER BY filename ASC, start ASC, id ASC LIMIT %s OFFSET %s',
+        tuple(params + [safe_page_size, offset])
+    )
+    return [_format_doc_block_row(row) for row in cur.fetchall()], {
+        'page': safe_page,
+        'page_size': safe_page_size,
+        'total': total,
+        'pages': (total + safe_page_size - 1) // safe_page_size if total > 0 else 0
+    }
 
 
 def get_code_blocks_by_project(project_path, project_id=None, filename=None):
@@ -141,27 +201,45 @@ def get_code_blocks_by_project(project_path, project_id=None, filename=None):
     sql += ' ORDER BY file ASC, start_line ASC, end_line ASC, id ASC'
     cur.execute(sql, tuple(params))
 
-    blocks = []
-    for row in cur.fetchall():
-        related_id = _json_load_if_needed(row.get('related_id'), [])
-        related_range = _json_load_if_needed(row.get('related_range'), {})
-        start_line = _safe_int(row.get('start_line'))
-        end_line = _safe_int(row.get('end_line'))
-        code = row.get('code') or ''
-        blocks.append({
-            'id': _safe_int(row.get('id')),
-            'file': row.get('file') or '',
-            'filename': row.get('file') or '',
-            'range': [start_line, end_line],
-            'startLine': start_line,
-            'endLine': end_line,
-            'type': row.get('type') or '',
-            'code': code,
-            'content': code,
-            'related_id': related_id if isinstance(related_id, list) else [],
-            'related_range': related_range if isinstance(related_range, dict) else {}
-        })
-    return blocks
+    return [_format_code_block_row(row) for row in cur.fetchall()]
+
+
+def get_paginated_code_blocks_by_project(project_path, project_id=None, filename=None, page=1, page_size=100):
+    resolved_project_id = resolve_project_id(project_path, project_id)
+    safe_page = max(_safe_int(page, 1), 1)
+    safe_page_size = max(_safe_int(page_size, 100), 1)
+    if not resolved_project_id:
+        return [], {
+            'page': safe_page,
+            'page_size': safe_page_size,
+            'total': 0,
+            'pages': 0
+        }
+
+    conn = get_db()
+    cur = conn.cursor()
+    where_sql = ' FROM code_blocks WHERE project_id=%s'
+    params = [resolved_project_id]
+    if filename:
+        where_sql += ' AND file=%s'
+        params.append(filename)
+
+    cur.execute('SELECT COUNT(*) AS total' + where_sql, tuple(params))
+    row = cur.fetchone() or {}
+    total = _safe_int(row.get('total'))
+    offset = (safe_page - 1) * safe_page_size
+
+    cur.execute(
+        'SELECT id, file, start_line, end_line, type, code, related_id, related_range' + where_sql +
+        ' ORDER BY file ASC, start_line ASC, end_line ASC, id ASC LIMIT %s OFFSET %s',
+        tuple(params + [safe_page_size, offset])
+    )
+    return [_format_code_block_row(row) for row in cur.fetchall()], {
+        'page': safe_page,
+        'page_size': safe_page_size,
+        'total': total,
+        'pages': (total + safe_page_size - 1) // safe_page_size if total > 0 else 0
+    }
 
 
 def _remap_related_range_keys(related_range, old_to_new):
