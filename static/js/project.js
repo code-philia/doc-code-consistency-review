@@ -253,6 +253,11 @@ const app = createApp({
             return typeMap[type] || type || 'other';
         };
 
+        const shouldRenderAlignmentAsAlignedBlock = (alignment) => {
+            if (!alignment) return false;
+            return Number(alignment.isCodeReview || 0) !== 1 || !!alignment.isReviewed;
+        };
+
         const getKbSelectionKey = (kb) => {
             return `${normalizeKbType(kb?.type)}::${kb?.name || ''}`;
         };
@@ -707,6 +712,9 @@ const app = createApp({
                         const alignedRanges = new Set();
                         if (alignmentResults.value) {
                             alignmentResults.value.forEach(alignment => {
+                                if (!shouldRenderAlignmentAsAlignedBlock(alignment)) {
+                                    return;
+                                }
                                 if (alignment.docRanges) {
                                     alignment.docRanges.forEach(range => {
                                         if (range.documentId === selectedDocFile.value) {
@@ -797,6 +805,9 @@ const app = createApp({
                         const alignedCodeRanges = [];
                         if (alignmentResults.value) {
                             alignmentResults.value.forEach(alignment => {
+                                if (!shouldRenderAlignmentAsAlignedBlock(alignment)) {
+                                    return;
+                                }
                                 if (alignment.codeRanges) {
                                     alignment.codeRanges.forEach(range => {
                                         if (range.documentId === selectedCodeFile.value || range.filename === selectedCodeFile.value) {
