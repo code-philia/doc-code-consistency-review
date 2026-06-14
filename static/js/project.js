@@ -474,7 +474,7 @@ const app = createApp({
                         selected_doc_file: selectedDocFile.value || '',
                         selected_code_file: selectedCodeFile.value || '',
                         status_filters: statusFilters.value.join(','),
-                        include_code_review: 0,
+                        include_code_review: alignType === 'code2req' ? 'reviewed_only' : 0,
                         align_type: alignType
                     }
                 });
@@ -6661,23 +6661,24 @@ const app = createApp({
             }
         };
 
-        // 导航审查详情
+        // 导航审查详情（仅在当前页列表内切换）
         const navigateReviewAlignment = (step) => {
             if (!selectedReviewAlignment.value) return;
-            const currentIndex = alignmentResults.value.findIndex(a => a.id === selectedReviewAlignment.value.id);
+            const currentList = sidebarAlignmentItems.value || [];
+            const currentIndex = currentList.findIndex(a => a.id === selectedReviewAlignment.value.id);
             if (currentIndex === -1) return;
 
             let newIndex = currentIndex + step;
             if (newIndex < 0) {
-                ElMessage.info('已经是第一个对齐结果了');
+                ElMessage.info('已经是当前页的第一个对齐结果了');
                 return;
             }
-            if (newIndex >= alignmentResults.value.length) {
-                ElMessage.info('已经是最后一个对齐结果了');
+            if (newIndex >= currentList.length) {
+                ElMessage.info('已经是当前页的最后一个对齐结果了');
                 return;
             }
 
-            const nextAlignment = alignmentResults.value[newIndex];
+            const nextAlignment = currentList[newIndex];
             selectedReviewAlignment.value = nextAlignment;
 			clearReverseRequirementState();
             // 同步更新外部选中状态

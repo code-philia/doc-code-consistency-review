@@ -2333,8 +2333,8 @@ def add_code_data():
               for item in code_blocks]
 
     sql = "INSERT INTO alignments(id,user_id,project_id,name,reviewThoughts,docRanges,codeRanges," \
-          "createdAt,updatedAt,is_code_review)" \
-          "VALUES(%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,1)"
+          "createdAt,updatedAt,is_code_review,align_type)" \
+          "VALUES(%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,1,'code2req')"
     rows = [(item['alignment'].get('id'),
              current_user.user_id,
              project_id,
@@ -2693,8 +2693,17 @@ def _filter_alignments(items, *, file_path=None, kind='doc', selected_doc_file=N
     result = items
 
     if include_code_review is not None:
-        include_flag = str(include_code_review).lower() in ('1', 'true', 'yes')
-        result = [item for item in result if bool(item.get('isCodeReview')) == include_flag]
+        val = str(include_code_review).lower()
+        if val in ('0', 'false', 'no'):
+            # 排除所有 is_code_review=1 的对齐
+            result = [item for item in result if not bool(item.get('isCodeReview'))]
+        elif val == 'reviewed_only':
+            # 排除 "is_code_review=1 且未审查" 的对齐（保留已审查的纯代码对齐）
+            result = [item for item in result
+                      if not item.get('isCodeReview') or item.get('isReviewed')]
+        else:
+            # 1/true/yes -> 包含所有
+            pass
 
     if file_path:
         if kind == 'code':
