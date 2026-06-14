@@ -2826,3 +2826,46 @@
 .fade-enter-from, .fade-leave-to {
     opacity: 0;
 }
+
+/* 手动对齐弹窗：已有对齐关系选项卡样式 */
+.manual-align-dialog .el-dialog {
+    height: 520px;
+    display: flex;
+    flex-direction: column;
+}
+
+.manual-align-dialog .el-dialog__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.manual-align-dialog-body {
+    min-height: 100%;
+}
+
+.existing-align-tabs .el-tabs__header {
+    margin-bottom: 8px;
+}
+
+.existing-align-tabs .el-tabs__content {
+    overflow: visible;
+}
+
+.existing-align-select-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.existing-align-action {
+    margin-top: 8px;
+}
+
+.existing-align-empty {
+    text-align: center;
+    color: #909399;
+    font-size: 13px;
+    padding: 20px 0;
+}

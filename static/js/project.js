@@ -168,6 +168,44 @@ const app = createApp({
         const codeBlockPage = ref(1);
         const codeBlockPageSize = ref(100);
         const codeBlockTotal = ref(0);
+
+        // 手动对齐弹窗：已有对齐关系选项卡
+        const existingAlignTab = ref('req2code');
+        const selectedExistingAlignmentId = ref('');
+        const projectAlignmentPool = computed(() => {
+            const flattened = Object.values(allAlignments.value || {}).flat();
+            const uniqueAlignments = new Map();
+            flattened.forEach(item => {
+                if (item && item.id) {
+                    uniqueAlignments.set(item.id, item);
+                }
+            });
+            return Array.from(uniqueAlignments.values());
+        });
+        const existingAlignmentsReq2Code = computed(() => {
+            return projectAlignmentPool.value.filter(item =>
+                item.align_type === 'req2code' &&
+                Number(item.isCodeReview || 0) !== 1
+            );
+        });
+        const existingAlignmentsCode2Req = computed(() => {
+            return projectAlignmentPool.value.filter(item =>
+                item.align_type === 'code2req' &&
+                Number(item.isCodeReview || 0) !== 1
+            );
+        });
+        const currentExistingAlignments = computed(() => {
+            return existingAlignTab.value === 'code2req'
+                ? existingAlignmentsCode2Req.value
+                : existingAlignmentsReq2Code.value;
+        });
+        watch(existingAlignTab, () => {
+            selectedExistingAlignmentId.value = '';
+        });
+        const ensureProjectAlignmentsLoaded = async () => {
+            if (projectAlignmentPool.value.length > 0) return;
+            await fetchAllAlignments();
+        };
         
         // KB Application State
         const showKbAppDialog = ref(false);
@@ -1908,6 +1946,8 @@ const app = createApp({
 
         const resetManualAlignFromBlock = () => {
             manualAlignFromBlock.value = false;
+            existingAlignTab.value = 'req2code';
+            selectedExistingAlignmentId.value = '';
         };
 
         const getSelectionRawContent = async (selection) => {
@@ -3143,6 +3183,7 @@ const app = createApp({
                         end,
                         content: docContent.slice(start, end)
                     };
+                    await ensureProjectAlignmentsLoaded();
                     resetManualAlignFromBlock();
                     showAlignmentDialog.value = true;
                     newAlignmentName.value = '';
@@ -3290,7 +3331,8 @@ const app = createApp({
                 isReviewed: false,
                 reviewThoughts: '',
                 docRanges: [],
-                codeRanges: []
+                codeRanges: [],
+                align_type: currentSelection.value.type === 'code' ? 'code2req' : 'req2code'
             };
 
             if (currentSelection.value.type === 'code') {
@@ -4374,6 +4416,7 @@ const app = createApp({
                         end,
                         content: codeContent.slice(start, end)
                     };
+                    await ensureProjectAlignmentsLoaded();
                     resetManualAlignFromBlock();
                     showCodeSelectionDialog.value = true;
                     newAlignmentName.value = '';
@@ -4514,6 +4557,28 @@ const app = createApp({
                 console.error("Error updating alignment:", err);
                 ElMessage.error(`更新对齐关系失败: ${err.message}`);
             }
+        };
+
+        const addToSelectedExistingAlignment = async () => {
+            if (!selectedExistingAlignmentId.value) {
+                ElMessage.warning('请选择要添加到的对齐关系');
+                return;
+            }
+
+            const alignment = currentExistingAlignments.value.find(
+                item => item.id === selectedExistingAlignmentId.value
+            );
+            if (!alignment) {
+                ElMessage.warning('所选对齐关系不存在，请重新选择');
+                return;
+            }
+
+            if (currentSelection.value?.type === 'code') {
+                await addToAlignment(alignment);
+                return;
+            }
+
+            await addDocToAlignment(alignment);
         };
 
         // 导出表单相关状态
@@ -5862,6 +5927,7 @@ const app = createApp({
                     };
                     manualAlignFromBlock.value = true;
                     newAlignmentName.value = '';
+                    await ensureProjectAlignmentsLoaded();
                     hideContextMenu();
                     showAlignmentDialog.value = true;
                     return;
@@ -5888,6 +5954,7 @@ const app = createApp({
                 currentSelection.value = selection;
                 manualAlignFromBlock.value = true;
                 newAlignmentName.value = '';
+                await ensureProjectAlignmentsLoaded();
                 hideContextMenu();
                 showCodeSelectionDialog.value = true;
             } catch (error) {
@@ -7093,7 +7160,12 @@ const app = createApp({
             handleCodeSelection,
             addToAlignment,
             addDocToAlignment,
+            addToSelectedExistingAlignment,
             showCodeSelectionDialog,
+            existingAlignTab,
+            existingAlignmentsReq2Code,
+            existingAlignmentsCode2Req,
+            selectedExistingAlignmentId,
             manualAlignFromBlock,
             resetManualAlignFromBlock,
             removeFile,

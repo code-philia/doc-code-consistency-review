@@ -2919,7 +2919,7 @@ def add_alignment():
                 mermaid_code or '',
                 0,
                 is_alignment,
-                'req2code' if new_alignment.get('docRanges') else 'code2req'
+                new_alignment.get('align_type') or ('req2code' if new_alignment.get('docRanges') else 'code2req')
             )
         )
 
