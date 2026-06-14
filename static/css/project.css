@@ -1204,6 +1204,17 @@
     color: var(--accent-hover);
 }
 
+.context-menu-item.is-disabled {
+    color: #b0b4bb;
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+
+.context-menu-item.is-disabled:hover {
+    background-color: transparent;
+    color: #b0b4bb;
+}
+
 .context-menu-item i {
     margin-right: 8px;
     width: 12px;

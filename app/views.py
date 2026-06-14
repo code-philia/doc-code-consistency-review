@@ -17,6 +17,8 @@ from .db import (
     replace_code_blocks,
     append_missing_doc_blocks,
     append_missing_code_blocks,
+    _default_doc_block_name,
+    _default_code_block_name,
 )
 
 os.environ["OPENBLAS_NUM_THREADS"] = "128"
@@ -76,6 +78,20 @@ BLOCK_SIDEBAR_PAGE_SIZE = 100
 
 def project_now_str():
     return datetime.now(ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _resolve_doc_block_name(block_data):
+    return (
+        (block_data.get('name') or '').strip()
+        or _default_doc_block_name(block_data.get('content') or '', 24)
+    )
+
+
+def _resolve_code_block_name(block_data):
+    return (
+        (block_data.get('name') or '').strip()
+        or _default_code_block_name(block_data.get('code') or block_data.get('content') or '', 60)
+    )
 
 
 def _safe_int(value, default=0):
@@ -3352,7 +3368,7 @@ def get_code_blocks():
                     )
                     if not has_overlap:
                         continue
-                    if matched_alignment is None:
+                    if not alignment.get('isCodeReview') and matched_alignment is None:
                         matched_alignment = alignment
                     if alignment.get('isCodeReview') and matched_code_review_alignment is None:
                         matched_code_review_alignment = alignment
@@ -3616,6 +3632,7 @@ def add_block():
             start = _safe_int(block_data.get('start'))
             end = _safe_int(block_data.get('end'))
             content = block_data.get('content') or ''
+            block_name = _resolve_doc_block_name(block_data)
 
             db = get_db()
             cur = db.cursor()
@@ -3637,12 +3654,13 @@ def add_block():
             block_data['start'] = start
             block_data['end'] = end
             block_data['content'] = content
+            block_data['name'] = block_name
             block_data['type'] = block_data.get('type') or block_data.get('name') or ''
 
             cur.execute(
-                'INSERT INTO doc_blocks(project_id, id, filename, type, content, start, end, createdAt, updatedAt) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
-                (project_id, _safe_int(block_id), filename, block_data.get('type') or '', content, start, end)
+                'INSERT INTO doc_blocks(project_id, id, name, filename, type, content, start, end, createdAt, updatedAt) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+                (project_id, _safe_int(block_id), block_name, filename, block_data.get('type') or '', content, start, end)
             )
             return jsonify({'status': 'success', 'message': '需求块添加成功'})
 
@@ -3655,6 +3673,7 @@ def add_block():
             start_line = _safe_int(target_range[0])
             end_line = _safe_int(target_range[1])
             code_content = block_data.get('code') or block_data.get('content') or ''
+            block_name = _resolve_code_block_name(block_data)
 
             db = get_db()
             cur = db.cursor()
@@ -3679,15 +3698,17 @@ def add_block():
             block_data['endLine'] = end_line
             block_data['code'] = code_content
             block_data['content'] = code_content
+            block_data['name'] = block_name
             block_data['related_id'] = block_data.get('related_id') or []
             block_data['related_range'] = block_data.get('related_range') or {}
 
             cur.execute(
-                'INSERT INTO code_blocks(project_id, id, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+                'INSERT INTO code_blocks(project_id, id, name, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
                 (
                     project_id,
                     _safe_int(block_id),
+                    block_name,
                     file_name,
                     start_line,
                     end_line,
@@ -3703,6 +3724,69 @@ def add_block():
 
     except Exception as e:
         print(f"Error adding block: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+@bp.route('/api/rename-block', methods=['POST'])
+def rename_block():
+    """重命名需求块或代码块"""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        block_type = data.get('blockType')
+        block_data = data.get('blockData') or {}
+        new_name = (data.get('name') or '').strip()
+        project_id = resolve_project_id(project_path, data.get('project_id') or data.get('projectId'))
+
+        if not project_path or not block_type or not block_data:
+            return jsonify({'status': 'error', 'message': '缺少必要参数'}), 400
+        if not project_id:
+            return jsonify({'status': 'error', 'message': '未找到项目ID'}), 400
+        if not new_name:
+            return jsonify({'status': 'error', 'message': '名称不能为空'}), 400
+
+        db = get_db()
+        cur = db.cursor()
+        updated = 0
+
+        if block_type == 'doc':
+            filename = block_data.get('filename') or block_data.get('documentId') or ''
+            start = _safe_int(block_data.get('start'))
+            end = _safe_int(block_data.get('end'))
+            if block_data.get('id') not in (None, ''):
+                cur.execute(
+                    'UPDATE doc_blocks SET name=%s, updatedAt=CURRENT_TIMESTAMP WHERE project_id=%s AND id=%s',
+                    (new_name, project_id, _safe_int(block_data.get('id')))
+                )
+            else:
+                cur.execute(
+                    'UPDATE doc_blocks SET name=%s, updatedAt=CURRENT_TIMESTAMP WHERE project_id=%s AND filename=%s AND start=%s AND end=%s',
+                    (new_name, project_id, filename, start, end)
+                )
+            updated = cur.rowcount
+        elif block_type == 'code':
+            line_range = block_data.get('range') if isinstance(block_data.get('range'), list) else []
+            filename = block_data.get('file') or block_data.get('filename') or block_data.get('documentId') or ''
+            start_line = _safe_int(line_range[0] if len(line_range) == 2 else block_data.get('startLine'))
+            end_line = _safe_int(line_range[1] if len(line_range) == 2 else block_data.get('endLine'))
+            if block_data.get('id') not in (None, ''):
+                cur.execute(
+                    'UPDATE code_blocks SET name=%s, updatedAt=CURRENT_TIMESTAMP WHERE project_id=%s AND id=%s',
+                    (new_name, project_id, _safe_int(block_data.get('id')))
+                )
+            else:
+                cur.execute(
+                    'UPDATE code_blocks SET name=%s, updatedAt=CURRENT_TIMESTAMP WHERE project_id=%s AND file=%s AND start_line=%s AND end_line=%s',
+                    (new_name, project_id, filename, start_line, end_line)
+                )
+            updated = cur.rowcount
+        else:
+            return jsonify({'status': 'error', 'message': '无效的块类型'}), 400
+
+        if updated <= 0:
+            return jsonify({'status': 'warning', 'message': '未找到要重命名的块'})
+        return jsonify({'status': 'success', 'message': '重命名成功'})
+    except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
 
@@ -3860,6 +3944,70 @@ def delete_block():
 
     except Exception as e:
         print(f"Error deleting block: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+@bp.route('/api/clear-alignment-target', methods=['POST'])
+def clear_alignment_target():
+    """清空单条对齐关系的目标侧块，用于删除对齐结果或重新对齐前准备"""
+    try:
+        data = request.get_json()
+        project_path = data.get('projectPath')
+        project_id = data.get('project_id')
+        alignment_id = data.get('alignmentId')
+
+        if not project_path or not alignment_id:
+            return jsonify({'status': 'error', 'message': '缺少必要参数'}), 400
+
+        resolved_project_id = resolve_project_id(project_path, project_id)
+        if not resolved_project_id:
+            return jsonify({'status': 'error', 'message': '未找到项目ID'}), 400
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            'SELECT id, align_type, docRanges, codeRanges FROM alignments WHERE id=%s AND project_id=%s',
+            (alignment_id, resolved_project_id)
+        )
+        row = cur.fetchone()
+        if not row:
+            return jsonify({'status': 'error', 'message': '未找到对齐关系'}), 404
+
+        align_type = row.get('align_type') or 'req2code'
+        doc_ranges = pyjson.loads(row.get('docRanges') or '[]')
+        code_ranges = pyjson.loads(row.get('codeRanges') or '[]')
+        if align_type == 'code2req':
+            doc_ranges = []
+        else:
+            code_ranges = []
+
+        cur.execute(
+            'UPDATE alignments SET docRanges=%s, codeRanges=%s, isReviewed=0, reviewThoughts="", '
+            'GenReq="", GenMermaid="", is_alignment=0, updatedAt=CURRENT_TIMESTAMP '
+            'WHERE id=%s AND project_id=%s',
+            (
+                pyjson.dumps(doc_ranges, ensure_ascii=False),
+                pyjson.dumps(code_ranges, ensure_ascii=False),
+                alignment_id,
+                resolved_project_id
+            )
+        )
+        cur.execute('DELETE FROM issues WHERE alignmentId=%s AND project_id=%s', (alignment_id, resolved_project_id))
+
+        return jsonify({
+            'status': 'success',
+            'message': '已清空目标侧对齐结果',
+            'data': {
+                'id': alignment_id,
+                'align_type': align_type,
+                'docRanges': doc_ranges,
+                'codeRanges': code_ranges,
+                'isReviewed': False,
+                'reviewThoughts': '',
+                'is_alignment': 0
+            }
+        })
+    except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
 

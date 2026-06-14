@@ -908,11 +908,11 @@
                     >
                         <!-- 对齐关系右键菜单 -->
                         <template v-if="contextMenu.selectedAlignment">
-                            <div class="context-menu-item" @click="PromptAlignment">
-                                <i class="fas fa-link"></i> 对齐
+                            <div class="context-menu-item" @click="restartSelectedAlignmentFromContextMenu">
+                                <i class="fas fa-rotate-right"></i> 重新对齐
                             </div>
-                            <div class="context-menu-item" @click="manualAlignBlockFromContextMenu">
-                                <i class="fas fa-hand-pointer"></i> 手动对齐
+                            <div class="context-menu-item" @click="clearAlignmentTargetFromContextMenu">
+                                <i class="fas fa-eraser"></i> 删除对齐结果
                             </div>
                             <div class="context-menu-item" @click="PromptReview">
                                 <i class="fas fa-tasks"></i> 审查
@@ -930,10 +930,27 @@
                         </template>
                         <template v-else-if="contextMenu.selectedBlock">
                             <div class="context-menu-item" @click="alignBlockFromContextMenu">
-                                <i class="fas fa-link"></i> 对齐
+                                <i class="fas fa-link"></i> 自动对齐
                             </div>
                             <div class="context-menu-item" @click="manualAlignBlockFromContextMenu">
                                 <i class="fas fa-hand-pointer"></i> 手动对齐
+                            </div>
+                            <div class="context-menu-item" @click="renameBlockFromContextMenu">
+                                <i class="fas fa-pen"></i> 重命名
+                            </div>
+                            <div
+                                class="context-menu-item"
+                                :class="{ 'is-disabled': contextMenu.selectedBlockType === 'doc' }"
+                                @click="reviewBlockFromContextMenu"
+                            >
+                                <i class="fas fa-tasks"></i> 审查
+                            </div>
+                            <div
+                                class="context-menu-item"
+                                :class="{ 'is-disabled': contextMenu.selectedBlockType === 'doc' }"
+                                @click="showBlockReviewResultFromContextMenu"
+                            >
+                                <i class="fas fa-search"></i> 查看详情
                             </div>
                             <div class="context-menu-item" @click="deleteBlockFromContextMenu">
                                 <i class="fas fa-trash"></i> 删除

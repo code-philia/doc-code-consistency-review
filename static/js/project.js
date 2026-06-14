@@ -3202,6 +3202,7 @@ const app = createApp({
                 let blockData = {};
                 if (selectionType === 'doc') {
                     blockData = {
+                        name: extractPlainTextFromMarkdown(currentSelection.value.content || '', 40) || '需求块',
                         filename: currentSelection.value.documentId,
                         start: currentSelection.value.start,
                         end: currentSelection.value.end,
@@ -3214,6 +3215,7 @@ const app = createApp({
                         currentSelection.value.end
                     );
                     blockData = {
+                        name: getCodeBlockFunctionName({ content: currentSelection.value.content }),
                         file: currentSelection.value.documentId,
                         range: [startLine, endLine],
                         content: currentSelection.value.content
@@ -3260,6 +3262,7 @@ const app = createApp({
                 return {
                     blockType: 'doc',
                     blockData: {
+                        name: extractPlainTextFromMarkdown(currentSelection.value.content || '', 40) || '需求块',
                         filename: currentSelection.value.documentId,
                         start: currentSelection.value.start,
                         end: currentSelection.value.end,
@@ -3277,6 +3280,7 @@ const app = createApp({
             return {
                 blockType: 'code',
                 blockData: {
+                    name: getCodeBlockFunctionName({ content: currentSelection.value.content }),
                     file: currentSelection.value.documentId,
                     range: [startLine, endLine],
                     content: currentSelection.value.content
@@ -3613,6 +3617,8 @@ const app = createApp({
         };
 
         const getCodeBlockFunctionName = (block) => {
+            const explicitName = (block?.name || '').toString().trim();
+            if (explicitName) return explicitName;
             const text = getCodeBlockText(block);
             if (!text.trim()) return '代码块';
             const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
@@ -3710,18 +3716,7 @@ const app = createApp({
         const handleBlockItemContextMenu = async (event, block, index, type) => {
             event.preventDefault();
             await handleBlockItemClick(block, index);
-            let matchedAlignment = findAlignmentForSidebarBlock(block, type, true);
-            if (!matchedAlignment) {
-                const matchedId = getMatchedAlignmentIdForBlock(block, type, true);
-                if (matchedId) {
-                    matchedAlignment = await fetchAlignmentById(matchedId);
-                }
-            }
-            if (matchedAlignment) {
-                showContextMenu(event, matchedAlignment, block, type);
-            } else {
-                showBlockContextMenu(event, block, type);
-            }
+            showBlockContextMenu(event, block, type);
         };
 
         // 根据事件坐标获取高亮块
@@ -4104,8 +4099,10 @@ const app = createApp({
                 return;
             }
 
-            // 显示右键菜单
-            showContextMenu(event, correspondingAlignment, block, 'doc');
+            // 显示块右键菜单
+            if (block) {
+                showBlockContextMenu(event, block, 'doc');
+            }
 
             // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
             handleHighlightBlockClick(event);
@@ -4153,8 +4150,10 @@ const app = createApp({
                 return;
             }
 
-            // 显示右键菜单
-            showContextMenu(event, correspondingAlignment, block, 'code');
+            // 显示块右键菜单
+            if (block) {
+                showBlockContextMenu(event, block, 'code');
+            }
 
             // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
             handleHighlightBlockClick(event);
@@ -5126,6 +5125,93 @@ const app = createApp({
             document.removeEventListener('click', hideContextMenu);
         };
 
+        const getAlignmentDirectionByType = (alignment) => {
+            return alignment?.align_type === 'code2req' ? 'code-to-doc' : 'doc-to-code';
+        };
+
+        const refreshAlignmentAndBlockViews = async (blockTypeForMenu = null) => {
+            await fetchAllAlignments();
+            await fetchAlignments();
+            await fetchAlignmentSidebarPage(false, alignType.value);
+            await fetchSidebarBlocksPage(false);
+
+            if (blockTypeForMenu === 'doc') {
+                await loadAndRenderDocBlocks(true);
+            } else if (blockTypeForMenu === 'code') {
+                await loadAndRenderCodeBlocks(true);
+            }
+        };
+
+        const requestClearAlignmentTarget = async (alignmentId) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            const response = await axios.post('/api/clear-alignment-target', {
+                projectPath: projectPath.value,
+                alignmentId,
+                project_id: projectId
+            });
+            if (response.data?.status !== 'success') {
+                throw new Error(response.data?.message || '清空手动对齐失败');
+            }
+            return response.data.data || null;
+        };
+
+        const clearAlignmentTargetFromContextMenu = async () => {
+            const alignment = contextMenu.value.selectedAlignment;
+            if (!alignment) return;
+
+            const targetLabel = alignment.align_type === 'code2req' ? '需求块' : '代码块';
+            try {
+                await ElMessageBox.confirm(
+                    `确定要删除 "${alignment.name}" 中的${targetLabel}吗？删除后会保留源块，并清空该条对齐关系的审查结果。`,
+                    '删除对齐结果',
+                    {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+                await requestClearAlignmentTarget(alignment.id);
+                hideContextMenu();
+                await refreshAlignmentAndBlockViews(alignment.align_type === 'code2req' ? 'doc' : 'code');
+                ElMessage.success('已删除对齐结果结果');
+            } catch (error) {
+                if (error === 'cancel' || error === 'close') return;
+                ElMessage.error(`删除对齐结果失败: ${error.message}`);
+            }
+        };
+
+        const restartSelectedAlignmentFromContextMenu = async () => {
+            const alignment = contextMenu.value.selectedAlignment;
+            if (!alignment) return;
+            try {
+                await ElMessageBox.confirm(
+                    `确定要重新对齐 "${alignment.name}" 吗？这会先清空目标侧块与审查结果，再按当前方向重新对齐。`,
+                    '重新对齐',
+                    {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }
+                );
+                const clearedAlignmentData = await requestClearAlignmentTarget(alignment.id);
+                hideContextMenu();
+                await performSingleAlignment(
+                    {
+                        ...alignment,
+                        ...(clearedAlignmentData || {}),
+                        isReviewed: false,
+                        reviewThoughts: ''
+                    },
+                    getAlignmentDirectionByType(alignment),
+                    ''
+                );
+            } catch (error) {
+                if (error === 'cancel' || error === 'close') return;
+                ElMessage.error(`重新对齐失败: ${error.message}`);
+            }
+        };
+
 
         const renameAlignment = async () => {
             if (!contextMenu.value.selectedAlignment) return;
@@ -5594,7 +5680,7 @@ const app = createApp({
                 await axios.post(`/project/alignments?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, updatedAlignment);
                 console.error('projectId:', projectId);
                 // 刷新对齐数据
-                await fetchAlignments();
+                await refreshAlignmentAndBlockViews(direction === 'doc-to-code' ? 'code' : 'doc');
                 refreshFilteredAlignments();
                 
 //                ElMessage.success(`"${alignment.name}" 对齐完成！`);
@@ -5844,9 +5930,7 @@ const app = createApp({
             const id = generateUUIDLike();
             const newAlignment = {
                 id: id,
-                name: blockTypeForMenu === 'doc'
-                    ? (extractPlainTextFromMarkdown(block.content || '需求块', 20) || '需求块对齐')
-                    : ((block.code || block.content || '代码块').split('\n')[0].trim().slice(0, 20) || '代码块对齐'),
+                name: getBlockDisplayName(block, blockTypeForMenu),
                 isReviewed: false,
                 reviewThoughts: '',
                 docRanges: [],
@@ -5894,7 +5978,7 @@ const app = createApp({
                     newAlignment
                 );
                 hideContextMenu();
-                await fetchAlignments();
+                await refreshAlignmentAndBlockViews(blockTypeForMenu);
 
                 // 复用已有单条对齐流程：需求块默认需求->代码，代码块默认代码->需求
                 const direction = blockTypeForMenu === 'doc' ? 'doc-to-code' : 'code-to-doc';
@@ -5991,12 +6075,7 @@ const app = createApp({
 
                 if (response.data.status === 'success') {
                     hideContextMenu();
-                    if (blockTypeForMenu === 'doc') {
-                        await loadAndRenderDocBlocks(true);
-                    } else {
-                        await loadAndRenderCodeBlocks(true);
-                    }
-                    await fetchAlignments();
+                    await refreshAlignmentAndBlockViews(blockTypeForMenu);
                     ElMessage.success(response.data.message || '删除成功');
                 } else {
                     ElMessage.warning(response.data.message || '删除失败');
@@ -6006,6 +6085,91 @@ const app = createApp({
                 console.error('删除块失败:', error);
                 ElMessage.error(`删除块失败: ${error.message}`);
             }
+        };
+
+        const renameBlockFromContextMenu = async () => {
+            const block = contextMenu.value.selectedBlock;
+            const blockTypeForMenu = contextMenu.value.selectedBlockType;
+            if (!block || !blockTypeForMenu) return;
+
+            try {
+                const result = await ElMessageBox.prompt(
+                    `请输入新的${blockTypeForMenu === 'doc' ? '需求块' : '代码块'}名称`,
+                    '重命名块',
+                    {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        inputValue: getBlockDisplayName(block, blockTypeForMenu),
+                        inputValidator: (value) => {
+                            if (!value || !value.trim()) return '名称不能为空';
+                            return true;
+                        }
+                    }
+                );
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const response = await axios.post('/api/rename-block', {
+                    projectPath: projectPath.value,
+                    blockType: blockTypeForMenu,
+                    blockData: block,
+                    name: result.value.trim(),
+                    project_id: projectId
+                });
+
+                if (response.data.status !== 'success') {
+                    throw new Error(response.data.message || '重命名失败');
+                }
+
+                hideContextMenu();
+                if (blockTypeForMenu === 'doc') {
+                    await loadAndRenderDocBlocks(true);
+                } else {
+                    await loadAndRenderCodeBlocks(true);
+                }
+                await fetchSidebarBlocksPage(false);
+                ElMessage.success('块重命名成功');
+            } catch (error) {
+                if (error === 'cancel' || error === 'close') return;
+                ElMessage.error(`块重命名失败: ${error.message}`);
+            }
+        };
+
+        const getCodeReviewAlignmentIdForBlock = (block) => {
+            if (!block) return null;
+            return block.matchedCodeReviewAlignmentId || null;
+        };
+
+        const getCodeReviewAlignmentForBlock = async (block) => {
+            const alignmentId = getCodeReviewAlignmentIdForBlock(block);
+            if (!alignmentId) return null;
+            return await fetchAlignmentById(alignmentId);
+        };
+
+        const reviewBlockFromContextMenu = async () => {
+            if (contextMenu.value.selectedBlockType !== 'code') return;
+            const block = contextMenu.value.selectedBlock;
+            const alignment = await getCodeReviewAlignmentForBlock(block);
+            if (!alignment) {
+                ElMessage.warning('当前代码块暂无可审查的对齐关系');
+                return;
+            }
+            contextMenu.value.selectedAlignment = alignment;
+            hideContextMenu();
+            PromptReview();
+        };
+
+        const showBlockReviewResultFromContextMenu = async () => {
+            if (contextMenu.value.selectedBlockType !== 'code') return;
+            const block = contextMenu.value.selectedBlock;
+            const alignment = await getCodeReviewAlignmentForBlock(block);
+            if (!alignment) {
+                ElMessage.warning('当前代码块暂无可查看详情的审查结果');
+                return;
+            }
+            selectedReviewAlignment.value = alignment;
+            showReviewDialog.value = true;
+            hideContextMenu();
         };
 
         
@@ -7148,8 +7312,13 @@ const app = createApp({
             handleNodeClick,
             contextMenu,
             showContextMenu,
+            restartSelectedAlignmentFromContextMenu,
+            clearAlignmentTargetFromContextMenu,
             alignBlockFromContextMenu,
             manualAlignBlockFromContextMenu,
+            renameBlockFromContextMenu,
+            reviewBlockFromContextMenu,
+            showBlockReviewResultFromContextMenu,
             deleteBlockFromContextMenu,
             renameAlignment,
             deleteAlignment,

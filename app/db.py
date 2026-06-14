@@ -65,6 +65,25 @@ def _compact_title_from_text(text: str, max_len: int = 24):
     return compact[:max_len].rstrip() + '…'
 
 
+def _default_doc_block_name(content: str, max_len: int = 24):
+    return _compact_title_from_text(content, max_len) or '需求块'
+
+
+def _default_code_block_name(code: str, max_len: int = 60):
+    text = (code or '').strip()
+    if not text:
+        return '代码块'
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    first_meaningful = next((
+        line for line in lines
+        if not line.startswith('//') and not line.startswith('/*') and not line.startswith('*')
+    ), lines[0] if lines else '代码块')
+    compact = re.sub(r'\s+', ' ', first_meaningful).strip().rstrip('{').strip() or '代码块'
+    if len(compact) <= max_len:
+        return compact
+    return compact[:max_len].rstrip() + '...'
+
+
 def get_project_id_by_path(project_path):
     if not project_path:
         return None
@@ -93,7 +112,7 @@ def _get_next_block_id(table_name, project_id):
 
 def _format_doc_block_row(row):
     content = row.get('content') or ''
-    name = row.get('type') or _compact_title_from_text(content, 24)
+    name = row.get('name') or row.get('type') or _default_doc_block_name(content, 24)
     return {
         'id': _safe_int(row.get('id')),
         'name': name,
@@ -114,6 +133,7 @@ def _format_code_block_row(row):
     code = row.get('code') or ''
     return {
         'id': _safe_int(row.get('id')),
+        'name': row.get('name') or _default_code_block_name(code, 60),
         'file': row.get('file') or '',
         'filename': row.get('file') or '',
         'range': [start_line, end_line],
@@ -134,7 +154,7 @@ def get_doc_blocks_by_project(project_path, project_id=None, filename=None):
 
     conn = get_db()
     cur = conn.cursor()
-    sql = 'SELECT id, filename, type, content, start, end FROM doc_blocks WHERE project_id=%s'
+    sql = 'SELECT id, name, filename, type, content, start, end FROM doc_blocks WHERE project_id=%s'
     params = [resolved_project_id]
     if filename:
         sql += ' AND filename=%s'
@@ -171,7 +191,7 @@ def get_paginated_doc_blocks_by_project(project_path, project_id=None, filename=
     offset = (safe_page - 1) * safe_page_size
 
     cur.execute(
-        'SELECT id, filename, type, content, start, end' + where_sql +
+        'SELECT id, name, filename, type, content, start, end' + where_sql +
         ' ORDER BY filename ASC, start ASC, id ASC LIMIT %s OFFSET %s',
         tuple(params + [safe_page_size, offset])
     )
@@ -191,7 +211,7 @@ def get_code_blocks_by_project(project_path, project_id=None, filename=None):
     conn = get_db()
     cur = conn.cursor()
     sql = (
-        'SELECT id, file, start_line, end_line, type, code, related_id, related_range '
+        'SELECT id, name, file, start_line, end_line, type, code, related_id, related_range '
         'FROM code_blocks WHERE project_id=%s'
     )
     params = [resolved_project_id]
@@ -230,7 +250,7 @@ def get_paginated_code_blocks_by_project(project_path, project_id=None, filename
     offset = (safe_page - 1) * safe_page_size
 
     cur.execute(
-        'SELECT id, file, start_line, end_line, type, code, related_id, related_range' + where_sql +
+        'SELECT id, name, file, start_line, end_line, type, code, related_id, related_range' + where_sql +
         ' ORDER BY file ASC, start_line ASC, end_line ASC, id ASC LIMIT %s OFFSET %s',
         tuple(params + [safe_page_size, offset])
     )
@@ -289,6 +309,7 @@ def save_code_blocks_for_file(project_path, file_name, code_blocks, project_id=N
         related_range = _remap_related_range_keys(block.get('related_range') or {}, old_to_new)
         stored_block = {
             'id': new_id,
+            'name': block.get('name') or _default_code_block_name(block.get('code') or block.get('content') or '', 60),
             'file': file_name,
             'filename': file_name,
             'range': [start_line, end_line],
@@ -304,6 +325,7 @@ def save_code_blocks_for_file(project_path, file_name, code_blocks, project_id=N
         values.append((
             resolved_project_id,
             new_id,
+            stored_block['name'],
             file_name,
             start_line,
             end_line,
@@ -314,8 +336,8 @@ def save_code_blocks_for_file(project_path, file_name, code_blocks, project_id=N
         ))
 
     cur.executemany(
-        'INSERT INTO code_blocks(project_id, id, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
-        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+        'INSERT INTO code_blocks(project_id, id, name, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
+        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
         values
     )
     return stored_blocks
@@ -343,6 +365,7 @@ def replace_doc_blocks(project_path, doc_blocks):
         values.append((
             project_id,
             _safe_int(block_id, idx),
+            block.get('name') or _default_doc_block_name(block.get('content') or '', 24),
             block.get('filename') or block.get('documentId') or '',
             block.get('type') or block.get('name') or '',
             block.get('content') or '',
@@ -351,8 +374,8 @@ def replace_doc_blocks(project_path, doc_blocks):
         ))
 
     cur.executemany(
-        'INSERT INTO doc_blocks(project_id, id, filename, type, content, start, end, createdAt, updatedAt) '
-        'VALUES (%s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+        'INSERT INTO doc_blocks(project_id, id, name, filename, type, content, start, end, createdAt, updatedAt) '
+        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
         values
     )
     return project_id
@@ -381,6 +404,7 @@ def replace_code_blocks(project_path, code_blocks):
         values.append((
             project_id,
             _safe_int(block.get('id')),
+            block.get('name') or _default_code_block_name(block.get('code') or block.get('content') or '', 60),
             block.get('file') or block.get('filename') or '',
             _safe_int(start_line),
             _safe_int(end_line),
@@ -391,8 +415,8 @@ def replace_code_blocks(project_path, code_blocks):
         ))
 
     cur.executemany(
-        'INSERT INTO code_blocks(project_id, id, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
-        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+        'INSERT INTO code_blocks(project_id, id, name, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
+        'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
         values
     )
     return project_id
@@ -424,6 +448,7 @@ def append_missing_doc_blocks(project_path, doc_ranges, block_type=''):
         values.append((
             project_id,
             next_id,
+            doc_range.get('name') or _default_doc_block_name(doc_range.get('content') or '', 24),
             filename,
             block_type or doc_range.get('type') or '',
             doc_range.get('content') or '',
@@ -435,8 +460,8 @@ def append_missing_doc_blocks(project_path, doc_ranges, block_type=''):
 
     if values:
         cur.executemany(
-            'INSERT INTO doc_blocks(project_id, id, filename, type, content, start, end, createdAt, updatedAt) '
-            'VALUES (%s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+            'INSERT INTO doc_blocks(project_id, id, name, filename, type, content, start, end, createdAt, updatedAt) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
             values
         )
 
@@ -469,6 +494,7 @@ def append_missing_code_blocks(project_path, code_ranges):
         values.append((
             project_id,
             next_id,
+            code_range.get('name') or _default_code_block_name(code_range.get('content') or '', 60),
             filename,
             start_line,
             end_line,
@@ -482,7 +508,7 @@ def append_missing_code_blocks(project_path, code_ranges):
 
     if values:
         cur.executemany(
-            'INSERT INTO code_blocks(project_id, id, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
-            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+            'INSERT INTO code_blocks(project_id, id, name, file, start_line, end_line, type, code, related_id, related_range, createdAt, updatedAt) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
             values
         )
