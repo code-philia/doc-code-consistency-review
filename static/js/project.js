@@ -252,6 +252,10 @@ const app = createApp({
             };
             return typeMap[type] || type || 'other';
         };
+
+        const getKbSelectionKey = (kb) => {
+            return `${normalizeKbType(kb?.type)}::${kb?.name || ''}`;
+        };
         
         
         const filteredKbAppList = computed(() => {
@@ -271,6 +275,18 @@ const app = createApp({
             return list;
         });
 
+        const areAllFilteredKbAppsSelected = computed(() => {
+            if (filteredKbAppList.value.length === 0) {
+                return false;
+            }
+
+            return filteredKbAppList.value.every(kb => isKbSelected(kb));
+        });
+
+        const hasAnyFilteredKbAppsSelected = computed(() => {
+            return filteredKbAppList.value.some(kb => isKbSelected(kb));
+        });
+
         const isKbSelected = (kb) => {
             const currentType = normalizeKbType(kb.type);
             return selectedKbAppItems.value.some(item => item.name === kb.name && normalizeKbType(item.type) === currentType);
@@ -284,6 +300,59 @@ const app = createApp({
             } else {
                 selectedKbAppItems.value.push({ name: kb.name, type: kb.type });
             }
+        };
+
+        const selectAllFilteredKbApps = () => {
+            if (filteredKbAppList.value.length === 0) {
+                ElMessage.warning('当前没有可选择的知识库');
+                return;
+            }
+
+            const selectedKeys = new Set(
+                selectedKbAppItems.value.map(item => getKbSelectionKey(item))
+            );
+
+            let addedCount = 0;
+            filteredKbAppList.value.forEach((kb) => {
+                const key = getKbSelectionKey(kb);
+                if (selectedKeys.has(key)) {
+                    return;
+                }
+                selectedKbAppItems.value.push({ name: kb.name, type: kb.type });
+                selectedKeys.add(key);
+                addedCount += 1;
+            });
+
+            if (addedCount === 0) {
+                ElMessage.info('当前搜索结果已全部选中');
+                return;
+            }
+
+            ElMessage.success(`已选中当前结果中的 ${addedCount} 个知识库`);
+        };
+
+        const clearAllFilteredKbAppsSelection = () => {
+            if (filteredKbAppList.value.length === 0) {
+                ElMessage.warning('当前没有可取消的知识库');
+                return;
+            }
+
+            const filteredKeys = new Set(
+                filteredKbAppList.value.map(kb => getKbSelectionKey(kb))
+            );
+            const originalLength = selectedKbAppItems.value.length;
+
+            selectedKbAppItems.value = selectedKbAppItems.value.filter(
+                item => !filteredKeys.has(getKbSelectionKey(item))
+            );
+
+            const removedCount = originalLength - selectedKbAppItems.value.length;
+            if (removedCount === 0) {
+                ElMessage.info('当前结果中没有已选中的知识库');
+                return;
+            }
+
+            ElMessage.success(`已取消当前结果中的 ${removedCount} 个知识库`);
         };
 
         const saveKbAppSelection = async () => {
@@ -7563,10 +7632,14 @@ const app = createApp({
             selectedKbAppItems,
             isSavingKbApp,
             filteredKbAppList,
+            areAllFilteredKbAppsSelected,
+            hasAnyFilteredKbAppsSelected,
             openKbAppDialog,
             fetchKbAppData,
             isKbSelected,
             toggleKbSelection,
+            selectAllFilteredKbApps,
+            clearAllFilteredKbAppsSelection,
             saveKbAppSelection,
             getKbColor,
             getKbTypeName,

@@ -143,6 +143,21 @@
                     <el-option label="必查清单" value="checklist"></el-option>
                     <el-option label="其他" value="other"></el-option>
                 </el-select>
+
+                <div style="margin-left: auto; display: flex; gap: 8px;">
+                    <el-button
+                        @click="clearAllFilteredKbAppsSelection"
+                        :disabled="filteredKbAppList.length === 0 || !hasAnyFilteredKbAppsSelected"
+                    >
+                        取消全选当前结果
+                    </el-button>
+                    <el-button
+                        @click="selectAllFilteredKbApps"
+                        :disabled="filteredKbAppList.length === 0 || areAllFilteredKbAppsSelected"
+                    >
+                        全选当前结果
+                    </el-button>
+                </div>
             </div>
 
             <!-- 知识库列表 -->
