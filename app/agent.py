@@ -29,6 +29,9 @@ API_KEY = os.environ.get("API_KEY", "0")
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
 MODEL_NAME = "Qwen3-32B"
 
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.230:7022/v1")
+# MODEL_NAME = "qwen3.6-27b"
+
 #API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
 #MODEL_NAME = "/llm"
 
@@ -340,26 +343,22 @@ def parse_abstract_output(response):
         response: LLM的完整响应文本
         
     """
-    try:
-        json_match = re.search(r'```(?:json)?\s*([\[\{].*?[\]\}])\s*```', response, re.DOTALL)
+    json_match = re.search(r'```(?:json)?\s*([\[\{].*?[\]\}])\s*```', response, re.DOTALL)
+    if json_match:
+        json_str = json_match.group(1)
+    else:
+        json_match = re.search(r'([\[\{].*[\]\}])', response, re.DOTALL)
         if json_match:
             json_str = json_match.group(1)
         else:
-            json_match = re.search(r'([\[\{].*[\]\}])', response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                json_str = response.strip()
+            json_str = response.strip()
 
-        data = _safe_json_loads(json_str)
-        if isinstance(data, dict):
-            return [data]
-        elif isinstance(data, list):
-            return data
-        else:
-            return []
-    except (json.JSONDecodeError, AttributeError) as e:
-        print(f"解析llm输出失败: {e}")
+    data = _safe_json_loads(json_str)
+    if isinstance(data, dict):
+        return [data]
+    elif isinstance(data, list):
+        return data
+    else:
         return []
 
 def query_codefile_from_abstract(requirement, file_abstract):
@@ -371,12 +370,31 @@ def query_codefile_from_abstract(requirement, file_abstract):
     )
 
     # 解析回复
-    response = query_llm(prompt)
-    llm_output = response.content
+    #response = query_llm(prompt)
+    #llm_output = response.content
     # print("original llm output: ", llm_output)
-    parsed_output = parse_abstract_output(llm_output)
+    #parsed_output = parse_abstract_output(llm_output)
     # print("requirement: ", requirement)
     # print("parse output: ", parsed_output)
+    
+    
+    # 多次解析回复
+    max_req = MAX_REQ
+    parsed_output = ""
+    for attempt in range(max_req):
+        response = query_llm(prompt)
+        llm_output = response.content
+
+        # print("original llm output: ", llm_output)
+        try:
+            parsed_output = parse_abstract_output(llm_output)
+            # print("parsed llm output: ", parsed_output)
+            return parsed_output
+        except Exception as e:
+            print(f"第{attempt+1}次调用大模型输出解析失败")
+            print(e)
+    print('已尝试多次，无法正确输出和解析摘要')    
+    
     
     file_list = []
     similarity_results = []

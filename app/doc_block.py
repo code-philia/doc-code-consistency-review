@@ -112,11 +112,81 @@ def chunk_markdown(filename: str, content: str) -> List[Dict]:
     #    logger.info(blocks[i])
     
     return blocks
+ 
+
+def filter_content_by_keywords(content, filter_keywords=None):
+    """
+    过滤掉包含特定关键词的标题行及其后续内容（或者仅判断是否包含）
+    这里演示如何判断 content 中是否包含这些“标题行”
+    """
     
+    # 如果未提供关键词，使用默认列表
+    if filter_keywords is None:
+        # 按照438GJB 过滤不需要的章节
+        # 定义要过滤的关键词列表
+        filter_keywords = ["## 标识", "## 系统概述", "## 文档概述", "### 文档的主要用途", "### 文档的主要内容", "### 保密要求", "# 引用和依据文档", "## 适应性需求", "## 安全性需求", "## 保密性需求", "## CSCI环境需求", "## 计算机资源需求", "### 计算机硬件需求", "### 计算机软件需求", "### 计算机通信需求", "## 软件质量因素", "## 设计和实现约束", "## 人员需求", "### 开发人员需求", "### 测试人员需求", "## 培训需求", "## 设计和实现约束", "## 软件保障需求", "## 其他需求", "## 验收、交付和包装需求", "### 验收准则", "### 交付形式", "### 交付文档", "### 版权保护要求", "## 需求的优先顺序和关键程度", "# 合格性规定", "# 需求可追踪性", "## 软件需求追踪任务书用户需求", "## 任务书用户需求追踪软件需求", "# 注释", "### 系统和软件用途", "### 当前和计划的运行现场", "# 引用文件", "# 运行环境要求", "## 硬件环境", "## 软件环境", "## 关键性要求", "### 可靠性", "### 安全性", "### 保密性", "# 设计约束", "## 环境要求", "## 重用要求", "# 质量控制要求", "## 软件关键性等级", "## 对分承制方的要求", "## 配置管理", "## 测试要求", "# 验收和交付", "## 验收准则", "### 一次验收", "### 二次验收", "## 软件交付形式", "# 版权保护要求", "# 软件保障要求", "# 进度和里程碑", "## 标准", "## 文档", "# 引用文档", "## 交付", "## 评审要求", "## 对分承制方要求"]
+
+    # 1. 预处理关键词，提取核心文本
+    # 例如："## 1.1 标识" -> "标识"
+    # 例如："### 保密要求" -> "保密要求"
+    cleaned_keywords = []
+    for kw in filter_keywords:
+        # 去掉开头的 # 和空格，只保留后面的文字
+        # 使用 lstrip('# ') 去掉左边的 # 和空格
+        core_text = kw.lstrip('# ').strip()
+        if core_text:
+            cleaned_keywords.append(core_text)
+
+    # 2. 构建正则表达式列表
+    # 我们不需要为每个关键词编译一次，可以合并成一个大的正则，或者逐个检查
+    # 这里为了清晰，我们构建一个能够匹配“任意级别、任意序号、包含核心词”的正则模式
     
+    # 通用标题匹配模式：
+    # ^#{1,6}      : 行首，1-6个#
+    # \s*          : 可选空格
+    # (\d+\.?)*    : 可选的序号部分 (如 1, 1.1, 1.1.2)
+    # \s*          : 序号和标题文字之间的可选空格
+    # (核心词)     : 必须包含的核心关键词
+    # .*           : 标题其余部分
+    
+    # 为了性能，我们可以将所有核心词合并成一个正则的“或”关系，或者逐个匹配
+    # 鉴于关键词数量不多，逐个匹配逻辑更清晰，且易于调试
+    
+    found_filtered_heading = False
+    
+    # 编译一个通用的“标题行”结构正则，用于预筛选，提高效率
+    # 这个正则匹配所有可能的标题行，不管内容是什么
+    heading_structure_pattern = re.compile(r'^#{1,6}\s+(\d+\.?)*\s*(.+)$', re.MULTILINE)
+    
+    lines = content.splitlines()
+    
+    for line in lines:
+        # 先判断这行是不是标题行
+        match = heading_structure_pattern.match(line)
+        if not match:
+            continue
+            
+        # match.group(2) 是去掉了 # 和序号后的标题纯文本
+        title_text = match.group(2)
+        
+        # 检查这个标题文本是否包含任何过滤关键词
+        # 注意：这里使用 "in" 判断子串，因为标题可能是 "1.1 标识管理"，包含 "标识"
+        for core_kw in cleaned_keywords:
+            if core_kw in title_text:
+                found_filtered_heading = True
+                # 如果只需要判断是否存在，可以提前返回
+                # return True 
+                break
+        
+        if found_filtered_heading:
+            break
+
+    return found_filtered_heading 
+
+# 过滤markdown内容   
 def _flush_buffer(blocks, lines, start_offset, filename, block_type):
     content = "".join(lines)
-    # 过滤markdown内容
+    
     # Ignore purely empty blocks (whitespace only) unless it's a code block (which might be empty)
     if not content.strip() and block_type != "code_block":
         return
@@ -129,7 +199,12 @@ def _flush_buffer(blocks, lines, start_offset, filename, block_type):
     # 过滤单行标题（无具体内容的），最后一个\n后无内容都算
     if not content.strip('\n').count('\n'):
         return
-    
+        
+    # 按照438GJB 过滤不需要的章节
+    # 检查 content 是否包含列表中的任意一个关键词
+    if filter_content_by_keywords(content):
+        return
+
     # For text blocks, if it's extremely short (e.g. just a newline), skip or merge?
     # Here we just skip purely empty ones.
     if "# 引用文件" in content:

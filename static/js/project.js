@@ -4681,10 +4681,10 @@ const app = createApp({
             try {
                 const exportableIssues = issues.value.filter(issue => issue.status === 'confirmed');
                 
-                if (exportableIssues.length === 0) {
+                /* if (exportableIssues.length === 0) {
                     ElMessage.warning('没有已确认的问题单可导出');
                     return;
-                }
+                } */
 
                 // 显示导出对话框
                 showExportDialog.value = true;
@@ -4699,11 +4699,11 @@ const app = createApp({
             try {
                 const exportableIssues = issues.value.filter(issue => issue.status === 'confirmed');
                 
-                if (exportableIssues.length === 0) {
+                /* if (exportableIssues.length === 0) {
                     ElMessage.warning('没有已确认的问题单可导出');
                     showExportDialog.value = false;
                     return;
-                }
+                } */
 
                 // 调用后端API生成docx文件
                 const response = await axios.post('/project/export-issues-download', {

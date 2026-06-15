@@ -2167,6 +2167,15 @@ def align_requirement_to_project_addprompt():
         code_ranges = []
         # 遍历经过代码摘要筛选的代码文件
         for file_name in file_name_list:
+            # 假设 file_name 是一个字典，例如：{"filename": "main.py"}
+            if isinstance(file_name, dict):
+                file_name = file_name.get("filename", file_name.get("file", ""))
+
+            # 确保 file_name 是字符串
+            
+            if not isinstance(file_name, (str, bytes, os.PathLike)):
+                continue
+            
             all_code_blocks = _get_or_build_code_blocks_for_file(project_path, file_name, project_id)
             if not all_code_blocks:
                 continue
