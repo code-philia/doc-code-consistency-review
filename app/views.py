@@ -1268,9 +1268,7 @@ def remove_file_content():
 DOC_PAGE_TARGET_CHARS = 12000
 DOC_PAGE_MIN_CHARS = 8000
 DOC_PAGE_MAX_CHARS = 18000
-CODE_PAGE_TARGET_CHARS = 12000
-CODE_PAGE_MIN_CHARS = 8000
-CODE_PAGE_MAX_CHARS = 18000
+CODE_PAGE_LINES = 500
 
 
 def _regularize_file_content(content, file_type):
@@ -1366,18 +1364,15 @@ def _build_code_page_ranges(content):
     length = len(content)
 
     while start < length:
-        end = min(start + CODE_PAGE_TARGET_CHARS, length)
-        if end < length:
-            min_end = min(start + CODE_PAGE_MIN_CHARS, length)
-            max_end = min(start + CODE_PAGE_MAX_CHARS, length)
-            next_line_break = content.rfind('\n', start, max_end + 1)
-            if next_line_break >= min_end:
-                end = next_line_break + 1
-            else:
-                forward_break = content.find('\n', end)
-                if forward_break != -1 and forward_break < max_end:
-                    end = forward_break + 1
+        pos = start
+        for _ in range(CODE_PAGE_LINES):
+            nl = content.find('\n', pos)
+            if nl == -1:
+                pos = length
+                break
+            pos = nl + 1
 
+        end = pos if pos > start else length
         if end <= start:
             break
         pages.append({'start': start, 'end': end})
@@ -1463,6 +1458,8 @@ def get_file_content():
                 page_start = 0
                 page_end = 0
 
+            start_line = normalized_content[:page_start].count('\n') + 1 if page_start > 0 else 1
+
             return jsonify({
                 "status": "success",
                 "content": page_content,
@@ -1473,7 +1470,8 @@ def get_file_content():
                     "page_ranges": page_ranges
                 },
                 "page_start": page_start,
-                "page_end": page_end
+                "page_end": page_end,
+                "start_line": start_line
             }), 200
 
         return jsonify({"status": "success", "content": content}), 200

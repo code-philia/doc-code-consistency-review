@@ -85,6 +85,7 @@ const app = createApp({
         const currentDocPage = ref(1);
         const codePageRanges = ref([]);
         const currentCodePage = ref(1);
+        const codePageStartLine = ref(1);
         
         const dialogParseDocMethodVisible = ref(false);
         const parseDocMethod = ref('default');
@@ -506,6 +507,7 @@ const app = createApp({
                     selectedCodeRawContent.value = '';
                     codePageRanges.value = [];
                     currentCodePage.value = 1;
+                    codePageStartLine.value = 1;
                 }
 
                 await fetchProjectMetadata();
@@ -1237,6 +1239,7 @@ const app = createApp({
             const fileName = targetFile || selectedCodeFile.value;
             if (!fileName) {
                 currentCodePage.value = 1;
+                codePageStartLine.value = 1;
                 selectedCodeContent.value = '';
                 return;
             }
@@ -1244,6 +1247,7 @@ const app = createApp({
             const renderedHtml = formatCodeWithLineNumbers(pageResponse.content || '');
             codePageRanges.value = pageResponse.pagination?.page_ranges || [];
             currentCodePage.value = pageResponse.pagination?.page || 1;
+            codePageStartLine.value = pageResponse.start_line || 1;
             selectedCodeContent.value = shiftMarkdownParseOffsets(renderedHtml, pageResponse.page_start || 0);
 
             await nextTick();
@@ -6614,6 +6618,7 @@ const app = createApp({
             selectedCodeContent.value = '';
             codePageRanges.value = [];
             currentCodePage.value = 1;
+            codePageStartLine.value = 1;
             selectedDocRawContent.value = '';
             selectedCodeRawContent.value = '';
             docPageRanges.value = [];
@@ -7484,6 +7489,7 @@ const app = createApp({
             goToDocNextPage,
             goToDocLastPage,
             currentCodePage,
+            codePageStartLine,
             totalCodePages,
             goToCodeFirstPage,
             goToCodePrevPage,

@@ -557,7 +557,7 @@
                                         </div>
                                     </div>
                                     <div class="content-card">
-                                        <div class="content-text-code" v-html="selectedCodeContent" @mouseup="handleCodeSelection"></div>
+                                        <div class="content-text-code" v-html="selectedCodeContent" @mouseup="handleCodeSelection" :style="'counter-reset: listing ' + (codePageStartLine - 1)"></div>
                                         <div class="doc-pagination-bar" v-if="selectedCodeFile">
                                             <div class="doc-pagination-info">
                                                 第 ${ currentCodePage } / ${ totalCodePages } 页

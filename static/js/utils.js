@@ -202,7 +202,7 @@ export async function renderMarkdown(content) {
  * with Position Attributes
  ****************************/
 export function formatCodeWithLineNumbers(codeContent) {
-    const textLines = splitLines(codeContent, true);
+    const textLines = splitLines(codeContent, false);
 
     let innerHTML = '';
     let offset = 0;
