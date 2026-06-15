@@ -855,9 +855,14 @@
                                 <div class="issue-header-bar">
                                     <div class="issue-title-bar">
                                         <h3><i class="fas fa-exclamation-triangle"></i> 问题单列表 (${issues ? issues.length : 0})</h3>
-                                        <button class="export-btn" @click="exportConfirmedIssues" title="仅导出已确认的问题单">
-                                            <i class="fas fa-download"></i> 导出问题单
-                                        </button>
+                                        <div class="export-btn-group">
+                                            <button class="export-btn primary" @click="exportAllIssues" title="一键导出所有问题单">
+                                                <i class="fas fa-download"></i> 一键导出全部
+                                            </button>
+                                            <button class="export-btn" @click="openExportDialog" title="按状态筛选导出">
+                                                <i class="fas fa-filter"></i> 选择导出
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="issue-actions">
                                         <button class="action-btn" @click="refreshIssuesSorting">
@@ -1770,6 +1775,22 @@
                     </el-checkbox-group>
                 </el-form-item>
 
+                <!-- 导出范围 -->
+                <el-form-item label="导出范围">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <span style="font-size: 12px; color: #909399;">问题单状态筛选：</span>
+                        <el-checkbox-group v-model="exportForm.filterStatuses">
+                            <el-checkbox value="confirmed">已确认</el-checkbox>
+                            <el-checkbox value="false_positive">误报</el-checkbox>
+                            <el-checkbox value="unconfirmed">未确认</el-checkbox>
+                        </el-checkbox-group>
+                        <el-divider style="margin: 4px 0;"></el-divider>
+                        <el-checkbox v-model="exportForm.onlySelected" :disabled="selectedIssueIds.size === 0">
+                            仅导出勾选的问题单（当前勾选 ${selectedIssueIds.size} 条）
+                        </el-checkbox>
+                    </div>
+                </el-form-item>
+
                 <!-- 导出说明 -->
                 <el-alert
                     title="导出说明"
@@ -1779,7 +1800,7 @@
                     style="margin-bottom: 20px;"
                 >
                     <template #default>
-                        <p style="margin: 0;">所有问题单将被下载到指定存储目录。</p>
+                        <p style="margin: 0;">${ getExportCountText() }</p>
                     </template>
                 </el-alert>
             </el-form>

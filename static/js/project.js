@@ -4672,38 +4672,76 @@ const app = createApp({
             issueCategories: ['文档', '编码'],
             exportPath: projectPath.value || '',
             selectedFolderName: '',
-            selectedFolderHandle: null
+            selectedFolderHandle: null,
+            filterStatuses: ['confirmed', 'false_positive', 'unconfirmed'],  // 状态筛选
+            onlySelected: false                                              // 仅导出勾选项
         });
 
-        // 选择导出文件夹
-        // 仅导出已确认的问题单
-        const exportConfirmedIssues = async () => {
-            try {
-                const exportableIssues = issues.value.filter(issue => issue.status === 'confirmed');
-                
-                /* if (exportableIssues.length === 0) {
-                    ElMessage.warning('没有已确认的问题单可导出');
-                    return;
-                } */
+        // 计算当前筛选条件下将导出的问题单数量
+        const getExportableIssues = () => {
+            let result = [...issues.value];
 
-                // 显示导出对话框
-                showExportDialog.value = true;
-            } catch (error) {
-                console.error('导出问题单失败:', error);
-                ElMessage.error('导出失败：' + error.message);
+            // 如果启用"仅导出勾选项"
+            if (exportForm.value.onlySelected && selectedIssueIds.value.size > 0) {
+                result = result.filter(i => selectedIssueIds.value.has(i.id));
             }
+
+            // 按状态筛选
+            const statuses = exportForm.value.filterStatuses || [];
+            if (statuses.length > 0) {
+                result = result.filter(i => {
+                    const s = i.status || 'unconfirmed';
+                    return statuses.includes(s);
+                });
+            }
+
+            return result;
+        };
+
+        // 导出数量提示文本
+        const getExportCountText = () => {
+            const count = getExportableIssues().length;
+            const total = issues.value.length;
+            if (exportForm.value.onlySelected && selectedIssueIds.value.size > 0) {
+                return `当前将导出 ${count} 条问题单（从已勾选的 ${selectedIssueIds.value.size} 条 + 状态筛选得出）。`;
+            }
+            if (count === total) {
+                return `当前将导出全部 ${total} 条问题单。`;
+            }
+            return `当前将导出 ${count} 条问题单（共 ${total} 条，按状态筛选）。`;
+        };
+
+        // 一键导出所有问题单
+        const exportAllIssues = async () => {
+            if (issues.value.length === 0) {
+                ElMessage.warning('没有问题单可导出');
+                return;
+            }
+            // 预设：导出全部，状态全选，不限定勾选
+            exportForm.value.filterStatuses = ['confirmed', 'false_positive', 'unconfirmed'];
+            exportForm.value.onlySelected = false;
+            showExportDialog.value = true;
+        };
+
+        // 打开导出对话框（按状态筛选模式）
+        const openExportDialog = () => {
+            // 默认全选状态，不限定勾选
+            if (!exportForm.value.filterStatuses || exportForm.value.filterStatuses.length === 0) {
+                exportForm.value.filterStatuses = ['confirmed', 'false_positive', 'unconfirmed'];
+            }
+            exportForm.value.onlySelected = selectedIssueIds.value.size > 0;
+            showExportDialog.value = true;
         };
 
         // 确认导出
         const confirmExport = async () => {
             try {
-                const exportableIssues = issues.value.filter(issue => issue.status === 'confirmed');
-                
-                /* if (exportableIssues.length === 0) {
-                    ElMessage.warning('没有已确认的问题单可导出');
-                    showExportDialog.value = false;
+                const exportableIssues = getExportableIssues();
+
+                if (exportableIssues.length === 0) {
+                    ElMessage.warning('没有符合条件的问题单可导出');
                     return;
-                } */
+                }
 
                 // 调用后端API生成docx文件
                 const response = await axios.post('/project/export-issues-download', {
@@ -7550,7 +7588,9 @@ const app = createApp({
 
             // 问题单数据
             fetchIssues,
-            exportConfirmedIssues,
+            exportAllIssues,
+            openExportDialog,
+            getExportCountText,
             deleteProject,
             // 导出表单相关
             showExportDialog,
