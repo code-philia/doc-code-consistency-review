@@ -2405,6 +2405,7 @@ const app = createApp({
                     alignmentResults.value = [];
                     issues.value = [];
                     selectedIssue.value = null;
+                    selectedIssueIds.value = new Set();
                     selectedDocFile.value = null;
                     selectedCodeFile.value = null;
                     
@@ -4775,9 +4776,44 @@ const app = createApp({
          ***********************/
         const issues = ref([]);
         const selectedIssue = ref(null);
+        const selectedIssueIds = ref(new Set());
+
+        const isIssueSelected = (issue) => {
+            return selectedIssueIds.value.has(issue.id);
+        };
+
+        const allIssuesSelected = computed(() => {
+            return issues.value.length > 0 && issues.value.every(i => selectedIssueIds.value.has(i.id));
+        });
+
+        const someIssuesSelected = computed(() => {
+            if (issues.value.length === 0) return false;
+            const selectedCount = issues.value.filter(i => selectedIssueIds.value.has(i.id)).length;
+            return selectedCount > 0 && selectedCount < issues.value.length;
+        });
+
+        const toggleIssueSelection = (issue) => {
+            const newSet = new Set(selectedIssueIds.value);
+            if (newSet.has(issue.id)) {
+                newSet.delete(issue.id);
+            } else {
+                newSet.add(issue.id);
+            }
+            selectedIssueIds.value = newSet;
+        };
+
+        const selectAllIssues = () => {
+            if (allIssuesSelected.value) {
+                selectedIssueIds.value = new Set();
+            } else {
+                selectedIssueIds.value = new Set(issues.value.map(i => i.id));
+            }
+        };
 
         const selectIssue = (issue) => {
             selectedIssue.value = issue;
+            // 切换多选状态
+            toggleIssueSelection(issue);
         };
 
         const syncIssueStatusLocally = (issueId, newStatus) => {
@@ -4800,56 +4836,105 @@ const app = createApp({
         };
 
         const confirmIssue = async () => {
-            if (!selectedIssue.value) {
-                ElMessage.warning('请先选择一个问题单。');
+            const selectedIds = Array.from(selectedIssueIds.value);
+            if (selectedIds.length === 0) {
+                if (!selectedIssue.value) {
+                    ElMessage.warning('请先选择一个问题单。');
+                    return;
+                }
+                // 单条确认（向后兼容）
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    const updatedIssue = { ...selectedIssue.value, status: 'confirmed' };
+                    const response = await axios.put(
+                        `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
+                        updatedIssue
+                    );
+
+                    if (response.data.status === 'success') {
+                        syncIssueStatusLocally(selectedIssue.value.id, 'confirmed');
+                    } else {
+                        ElMessage.error('确认失败：' + response.data.message);
+                    }
+                } catch (error) {
+                    console.error('Error confirming issue:', error);
+                    ElMessage.error('确认失败：' + (error.response?.data?.message || error.message));
+                }
                 return;
             }
 
+            // 批量确认
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
-                // 更新问题单状态为已确认
-                const updatedIssue = { ...selectedIssue.value, status: 'confirmed' };
-                const response = await axios.put(
-                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
-                    updatedIssue
+                const response = await axios.post(
+                    `/project/issues/batch-update?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
+                    { issue_ids: selectedIds, status: 'confirmed' }
                 );
 
                 if (response.data.status === 'success') {
-                    syncIssueStatusLocally(selectedIssue.value.id, 'confirmed');
+                    selectedIds.forEach(id => syncIssueStatusLocally(id, 'confirmed'));
+                    selectedIssueIds.value = new Set();
+                    ElMessage.success(`已确认 ${response.data.updated_count} 条问题单`);
                 } else {
-                    ElMessage.error('确认失败：' + response.data.message);
+                    ElMessage.error('批量确认失败：' + response.data.message);
                 }
             } catch (error) {
-                console.error('Error confirming issue:', error);
-                ElMessage.error('确认失败：' + (error.response?.data?.message || error.message));
+                console.error('Error batch confirming issues:', error);
+                ElMessage.error('批量确认失败：' + (error.response?.data?.message || error.message));
             }
         };
 
         // 将选中的问题单标记为误报
         const markFalsePositive = async () => {
-            if (!selectedIssue.value) {
-                ElMessage.warning('请先选择一个问题单。');
+            const selectedIds = Array.from(selectedIssueIds.value);
+            if (selectedIds.length === 0) {
+                if (!selectedIssue.value) {
+                    ElMessage.warning('请先选择一个问题单。');
+                    return;
+                }
+                // 单条标记（向后兼容）
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    const updatedIssue = { ...selectedIssue.value, status: 'false_positive' };
+                    const response = await axios.put(
+                        `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
+                        updatedIssue
+                    );
+
+                    if (response.data.status === 'success') {
+                        syncIssueStatusLocally(selectedIssue.value.id, 'false_positive');
+                    } else {
+                        ElMessage.error('标记失败：' + response.data.message);
+                    }
+                } catch (error) {
+                    console.error('Error marking false positive:', error);
+                    ElMessage.error('标记失败：' + (error.response?.data?.message || error.message));
+                }
                 return;
             }
 
+            // 批量标记
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
-                const updatedIssue = { ...selectedIssue.value, status: 'false_positive' };
-                const response = await axios.put(
-                    `/project/issues/${selectedIssue.value.id}?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
-                    updatedIssue
+                const response = await axios.post(
+                    `/project/issues/batch-update?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`,
+                    { issue_ids: selectedIds, status: 'false_positive' }
                 );
 
                 if (response.data.status === 'success') {
-                    syncIssueStatusLocally(selectedIssue.value.id, 'false_positive');
+                    selectedIds.forEach(id => syncIssueStatusLocally(id, 'false_positive'));
+                    selectedIssueIds.value = new Set();
+                    ElMessage.success(`已标记 ${response.data.updated_count} 条问题单为误报`);
                 } else {
-                    ElMessage.error('标记失败：' + response.data.message);
+                    ElMessage.error('批量标记失败：' + response.data.message);
                 }
             } catch (error) {
-                console.error('Error marking false positive:', error);
-                ElMessage.error('标记失败：' + (error.response?.data?.message || error.message));
+                console.error('Error batch marking false positive:', error);
+                ElMessage.error('批量标记失败：' + (error.response?.data?.message || error.message));
             }
         };
 
@@ -4917,6 +5002,7 @@ const app = createApp({
                     const idx = issues.value.findIndex(i => i.id === selectedIssue.value.id);
                     if (idx > -1) issues.value.splice(idx, 1);
                     selectedIssue.value = null;
+                    selectedIssueIds.value = new Set();
                 } else {
                     ElMessage.error('删除失败：' + response.data.message);
                 }
@@ -4943,9 +5029,10 @@ const app = createApp({
                     const index = issues.value.indexOf(selectedIssue.value);
                     if (index > -1) {
                         issues.value.splice(index, 1);
-                        selectedIssue.value = null;
-                        ElMessage.info('问题单已忽略。');
                     }
+                    selectedIssue.value = null;
+                    selectedIssueIds.value = new Set();
+                    ElMessage.info('问题单已忽略。');
                 } else {
                     ElMessage.error('删除失败：' + response.data.message);
                 }
@@ -5091,6 +5178,7 @@ const app = createApp({
                         // 清空前端审查相关状态
                         issues.value = [];
                         selectedIssue.value = null;
+                        selectedIssueIds.value = new Set();
                         
                         // 重新获取对齐数据（更新审查状态）
                         // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
@@ -6350,6 +6438,7 @@ const app = createApp({
                         }
                         if (selectedIssue.value && selectedIssue.value.id === issue.id) {
                             selectedIssue.value = null;
+                            selectedIssueIds.value = new Set();
                         }
                         ElMessage.success('问题单已删除');
                     } else {
@@ -6504,6 +6593,7 @@ const app = createApp({
             // 问题单
             issues.value = [];
             selectedIssue.value = null;
+            selectedIssueIds.value = new Set();
 
             // 任务与进度
             isAutoAligning.value = false;
@@ -7514,6 +7604,12 @@ const app = createApp({
             // 问题单相关
             selectedIssue,
             selectIssue,
+            selectedIssueIds,
+            isIssueSelected,
+            allIssuesSelected,
+            someIssuesSelected,
+            toggleIssueSelection,
+            selectAllIssues,
             confirmIssue,
             markFalsePositive,
             cycleIssueStatus,

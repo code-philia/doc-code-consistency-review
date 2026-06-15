@@ -876,6 +876,12 @@
                                 </div>
                                 <div class="issue-table">
                                     <div class="issue-row issue-header-row">
+                                        <div class="issue-cell issue-checkbox-cell">
+                                            <input type="checkbox"
+                                                   :checked="allIssuesSelected"
+                                                   :indeterminate="someIssuesSelected"
+                                                   @click.stop="selectAllIssues">
+                                        </div>
                                         <div class="issue-cell issue-id-cell">ID</div>
                                         <div class="issue-cell issue-level-cell">等级</div>
                                         <div class="issue-cell issue-description-cell">问题描述</div>
@@ -887,10 +893,13 @@
                                         v-for="(issue, index) in issues"
                                         :key="issue.id"
                                         class="issue-row"
-                                        :class="{ 'selected': issue === selectedIssue }"
+                                        :class="{ 'selected': selectedIssueIds.has(issue.id) }"
                                         @click="selectIssue(issue)"
                                         @dblclick="showIssueDetail(issue)"
                                     >
+                                        <div class="issue-cell issue-checkbox-cell" @click.stop="toggleIssueSelection(issue)">
+                                            <input type="checkbox" :checked="selectedIssueIds.has(issue.id)">
+                                        </div>
                                         <div class="issue-cell issue-id-cell">${ issue.displayId || 'ISSUE-???' }</div>
                                         <div class="issue-cell issue-level-cell">
                                             <span class="issue-level" :class="issue.level?.toLowerCase()">

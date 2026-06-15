@@ -3079,6 +3079,43 @@ def update_issue(issue_id):
         return jsonify({'status': 'error', 'message': str(e)})
 
 
+@bp.route('/project/issues/batch-update', methods=['POST'])
+def batch_update_issues():
+    try:
+        project_path = request.args.get('path')
+        project_id = request.args.get('project_id')
+        if not project_path:
+            return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
+        if not project_id:
+            return jsonify({'status': 'error', 'message': '缺少 project_id 参数'})
+
+        data = request.json or {}
+        issue_ids = data.get('issue_ids', [])
+        status = data.get('status')
+
+        if not issue_ids:
+            return jsonify({'status': 'error', 'message': '未提供要更新的问题单 ID'})
+        if not status:
+            return jsonify({'status': 'error', 'message': '未提供目标状态'})
+
+        conn = get_db()
+        cur = conn.cursor()
+
+        format_strings = ','.join(['%s'] * len(issue_ids))
+        sql = f'UPDATE issues SET status=%s, updatedAt=CURRENT_TIMESTAMP WHERE id IN ({format_strings}) AND project_id=%s'
+        cur.execute(sql, (status, *issue_ids, project_id))
+        updated_count = cur.rowcount
+        conn.commit()
+
+        return jsonify({
+            'status': 'success',
+            'message': f'已更新 {updated_count} 条问题单',
+            'updated_count': updated_count
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 @bp.route('/project/issues/<issue_id>', methods=['DELETE'])
 def delete_issue(issue_id):
     try:
