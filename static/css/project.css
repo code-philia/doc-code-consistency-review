@@ -1005,6 +1005,15 @@
     border-left: 2px solid var(--accent-color);
 }
 
+.issue-row.review-current {
+    background-color: #fff7e6;
+    border-left: 2px solid #e6a23c;
+}
+
+.issue-row.selected.review-current {
+    background: linear-gradient(90deg, #fff7e6 0%, #e6f7ff 100%);
+}
+
 .issue-header-row {
     background-color: #f8f9fa;
     font-weight: 600;

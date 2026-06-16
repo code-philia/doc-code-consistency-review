@@ -897,8 +897,9 @@
                                     <div
                                         v-for="(issue, index) in issues"
                                         :key="issue.id"
+                                        :id="'issue-row-' + issue.id"
                                         class="issue-row"
-                                        :class="{ 'selected': selectedIssueIds.has(issue.id) }"
+                                        :class="{ 'selected': selectedIssueIds.has(issue.id), 'review-current': currentReviewIssueId === issue.id }"
                                         @click="selectIssue(issue)"
                                         @dblclick="showIssueDetail(issue)"
                                     >
@@ -1395,10 +1396,10 @@
                         <el-divider direction="vertical"></el-divider>
 
                         <el-button-group>
-                            <el-button size="small" @click="navigateReviewAlignment(-1)">
+                            <el-button size="small" @click="navigateReviewDetail(-1)">
                                 <i class="fas fa-chevron-left"></i> 上一个
                             </el-button>
-                            <el-button size="small" @click="navigateReviewAlignment(1)">
+                            <el-button size="small" @click="navigateReviewDetail(1)">
                                 下一个 <i class="fas fa-chevron-right"></i>
                             </el-button>
                         </el-button-group>

@@ -107,6 +107,10 @@ const app = createApp({
         const showAlignmentDirectionDialog = ref(false);
         const alignmentDirectionMode = ref('auto');
         const selectedReviewAlignment = ref(null);
+        const reviewDialogSource = ref('alignment');
+        const reviewDialogBlockType = ref(null);
+        const reviewDialogCurrentBlockKey = ref(null);
+        const currentReviewIssueId = ref(null);
         const activeReviewTab = ref('issues');
         const editingIssueId = ref(null);
         const issueContentBeforeEdit = ref('');
@@ -3592,6 +3596,45 @@ const app = createApp({
 
         const currentSelectedBlockIndex = ref(-1);
 
+        const getBlockKey = (block, type) => {
+            if (!block) return '';
+            if (type === 'doc') {
+                const filename = block.filename || block.documentId || '';
+                return `${filename}:${Number(block.start) || 0}-${Number(block.end) || 0}`;
+            }
+            const filename = block.file || block.filename || '';
+            const startLine = Array.isArray(block.range) ? Number(block.range[0]) || 0 : 0;
+            const endLine = Array.isArray(block.range) ? Number(block.range[1]) || 0 : 0;
+            return `${filename}:${startLine}-${endLine}`;
+        };
+
+        const resetReviewDialogNavigationContext = () => {
+            reviewDialogSource.value = 'alignment';
+            reviewDialogBlockType.value = null;
+            reviewDialogCurrentBlockKey.value = null;
+            currentReviewIssueId.value = null;
+        };
+
+        const syncReviewDialogContext = ({ source = 'alignment', block = null, blockType = null, issue = null } = {}) => {
+            reviewDialogSource.value = source;
+            reviewDialogBlockType.value = source === 'block' ? blockType : null;
+            reviewDialogCurrentBlockKey.value = source === 'block' ? getBlockKey(block, blockType) : null;
+            currentReviewIssueId.value = source === 'issue' ? issue?.id || null : null;
+            if (source === 'issue' && issue) {
+                selectedIssue.value = issue;
+            }
+        };
+
+        const scrollToIssueInList = (issueId) => {
+            if (!issueId) return;
+            nextTick(() => {
+                const el = document.getElementById(`issue-row-${issueId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        };
+
         // 滚动侧边栏到指定块
         const scrollToBlockInSidebar = (index) => {
             currentSelectedBlockIndex.value = index;
@@ -6377,6 +6420,14 @@ const app = createApp({
                 ElMessage.warning('当前代码块暂无可查看详情的审查结果');
                 return;
             }
+            syncReviewDialogContext({
+                source: 'block',
+                block,
+                blockType: contextMenu.value.selectedBlockType
+            });
+            currentSelectedBlockIndex.value = displayedBlocks.value.findIndex(
+                item => getBlockKey(item, contextMenu.value.selectedBlockType) === getBlockKey(block, contextMenu.value.selectedBlockType)
+            );
             selectedReviewAlignment.value = alignment;
             showReviewDialog.value = true;
             hideContextMenu();
@@ -6385,7 +6436,7 @@ const app = createApp({
         
         
         const showReviewResult = () => {
-
+            syncReviewDialogContext({ source: 'alignment' });
             selectedReviewAlignment.value = contextMenu.value.selectedAlignment;
             showReviewDialog.value = true;
             hideContextMenu();
@@ -6517,8 +6568,10 @@ const app = createApp({
             try {
                 const targetAlignment = await fetchAlignmentById(issue.alignmentId);
                 if (targetAlignment) {
+                    syncReviewDialogContext({ source: 'issue', issue });
                     selectedReviewAlignment.value = targetAlignment;
                     showReviewDialog.value = true;
+                    scrollToIssueInList(issue.id);
                 } else {
                     ElMessage.warning(`未找到ID为 ${issue.alignmentId} 的对齐关系`);
                 }
@@ -6649,6 +6702,7 @@ const app = createApp({
             showCodeSelectionDialog.value = false;
             showReviewDialog.value = false;
             selectedReviewAlignment.value = null;
+            resetReviewDialogNavigationContext();
             
             // 清理流程图状态
             currentFlowchart.value = null;
@@ -7105,8 +7159,7 @@ const app = createApp({
             }
         };
 
-        // 导航审查详情（仅在当前页列表内切换）
-        const navigateReviewAlignment = (step) => {
+        const navigateReviewAlignment = async (step) => {
             if (!selectedReviewAlignment.value) return;
             const currentList = sidebarAlignmentItems.value || [];
             const currentIndex = currentList.findIndex(a => a.id === selectedReviewAlignment.value.id);
@@ -7124,12 +7177,100 @@ const app = createApp({
 
             const nextAlignment = currentList[newIndex];
             selectedReviewAlignment.value = nextAlignment;
-			clearReverseRequirementState();
+            syncReviewDialogContext({ source: 'alignment' });
+            clearReverseRequirementState();
             // 同步更新外部选中状态
-            handleAlignmentItemClick(nextAlignment);
-			if (activeReviewTab.value === 'requirement-reverse') {
+            await handleAlignmentItemClick(nextAlignment);
+            if (activeReviewTab.value === 'requirement-reverse') {
                 loadReverseRequirementCache(nextAlignment);
             }
+        };
+
+        const navigateReviewBlock = async (step) => {
+            const blockListType = reviewDialogBlockType.value || blockType.value;
+            if (blockListType !== 'code') {
+                ElMessage.info('当前块类型不支持查看审查详情');
+                return;
+            }
+
+            const currentBlocks = (blockListType === 'doc' ? docBlocks.value : codeBlocks.value) || [];
+            if (!currentBlocks.length) return;
+
+            const currentIndex = currentBlocks.findIndex(
+                block => getBlockKey(block, blockListType) === reviewDialogCurrentBlockKey.value
+            );
+            if (currentIndex === -1) return;
+
+            for (let newIndex = currentIndex + step; newIndex >= 0 && newIndex < currentBlocks.length; newIndex += step) {
+                const nextBlock = currentBlocks[newIndex];
+                const nextAlignment = await getCodeReviewAlignmentForBlock(nextBlock);
+                if (!nextAlignment) {
+                    continue;
+                }
+
+                syncReviewDialogContext({
+                    source: 'block',
+                    block: nextBlock,
+                    blockType: blockListType
+                });
+                selectedReviewAlignment.value = nextAlignment;
+                clearReverseRequirementState();
+                currentSelectedBlockIndex.value = newIndex;
+                scrollToBlockInSidebar(newIndex);
+                await handleAlignmentItemClick(nextAlignment);
+                if (activeReviewTab.value === 'requirement-reverse') {
+                    loadReverseRequirementCache(nextAlignment);
+                }
+                return;
+            }
+
+            ElMessage.info(step < 0 ? '已经是当前块列表中第一个有审查结果的代码块了' : '已经是当前块列表中最后一个有审查结果的代码块了');
+        };
+
+        const navigateReviewIssue = async (step) => {
+            const currentIssues = issues.value || [];
+            if (!currentIssues.length || !currentReviewIssueId.value) return;
+
+            const currentIndex = currentIssues.findIndex(issue => issue.id === currentReviewIssueId.value);
+            if (currentIndex === -1) return;
+
+            const newIndex = currentIndex + step;
+            if (newIndex < 0) {
+                ElMessage.info('已经是当前问题单列表的第一个问题单了');
+                return;
+            }
+            if (newIndex >= currentIssues.length) {
+                ElMessage.info('已经是当前问题单列表的最后一个问题单了');
+                return;
+            }
+
+            const nextIssue = currentIssues[newIndex];
+            const nextAlignment = await fetchAlignmentById(nextIssue.alignmentId);
+            if (!nextAlignment) {
+                ElMessage.warning(`未找到ID为 ${nextIssue.alignmentId} 的对齐关系`);
+                return;
+            }
+
+            syncReviewDialogContext({ source: 'issue', issue: nextIssue });
+            selectedReviewAlignment.value = nextAlignment;
+            clearReverseRequirementState();
+            scrollToIssueInList(nextIssue.id);
+            await handleAlignmentItemClick(nextAlignment);
+            if (activeReviewTab.value === 'requirement-reverse') {
+                loadReverseRequirementCache(nextAlignment);
+            }
+        };
+
+        const navigateReviewDetail = async (step) => {
+            if (reviewDialogSource.value === 'block') {
+                await navigateReviewBlock(step);
+                return;
+            }
+            if (reviewDialogSource.value === 'issue') {
+                await navigateReviewIssue(step);
+                return;
+            }
+            await navigateReviewAlignment(step);
         };
 
         /***********************
@@ -7147,9 +7288,10 @@ const app = createApp({
             if (oldValue === true && newValue === false) {
                 // 弹窗从打开状态变为关闭状态，重置选项卡
                 activeReviewTab.value = 'issues';
-				reverseRequestSeq += 1;
+                reverseRequestSeq += 1;
                 isGeneratingReverse.value = false;
                 clearReverseRequirementState();
+                resetReviewDialogNavigationContext();
             }
         });
 
@@ -7643,7 +7785,9 @@ const app = createApp({
             showReviewDialog,
             loadDefaultReviewPrompt,
             selectedReviewAlignment,
+            currentReviewIssueId,
             showReviewResult,
+            navigateReviewDetail,
             getIssueById,
             getIssuesByAlignmentId,
 
