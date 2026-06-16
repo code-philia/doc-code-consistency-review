@@ -3378,6 +3378,27 @@
     transform-origin: top left;
 }
 
+/* 审查详情弹窗-需求反生成选项卡中的流程图：缩小以显示全貌 */
+.flowchart-section .mermaid-diagram {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+    min-height: 200px;
+    padding: 12px;
+    border: 1px solid #e4e7ed;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.flowchart-section .mermaid-diagram svg {
+    max-width: 100%;
+    min-width: unset;
+    height: auto;
+    transform: scale(0.6);
+    transform-origin: center center;
+}
+
 .error-message {
     margin-top: 0;
 }
