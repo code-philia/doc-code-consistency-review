@@ -2,6 +2,7 @@ import os
 import re
 import json
 import sys
+import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional
 from flask_login import current_user
 from dotenv import load_dotenv
@@ -11,7 +12,7 @@ from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PRO
     REVIEW_PROMPT_TEMPLATE_KBS, GENERATE_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, \
     RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, \
     CODEFILE_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_KBS, ALIGN_REQ_PROMPT_TEMPLATE_KBS, CODE_THINKING_PROMPT_TEMPLATE, \
-    CODE_THINKING_PROMPT_TEMPLATE_KBS, DEFAULTS
+    CODE_THINKING_PROMPT_TEMPLATE_KBS, DEFAULTS, FLOWCHART_SVG_PROMPT_TEMPLATE
 from .prompt import Combine_Req2Code_Align_UserPrompt, Combine_Code2Req_Align_UserPrompt, Combine_Review_UserPrompt
 from openai import OpenAI
 from .utils import chunk_list
@@ -52,7 +53,64 @@ PROMPT_TYPE_FALLBACK_MAP = {
 }
 
 
-def query_llm(message, history=None):
+def _stringify_content_part(part) -> str:
+    if part is None:
+        return ""
+    if isinstance(part, str):
+        return part
+    if isinstance(part, list):
+        return "\n".join(filter(None, (_stringify_content_part(item) for item in part)))
+    if isinstance(part, dict):
+        for key in ("text", "content", "output_text", "input_text", "reasoning_content"):
+            value = part.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+            if isinstance(value, dict):
+                nested = _stringify_content_part(value)
+                if nested:
+                    return nested
+        if isinstance(part.get("text"), dict):
+            value = part["text"].get("value")
+            if isinstance(value, str):
+                return value
+        return ""
+
+    for attr in ("text", "content", "output_text", "input_text", "reasoning_content"):
+        value = getattr(part, attr, None)
+        if isinstance(value, str) and value.strip():
+            return value
+        if value is not None and not isinstance(value, str):
+            nested = _stringify_content_part(value)
+            if nested:
+                return nested
+
+    return ""
+
+
+def _extract_message_text(message) -> str:
+    if message is None:
+        return ""
+
+    content = getattr(message, "content", None)
+    text = _stringify_content_part(content)
+    if text.strip():
+        return text.strip()
+
+    reasoning = getattr(message, "reasoning_content", None)
+    text = _stringify_content_part(reasoning)
+    if text.strip():
+        return text.strip()
+
+    if hasattr(message, "model_dump"):
+        dumped = message.model_dump()
+        text = _stringify_content_part(dumped)
+        if text.strip():
+            return text.strip()
+
+    return ""
+
+
+def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=1024):
     client = OpenAI(
         api_key=API_KEY,
         base_url=API_BASE_URL,
@@ -74,21 +132,21 @@ def query_llm(message, history=None):
     resp = client.chat.completions.create(
         model=MODEL_NAME,
         messages=messages,
-        temperature=0.1,
-        top_p=0.9,
-        max_tokens=1024,
+        temperature=temperature,
+        top_p=top_p,
+        max_tokens=max_tokens,
     )
     #req = RequestLLM('')
     #res = req.request_qwen_14b_llm_output(message)
 
     text = ""
     if resp.choices and resp.choices[0].message:
-        text = resp.choices[0].message.content or ""
+        text = _extract_message_text(resp.choices[0].message)
 
     class Resp:
         pass
     r = Resp()
-    r.content = text.strip()
+    r.content = (text or "").strip()
 
     return r
 
@@ -1596,42 +1654,189 @@ def query_generated_requirement(related_code, reference_requirement=""):
     # 调用LLM
     response = query_llm(prompt)
     return response.content
-    
+
+
+SVG_ALLOWED_TAGS = {'svg', 'g', 'rect', 'polygon', 'line', 'path', 'text', 'tspan'}
+SVG_BLOCK_START = "'''svg"
+SVG_BLOCK_END = "'''"
+SVG_ALLOWED_ATTRS = {
+    'svg': {'xmlns', 'width', 'height', 'viewBox', 'version'},
+    'g': {'transform'},
+    'rect': {'x', 'y', 'width', 'height', 'rx', 'ry', 'fill', 'stroke', 'stroke-width'},
+    'polygon': {'points', 'fill', 'stroke', 'stroke-width'},
+    'line': {'x1', 'y1', 'x2', 'y2', 'fill', 'stroke', 'stroke-width'},
+    'path': {'d', 'fill', 'stroke', 'stroke-width'},
+    'text': {'x', 'y', 'dx', 'dy', 'fill', 'font-size', 'font-family', 'font-weight', 'text-anchor'},
+    'tspan': {'x', 'y', 'dx', 'dy', 'fill', 'font-size', 'font-family', 'font-weight', 'text-anchor'},
+}
+
+
+def _svg_local_name(tag: str) -> str:
+    if not isinstance(tag, str):
+        return ''
+    if '}' in tag:
+        return tag.rsplit('}', 1)[-1]
+    return tag
+
+
+def _extract_svg_text(response_text: str) -> str:
+    text = (response_text or "").strip()
+    wrapped_match = re.search(r"'''svg\s*(<svg[\s\S]*?</svg>)\s*'''", text, re.IGNORECASE)
+    if wrapped_match:
+        return wrapped_match.group(1).strip()
+
+    code_block_match = re.search(r'```(?:svg|xml)?\s*(<svg[\s\S]*?</svg>)\s*```', text, re.IGNORECASE)
+    if code_block_match:
+        return code_block_match.group(1).strip()
+
+    svg_match = re.search(r'(<svg[\s\S]*?</svg>)', text, re.IGNORECASE)
+    if svg_match:
+        return svg_match.group(1).strip()
+
+    return text
+
+
+def _preview_text(text: str, limit: int = 200) -> str:
+    normalized = (text or '').replace('\n', '\\n')
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[:limit] + '...'
+
+
+def _sanitize_svg_node(node, is_root=False):
+    local_name = _svg_local_name(node.tag)
+    if local_name not in SVG_ALLOWED_TAGS:
+        return None
+
+    clean_tag = 'svg' if is_root else local_name
+    clean_node = ET.Element(clean_tag)
+
+    allowed_attrs = SVG_ALLOWED_ATTRS.get(local_name, set())
+    for attr_name, attr_value in (node.attrib or {}).items():
+        normalized_attr = _svg_local_name(attr_name)
+        if normalized_attr in allowed_attrs and attr_value is not None:
+            clean_node.set(normalized_attr, str(attr_value).strip())
+
+    if is_root:
+        clean_node.set('xmlns', 'http://www.w3.org/2000/svg')
+        if not clean_node.get('version'):
+            clean_node.set('version', '1.1')
+        if not clean_node.get('width'):
+            clean_node.set('width', '1200')
+        if not clean_node.get('height'):
+            clean_node.set('height', '900')
+        if not clean_node.get('viewBox'):
+            clean_node.set('viewBox', '0 0 1200 900')
+
+    if local_name in ('text', 'tspan') and node.text:
+        clean_node.text = node.text.strip()
+
+    for child in list(node):
+        clean_child = _sanitize_svg_node(child)
+        if clean_child is not None:
+            clean_node.append(clean_child)
+
+    return clean_node
+
+
+def _sanitize_svg_content(svg_text: str) -> str:
+    raw_svg = _extract_svg_text(svg_text)
+    if not raw_svg:
+        raise ValueError("流程图内容为空")
+
+    try:
+        root = ET.fromstring(raw_svg)
+    except ET.ParseError as exc:
+        raise ValueError(f"流程图 SVG 解析失败: {exc}") from exc
+
+    if _svg_local_name(root.tag) != 'svg':
+        raise ValueError("流程图内容不是有效的 SVG")
+
+    clean_root = _sanitize_svg_node(root, is_root=True)
+    if clean_root is None:
+        raise ValueError("流程图 SVG 中没有可保留的合法元素")
+
+    if not list(clean_root):
+        background = ET.SubElement(clean_root, 'rect')
+        background.set('x', '0')
+        background.set('y', '0')
+        background.set('width', clean_root.get('width', '1200'))
+        background.set('height', clean_root.get('height', '900'))
+        background.set('fill', '#ffffff')
+
+    return ET.tostring(clean_root, encoding='unicode')
+
+
 def query_flow_chart(code_content):
-    prompt = f"""请分析以下代码，生成一个清晰的Mermaid流程图来展示代码的执行流程。
-    代码内容：
-    {code_content}
+    system_instruction = (
+        "你是SVG流程图生成器。"
+        "禁止输出分析、解释、思考过程、Markdown、编号、标题。"
+        "你的回复必须严格为三行格式：第一行是'''svg，第二行开始是SVG源码，最后一行是'''。"
+    )
+    primary_prompt = FLOWCHART_SVG_PROMPT_TEMPLATE.format(code_content=code_content)
 
-    要求：
-    1. 使用Mermaid flowchart语法
-    2. 展示主要的执行流程和逻辑分支，包含关键的函数调用和数据流
-    3. 只返回Mermaid代码，不要包含其他解释文字
-    4. 对于输入多段的代码，只考虑主要的部分，不需要为每一段都绘制流程图
+    fallback_prompt = f"""直接输出完整 SVG 流程图源码。
+必须严格包裹为：
+'''svg
+<svg>...</svg>
+'''
+不要输出“我来分析”“让我思考”“步骤”“说明”等任何文字。
+只允许标签：svg、g、rect、polygon、line、path、text、tspan。
+禁止 style、class、defs、marker、script、foreignObject。
+必须包含白色背景、流程框、判断菱形、连线和箭头。
 
-    示例：
-    ```mermaid
-    graph TD;
-    A["开始"] --> B["处理数据"];
-    B --> C{{"检查条件?"}};
-    C -->|"是"| D["执行操作"];
-    C -->|"否"| B;
-    D --> E["结束"];
-    ```
-    **注意**所有节点内容需要用引号包围，例如A("..."), B["..."], C{{"..."}}, |"..."|
-    请直接返回Mermaid流程图代码，不要包含其他解释文字和思考过程。"""
+代码：
+{code_content}
+"""
 
-    response = query_llm(prompt)
-    mermaid_code = response.content
+    errors = []
+    retry_specs = [
+        {"prompt": primary_prompt, "history": [{"role": "system", "content": system_instruction}]},
+        {"prompt": fallback_prompt, "history": [{"role": "system", "content": system_instruction}]}
+    ]
 
-    mermaid_pattern = r'```(?:mermaid)?\s*\n?(.*?)\n?```'
-    match = re.search(mermaid_pattern, mermaid_code, re.DOTALL)
-    
-    if match:
-        mermaid_code = match.group(1).strip()
-    else:
-        mermaid_code = mermaid_code.strip()
-    
-    return mermaid_code
+    previous_raw_content = ""
+    for attempt, spec in enumerate(retry_specs, 1):
+        response = query_llm(
+            spec["prompt"],
+            history=spec["history"],
+            temperature=0.05,
+            top_p=0.8,
+            max_tokens=2600
+        )
+        raw_content = response.content or ''
+        previous_raw_content = raw_content
+        try:
+            return _sanitize_svg_content(raw_content)
+        except Exception as exc:
+            errors.append(f"第{attempt}次生成失败: {exc}; 返回预览={_preview_text(raw_content)}")
+
+    repair_history = [
+        {"role": "system", "content": system_instruction},
+        {"role": "user", "content": primary_prompt},
+        {"role": "assistant", "content": previous_raw_content},
+    ]
+    repair_prompt = """你上一条回复不符合要求，因为它不是可解析的SVG。
+删除所有解释、思考、分析和编号。
+现在只输出一个完整合法的 SVG，并严格包裹为：
+'''svg
+<svg>...</svg>
+'''
+"""
+    repair_response = query_llm(
+        repair_prompt,
+        history=repair_history,
+        temperature=0.05,
+        top_p=0.8,
+        max_tokens=2600
+    )
+    repair_raw_content = repair_response.content or ''
+    try:
+        return _sanitize_svg_content(repair_raw_content)
+    except Exception as exc:
+        errors.append(f"第3次生成失败: {exc}; 返回预览={_preview_text(repair_raw_content)}")
+
+    raise ValueError(" ; ".join(errors))
 
 
 def smart_parse_doc(text, type='rule'):

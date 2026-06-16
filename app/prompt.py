@@ -484,6 +484,68 @@ GENERATE_PROMPT_TEMPLATE = """
 /think
 """
 
+FLOWCHART_SVG_PROMPT_TEMPLATE = """
+你现在只能返回最终答案，禁止输出分析过程、思考过程、解释文字、Markdown、代码块围栏。
+你必须严格按下面格式返回，不能多一个字，也不能少一个字：
+'''svg
+<svg ...>...</svg>
+'''
+如果输出了任何一句解释、前缀、后缀、标题、编号、说明，都视为失败。
+
+请根据给定代码，直接输出一个完整 SVG 流程图，用于展示主要执行流程。
+
+强约束：
+1. 根元素必须是 `<svg>`，并包含 `xmlns="http://www.w3.org/2000/svg"`。
+2. 只允许标签：`svg`、`g`、`rect`、`polygon`、`line`、`path`、`text`、`tspan`。
+3. 禁止使用：`style` 属性、`style` 标签、`class`、`foreignObject`、`script`、`defs`、`use`、`marker`、`filter`、`clipPath`、渐变、动画、事件属性。
+4. 只允许基础属性，例如：`fill`、`stroke`、`stroke-width`、`font-size`、`font-family`、`text-anchor`。
+5. 必须保留白色背景。
+6. 箭头必须用 `line` 或 `path` 加 `polygon` 直接绘制，不能使用 `marker`。
+7. 只绘制主要流程，不要展开细节，节点数量控制在 6 到 10 个。
+8. 节点文案使用简洁中文，单个节点建议不超过 12 个字。
+9. 布局自上而下，避免重叠。
+
+参考骨架：
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" version="1.1">
+  <rect x="0" y="0" width="1200" height="900" fill="#ffffff"/>
+  <rect x="460" y="60" width="280" height="70" rx="10" ry="10" fill="#ffffff" stroke="#222222" stroke-width="2"/>
+  <text x="600" y="103" fill="#222222" font-size="24" font-family="Arial" text-anchor="middle">开始</text>
+
+  <line x1="600" y1="130" x2="600" y2="210" stroke="#222222" stroke-width="2"/>
+  <polygon points="600,230 592,214 608,214" fill="#222222"/>
+
+  <rect x="420" y="230" width="360" height="84" rx="10" ry="10" fill="#ffffff" stroke="#222222" stroke-width="2"/>
+  <text x="600" y="272" fill="#222222" font-size="22" font-family="Arial" text-anchor="middle">关键处理步骤</text>
+
+  <polygon points="600,360 730,430 600,500 470,430" fill="#ffffff" stroke="#222222" stroke-width="2"/>
+  <text x="600" y="438" fill="#222222" font-size="22" font-family="Arial" text-anchor="middle">条件判断</text>
+
+  <line x1="730" y1="430" x2="900" y2="430" stroke="#222222" stroke-width="2"/>
+  <polygon points="920,430 904,422 904,438" fill="#222222"/>
+  <text x="815" y="414" fill="#222222" font-size="18" font-family="Arial" text-anchor="middle">是</text>
+
+  <rect x="900" y="388" width="220" height="84" rx="10" ry="10" fill="#ffffff" stroke="#222222" stroke-width="2"/>
+  <text x="1010" y="438" fill="#222222" font-size="20" font-family="Arial" text-anchor="middle">分支处理</text>
+
+  <line x1="600" y1="500" x2="600" y2="620" stroke="#222222" stroke-width="2"/>
+  <polygon points="600,640 592,624 608,624" fill="#222222"/>
+  <text x="640" y="565" fill="#222222" font-size="18" font-family="Arial" text-anchor="start">否</text>
+
+  <rect x="460" y="640" width="280" height="70" rx="10" ry="10" fill="#ffffff" stroke="#222222" stroke-width="2"/>
+  <text x="600" y="683" fill="#222222" font-size="24" font-family="Arial" text-anchor="middle">结束</text>
+</svg>
+
+# 代码
+```text
+{code_content}
+```
+
+现在严格按以下格式输出：
+'''svg
+<svg ...>...</svg>
+'''
+"""
+
 RULE_EXTRACTION_PROMPT = """
 你是一个代码审计专家。请分析以下编程规范文档的片段，提取其中的规则信息。
 请提取：

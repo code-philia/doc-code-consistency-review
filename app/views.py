@@ -2252,11 +2252,12 @@ def generate_flowchart():
         if not code_content:
             return jsonify({"status": "error", "message": "Missing code content"}), 400
 
-        mermaid_code = query_flow_chart(code_content)
+        flowchart_code = query_flow_chart(code_content)
 
         return jsonify({
             "status": "success",
-            "mermaidCode": mermaid_code
+            "flowchartCode": flowchart_code,
+            "mermaidCode": flowchart_code
         })
 
     except Exception as e:
@@ -2297,6 +2298,7 @@ def generate_reverse_requirement():
                 "status": "success",
                 "cached": True,
                 "generatedRequirement": row.get('GenReq'),
+                "flowchartCode": row.get('GenMermaid'),
                 "mermaidCode": row.get('GenMermaid')
             })
 			
@@ -2305,6 +2307,7 @@ def generate_reverse_requirement():
                 "status": "success",
                 "cached": False,
                 "generatedRequirement": None,
+                "flowchartCode": None,
                 "mermaidCode": None
             })
 
@@ -2326,19 +2329,26 @@ def generate_reverse_requirement():
         # 调用LLM生成需求，传入参考需求内容
         generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
 
-        # 调用LLM生成流程图
-        mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else
-                                       '\n\n'.join([block.get('content', '') for block in code_content]))
+        flowchart_code = ''
+        flowchart_warning = None
+        try:
+            flowchart_code = query_flow_chart(code_content if isinstance(code_content, str) else
+                                              '\n\n'.join([block.get('content', '') for block in code_content]))
+        except Exception as flowchart_error:
+            flowchart_warning = f"流程图生成失败: {flowchart_error}"
+            print(flowchart_warning)
 
         cur.execute(
             'UPDATE alignments SET GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP WHERE id=%s AND project_id=%s',
-            (generated_requirement or '', mermaid_code or '', alignment_id, project_id)
+            (generated_requirement or '', flowchart_code or '', alignment_id, project_id)
         )
         return jsonify({
             "status": "success",
 			"cached": False,
             "generatedRequirement": generated_requirement,
-            "mermaidCode": mermaid_code
+            "flowchartCode": flowchart_code,
+            "mermaidCode": flowchart_code,
+            "flowchartWarning": flowchart_warning
         })
 
     except Exception as e:

@@ -873,7 +873,7 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
 
 def gen_requirement(doc_ranges, code_ranges):
     generated_requirement = ''
-    mermaid_code = ''
+    flowchart_code = ''
 
     # 反生成需求+流程图
     try:
@@ -902,12 +902,16 @@ def gen_requirement(doc_ranges, code_ranges):
         generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
 
         # 调用LLM生成流程图
-        mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else
-                                        '\n\n'.join([block.get('content', '') for block in code_content]))
+        try:
+            flowchart_code = query_flow_chart(code_content if isinstance(code_content, str) else
+                                              '\n\n'.join([block.get('content', '') for block in code_content]))
+        except Exception as flowchart_error:
+            logger.error(f"Error generating flowchart: {str(flowchart_error)}", exc_info=True)
+            flowchart_code = ''
 
     except Exception as e:
         # print(f"Error generating reverse requirement: {str(e)}")
         logger.error(f"Error generating reverse requirement: {str(e)}", exc_info=True)
         # return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
     
-    return generated_requirement, mermaid_code
+    return generated_requirement, flowchart_code

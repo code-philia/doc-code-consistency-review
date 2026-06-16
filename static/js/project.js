@@ -6755,21 +6755,144 @@ const app = createApp({
             currentFlowchart.value = null;
             reverseError.value = null;
         };
-        const renderMermaidFlowchart = async (mermaidCode) => {
-            if (!mermaidCode) return;
-            await nextTick();
-            try {
-                const element = document.getElementById('mermaid-flowchart');
-                if (element) {
-                    element.innerHTML = '';
-                    const { svg } = await mermaid.render(`mermaid-graph-${Date.now()}`, mermaidCode);
-                    element.innerHTML = svg;
+
+        const getFlowchartContainer = () => document.getElementById('svg-flowchart');
+
+        const normalizeFlowchartCode = (flowchartCode) => {
+            if (typeof flowchartCode !== 'string') {
+                return '';
+            }
+            return flowchartCode.replace(/\\n/g, '\n').trim();
+        };
+
+        const getFlowchartPayload = (responseData) => normalizeFlowchartCode(
+            responseData?.flowchartCode || responseData?.svgCode || responseData?.mermaidCode || ''
+        );
+
+        const looksLikeSvgMarkup = (flowchartCode) => (
+            typeof flowchartCode === 'string' && flowchartCode.trim().startsWith('<svg')
+        );
+
+        const sanitizeSvgMarkup = (svgMarkup) => {
+            const normalized = normalizeFlowchartCode(svgMarkup);
+            if (!normalized) {
+                throw new Error('SVG内容为空');
+            }
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(normalized, 'image/svg+xml');
+            const parserError = doc.querySelector('parsererror');
+            const root = doc.documentElement;
+            if (parserError || !root || root.nodeName.toLowerCase() !== 'svg') {
+                throw new Error('流程图内容不是有效的SVG');
+            }
+
+            const allowedTags = new Set(['svg', 'g', 'rect', 'polygon', 'line', 'path', 'text', 'tspan']);
+            const allowedAttrs = {
+                svg: new Set(['xmlns', 'width', 'height', 'viewBox', 'version']),
+                g: new Set(['transform']),
+                rect: new Set(['x', 'y', 'width', 'height', 'rx', 'ry', 'fill', 'stroke', 'stroke-width']),
+                polygon: new Set(['points', 'fill', 'stroke', 'stroke-width']),
+                line: new Set(['x1', 'y1', 'x2', 'y2', 'fill', 'stroke', 'stroke-width']),
+                path: new Set(['d', 'fill', 'stroke', 'stroke-width']),
+                text: new Set(['x', 'y', 'dx', 'dy', 'fill', 'font-size', 'font-family', 'font-weight', 'text-anchor']),
+                tspan: new Set(['x', 'y', 'dx', 'dy', 'fill', 'font-size', 'font-family', 'font-weight', 'text-anchor'])
+            };
+
+            const sanitizeNode = (node, ownerDocument, isRoot = false) => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    return ownerDocument.createTextNode(node.textContent || '');
                 }
+                if (node.nodeType !== Node.ELEMENT_NODE) {
+                    return null;
+                }
+
+                const localName = (node.localName || '').toLowerCase();
+                if (!allowedTags.has(localName)) {
+                    return null;
+                }
+
+                const cleanNode = ownerDocument.createElementNS('http://www.w3.org/2000/svg', localName);
+                const allowedForNode = allowedAttrs[localName] || new Set();
+                Array.from(node.attributes || []).forEach((attr) => {
+                    const attrName = (attr.localName || attr.name || '').trim();
+                    if (allowedForNode.has(attrName) && attr.value != null) {
+                        cleanNode.setAttribute(attrName, attr.value);
+                    }
+                });
+
+                if (isRoot) {
+                    if (!cleanNode.getAttribute('xmlns')) {
+                        cleanNode.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    }
+                    if (!cleanNode.getAttribute('version')) {
+                        cleanNode.setAttribute('version', '1.1');
+                    }
+                }
+
+                Array.from(node.childNodes || []).forEach((child) => {
+                    const cleanChild = sanitizeNode(child, ownerDocument, false);
+                    if (cleanChild) {
+                        cleanNode.appendChild(cleanChild);
+                    }
+                });
+
+                return cleanNode;
+            };
+
+            const cleanDoc = document.implementation.createDocument('http://www.w3.org/2000/svg', 'svg', null);
+            const cleanRoot = sanitizeNode(root, cleanDoc, true);
+            if (!cleanRoot) {
+                throw new Error('流程图SVG没有可渲染的内容');
+            }
+
+            cleanDoc.replaceChild(cleanRoot, cleanDoc.documentElement);
+            return new XMLSerializer().serializeToString(cleanRoot);
+        };
+
+        const renderSvgFlowchart = async (svgMarkup) => {
+            const element = getFlowchartContainer();
+            if (!element) {
+                throw new Error('未找到流程图容器');
+            }
+            element.innerHTML = sanitizeSvgMarkup(svgMarkup);
+        };
+
+        const renderMermaidFlowchart = async (mermaidCode) => {
+            const element = getFlowchartContainer();
+            if (!element) {
+                throw new Error('未找到流程图容器');
+            }
+            element.innerHTML = '';
+            const { svg } = await mermaid.render(`mermaid-graph-${Date.now()}`, mermaidCode);
+            element.innerHTML = svg;
+        };
+
+        const renderFlowchart = async (flowchartCode) => {
+            const normalized = normalizeFlowchartCode(flowchartCode);
+            if (!normalized) {
+                return;
+            }
+
+            await nextTick();
+            const element = getFlowchartContainer();
+            if (!element) {
+                throw new Error('未找到流程图容器');
+            }
+
+            element.innerHTML = '';
+            if (looksLikeSvgMarkup(normalized)) {
+                await renderSvgFlowchart(normalized);
+                return;
+            }
+
+            try {
+                await renderMermaidFlowchart(normalized);
             } catch (mermaidError) {
-                console.error('Mermaid渲染错误:', mermaidError);
-                reverseError.value = 'Mermaid图表渲染失败: ' + mermaidError.message;
+                throw new Error('旧版Mermaid流程图渲染失败: ' + (mermaidError?.message || '未知错误'));
             }
         };
+
         const loadReverseRequirementCache = async (alignment = selectedReviewAlignment.value) => {
             if (!alignment) {
                 clearReverseRequirementState();
@@ -6795,9 +6918,14 @@ const app = createApp({
                 }
                 if (response.data.status === 'success' && response.data.cached) {
                     currentReverseRequirement.value = response.data.generatedRequirement;
-                    if (response.data.mermaidCode) {
-                        currentFlowchart.value = response.data.mermaidCode.replace(/\\n/g, '\n').trim();
-                        await renderMermaidFlowchart(currentFlowchart.value);
+                    const flowchartCode = getFlowchartPayload(response.data);
+                    if (flowchartCode) {
+                        currentFlowchart.value = flowchartCode;
+                        try {
+                            await renderFlowchart(flowchartCode);
+                        } catch (renderError) {
+                            reverseError.value = renderError.message;
+                        }
                     }
                 }
             } catch (error) {
@@ -6844,8 +6972,6 @@ const app = createApp({
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
 
-                // 获取当前选中对齐块的id
-                const alignId = selectedReviewAlignment.value.id
                 const response = await axios.post('/api/generate-reverse-requirement', {
                     alignment_id: alignment.id,
 					requirementContent: requirementContent,
@@ -6865,15 +6991,19 @@ const app = createApp({
 
                 if (response.data.status === 'success') {
                     currentReverseRequirement.value = response.data.generatedRequirement;
-                    
-                    // 如果同时返回了流程图，也设置流程图
-                    if (response.data.mermaidCode) {
-                        let mermaidCode = response.data.mermaidCode.replace(/\\n/g, '\n').trim();
-                        currentFlowchart.value = mermaidCode;
-                        
-                        await renderMermaidFlowchart(mermaidCode);
+
+                    const flowchartCode = getFlowchartPayload(response.data);
+                    if (flowchartCode) {
+                        currentFlowchart.value = flowchartCode;
+                        try {
+                            await renderFlowchart(flowchartCode);
+                        } catch (renderError) {
+                            reverseError.value = renderError.message;
+                        }
+                    } else if (response.data.flowchartWarning) {
+                        reverseError.value = response.data.flowchartWarning;
+                        ElMessage.warning('需求已生成，但流程图生成失败');
                     }
-                    
                 } else {
                     reverseError.value = response.data.message || '需求反生成失败';
                     ElMessage.error(reverseError.value);
@@ -6925,32 +7055,15 @@ const app = createApp({
                 });
 
                 if (response.data.status === 'success') {
-                    // 将转义的换行符转换为真正的换行符，并清理代码
-                    let mermaidCode = response.data.mermaidCode.replace(/\\n/g, '\n');
-                    
-                    // 清理可能的额外字符和格式问题
-                    mermaidCode = mermaidCode.trim();
-                    
-                    currentFlowchart.value = mermaidCode;
-                    
-                    // 等待DOM更新后渲染Mermaid图表
-                    await nextTick();
+                    const flowchartCode = getFlowchartPayload(response.data);
+                    currentFlowchart.value = flowchartCode;
+
                     try {
-                        const element = document.getElementById('mermaid-flowchart');
-                        if (element) {
-                            // 清空元素内容
-                            element.innerHTML = '';
-                            
-                            // 使用Mermaid 10.x的新API
-                            const { svg } = await mermaid.render('mermaid-graph', mermaidCode);
-                            element.innerHTML = svg;
-                        }
-                    } catch (mermaidError) {
-                        console.error('Mermaid渲染错误:', mermaidError);
-                        console.error('错误的Mermaid代码:', mermaidCode);
-                        flowchartError.value = 'Mermaid图表渲染失败: ' + mermaidError.message;
+                        await renderFlowchart(flowchartCode);
+                    } catch (renderError) {
+                        console.error('流程图渲染错误:', renderError);
+                        flowchartError.value = renderError.message;
                     }
-                    
                 } else {
                     flowchartError.value = response.data.message || '生成流程图失败';
                     ElMessage.error(flowchartError.value);
@@ -6982,41 +7095,25 @@ const app = createApp({
             }
 
             try {
-                const element = document.getElementById('mermaid-flowchart');
-                if (!element) {
-                    ElMessage.error('未找到流程图元素');
-                    return;
+                isViewingFlowchart.value = true;
+                let svgData = '';
+                const normalized = normalizeFlowchartCode(currentFlowchart.value);
+
+                if (looksLikeSvgMarkup(normalized)) {
+                    svgData = sanitizeSvgMarkup(normalized);
+                } else {
+                    const element = getFlowchartContainer();
+                    if (!element) {
+                        throw new Error('未找到流程图元素');
+                    }
+
+                    const svgElement = element.querySelector('svg');
+                    if (!svgElement) {
+                        throw new Error('当前流程图尚未成功渲染，无法查看');
+                    }
+
+                    svgData = new XMLSerializer().serializeToString(svgElement.cloneNode(true));
                 }
-
-                const svgElement = element.querySelector('svg');
-                if (!svgElement) {
-                    ElMessage.error('未找到SVG元素');
-                    return;
-                }
-
-                // 克隆SVG元素以避免修改原始元素
-                const clonedSvg = svgElement.cloneNode(true);
-                
-                // 设置SVG的背景色为白色
-                clonedSvg.style.backgroundColor = 'white';
-                
-                // 确保SVG有正确的尺寸
-                const svgRect = svgElement.getBoundingClientRect();
-                const svgWidth = svgElement.viewBox?.baseVal?.width || svgRect.width || 800;
-                const svgHeight = svgElement.viewBox?.baseVal?.height || svgRect.height || 600;
-                
-                clonedSvg.setAttribute('width', svgWidth);
-                clonedSvg.setAttribute('height', svgHeight);
-                
-                // 添加白色背景矩形
-                const backgroundRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                backgroundRect.setAttribute('width', '100%');
-                backgroundRect.setAttribute('height', '100%');
-                backgroundRect.setAttribute('fill', 'white');
-                clonedSvg.insertBefore(backgroundRect, clonedSvg.firstChild);
-
-                // 将SVG转换为字符串
-                const svgData = new XMLSerializer().serializeToString(clonedSvg);
                 
                 // 获取HTML模板并替换占位符
                 const templateResponse = await fetch('/templates/flowchart-viewer.html');
@@ -7048,6 +7145,8 @@ const app = createApp({
             } catch (error) {
                 console.error('查看流程图时出错:', error);
                 ElMessage.error('查看流程图失败: ' + error.message);
+            } finally {
+                isViewingFlowchart.value = false;
             }
         };
 
