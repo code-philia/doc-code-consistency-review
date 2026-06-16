@@ -877,6 +877,9 @@
                                             <button class="export-btn primary" @click="openExportDialog" title="导出问题单">
                                                 <i class="fas fa-download"></i> 导出问题单
                                             </button>
+                                            <button class="export-btn kb-btn" @click="openBatchIssueToKB" title="一键入库问题单">
+                                                <i class="fas fa-database"></i> 一键入库
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="issue-actions">
@@ -1827,6 +1830,53 @@
                 <el-button type="primary" @click="confirmExport">确认导出</el-button>
             </template>
         </el-dialog>
+
+        <!-- 一键入库范围选择弹窗 -->
+        <el-dialog
+            v-model="showBatchKbDialog"
+            title="一键入库 - 选择问题单"
+            width="600px"
+            :close-on-click-modal="false"
+            custom-class="batch-kb-dialog"
+        >
+            <el-form :model="batchKbForm" label-width="120px" label-position="left">
+                <el-form-item label="入库范围">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <span style="font-size: 12px; color: #909399;">问题单状态筛选：</span>
+                        <el-checkbox-group v-model="batchKbForm.filterStatuses" :disabled="batchKbForm.onlySelected">
+                            <el-checkbox value="confirmed">已确认</el-checkbox>
+                            <el-checkbox value="false_positive">误报</el-checkbox>
+                            <el-checkbox value="unconfirmed">未确认</el-checkbox>
+                        </el-checkbox-group>
+                        <el-divider style="margin: 4px 0;"></el-divider>
+                        <el-checkbox v-model="batchKbForm.onlySelected" :disabled="selectedIssueIds.size === 0">
+                            仅入库勾选的问题单（当前勾选 ${selectedIssueIds.size} 条）
+                        </el-checkbox>
+                    </div>
+                </el-form-item>
+
+                <el-alert
+                    title="入库说明"
+                    type="info"
+                    :closable="false"
+                    show-icon
+                    style="margin-bottom: 10px;"
+                >
+                    <template #default>
+                        <p style="margin: 0;">${ getBatchKbCountText() }</p>
+                        <p style="margin: 4px 0 0 0; font-size: 12px; color: #909399;">
+                            确认后将打开知识库入库界面，可在其中进一步勾选、新建或追加到已有知识库。
+                        </p>
+                    </template>
+                </el-alert>
+            </el-form>
+
+            <template #footer>
+                <el-button @click="showBatchKbDialog = false">取消</el-button>
+                <el-button type="primary" @click="confirmBatchIssueToKB">确认并选择知识库</el-button>
+            </template>
+        </el-dialog>
+
         <input
             type="file"
             ref="switchKBInput"

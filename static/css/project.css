@@ -1928,6 +1928,17 @@
     border-color: var(--accent-hover, #337ecc);
 }
 
+.export-btn-group .export-btn.kb-btn {
+    background-color: #e6a23c;
+    color: #fff;
+    border-color: #e6a23c;
+}
+
+.export-btn-group .export-btn.kb-btn:hover {
+    background-color: #cf9236;
+    border-color: #cf9236;
+}
+
 .issue-title-bar {
     display: flex;
     align-items: center;

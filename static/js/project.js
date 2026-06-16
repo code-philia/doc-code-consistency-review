@@ -4811,6 +4811,91 @@ const app = createApp({
             }
         };
 
+        // ========== 一键入库相关 ==========
+        const showBatchKbDialog = ref(false);
+        const batchKbForm = ref({
+            filterStatuses: ['confirmed', 'false_positive', 'unconfirmed'],
+            onlySelected: false
+        });
+
+        // 计算当前筛选条件下将入库的问题单
+        const getBatchKbIssues = () => {
+            let result = [...issues.value];
+
+            // 如果启用"仅入库勾选项"，仅按勾选过滤，忽略状态筛选
+            if (batchKbForm.value.onlySelected && selectedIssueIds.value.size > 0) {
+                result = result.filter(i => selectedIssueIds.value.has(i.id));
+                return result;
+            }
+
+            // 按状态筛选
+            const statuses = batchKbForm.value.filterStatuses || [];
+            if (statuses.length > 0) {
+                result = result.filter(i => {
+                    const s = i.status || 'unconfirmed';
+                    return statuses.includes(s);
+                });
+            }
+
+            return result;
+        };
+
+        // 入库数量提示文本
+        const getBatchKbCountText = () => {
+            const count = getBatchKbIssues().length;
+            const total = issues.value.length;
+            if (batchKbForm.value.onlySelected && selectedIssueIds.value.size > 0) {
+                return `当前将入库 ${count} 条问题单（仅入库已勾选的 ${selectedIssueIds.value.size} 条，含全部状态）。`;
+            }
+            if (count === total) {
+                return `当前将入库全部 ${total} 条问题单。`;
+            }
+            return `当前将入库 ${count} 条问题单（共 ${total} 条，按状态筛选）。`;
+        };
+
+        // 打开一键入库范围选择弹窗
+        const openBatchIssueToKB = () => {
+            if (issues.value.length === 0) {
+                ElMessage.warning('没有问题单可入库');
+                return;
+            }
+            // 默认全选状态
+            if (!batchKbForm.value.filterStatuses || batchKbForm.value.filterStatuses.length === 0) {
+                batchKbForm.value.filterStatuses = ['confirmed', 'false_positive', 'unconfirmed'];
+            }
+            // 如果有勾选的问题单，默认仅入库勾选项；否则入库全部
+            batchKbForm.value.onlySelected = selectedIssueIds.value.size > 0;
+            showBatchKbDialog.value = true;
+        };
+
+        // 确认选择范围，打开知识库入库主界面
+        const confirmBatchIssueToKB = async () => {
+            const targetIssues = getBatchKbIssues();
+
+            if (targetIssues.length === 0) {
+                ElMessage.warning('没有符合条件的问题单可入库');
+                return;
+            }
+
+            // 关闭范围选择弹窗
+            showBatchKbDialog.value = false;
+
+            // 将问题单格式化为 openReviewDialogWithData 所需的结构
+            const formattedIssues = targetIssues.map(issue => ({
+                id: issue.displayId || `issue_${issue.id}`,
+                summary: issue.summary || issue.title || '问题单',
+                content: issue.description || '',
+                desc: issue.description || '',
+                opinion: '待人工处理',
+                trace_id: issue.alignmentId || '',
+                severity: issue.level || 'low',
+                status: issue.status || 'unconfirmed'
+            }));
+
+            // 打开知识库入库审查弹窗
+            await openReviewDialogWithData(formattedIssues, 'issue');
+        };
+
         // 删除项目
         const deleteProject = async () => {
             try {
@@ -7834,6 +7919,12 @@ const app = createApp({
             exportForm,
             confirmExport,
             exportResults,
+            // 一键入库相关
+            showBatchKbDialog,
+            batchKbForm,
+            openBatchIssueToKB,
+            confirmBatchIssueToKB,
+            getBatchKbCountText,
             // 审查结果弹窗
             SetPrompt,
             showPromptDialog,
