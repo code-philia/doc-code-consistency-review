@@ -333,7 +333,7 @@
 
             <el-splitter-panel class="main-content">
                 <!-- 项目视图（默认显示） -->
-                <div class="stats-view" id="statsView">
+                <div class="stats-view main-workspace-stats" id="statsView">
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-title">
@@ -459,12 +459,12 @@
                         <el-splitter-panel :min="200" size="100%">
                             <el-splitter>
                                 <el-splitter-panel class="split-panel req-panel" :min="200" size="40%">
-                                    <div class="panel-title">
-                                        <div style="display: flex; align-items: center;">
-                                            <i class="fas fa-file-word"></i> <span style="margin-left: 8px;">${ selectedDocFile || '请选择需求文档' }</span>
+                                    <div class="panel-title workspace-panel-title">
+                                        <div class="workspace-panel-title-main">
+                                            <i class="fas fa-file-word"></i> <span class="workspace-panel-title-text">${ selectedDocFile || '请选择需求文档' }</span>
                                         </div>
-                                        <div style="display: flex; align-items: center;">
-                                            <el-button-group size="small" style="margin-right: 10px;">
+                                        <div class="workspace-panel-actions">
+                                            <el-button-group size="small" class="workspace-nav-btn-group">
                                                 <el-button size="small" @click="navigateDocBlock(-1)" title="上一块">↑</el-button>
                                                 <el-button size="small" @click="navigateDocBlock(1)" title="下一块">↓</el-button>
                                             </el-button-group>
@@ -485,7 +485,7 @@
                                             </el-button>
                                         </div>
                                     </div>
-                                    <div class="content-card">
+                                    <div class="content-card workspace-content-card workspace-content-card--doc">
                                         <div class="content-text-doc">
                                             <div class="doc-content-scroll" v-html="selectedDocContent" @mouseup="handleDocSelection"></div>
                                             <div class="doc-pagination-bar" v-if="selectedDocFile">
@@ -503,12 +503,12 @@
                                     </div>
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel code-panel" :min="200" size="40%">
-                                    <div class="panel-title">
-                                        <div style="display: flex; align-items: center;">
-                                            <i class="fas fa-file-code"></i> <span style="margin-left: 8px;">${ selectedCodeFile || '请选择代码文件' }</span>
+                                    <div class="panel-title workspace-panel-title">
+                                        <div class="workspace-panel-title-main">
+                                            <i class="fas fa-file-code"></i> <span class="workspace-panel-title-text">${ selectedCodeFile || '请选择代码文件' }</span>
                                         </div>
-                                        <div style="display: flex; align-items: center;">
-                                            <el-button-group size="small" style="margin-right: 10px;">
+                                        <div class="workspace-panel-actions">
+                                            <el-button-group size="small" class="workspace-nav-btn-group">
                                                 <el-button size="small" @click="navigateCodeBlock(-1)" title="上一块">↑</el-button>
                                                 <el-button size="small" @click="navigateCodeBlock(1)" title="下一块">↓</el-button>
                                             </el-button-group>
@@ -556,7 +556,7 @@
                                             </el-dialog>
                                         </div>
                                     </div>
-                                    <div class="content-card">
+                                    <div class="content-card workspace-content-card workspace-content-card--code">
                                         <div class="content-text-code" v-html="selectedCodeContent" @mouseup="handleCodeSelection" :style="'counter-reset: listing ' + (codePageStartLine - 1)"></div>
                                         <div class="doc-pagination-bar" v-if="selectedCodeFile">
                                             <div class="doc-pagination-info">
@@ -883,16 +883,16 @@
                                         </div>
                                     </div>
                                     <div class="issue-actions">
-                                        <button class="action-btn" @click="refreshIssuesSorting">
+                                        <button class="action-btn action-btn--neutral" @click="refreshIssuesSorting">
                                             <i class="fas fa-sync-alt"></i> 刷新
                                         </button>
-                                        <button class="action-btn" @click="confirmIssue">
+                                        <button class="action-btn action-btn--success" @click="confirmIssue">
                                             <i class="fas fa-check"></i> 确认
                                         </button>
-                                        <button class="action-btn" @click="markFalsePositive">
+                                        <button class="action-btn action-btn--warning" @click="markFalsePositive">
                                             <i class="fas fa-exclamation-circle"></i> 误报
                                         </button>
-                                        <button class="action-btn secondary" @click="deleteSelectedIssue">
+                                        <button class="action-btn action-btn--danger" @click="deleteSelectedIssue">
                                             <i class="fas fa-trash"></i> 删除
                                         </button>
                                     </div>
