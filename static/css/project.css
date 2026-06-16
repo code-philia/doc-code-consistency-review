@@ -934,8 +934,9 @@
     gap: 12px;
     margin-bottom: 8px;
     padding: 4px 6px 6px;
-    background: linear-gradient(180deg, #c8d1da 0%, #bcc6d1 100%);
-    border: 1px solid #9eabb8;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #c7d0d9;
 }
 
 .issue-title-bar {
@@ -3875,8 +3876,8 @@
 .sidebar-header {
     padding: 8px 10px;
     min-height: 34px;
-    background: #dbe3ea;
-    border-bottom: 1px solid #b4bec9;
+    background: #d7dde4;
+    border-bottom: 1px solid #b6c0ca;
 }
 
 .sidebar-title {
@@ -3886,30 +3887,41 @@
 }
 
 .file-tree {
-    padding: 4px 0;
-    background: #f5f7f9;
+    padding: 2px 0 4px;
+    background: #f3f5f7;
 }
 
 .file-category {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .category-header {
-    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
     font-size: 11px;
     font-weight: 700;
-    color: #4a5560;
+    color: #4f5964;
     text-transform: uppercase;
     letter-spacing: 0.2px;
 }
 
 .category-header i {
-    margin-right: 5px;
-    color: #66727f;
+    margin-right: 0;
+    color: #7b8793;
+    font-size: 10px;
+}
+
+.file-count {
+    margin-left: auto;
+    color: #7b8793;
+    font-size: 10px;
+    font-weight: 600;
 }
 
 .file-items {
-    padding: 0 4px;
+    padding: 0 2px;
 }
 
 .empty-item,
@@ -3925,57 +3937,81 @@
     background: transparent !important;
 }
 
+.el-tree-node__content > .el-tree-node__expand-icon {
+    width: 14px;
+    min-width: 14px;
+    padding: 0;
+    margin-right: 2px;
+    color: #7a8591;
+    font-size: 11px;
+}
+
+.el-tree-node__content > .el-tree-node__expand-icon.is-leaf {
+    color: transparent;
+}
+
 .el-tree-node__content {
-    min-height: 24px;
-    padding-right: 4px;
+    min-height: 22px;
+    padding-right: 2px;
     border-radius: 0;
+    border: 1px solid transparent;
 }
 
 .el-tree-node__content:hover {
-    background-color: #e7edf3 !important;
+    background-color: #e9edf2 !important;
+    border-color: #dbe2e9;
 }
 
 .tree-node {
-    gap: 6px;
-    padding: 2px 0;
-    border-left: 2px solid transparent;
+    gap: 4px;
+    padding: 1px 0;
+    border-left: none;
 }
 
 .tree-node.is-selected {
-    border-left-color: #4a5560;
-    background: transparent;
+    background: #d9e3ee;
 }
 
 .tree-node-main {
-    gap: 6px;
+    gap: 5px;
 }
 
 .tree-node-icon {
     width: 12px;
-    font-size: 12px;
-    color: #6b7280;
+    font-size: 11px;
+    color: #808a95;
+}
+
+.tree-node-icon.is-doc,
+.tree-node-icon.is-code,
+.tree-node-icon.is-folder {
+    color: #808a95;
+}
+
+.tree-node-icon.is-folder {
+    color: #7a8591;
 }
 
 .tree-node-label {
-    font-size: 12px;
-    color: #1f2933;
+    font-size: 11px;
+    color: #2a3440;
 }
 
 .tree-node.is-selected .tree-node-label {
-    color: #111827;
+    color: #18212b;
     font-weight: 600;
 }
 
 .tree-node-action {
-    width: 14px;
-    height: 14px;
-    min-width: 14px;
-    font-size: 11px;
-    color: #8893a0;
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    font-size: 10px;
+    color: #96a0ab;
 }
 
 .tree-node-action:hover {
-    color: #374151;
+    color: #4b5563;
 }
 
 .progress-section {
@@ -4009,15 +4045,17 @@
 
 .split-panel.req-panel,
 .split-panel.code-panel {
-    gap: 4px;
+    gap: 0;
+    padding: 0;
+    background: #ffffff;
 }
 
 .workspace-panel-title {
     margin-bottom: 0;
-    padding: 4px 8px;
-    background: linear-gradient(180deg, #c8d1da 0%, #bcc6d1 100%);
-    border: 1px solid #9eabb8;
-    border-bottom-color: #94a2af;
+    padding: 4px 8px 2px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #c7d0d9;
     font-size: 11px;
     font-weight: 600;
     color: #17212b;
@@ -4055,7 +4093,7 @@
 
 .workspace-content-card {
     background: #ffffff;
-    border: 1px solid #bfc8d2;
+    border: none;
     border-radius: 0;
     box-shadow: none;
     padding: 0;
