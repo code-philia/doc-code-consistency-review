@@ -4729,9 +4729,10 @@ const app = createApp({
         const getExportableIssues = () => {
             let result = [...issues.value];
 
-            // 如果启用"仅导出勾选项"
+            // 如果启用"仅导出勾选项"，仅按勾选过滤，忽略状态筛选
             if (exportForm.value.onlySelected && selectedIssueIds.value.size > 0) {
                 result = result.filter(i => selectedIssueIds.value.has(i.id));
+                return result;
             }
 
             // 按状态筛选
@@ -4751,7 +4752,7 @@ const app = createApp({
             const count = getExportableIssues().length;
             const total = issues.value.length;
             if (exportForm.value.onlySelected && selectedIssueIds.value.size > 0) {
-                return `当前将导出 ${count} 条问题单（从已勾选的 ${selectedIssueIds.value.size} 条 + 状态筛选得出）。`;
+                return `当前将导出 ${count} 条问题单（仅导出已勾选的 ${selectedIssueIds.value.size} 条，含全部状态）。`;
             }
             if (count === total) {
                 return `当前将导出全部 ${total} 条问题单。`;
@@ -4759,24 +4760,13 @@ const app = createApp({
             return `当前将导出 ${count} 条问题单（共 ${total} 条，按状态筛选）。`;
         };
 
-        // 一键导出所有问题单
-        const exportAllIssues = async () => {
-            if (issues.value.length === 0) {
-                ElMessage.warning('没有问题单可导出');
-                return;
-            }
-            // 预设：导出全部，状态全选，不限定勾选
-            exportForm.value.filterStatuses = ['confirmed', 'false_positive', 'unconfirmed'];
-            exportForm.value.onlySelected = false;
-            showExportDialog.value = true;
-        };
-
-        // 打开导出对话框（按状态筛选模式）
+        // 打开导出对话框
         const openExportDialog = () => {
-            // 默认全选状态，不限定勾选
+            // 默认全选状态
             if (!exportForm.value.filterStatuses || exportForm.value.filterStatuses.length === 0) {
                 exportForm.value.filterStatuses = ['confirmed', 'false_positive', 'unconfirmed'];
             }
+            // 如果有勾选的问题单，默认仅导出勾选项；否则导出全部
             exportForm.value.onlySelected = selectedIssueIds.value.size > 0;
             showExportDialog.value = true;
         };
@@ -7836,7 +7826,6 @@ const app = createApp({
 
             // 问题单数据
             fetchIssues,
-            exportAllIssues,
             openExportDialog,
             getExportCountText,
             deleteProject,
