@@ -1619,7 +1619,9 @@
 
                                     <!-- 需求内容 -->
                                     <div v-if="currentReverseRequirement" class="reverse-requirement-section">
-                                        <div class="reverse-requirement-content" v-html="renderMarkdownWithLatex(currentReverseRequirement)"></div>
+                                        <div class="reverse-requirement-content">
+                                            <div class="markdown-content-rendered" v-html="renderMarkdownWithLatex(currentReverseRequirement)"></div>
+                                        </div>
                                     </div>
 
                                     <!-- 分隔线 -->
