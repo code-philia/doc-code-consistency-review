@@ -1525,9 +1525,6 @@
                                 <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
                                     <div class="issue-meta-line">
                                         <div class="issue-display-id">${ issue.displayId || 'ISSUE-???' }</div>
-                                        <div class="issue-description-text" :title="issue.summary">${ issue.summary || '无问题概要' }</div>
-                                    </div>
-                                    <div class="issue-header">
                                         <!-- 问题级别：编辑模式下显示下拉框，非编辑模式显示文本 -->
                                         <div v-if="!issue._isEditing" class="issue-level" :class="issue.level?.toLowerCase()">
                                             ${ issueLevelText(issue.level) }
@@ -1556,18 +1553,19 @@
                                                     ? '误报'
                                                     : '未确认') }
                                         </span>
-                                        <div class="issue-actions">
-                                            <button class="action-btn secondary" @click="deleteIssue(issue)">
-                                                <i class="fas fa-trash"></i> 删除
-                                            </button>
-                                            <button v-if="!issue._isEditing" class="action-btn edit-btn" @click="toggleEditIssue(issue)">
+                                        <div class="issue-meta-actions">
+                                            <button v-if="!issue._isEditing" class="action-btn" @click="toggleEditIssue(issue)">
                                                 <i class="fas fa-edit"></i> 编辑
                                             </button>
-                                            <button v-else class="action-btn save-btn" @click="saveIssue(issue)">
+                                            <button v-else class="action-btn" @click="saveIssue(issue)">
                                                 <i class="fas fa-save"></i> 保存
+                                            </button>
+                                            <button class="action-btn" @click="deleteIssue(issue)">
+                                                <i class="fas fa-trash"></i> 删除
                                             </button>
                                         </div>
                                     </div>
+                                    <div class="issue-summary-title" :title="issue.summary">${ issue.summary || '无问题概要' }</div>
                                     <div
                                         class="issue-summary"
                                         :contenteditable="issue._isEditing"

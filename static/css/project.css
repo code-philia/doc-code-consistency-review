@@ -783,7 +783,6 @@
 }
 
 .action-btn.secondary {
-    background-color: #7f8c8d;
 }
 
 .action-btn:hover {
@@ -1075,27 +1074,28 @@
 }
 
 .issue-status {
-    padding: 1px 3px;
-    width: 50px;
+    padding: 2px 6px;
     border-radius: 3px;
     font-size: 11px;
     font-weight: 700;
     text-align: center;
+    flex-shrink: 0;
+    display: inline-block;
 }
 
 .issue-status.confirmed {
-    background-color: var(--success-color);
-    color: white;
+    background-color: #16a34a;
+    color: #fff;
 }
 
 .issue-status.unconfirmed {
-    background-color: #e0e0e0;
-    color: var(--text-primary);
+    background-color: #d1d5db;
+    color: #374151;
 }
 
 .issue-status.false_positive {
-    background-color: var(--warning-color);
-    color: white;
+    background-color: #d97706;
+    color: #fff;
 }
 
 .issue-status.clickable {
@@ -1724,18 +1724,6 @@
 
 .issue-level {
     display: inline-block;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.issue-level.high, .issue-level.medium, .issue-level.low {
-    color: white;
-}
-
-.issue-level.false_positive {
-    background-color: var(--warning-color);
-    color: #fff;
-    border: 1px solid #f39c12;
 }
 
 .issue-summary {
@@ -1755,9 +1743,11 @@
 }
 
 .issue-info .issue-status {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
 }
 
 .alignment-header {
@@ -2420,25 +2410,27 @@
 
 /* 问题级别显示样式 */
 .issue-level {
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 3px;
-    font-size: 10px;
-    font-weight: 600;
-    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
     text-align: center;
-    min-width: 32px;
+    min-width: 36px;
+    flex-shrink: 0;
+    line-height: 1.4;
 }
 
 .issue-level.high {
-    background-color: #f56c6c;
+    background-color: #dc2626;
 }
 
 .issue-level.medium {
-    background-color: #e6a23c;
+    background-color: #d97706;
 }
 
 .issue-level.low {
-    background-color: #67c23a;
+    background-color: #16a34a;
 }
 /* Issues list table layout and spacing */
 .issue-table {
@@ -2943,6 +2935,16 @@
 .review-detail-dialog .el-button,
 .review-detail-dialog .action-btn {
     border-radius: 2px;
+    background: transparent;
+    color: #6b7280;
+    padding: 2px 6px;
+    font-size: 12px;
+    min-height: auto;
+}
+
+.review-detail-dialog .action-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #111827;
 }
 
 .review-detail-dialog .el-button {
@@ -3258,43 +3260,36 @@
     background: #f7f9fb;
     color: #4b5563;
     font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .issue-display-id {
     color: #111827;
     font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
 }
 
-.issue-description-text {
-    font-size: 11px;
-    color: #4b5563;
-}
-
-.issue-header {
-    margin-bottom: 6px;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.issue-actions {
-    width: auto;
+.issue-meta-actions {
     margin-left: auto;
     display: flex;
-    gap: 6px;
-    justify-content: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
 }
 
-.action-btn {
-    padding: 1px 6px;
-    font-size: 11px;
-    border: none;
-    background: transparent;
-    color: #24313d;
-    min-height: 22px;
+.issue-summary-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 6px;
+    padding: 0 2px;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 0 0 auto;
-    gap: 4px;
 }
 
 .issue-summary {
