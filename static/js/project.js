@@ -456,6 +456,7 @@ const app = createApp({
         // 右侧侧边栏视图模式
         const rightSidebarMode = ref('alignment'); // 'alignment' | 'block'
         const blockType = ref('doc'); // 'doc' | 'code'
+        const isRightSidebarControlsCollapsed = ref(false);
 
         // 计算属性：当前显示的块列表
         const displayedBlocks = computed(() => {
@@ -7922,6 +7923,7 @@ const app = createApp({
             showAllAlignments,
             viewMode,
             rightSidebarMode,
+            isRightSidebarControlsCollapsed,
             blockType,
             displayedBlocks,
             refreshBlocks,

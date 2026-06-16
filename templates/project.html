@@ -579,91 +579,110 @@
                                                 <el-radio-button label="block">块视图</el-radio-button>
                                             </el-radio-group>
                                         </div>
+                                        <el-button
+                                            size="small"
+                                            text
+                                            plain
+                                            class="right-sidebar-collapse-btn"
+                                            @click="isRightSidebarControlsCollapsed = !isRightSidebarControlsCollapsed"
+                                        >
+                                            <i class="fas" :class="isRightSidebarControlsCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                                            ${ isRightSidebarControlsCollapsed ? '展开控制区' : '收起控制区' }
+                                        </el-button>
+                                    </div>
+
+                                    <div
+                                        class="right-sidebar-controls-panel"
+                                        :class="{ collapsed: isRightSidebarControlsCollapsed }"
+                                    >
                                        <div class="right-toolbar-actions right-toolbar-actions--alignment" v-if="rightSidebarMode === 'alignment'">
-                                        <el-button
-                                            @click="cancelSelection"
-                                            size="small"
-                                            text
-                                            plain
-                                            type="primary"
-                                            class="right-toolbar-btn"
-                                        >
-                                             取消选中
-                                        </el-button>
-                                        <el-button
-                                            @click="refreshAlignments"
-                                            size="small"
-                                            text
-                                            plain
-                                            type="primary"
-                                            class="right-toolbar-btn"
-                                        >
-                                             刷新列表
-                                        </el-button>
-                                        <el-button
-                                            @click="exportResults"
-                                            size="small"
-                                            text
-                                            plain
-                                            class="right-toolbar-btn"
-                                        >
-                                             导出结果
-                                        </el-button>
-                                        <el-button
-                                            @click="SetPrompt"
-                                            size="small"
-                                            text
-                                            plain
-                                            class="right-toolbar-btn"
-                                        >
-                                             提示词设置
-                                        </el-button>
+                                            <el-button
+                                                @click="cancelSelection"
+                                                size="small"
+                                                text
+                                                plain
+                                                type="primary"
+                                                class="right-toolbar-btn"
+                                            >
+                                                 取消选中
+                                            </el-button>
+                                            <el-button
+                                                @click="refreshAlignments"
+                                                size="small"
+                                                text
+                                                plain
+                                                type="primary"
+                                                class="right-toolbar-btn"
+                                            >
+                                                 刷新列表
+                                            </el-button>
+                                            <el-button
+                                                @click="exportResults"
+                                                size="small"
+                                                text
+                                                plain
+                                                class="right-toolbar-btn"
+                                            >
+                                                 导出结果
+                                            </el-button>
+                                            <el-button
+                                                @click="SetPrompt"
+                                                size="small"
+                                                text
+                                                plain
+                                                class="right-toolbar-btn"
+                                            >
+                                                 提示词设置
+                                            </el-button>
                                         </div>
                                        <div class="right-toolbar-actions right-toolbar-actions--block" v-if="rightSidebarMode === 'block'">
-                                        <el-button
-                                            @click="cancelSelection"
-                                            size="small"
-                                            text
-                                            plain
-                                            type="primary"
-                                            class="right-toolbar-btn"
-                                        >
-                                             取消选中
-                                        </el-button>
-                                        <el-button
-                                            @click="refreshBlocksAndAlignments"
-                                            size="small"
-                                            text
-                                            plain
-                                            type="primary"
-                                            class="right-toolbar-btn"
-                                        >
-                                             刷新列表
-                                        </el-button>
+                                            <el-button
+                                                @click="cancelSelection"
+                                                size="small"
+                                                text
+                                                plain
+                                                type="primary"
+                                                class="right-toolbar-btn"
+                                            >
+                                                 取消选中
+                                            </el-button>
+                                            <el-button
+                                                @click="refreshBlocksAndAlignments"
+                                                size="small"
+                                                text
+                                                plain
+                                                type="primary"
+                                                class="right-toolbar-btn"
+                                            >
+                                                 刷新列表
+                                            </el-button>
 
-                                        <el-button
-                                            @click="exportResults"
-                                            size="small"
-                                            text
-                                            plain
-                                            class="right-toolbar-btn"
-                                        >
-                                             导出结果
-                                        </el-button>
-                                        <el-button
-                                            @click="SetPrompt"
-                                            size="small"
-                                            text
-                                            plain
-                                            class="right-toolbar-btn"
-                                        >
-                                             提示词设置
-                                        </el-button>
+                                            <el-button
+                                                @click="exportResults"
+                                                size="small"
+                                                text
+                                                plain
+                                                class="right-toolbar-btn"
+                                            >
+                                                 导出结果
+                                            </el-button>
+                                            <el-button
+                                                @click="SetPrompt"
+                                                size="small"
+                                                text
+                                                plain
+                                                class="right-toolbar-btn"
+                                            >
+                                                 提示词设置
+                                            </el-button>
                                         </div>
                                     </div>
 
                                     <div class="content-card sidebar-list-container right-sidebar-panel right-sidebar-panel--alignment" v-if="rightSidebarMode === 'alignment'">
-                                        <div class="sidebar-controls sidebar-controls--alignment">
+                                        <div
+                                            class="sidebar-controls sidebar-controls--alignment"
+                                            :class="{ collapsed: isRightSidebarControlsCollapsed }"
+                                        >
                                             <div class="filter-row sidebar-controls-group">
                                                  <el-radio-group v-model="viewMode" size="small" class="custom-segmented-control">
                                                     <el-radio-button label="all">全部数据</el-radio-button>
@@ -762,7 +781,10 @@
 
                                     <!-- 块视图 -->
                                     <div class="content-card sidebar-list-container right-sidebar-panel right-sidebar-panel--block" v-if="rightSidebarMode === 'block'">
-                                        <div class="sidebar-controls sidebar-controls--block">
+                                        <div
+                                            class="sidebar-controls sidebar-controls--block"
+                                            :class="{ collapsed: isRightSidebarControlsCollapsed }"
+                                        >
                                             <div class="filter-row sidebar-controls-group">
                                                  <el-radio-group v-model="viewMode" size="small" class="custom-segmented-control">
                                                     <el-radio-button label="all">全部数据</el-radio-button>
