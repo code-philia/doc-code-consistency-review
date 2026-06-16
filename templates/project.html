@@ -1372,14 +1372,15 @@
             width="1200px"
             top="2vh"
             :close-on-click-modal="false"
+            class="review-detail-dialog"
         >
             <template #header>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-right: 30px;">
-                    <span class="el-dialog__title">
+                <div class="review-dialog-header">
+                    <span class="el-dialog__title review-dialog-title">
                         <i class="fas fa-search"></i> 需求点：${ selectedReviewAlignment?.name || '未知' }
                     </span>
 
-                    <div style="display: flex; gap: 10px; align-items: center;">
+                    <div class="review-dialog-toolbar">
 
                         <el-button type="success" size="small" @click="addAlignmentToKB">
                             <i class="fas fa-link"></i> 入库(对齐)
@@ -1395,7 +1396,7 @@
 
                         <el-divider direction="vertical"></el-divider>
 
-                        <el-button-group>
+                        <el-button-group class="review-dialog-nav">
                             <el-button size="small" @click="navigateReviewDetail(-1)">
                                 <i class="fas fa-chevron-left"></i> 上一个
                             </el-button>
@@ -1502,7 +1503,7 @@
                 <div class="review-right-panel">
                     <el-tabs v-model="activeReviewTab" type="card" class="review-tabs">
                         <el-tab-pane label="问题单" name="issues">
-                            <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="issues-container">
+                            <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="issues-container review-tab-panel">
                                 <div v-for="issue in getIssuesByAlignmentId(selectedReviewAlignment.id)" :key="issue.id" class="issue-info">
                                     <div class="issue-meta-line">
                                         <div class="issue-display-id">${ issue.displayId || 'ISSUE-???' }</div>
@@ -1564,12 +1565,12 @@
                             </div>
                         </el-tab-pane>
                         <el-tab-pane label="审查思考过程" name="process">
-                            <div class="review-process">
+                            <div class="review-process review-tab-panel">
                                 <div class="review-thoughts-rendered" v-html="renderMarkdownWithLatex(selectedReviewAlignment.reviewThoughts || '暂无审查思考过程')"></div>
                             </div>
                         </el-tab-pane>
                         <el-tab-pane label="需求反生成" name="requirement-reverse">
-                            <div class="requirement-reverse-container">
+                            <div class="requirement-reverse-container review-tab-panel">
                                 <div v-if="!currentReverseRequirement && !currentFlowchart" class="reverse-actions">
                                     <el-button
                                         type="primary"

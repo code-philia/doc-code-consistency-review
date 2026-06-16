@@ -2877,6 +2877,535 @@
     opacity: 0;
 }
 
+/* 审查详情弹窗：商用软件风格重构 */
+.review-detail-dialog.el-dialog,
+.review-detail-dialog .el-dialog {
+    width: min(92vw, 1500px) !important;
+    max-width: 1500px;
+    border-radius: 2px;
+    border: 1px solid #b9c2cc;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+    overflow: hidden;
+}
+
+.review-detail-dialog .el-dialog__header {
+    padding: 10px 14px;
+    background: #eef2f6;
+    border-bottom: 1px solid #c7d0da;
+}
+
+.review-detail-dialog .el-dialog__body {
+    padding: 10px;
+    background: #f3f5f7;
+    overflow: hidden;
+}
+
+.review-dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-right: 28px;
+}
+
+.review-dialog-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: #1f2937 !important;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.review-dialog-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.review-dialog-toolbar .el-divider--vertical {
+    margin: 0 2px;
+    height: 22px;
+    border-color: #c7d0da;
+}
+
+.review-detail-dialog .el-button,
+.review-detail-dialog .action-btn {
+    border-radius: 2px;
+}
+
+.review-detail-dialog .el-button {
+    min-height: 28px;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+.review-detail-dialog .el-dialog__headerbtn {
+    top: 10px;
+    right: 12px;
+}
+
+.review-detail-dialog .el-dialog__headerbtn .el-dialog__close {
+    color: #4b5563;
+}
+
+.review-detail-dialog .el-dialog__headerbtn .el-dialog__close:hover {
+    color: #111827;
+}
+
+.review-detail-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    gap: 10px;
+    height: min(80vh, 900px);
+    overflow: hidden;
+}
+
+.review-left-panel,
+.review-right-panel {
+    min-width: 0;
+    min-height: 0;
+    background: #ffffff;
+    border: 1px solid #cfd6df;
+}
+
+.review-left-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+}
+
+.review-right-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    border-left: 1px solid #cfd6df;
+}
+
+.review-left-section {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid #d6dde6;
+    border-radius: 0;
+    background: #fff;
+    overflow: visible;
+}
+
+.review-left-section h4,
+.review-right-section h4 {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    padding: 8px 10px;
+    background: #eef2f6;
+    border-bottom: 1px solid #d6dde6;
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.review-left-section h4 i,
+.review-right-section h4 i {
+    color: #4b5563;
+}
+
+.doc-ranges-container,
+.code-ranges-container {
+    flex: none;
+    overflow: visible;
+    padding: 8px;
+}
+
+.doc-ranges-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.doc-range,
+.code-range,
+.reverse-requirement-section,
+.flowchart-section,
+.issue-info {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.doc-range,
+.code-range {
+    border: 1px solid #d6dde6;
+    background: #fff;
+}
+
+.doc-file-info,
+.code-file-info {
+    padding: 6px 10px;
+    background: #eef2f6;
+    border-bottom: 1px solid #d6dde6;
+    font-size: 11px;
+}
+
+.review-detail-dialog .doc-file-info .file-name,
+.review-detail-dialog .code-file-info .file-name {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.review-detail-dialog .line-range {
+    color: #6b7280;
+}
+
+.review-detail-dialog .doc-content-rendered,
+.review-detail-dialog .review-thoughts-rendered,
+.review-detail-dialog .markdown-content-rendered {
+    padding: 10px;
+    border-radius: 0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.code-toc {
+    position: sticky;
+    top: 33px;
+    z-index: 3;
+    margin-bottom: 8px;
+    border: 1px solid #d6dde6;
+    border-radius: 0;
+    background: #fafbfc;
+}
+
+.toc-header {
+    padding: 8px 10px;
+    background: #f4f6f8;
+    border-bottom: 1px solid #d6dde6;
+    font-size: 12px;
+    color: #374151;
+    cursor: pointer;
+}
+
+.toc-badge {
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: #4b5563;
+    color: #fff;
+    font-size: 10px;
+}
+
+.toc-body {
+    max-height: none;
+    overflow: visible;
+    padding: 4px;
+}
+
+.toc-item {
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 0;
+    font-size: 12px;
+}
+
+.toc-item:hover {
+    background: #f2f4f6;
+}
+
+.toc-item.active {
+    background: #e8edf3;
+    color: #111827;
+}
+
+.toc-item.active .toc-num {
+    background: #374151;
+    color: #fff;
+}
+
+.toc-num {
+    min-width: 18px;
+    height: 18px;
+    border-radius: 2px;
+    background: #d8dee6;
+    color: #374151;
+}
+
+.toc-lines {
+    color: #6b7280;
+    font-size: 10px;
+}
+
+.code-content-with-lines {
+    margin: 0;
+    border-radius: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.line-numbers {
+    padding: 8px 6px;
+    min-width: 44px;
+    background: #f7f9fb;
+    border-right: 1px solid #e3e8ef;
+}
+
+.line-number {
+    background: transparent;
+    border-right: none;
+    color: #7c8794;
+}
+
+.code-range .code-content {
+    padding: 8px 10px;
+    background: #ffffff;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.code-text {
+    padding: 8px 10px;
+}
+
+.review-right-panel .review-tabs {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.review-right-panel .review-tabs > .el-tabs__header {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 6px 8px 0;
+    background: #eef2f6;
+    border-bottom: 1px solid #cfd6df;
+}
+
+.review-right-panel .review-tabs .el-tabs__nav-wrap::after {
+    display: none;
+}
+
+.review-right-panel .review-tabs .el-tabs__item {
+    height: 30px;
+    line-height: 30px;
+    border-radius: 0 !important;
+    border-color: #cfd6df !important;
+    background: #f7f9fb;
+    color: #4b5563;
+    font-size: 12px;
+}
+
+.review-right-panel .review-tabs .el-tabs__item.is-active {
+    background: #ffffff;
+    color: #111827;
+    font-weight: 600;
+}
+
+.review-right-panel .review-tabs .el-tabs__content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 8px;
+}
+
+.review-right-panel .el-tab-pane {
+    height: 100%;
+}
+
+.review-tab-panel {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+}
+
+.issues-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: none;
+}
+
+.issue-info {
+    margin-bottom: 0;
+    padding: 8px 10px;
+    background: #ffffff;
+    border: 1px solid #d6dde6;
+    border-left: 3px solid #c98b2e;
+}
+
+.issue-meta-line {
+    margin: 0 0 6px;
+    padding: 5px 8px;
+    border-radius: 0;
+    border: 1px solid #e0e6ed;
+    background: #f7f9fb;
+    color: #4b5563;
+    font-size: 11px;
+}
+
+.issue-display-id {
+    color: #111827;
+    font-size: 12px;
+}
+
+.issue-description-text {
+    font-size: 11px;
+    color: #4b5563;
+}
+
+.issue-header {
+    margin-bottom: 6px;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.issue-actions {
+    width: auto;
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    border: 1px solid transparent;
+}
+
+.action-btn.secondary {
+    background: #6b7280;
+}
+
+.issue-summary {
+    max-height: none;
+    margin-bottom: 0;
+    overflow: visible;
+    font-size: 13px;
+    line-height: 1.55;
+    font-weight: 500;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.review-process {
+    background: #ffffff;
+    border: 1px solid #d6dde6;
+    border-left: 2px solid #8b95a1;
+    border-radius: 0;
+    padding: 0;
+    max-height: none;
+    overflow: visible;
+}
+
+.requirement-reverse-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reverse-actions {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0 0 8px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5eaf0;
+}
+
+.reverse-display {
+    gap: 8px;
+}
+
+.reverse-display .el-divider--horizontal {
+    margin: 2px 0;
+}
+
+.reverse-requirement-section,
+.flowchart-section {
+    background: #ffffff;
+    border: 1px solid #d6dde6;
+    overflow: hidden;
+}
+
+.reverse-requirement-content {
+    min-height: 0;
+    max-height: none;
+    padding: 10px;
+    overflow: visible;
+}
+
+.reverse-requirement-content .markdown-content-rendered {
+    padding: 0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.mermaid-diagram {
+    min-height: 220px;
+    padding: 8px;
+    border: none;
+    border-radius: 0;
+    background: #ffffff;
+    justify-content: flex-start;
+    align-items: flex-start;
+    overflow: auto;
+}
+
+.mermaid-diagram svg {
+    max-width: none;
+    min-width: 100%;
+    height: auto;
+    transform: none;
+    transform-origin: top left;
+}
+
+.error-message {
+    margin-top: 0;
+}
+
+.empty-message {
+    padding: 16px 10px;
+    border: 1px dashed #cfd6df;
+    background: #fafbfc;
+    color: #6b7280;
+}
+
+@media (max-width: 1280px) {
+    .review-detail-container {
+        grid-template-columns: minmax(0, 1fr);
+        height: min(82vh, 960px);
+    }
+
+    .review-left-panel,
+    .review-right-panel {
+        min-height: 260px;
+    }
+
+    .review-dialog-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .review-dialog-toolbar {
+        width: 100%;
+    }
+}
+
 /* 手动对齐弹窗：已有对齐关系选项卡样式 */
 .manual-align-dialog .el-dialog {
     height: 520px;
