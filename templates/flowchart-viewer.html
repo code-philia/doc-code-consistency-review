@@ -83,6 +83,7 @@
         <button class="control-btn" onclick="resetZoom()">重置</button>
         <button class="control-btn" onclick="fitToScreen()">适应屏幕</button>
         <button class="control-btn" onclick="downloadSVG()" style="background: #67c23a;">下载 SVG</button>
+        <button class="control-btn" onclick="downloadPNG()" style="background: #e6a23c;">下载 PNG</button>
         <span class="zoom-info">缩放: <span id="zoom-level">100%</span></span>
     </div>
     <div class="flowchart-container" id="container">
@@ -180,6 +181,55 @@
             URL.revokeObjectURL(url);
         }
         
+        // 下载PNG功能
+        function downloadPNG() {
+            const svgClone = svg.cloneNode(true);
+
+            // 获取SVG尺寸
+            const svgBBox = svg.getBBox();
+            const svgWidth = svgBBox.width || originalWidth;
+            const svgHeight = svgBBox.height || originalHeight;
+
+            svgClone.setAttribute('width', svgWidth);
+            svgClone.setAttribute('height', svgHeight);
+            svgClone.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+
+            // 添加白色背景
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('width', '100%');
+            rect.setAttribute('height', '100%');
+            rect.setAttribute('fill', 'white');
+            svgClone.insertBefore(rect, svgClone.firstChild);
+
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            // 使用 data URI 而非 blob URL，避免 Canvas 跨域污染
+            const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+
+            const scale = 2;  // 2倍分辨率
+            const canvas = document.createElement('canvas');
+            canvas.width = svgWidth * scale;
+            canvas.height = svgHeight * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(scale, scale);
+
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, svgWidth, svgHeight);
+
+                canvas.toBlob(function(blob) {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = `flowchart_${new Date().getTime()}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(pngUrl);
+                }, 'image/png');
+            };
+            img.src = dataUrl;
+        }
+
         // 鼠标滚轮缩放
         container.addEventListener('wheel', (e) => {
             e.preventDefault();

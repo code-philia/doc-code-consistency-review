@@ -6842,7 +6842,7 @@ const app = createApp({
         };
 
         const getFlowchartPayload = (responseData) => normalizeFlowchartCode(
-            responseData?.flowchartCode || responseData?.svgCode || responseData?.mermaidCode || ''
+            responseData?.mermaidCode || responseData?.flowchartCode || responseData?.svgCode || ''
         );
 
         const looksLikeSvgMarkup = (flowchartCode) => (

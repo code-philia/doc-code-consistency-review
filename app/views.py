@@ -2256,8 +2256,8 @@ def generate_flowchart():
 
         return jsonify({
             "status": "success",
-            "flowchartCode": flowchart_code,
-            "mermaidCode": flowchart_code
+            "mermaidCode": flowchart_code,
+            "flowchartCode": flowchart_code
         })
 
     except Exception as e:
@@ -2298,8 +2298,8 @@ def generate_reverse_requirement():
                 "status": "success",
                 "cached": True,
                 "generatedRequirement": row.get('GenReq'),
-                "flowchartCode": row.get('GenMermaid'),
-                "mermaidCode": row.get('GenMermaid')
+                "mermaidCode": row.get('GenMermaid'),
+                "flowchartCode": row.get('GenMermaid')
             })
 			
         if cache_only:
@@ -2307,8 +2307,8 @@ def generate_reverse_requirement():
                 "status": "success",
                 "cached": False,
                 "generatedRequirement": None,
-                "flowchartCode": None,
-                "mermaidCode": None
+                "mermaidCode": None,
+                "flowchartCode": None
             })
 
         # 构建代码块列表，格式与现有函数兼容
@@ -2344,10 +2344,10 @@ def generate_reverse_requirement():
         )
         return jsonify({
             "status": "success",
-			"cached": False,
+            "cached": False,
             "generatedRequirement": generated_requirement,
-            "flowchartCode": flowchart_code,
             "mermaidCode": flowchart_code,
+            "flowchartCode": flowchart_code,
             "flowchartWarning": flowchart_warning
         })
 
