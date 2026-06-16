@@ -579,7 +579,7 @@
                                                 <el-radio-button label="block">块视图</el-radio-button>
                                             </el-radio-group>
                                         </div>
-                                       <div class="right-toolbar-actions" v-if="rightSidebarMode === 'alignment'">
+                                       <div class="right-toolbar-actions right-toolbar-actions--alignment" v-if="rightSidebarMode === 'alignment'">
                                         <el-button
                                             @click="cancelSelection"
                                             size="small"
@@ -618,10 +618,8 @@
                                         >
                                              提示词设置
                                         </el-button>
-
-
                                         </div>
-                                       <div class="right-toolbar-actions" v-if="rightSidebarMode === 'block'">
+                                       <div class="right-toolbar-actions right-toolbar-actions--block" v-if="rightSidebarMode === 'block'">
                                         <el-button
                                             @click="cancelSelection"
                                             size="small"
@@ -661,12 +659,11 @@
                                         >
                                              提示词设置
                                         </el-button>
-
                                         </div>
                                     </div>
 
-                                    <div class="content-card sidebar-list-container" v-if="rightSidebarMode === 'alignment'">
-                                        <div class="sidebar-controls">
+                                    <div class="content-card sidebar-list-container right-sidebar-panel right-sidebar-panel--alignment" v-if="rightSidebarMode === 'alignment'">
+                                        <div class="sidebar-controls sidebar-controls--alignment">
                                             <div class="filter-row sidebar-controls-group">
                                                  <el-radio-group v-model="viewMode" size="small" class="custom-segmented-control">
                                                     <el-radio-button label="all">全部数据</el-radio-button>
@@ -687,7 +684,7 @@
                                                 </el-checkbox-group>
                                             </div>
                                         </div>
-                                        <div class="alignment-list">
+                                        <div class="alignment-list alignment-list--alignment">
                                             <div v-if="sidebarAlignments && sidebarAlignments.length > 0">
                                                  <div
                                                     v-for="alignment in sidebarAlignments"
@@ -703,7 +700,7 @@
                                                         <el-tooltip effect="light" :content="alignment.name" placement="left">
                                                             <span class="alignment-title">${ alignment.name }</span>
                                                         </el-tooltip>
-                                                        <div style="display: flex; align-items: center; gap: 4px;">
+                                                        <div class="alignment-item-meta">
                                                             <el-tag
                                                                 :type="getAlignmentStatus(alignment).type"
                                                                 size="small"
@@ -712,7 +709,7 @@
                                                             >
                                                                 ${ getAlignmentStatus(alignment).text }
                                                             </el-tag>
-                                                            <i :class="expandedAlignmentIds.includes(alignment.id) ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" style="font-size: 10px; color: #909399;"></i>
+                                                            <i :class="expandedAlignmentIds.includes(alignment.id) ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="alignment-expand-icon"></i>
                                                         </div>
                                                     </div>
                                                     <!-- 展开的详细列表 -->
@@ -764,8 +761,8 @@
                                     </div>
 
                                     <!-- 块视图 -->
-                                    <div class="content-card sidebar-list-container" v-if="rightSidebarMode === 'block'">
-                                        <div class="sidebar-controls">
+                                    <div class="content-card sidebar-list-container right-sidebar-panel right-sidebar-panel--block" v-if="rightSidebarMode === 'block'">
+                                        <div class="sidebar-controls sidebar-controls--block">
                                             <div class="filter-row sidebar-controls-group">
                                                  <el-radio-group v-model="viewMode" size="small" class="custom-segmented-control">
                                                     <el-radio-button label="all">全部数据</el-radio-button>
@@ -779,30 +776,29 @@
                                                 </el-radio-group>
                                             </div>
                                         </div>
-                                        <div class="alignment-list">
+                                        <div class="alignment-list alignment-list--block">
                                             <div v-if="displayedBlocks && displayedBlocks.length > 0">
                                                  <div
                                                    v-for="(block, index) in displayedBlocks"
                                                    :key="index"
-                                                   class="alignment-list-item"
+                                                   class="alignment-list-item block-list-item"
                                                    :class="{ 'selected': currentSelectedBlockIndex === index }"
                                                    :id="'block-item-' + index"
-                                                   style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; position: relative; padding-right: 35px;"
                                                    @click="handleBlockItemClick(block, index)"
                                                    @contextmenu.prevent="handleBlockItemContextMenu($event, block, index, blockType)"
                                                 >
-                                                   <div style="font-weight: 500; font-size: 12px; color: var(--text-primary); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                   <div class="block-item-title">
                                                        ${ getBlockDisplayName(block, blockType) }
                                                    </div>
-                                                   <div style="font-size: 11px; color: var(--text-secondary);">
+                                                   <div class="block-item-meta">
                                                        ${ getBlockMetaText(block, blockType) }
                                                    </div>
-                                                   <div style="font-size: 11px; color: var(--text-secondary); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                   <div class="block-item-preview">
                                                        ${ getBlockPreviewText(block, blockType) }
                                                    </div>
 
                                                    <!-- Delete Button -->
-                                                   <div class="block-delete-btn" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%);" @click.stop>
+                                                   <div class="block-delete-btn" @click.stop>
                                                        <el-popconfirm
                                                            :title="'确认删除' + (blockType === 'doc' ? '需求' : '代码') + '块？\n内容：' + getBlockPreviewText(block, blockType)"
                                                            confirm-button-text="删除"
@@ -812,13 +808,13 @@
                                                            @confirm="handleDeleteBlock(block)"
                                                        >
                                                            <template #reference>
-                                                               <el-button type="text" size="mini" class="delete-icon-btn" style="padding: 5px;">
-                                                                   <i class="fas fa-trash" style="color: #c0c4cc; font-size: 14px;"></i>
+                                                               <el-button type="text" size="mini" class="delete-icon-btn">
+                                                                   <i class="fas fa-trash"></i>
                                                                </el-button>
                                                            </template>
                                                        </el-popconfirm>
                                                    </div>
-                                                     <div v-if="blockType === 'code' && hasCodeReview" style="display: flex; align-items: center; gap: 4px;">
+                                                     <div v-if="blockType === 'code' && hasCodeReview" class="block-item-status">
                                                             <el-tag
                                                                 :type="getBlockStatus(block, blockType, true).type"
                                                                 size="small"
