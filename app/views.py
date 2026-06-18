@@ -19,6 +19,7 @@ from .db import (
     append_missing_code_blocks,
     _default_doc_block_name,
     _default_code_block_name,
+    _get_next_block_id
 )
 
 os.environ["OPENBLAS_NUM_THREADS"] = "128"
