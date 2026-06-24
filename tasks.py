@@ -2,9 +2,12 @@ import json
 import os
 import time
 from collections import defaultdict
+from datetime import datetime
 
 import pandas as pd
 from celery import Celery
+from docx import Document
+
 from app import create_app
 from app.agent import query_review_result, query_review_result_by_feedback, query_codefile_from_abstract, \
     query_related_code, query_generated_requirement, query_flow_chart, query_related_requirement
@@ -14,7 +17,8 @@ from app.db import (
     append_missing_code_blocks,
 )
 from app.rag_chroma import rag_engine
-from app.utils import get_all_files_with_relative_paths, include_related_blocks
+from app.utils import get_all_files_with_relative_paths, include_related_blocks, replace_text_in_docx, \
+    generate_issue_content
 from app.views import (
     logger,
     get_abstracts_from_sqlite,
@@ -258,7 +262,9 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
                 issues_list = []
             
             # 需求反生成
-            generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+            #generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+            generated_requirement = ""
+            mermaid_code =""
             
             conn = get_db_celery()
             cur = conn.cursor()
@@ -512,6 +518,7 @@ def review_alignment_addprompt_task(project_path, alignment, project_id, user_id
 
 @celery.task(bind=True)
 def align_requirement_to_project_task(self, abstract, params, user_id):
+
     project_path = params.get('projectPath', '')
     project_id = params.get('project_id')
     chunks = params.get('requirements')
@@ -520,6 +527,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
     try:
 
         for i, chunk in enumerate(chunks, y_align):
+
             self.update_state(
                 state="PROGRESS",
                 meta={
@@ -593,20 +601,23 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
 
             # 遍历经过代码摘要筛选的代码文件
             for file_name in file_name_list:
+                # print('22222222222222222222222222')
                 # 假设 file_name 是一个字典，例如：{"filename": "main.py"}
                 if isinstance(file_name, dict):
                     file_name = file_name.get("filename", file_name.get("file", ""))
 
                 # 确保 file_name 是字符串
-                
+                # print('file_name, (str, bytes, os.PathLike):', file_name, type(file_name))
                 if not isinstance(file_name, (str, bytes, os.PathLike)):
                     continue
             
             
                 all_code_blocks = _get_or_build_code_blocks_for_file(project_path, file_name, project_id)
+                # print('all_code_blocks:', all_code_blocks)
                 if not all_code_blocks:
                     continue
-
+                
+                # print("调用对齐函数获取相关代码")
                 # 调用对齐函数获取相关代码
                 related_code = query_related_code(
                     requirement_text,
@@ -619,7 +630,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                 try:
                     # 检查并添加 related_id 对应的代码块
                     related_code = include_related_blocks(related_code, all_code_blocks)
-
+                    
                     # 转换为codeRanges格式
                     for code_block in related_code:
                         # 获取原始代码内容（不带行号）
@@ -655,8 +666,9 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                 except Exception as e:
                     print(f"add related_code failed: {e}") 
                     
-            chunk['codeRanges'] = code_ranges
-            add_alignment_data(project_path, chunk, project_id, user_id)
+            if code_ranges:
+                chunk['codeRanges'] = code_ranges
+                add_alignment_data(project_path, chunk, project_id, user_id)
 
         self.update_state(
             state="SUCCESS",
@@ -871,6 +883,7 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
     finally:
         conn.close()
 
+
 def gen_requirement(doc_ranges, code_ranges):
     generated_requirement = ''
     flowchart_code = ''
@@ -915,3 +928,147 @@ def gen_requirement(doc_ranges, code_ranges):
         # return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
     
     return generated_requirement, flowchart_code
+
+
+@celery.task(bind=True)
+def gen_requirement_task(self, alignments, project_id):
+    pass
+
+
+@celery.task(bind=True)
+def export_issues_task(self, data, docx_path):
+    db = get_db_celery()
+    cursor = db.cursor()
+    try:
+
+        issues = data.get('issues', [])
+        form_data = data.get('formData', {})
+        template_path = os.path.join(os.path.dirname(__file__), 'templates/', '问题单模板.docx')
+        # 创建临时目录存储文件
+        temp_dir = os.path.join(os.path.dirname(__file__), 'app/', 'temp_exports')
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir, exist_ok=True)
+
+        # 检查是否提供了DOCX模板路径
+        if template_path and os.path.exists(template_path):
+            current_date = datetime.now().strftime("%Y%m%d")
+            issue_categories = form_data.get('issueCategories', [])
+
+            # 将英文级别转换为中文的映射
+            level_mapping = {
+                'high': '重大',
+                'medium': '严重',
+                'low': '一般'
+            }
+
+            # 处理第一个问题单作为基础文档
+            first_issue = issues[0]
+            merged_doc = Document(template_path)
+
+            replacements = {}
+            # 替换页码信息
+            replacements["CURRENT"] = "1"
+            replacements["TOTAL"] = str(len(issues))
+
+            replacements["AAAAA软件"] = form_data.get('productName', '')
+            replacements["BBBBB"] = f"{form_data.get('issueId', '')}_1"
+            replacements["CCCCC"] = form_data.get('productId', '')
+            replacements["DDDDD"] = form_data.get('discoveryMethod', '')
+            replacements["EEEEE"] = form_data.get('issueTracking', '')
+            replacements["GGGGG"] = current_date
+
+            # 处理问题类别
+            for category in ['需求问题', '设计问题', '编码问题', '测试问题', '文档问题', '数据问题', '其他问题']:
+                if category in issue_categories:
+                    replacements[f"□{category}"] = f"■{category}"
+
+            # 处理问题级别
+            issue_level = first_issue.get('level', '')
+            chinese_level = level_mapping.get(issue_level.lower(), issue_level)
+
+            for level in ['重大', '严重', '一般']:
+                if level == chinese_level:
+                    replacements[f"□{level}"] = f"■{level}"
+
+            replacements["CONTENTCONTENT"] = first_issue.get('description', '')
+
+            # 替换第一个文档的占位符
+            replace_text_in_docx(merged_doc, replacements)
+
+            cursor.execute("""
+                        UPDATE export_tasks SET status = 'processing'
+                        WHERE task_id = %s
+                    """, (self.request.id,))
+            db.commit()
+
+            # 处理剩余的问题单
+            for i, issue in enumerate(issues[1:], 2):
+                # 添加分页符
+                # merged_doc.add_page_break()
+
+                # 为每个问题单加载新的模板并填充
+                temp_doc = Document(template_path)
+
+                replacements = {}
+                # 替换页码信息
+                replacements["CURRENT"] = str(i)
+                replacements["TOTAL"] = str(len(issues))
+
+                replacements["AAAAA软件"] = form_data.get('productName', '')
+                replacements["BBBBB"] = f"{form_data.get('issueId', '')}_{i}"
+                replacements["CCCCC"] = form_data.get('productId', '')
+                replacements["DDDDD"] = form_data.get('discoveryMethod', '')
+                replacements["EEEEE"] = form_data.get('issueTracking', '')
+                replacements["GGGGG"] = current_date
+
+                # 处理问题类别
+                for category in ['需求问题', '设计问题', '编码问题', '测试问题', '文档问题', '数据问题', '其他问题']:
+                    if category in issue_categories:
+                        replacements[f"□{category}"] = f"■{category}"
+
+                # 处理问题级别
+                issue_level = issue.get('level', '')
+                chinese_level = level_mapping.get(issue_level.lower(), issue_level)
+
+                for level in ['重大', '严重', '一般']:
+                    if level == chinese_level:
+                        replacements[f"□{level}"] = f"■{level}"
+
+                replacements["CONTENTCONTENT"] = issue.get('description', '')
+
+                # 替换模板中的占位符
+                replace_text_in_docx(temp_doc, replacements)
+
+                # 直接拼接填充好的页面内容到合并文档
+                for element in temp_doc.element.body:
+                    merged_doc.element.body.append(element)
+
+            # 保存合并后的文档
+            merged_doc.save(docx_path)
+        else:
+            # 使用文本格式导出（备用方案）
+            content = ""
+            for i, issue in enumerate(issues, 1):
+                content += f"问题单 {i}/{len(issues)}\n"
+                content += generate_issue_content(issue, form_data)
+                content += "\n" + "=" * 50 + "\n\n"
+
+            # 创建一个简单的docx文档
+            doc = Document()
+            doc.add_paragraph(content)
+            doc.save(docx_path)
+
+        cursor.execute("""
+            UPDATE export_tasks SET status = 'success', completed_at = NOW()
+            WHERE task_id = %s
+        """, (self.request.id, ))
+        db.commit()
+    except Exception as e:
+        cursor.execute("""
+            UPDATE export_tasks SET status = 'failure', completed_at = NOW(), error_msg = %s
+            WHERE task_id = %s
+        """, (str(e), self.request.id))
+        db.commit()
+        logger.error(f"生成问题单文件失败:{str(e)}", exc_info=True)
+    finally:
+        db.close()
