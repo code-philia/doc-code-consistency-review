@@ -1,5 +1,6 @@
 ﻿from celery.result import AsyncResult
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
+from flask_login import current_user
 
 from app.db import get_db
 
@@ -22,10 +23,10 @@ def get_progress(task_id):
         "code": 0,
         "task_id": task_id,
         "state": task_result.state,
-        #"meta": task_result.info
-		"meta": meta
+        # "meta": task_result.info
+        "meta": meta
     }
-    #print(f'response============================{response}')
+    # print(f'response============================{response}')
     return jsonify(response)
 
 
@@ -48,3 +49,68 @@ def stop_task(task_id):
     # task.revoke(terminate=True, persistent=True, signal='SIGTERM')
 
     return jsonify({'status': 'success', 'message': '已发送停止信号'})
+
+
+@task_bp.route('/api/task-snapshot/<project_id>/<category>', methods=['GET'])
+def get_task_snapshot(project_id, category):
+    user_id = current_user.user_id
+    is_admin = True if current_user.role == 'admin' else False
+
+    db = get_db()
+    cursor = db.cursor()
+    if is_admin:
+        cursor.execute("""SELECT task_id, next_task_id, task_type, task1_total, task2_total, current_total, 
+                       current_progress, state, title, is_running
+                       FROM user_task_snapshot
+                       WHERE project_id = %s AND task_category = %s
+                       LIMIT 1""", (int(project_id), category))
+    else:
+        cursor.execute("""SELECT task_id, next_task_id, task_type, task1_total, task2_total, current_total, 
+                        current_progress, state, title, is_running
+                        FROM user_task_snapshot
+                        WHERE project_id = %s AND task_category = %s
+                        LIMIT 1""", (int(project_id), category))
+
+    row = cursor.fetchone()
+    if not row:
+        return jsonify({'status': 'success', 'data': None})
+
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'taskId': row['task_id'],
+            'nextTaskId': row['next_task_id'],
+            'type': row['task_type'],
+            'task1Total': row['task1_total'],
+            'task2Total': row['task2_total'],
+            'currentTotal': row['current_total'],
+            'currentProgress': row['current_progress'],
+            'state': row['state'],
+            'title': row['title'],
+            'isRunning': bool(row['is_running']),
+        }
+    })
+
+
+@task_bp.route('/api/task-snapshot/clear', methods=['POST'])
+def clear_task_snapshot():
+    user_id = current_user.user_id
+    project_id = request.json.get('project_id')
+    category = request.json.get('category')
+    is_admin = True if current_user.role == 'admin' else False
+    db = get_db()
+    cursor = db.cursor()
+    if is_admin:
+        cursor.execute("""
+            UPDATE user_task_snapshot
+            SET is_running = 0, state = 'SUCCESS'
+            WHERE project_id = %s AND task_category = %s
+        """, (project_id, category))
+    else:
+        cursor.execute("""
+            UPDATE user_task_snapshot
+            SET is_running = 0, state = 'SUCCESS'
+            WHERE user_id = %s AND project_id = %s AND task_category = %s
+        """, (user_id, project_id, category))
+
+    return jsonify({'status': 'success'})

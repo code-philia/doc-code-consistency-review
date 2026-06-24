@@ -289,6 +289,8 @@ def convert_docfile_to_markdown(doc_file_path, doc_repo_path, parseDocMethod):
     os.makedirs(converted_repo_path, exist_ok=True)
     docToMd.convertDocToMarkdown(doc_file_path, converted_repo_path, parseDocMethod)
 
+
+    
 def get_filename_without_extension(filepath):
     """获取不带扩展名的文件名"""
     return os.path.splitext(os.path.basename(filepath))[0]

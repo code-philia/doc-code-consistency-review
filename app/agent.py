@@ -29,11 +29,11 @@ API_KEY = os.environ.get("API_KEY", "0")
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
 MODEL_NAME = "Qwen3-32B"
 
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
+# MODEL_NAME = "/llm"
+
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.230:7022/v1")
 # MODEL_NAME = "qwen3.6-27b"
-
-#API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
-#MODEL_NAME = "/llm"
 
 MAX_REQ = 3 # 最大重复次数
 
@@ -610,11 +610,11 @@ def query_related_code_block(
     for attempt in range(max_req):
         response = query_llm(prompt)
         llm_output = response.content
-
-        # print("original llm output: ", llm_output)
+        #print("original llm response: ", response)
+        #print("original llm output: ", llm_output)
         try:
             parsed_output = parse_alignment_output(llm_output)
-            # print("parsed llm output: ", parsed_output)
+            #print("parsed llm output: ", parsed_output)
             return parsed_output
         except Exception as e:
             print(f"第{attempt+1}次调用大模型输出解析失败")

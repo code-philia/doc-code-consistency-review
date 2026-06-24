@@ -1094,6 +1094,40 @@ def upload_files():
         return jsonify({"status": "error", "message": f"服务器处理文件上传时出错: {e}"}), 500
 
 
+def process_word_file(file_path):
+    try:
+        dir_name = os.path.dirname(file_path)
+        original_name = os.path.basename(file_path)
+        
+        # 生成新文件名
+        new_name = original_name.replace(" ", "_")  # 将空格替换为下划线
+        new_path = os.path.join(dir_name, new_name)
+        
+        if new_path == file_path:
+            print(f"文件名无需修改：{original_name}")
+            return None
+        
+        #print(f"正在处理：{original_name} -> {new_name}")
+    
+    
+        # 打开原文件
+        #doc = Document(file_path)
+        
+        # 保存到新文件（这会创建一个新文件，而不是覆盖原文件）
+        #doc.save(new_path)
+        
+        #print(f"成功保存为新文件：{new_name}")
+        
+        # 可选：如果确定新文件没问题，可以删除旧文件
+        #os.remove(file_path) 
+        #print("已删除原文件")
+        return new_name
+        
+    except Exception as e:
+        print(f"处理文件时出错：{e}")
+
+        
+        
 @bp.route('/project/upload-folder', methods=['POST'])
 def upload_folder():
     """处理文件夹上传功能"""
@@ -1645,140 +1679,80 @@ def auto_markdown_split():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
+
+@bp.route('/project/export-tasks', methods=['GET'])
+def get_export_tasks():
+    """
+    获取导出记录列表(兼轮询查询)
+    """
+    project_id = request.args.get('project_id', type=int)
+
+    db = get_db()
+    cursor = db.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT id, task_id, status, filename, created_at, completed_at, error_msg
+            FROM export_tasks
+            WHERE project_id = %s AND export_type = 'reverse_requirement'
+            ORDER BY created_at DESC
+            LIMIT 20
+        """, (project_id, ))
+
+        tasks = []
+        rows = cursor.fetchall()
+        for row in rows:
+            task = dict(row)
+            for key in ['created_at', 'completed_at']:
+                if isinstance(task[key], datetime):
+                    task[key] = task[key].strftime('%Y-%m-%d %H:%M:%S')
+            tasks.append(task)
+
+        has_processing = any(r['status'] in ('pending', 'processing') for r in rows)
+
+        return jsonify({'status': 'success', 'data': tasks, 'has_processing': has_processing})
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
 @bp.route('/project/export-issues-download', methods=['POST'])
 def export_issues_download():
     """导出所有问题单到一个docx文件"""
+
+    data = request.json
+    issues = data.get('issues', [])
+    form_data = data.get('formData', {})
+    project_id = data.get('project_id')
+
+    if not issues:
+        return jsonify({'status': 'error', 'message': '没有问题单可导出'})
+
+    temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
+    # 生成docx文件名
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    docx_filename = f"问题单导出_{form_data.get('issueId', 'BBB')}_{timestamp}.docx"
+    docx_path = os.path.join(temp_dir, docx_filename)
+
+    from tasks import export_issues_task
+    task = export_issues_task.delay(data, docx_path)
+
     try:
-        data = request.json
-        issues = data.get('issues', [])
-        form_data = data.get('formData', {})
-        project_path = data.get('projectPath', '')
-
-        template_path = os.path.join(os.path.dirname(__file__), '../templates', '问题单模板.docx')
-
-        if not issues:
-            return jsonify({'status': 'error', 'message': '没有问题单可导出'})
-
-        # 创建临时目录存储文件
-        temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir, exist_ok=True)
-
-        # 生成docx文件名
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        docx_filename = f"问题单导出_{form_data.get('issueId', 'BBB')}_{timestamp}.docx"
-        docx_path = os.path.join(temp_dir, docx_filename)
-
-        # 检查是否提供了DOCX模板路径
-        if template_path and os.path.exists(template_path):
-            current_date = datetime.now().strftime("%Y%m%d")
-            issue_categories = form_data.get('issueCategories', [])
-
-            # 将英文级别转换为中文的映射
-            level_mapping = {
-                'high': '重大',
-                'medium': '严重',
-                'low': '一般'
-            }
-
-            # 处理第一个问题单作为基础文档
-            first_issue = issues[0]
-            merged_doc = Document(template_path)
-
-            replacements = {}
-            # 替换页码信息
-            replacements["CURRENT"] = "1"
-            replacements["TOTAL"] = str(len(issues))
-
-            replacements["AAAAA软件"] = form_data.get('productName', '')
-            replacements["BBBBB"] = f"{form_data.get('issueId', '')}_1"
-            replacements["CCCCC"] = form_data.get('productId', '')
-            replacements["DDDDD"] = form_data.get('discoveryMethod', '')
-            replacements["EEEEE"] = form_data.get('issueTracking', '')
-            replacements["GGGGG"] = current_date
-
-            # 处理问题类别
-            for category in ['设计', '编码', '测试', '文档', '数据', '其他']:
-                if category in issue_categories:
-                    replacements[f"□{category}"] = f"■{category}"
-
-            # 处理问题级别
-            issue_level = first_issue.get('level', '')
-            chinese_level = level_mapping.get(issue_level.lower(), issue_level)
-
-            for level in ['重大', '严重', '一般']:
-                if level == chinese_level:
-                    replacements[f"□{level}"] = f"■{level}"
-
-            replacements["CONTENTCONTENT"] = first_issue.get('description', '')
-
-            # 替换第一个文档的占位符
-            replace_text_in_docx(merged_doc, replacements)
-
-            # 处理剩余的问题单
-            for i, issue in enumerate(issues[1:], 2):
-                # 添加分页符
-                #merged_doc.add_page_break()
-
-                # 为每个问题单加载新的模板并填充
-                temp_doc = Document(template_path)
-
-                replacements = {}
-                # 替换页码信息
-                replacements["CURRENT"] = str(i)
-                replacements["TOTAL"] = str(len(issues))
-
-                replacements["AAAAA软件"] = form_data.get('productName', '')
-                replacements["BBBBB"] = f"{form_data.get('issueId', '')}_{i}"
-                replacements["CCCCC"] = form_data.get('productId', '')
-                replacements["DDDDD"] = form_data.get('discoveryMethod', '')
-                replacements["EEEEE"] = form_data.get('issueTracking', '')
-                replacements["GGGGG"] = current_date
-
-                # 处理问题类别
-                for category in ['设计', '编码', '测试', '文档', '数据', '其他']:
-                    if category in issue_categories:
-                        replacements[f"□{category}"] = f"■{category}"
-
-                # 处理问题级别
-                issue_level = issue.get('level', '')
-                chinese_level = level_mapping.get(issue_level.lower(), issue_level)
-
-                for level in ['重大', '严重', '一般']:
-                    if level == chinese_level:
-                        replacements[f"□{level}"] = f"■{level}"
-
-                replacements["CONTENTCONTENT"] = issue.get('description', '')
-
-                # 替换模板中的占位符
-                replace_text_in_docx(temp_doc, replacements)
-
-                # 直接拼接填充好的页面内容到合并文档
-                for element in temp_doc.element.body:
-                    merged_doc.element.body.append(element)
-
-            # 保存合并后的文档
-            merged_doc.save(docx_path)
-        else:
-            # 使用文本格式导出（备用方案）
-            content = ""
-            for i, issue in enumerate(issues, 1):
-                content += f"问题单 {i}/{len(issues)}\n"
-                content += generate_issue_content(issue, form_data)
-                content += "\n" + "="*50 + "\n\n"
-
-            # 创建一个简单的docx文档
-            doc = Document()
-            doc.add_paragraph(content)
-            doc.save(docx_path)
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT INTO export_tasks (task_id, project_id, user_id, filename, url)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (task.id, project_id, current_user.user_id, docx_filename, docx_path))
 
         return jsonify({
             'status': 'success',
-            'message': f'成功生成包含 {len(issues)} 个问题单的docx文件',
-            'docxFile': docx_filename
+            'task_id': task.id,
+            'message': f'导出任务已创建',
         })
 
     except Exception as e:
+        task.revoke(terminate=True, signal='SIGTERM')
         return jsonify({'status': 'error', 'message': str(e)})
 
 
@@ -1797,11 +1771,11 @@ def download_file(filename):
             file_data = f.read()
 
         # 立即删除临时文件
-        try:
-            os.remove(file_path)
-            print(f"已删除临时文件: {file_path}")
-        except Exception as e:
-            print(f"删除临时文件失败: {e}")
+        # try:
+        #     os.remove(file_path)
+        #     print(f"已删除临时文件: {file_path}")
+        # except Exception as e:
+        #     print(f"删除临时文件失败: {e}")
 
         # 根据文件类型设置MIME类型
         if filename.endswith('.zip'):
@@ -2021,11 +1995,11 @@ def abstract_code_from_project():
 @bp.route('/api/get-code-abstract', methods=['POST'])
 def abstract_code_from_project_post():
     data = request.json
-    doc_ranges = data.get('docRanges', [])
     project_path = data.get('projectPath', '')
     project_id = data.get('project_id')
-    alignment = data.get('alignment')
-    total = data.get('total')
+    abstract_length = data.get('abstract_length')
+    all_align = data.get('all_align')
+    user_id = current_user.user_id
 
     if not project_path:
         return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
@@ -2034,13 +2008,32 @@ def abstract_code_from_project_post():
     if not os.path.exists(code_file_path):
         return jsonify({'status': 'success', 'data': []})
     from tasks import abstract_code_from_project_task, align_requirement_to_project_task
-    sig2 = align_requirement_to_project_task.s(data, current_user.user_id)
+    sig2 = align_requirement_to_project_task.s(data, user_id)
     sig2.freeze()
     task2_id = sig2.id
-    sig1 = abstract_code_from_project_task.s(data, code_file_path, current_user.user_id)
+    sig1 = abstract_code_from_project_task.s(data, code_file_path, user_id)
     sig1.freeze()
     task1_id = sig1.id
     chain(sig1, sig2).apply_async()
+
+    # 新增: 写入用户任务快照
+    db = get_db()
+    cursor = db.cursor()
+
+    # 先清理该项目旧的任务快照(防止残留)
+    cursor.execute("DELETE FROM user_task_snapshot WHERE user_id = %s AND project_id = %s",
+                   (user_id, project_id))
+
+    # 插入新的
+    cursor.execute("""INSERT INTO user_task_snapshot 
+                       (user_id, project_id, task_id, next_task_id, task_type, task1_total, task2_total, current_total,
+                       state, title, is_running, task_category)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                   (
+                       user_id, project_id, sig1.id, sig2.id, 'chain', abstract_length, all_align, abstract_length,
+                       'PENDING', '代码摘要', 1, 'align'
+                   ))
+
     return jsonify({'status': 'success', 'message': '链式任务已启动', 'task1_id': task1_id, 'task2_id': task2_id})
 
 
@@ -2265,7 +2258,49 @@ def generate_flowchart():
         print(f"Error generating flowchart: {str(e)}")
         return jsonify({"status": "error", "message": f"Failed to generate flowchart: {str(e)}"}), 500
 
+        
+def fix_mermaid_syntax(mmd_code):
+    """
+    修复 LLM 生成的 Mermaid 代码中的语法错误：
+    1. 给节点标签 [...] 中的内容加上双引号（如果包含特殊字符）。
+    2. 确保边标签 |...| 格式正确。
+    """
+    if not mmd_code:
+        return mmd_code
 
+    # 1. 移除可能存在的多余空白或重复的 graph TD (如果它是独立的)
+    lines = mmd_code.strip().split('\n')
+    
+    # 如果第一行是 graph TD，我们保留它，但确保后续内容正确
+    # 这里我们主要处理节点标签 [...]
+    
+    fixed_lines = []
+    for line in lines:
+        # 正则匹配节点标签：[内容]
+        # 匹配逻辑：找到 [ 和 ] 之间的内容
+        def add_quotes(match):
+            content = match.group(1)
+            # 如果内容包含 =, -, /, (, ), 空格 等，必须加引号
+            if re.search(r'[=\-/\(\)\s]', content):
+                # 转义内容内部的双引号
+                safe_content = content.replace('"', '\\"')
+                return f'["{safe_content}"]'
+            return match.group(0) # 不需要修改
+
+        # 替换节点标签 [xxx] -> ["xxx"] (如果需要)
+        # 注意：这可能会误伤边标签 |xxx|，所以要小心
+        # 更安全的做法是只处理节点标签，不处理边标签
+        
+        # 使用正则替换节点标签
+        # 匹配 [ 开头，中间内容，] 结尾，且不在 | ... | 内部
+        # 简单的策略：匹配所有 [...] 并检查内容
+        line = re.sub(r'\[([^\]]+)\]', add_quotes, line)
+        
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)      
+
+    
 # 改成从数据库查询
 @bp.route('/api/generate-reverse-requirement', methods=['POST'])
 def generate_reverse_requirement():
@@ -2299,8 +2334,7 @@ def generate_reverse_requirement():
                 "status": "success",
                 "cached": True,
                 "generatedRequirement": row.get('GenReq'),
-                "mermaidCode": row.get('GenMermaid'),
-                "flowchartCode": row.get('GenMermaid')
+                "mermaidCode": row.get('GenMermaid')
             })
 			
         if cache_only:
@@ -2308,8 +2342,7 @@ def generate_reverse_requirement():
                 "status": "success",
                 "cached": False,
                 "generatedRequirement": None,
-                "mermaidCode": None,
-                "flowchartCode": None
+                "mermaidCode": None
             })
 
         # 构建代码块列表，格式与现有函数兼容
@@ -2330,45 +2363,61 @@ def generate_reverse_requirement():
         # 调用LLM生成需求，传入参考需求内容
         generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
 
-        flowchart_code = ''
-        flowchart_warning = None
-        try:
-            flowchart_code = query_flow_chart(code_content if isinstance(code_content, str) else
-                                              '\n\n'.join([block.get('content', '') for block in code_content]))
-        except Exception as flowchart_error:
-            flowchart_warning = f"流程图生成失败: {flowchart_error}"
-            print(flowchart_warning)
+        # 调用LLM生成流程图
+        mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else
+                                       '\n\n'.join([block.get('content', '') for block in code_content]))
 
+        # generated_requirement 是 LLM 返回的字符串
+        # 关键步骤：处理流程图含有特殊字符无法渲染的问题
+        #print(mermaid_code)
+        mermaid_code = fix_mermaid_syntax(mermaid_code)
+        #print(mermaid_code)
+        
+        
         cur.execute(
             'UPDATE alignments SET GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP WHERE id=%s AND project_id=%s',
-            (generated_requirement or '', flowchart_code or '', alignment_id, project_id)
+            (generated_requirement or '', mermaid_code or '', alignment_id, project_id)
         )
+        
+        
+        
         return jsonify({
             "status": "success",
-            "cached": False,
+			"cached": False,
             "generatedRequirement": generated_requirement,
-            "mermaidCode": flowchart_code,
-            "flowchartCode": flowchart_code,
-            "flowchartWarning": flowchart_warning
+            "mermaidCode": mermaid_code
         })
 
     except Exception as e:
         print(f"Error generating reverse requirement: {str(e)}")
         return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
 
-
+ 
+    
 # 将代码块数据写入对齐表，方便单个的纯代码审查
 @bp.route('/api/add-code-data', methods=['POST'])
 def add_code_data():
+    """
+    将代码块数据写入对齐表，用is_code_review=1来标识 纯代码审查的数据
+    2026.6.9 更新：写入之前先查询alignments表有没有纯代码审查的数据，如果已存在就直接return
+    """
     data = request.json
     project_id = data.get('project_id')
     code_blocks = data.get('code_blocks')
+
+    db = get_db()
+    c = db.cursor()
+    c.execute(f'select count(*) count from alignments where project_id={project_id} and is_code_review=1')
+    count = c.fetchone().get('count')
+    if count > 0:
+        return jsonify({"status": "success", "count": count, 'message': '已存在代码块数据'}), 200
+
     result = [{"doc_file": item['codeRanges'][0]['filename'], "alignment": item}
               for item in code_blocks]
 
     sql = "INSERT INTO alignments(id,user_id,project_id,name,reviewThoughts,docRanges,codeRanges," \
-          "createdAt,updatedAt,is_code_review,align_type)" \
-          "VALUES(%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,1,'code2req')"
+          "createdAt,updatedAt,is_code_review)" \
+          "VALUES(%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,1)"
     rows = [(item['alignment'].get('id'),
              current_user.user_id,
              project_id,
@@ -2377,14 +2426,71 @@ def add_code_data():
              json.dumps(item['alignment'].get('docRanges')),
              json.dumps(item['alignment'].get('codeRanges'))) for item in result]
 
-    db = get_db()
-
     with db.cursor() as cursor:
         for i in range(0, len(rows), 500):
             batch = rows[i: i + 500]
             cursor.executemany(sql, batch)
 
     return jsonify({"status": "success", "message": "写入代码块成功"}), 200
+
+
+@bp.route('/api/reverse_requirements', methods=['POST'])
+def reverse_requirements():
+    data = request.json
+    project_id = data.get('project_id')
+    selected_reverse = data.get('selected_reverse')
+
+    # sql = "SELECT * FROM alignments WHERE project_id=%s"
+    params = [int(project_id)]
+
+    align_types = [t for t in selected_reverse if t in ("req2code", "code2req")]
+    has_code_review = "codeReview" in selected_reverse
+    conditions = []
+
+    if len(align_types) == 2:
+        conditions.append("align_type IS NOT NULL")
+    elif len(align_types) == 1:
+        conditions.append("align_type = %s")
+        params.append(align_types[0])
+
+    if has_code_review:
+        conditions.append("is_code_review = 1")
+
+    where_extra = ""
+    if conditions:
+        if len(conditions) == 1:
+            where_extra = " AND " + conditions[0]
+        else:
+            where_extra = " AND (" + " OR ".join(conditions) + ")"
+
+    db = get_db()
+    cursor = db.cursor()
+
+    stats_sql = f"""
+        SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN COALESCE(GenReq, '') = '' THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN COALESCE(GenReq, '') <> '' THEN 1 ELSE 0 END) as done
+        FROM alignments
+        WHERE project_id = %s {where_extra}   
+    """
+    print(stats_sql)
+    cursor.execute(stats_sql, params)
+    row = cursor.fetchone()
+    total_count = row['total']
+    pending_count = row['pending']
+    generated_count = row['done']
+
+    return jsonify({
+        "status": "success",
+        "task_id": 0,
+        "stats": {
+            "total": total_count,
+            "pending": pending_count,
+            "generated": generated_count,
+        }
+    })
+
 
 # 审查 需要异步处理
 @bp.route('/api/review-alignment', methods=['POST'])
@@ -2398,21 +2504,35 @@ def review_alignment():
     code_blocks = data.get('code_blocks')
     prompt_type = data.get('promptType', '')
     reviewed_count = data.get('reviewedCount', '')
+    total_review_count = data.get('totalReviewCount', '')
+    user_id = current_user.user_id
 
-    #if not all([project_path, project_id, files]) and not prompt_type:
     has_requirement_files = isinstance(files, dict) and any(files.values())
     has_code_blocks = isinstance(code_blocks, list) and len(code_blocks) > 0
     if not all([project_path, project_id]) or not (has_requirement_files or has_code_blocks):
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
-    # 尝试初始化RAG引擎
-    # try:
-        # rag_engine.initialize()
-    # except Exception as e:
-        # print(f"[Review] RAG initialize failed: {e}")
-
     from tasks import review_alignment_task
-    task = review_alignment_task.delay(project_path, project_id, current_user.user_id, files, prompt_type, reviewed_count)
+    task = review_alignment_task.delay(project_path, project_id, user_id, files, prompt_type, reviewed_count)
+
+    # 新增: 写入用户任务快照
+    db = get_db()
+    cursor = db.cursor()
+
+    # 先清理该项目旧的任务快照(防止残留)
+    cursor.execute("DELETE FROM user_task_snapshot WHERE user_id = %s AND project_id = %s",
+                   (user_id, project_id))
+
+    # 插入新的
+    cursor.execute("""INSERT INTO user_task_snapshot 
+                           (user_id, project_id, task_id, task_type, task1_total, current_total,
+                           state, title, is_running, task_category)
+                           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                   (
+                       user_id, project_id, task.id, 'single', total_review_count, total_review_count,
+                       'PENDING', '自动审查', 1, 'review'
+                   ))
+
 
     return jsonify({"status": "success", "task_id": task.id})
 
@@ -2511,8 +2631,10 @@ def review_alignment_addprompt():
         issues_list = []
 
     # 需求反生成
-    generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
-
+    #generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+    generated_requirement = ""
+    mermaid_code =""
+    
     conn = get_db()
     cur = conn.cursor()
 
@@ -3081,7 +3203,7 @@ def update_issue(issue_id):
         cur = conn.cursor()
         cur.execute('UPDATE issues SET severity=%s, title=%s, content=%s, status=%s, updatedAt=CURRENT_TIMESTAMP WHERE id=%s and project_id=%s', (
             issue_data.get('level') or issue_data.get('severity'),
-            issue_data.get('title'),
+            issue_data.get('summary'), # 前端传的是summary，不是title
             issue_data.get('description') or issue_data.get('content'),
             issue_data.get('status'),
             issue_id,
@@ -3404,6 +3526,28 @@ def get_code_blocks():
         else:
             code_blocks = get_code_blocks_by_project(project_path, resolved_project_id, filename)
             pagination = None
+            
+        if not code_blocks:
+            code_block_base_path = os.path.join(project_path, 'code_block_repo')
+            code_block_file_path = os.path.join(code_block_base_path, 'code_blocks.jsonl')
+
+            if not os.path.exists(code_block_file_path):
+                 return jsonify({'status': 'success', 'data': []})
+
+            code_blocks = []
+            with open(code_block_file_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        try:
+                            block = json.loads(line.strip())
+                            # 如果提供了文件名，则进行筛选
+                            if filename:
+                                if block.get('file') == filename:
+                                    code_blocks.append(block)
+                            else:
+                                code_blocks.append(block)
+                        except json.JSONDecodeError:
+                            continue
 
         if resolved_project_id:
             alignments = _load_project_alignments(resolved_project_id)
@@ -4171,11 +4315,32 @@ def align_code_to_requirements():
     project_path = data.get('projectPath', '')
     project_id = data.get('project_id', '')
     y_align = data.get('y_align', '')
+    all_align = data.get('all_align', '')
+    user_id = current_user.user_id
+
     if not project_path:
         return jsonify({"status": "error", "message": "缺少项目路径参数"}), 400
 
     from tasks import align_code_to_requirements_task
     task = align_code_to_requirements_task.delay(project_path, code_blocks, project_id, current_user.user_id, y_align)
+    # 新增: 写入用户任务快照
+    db = get_db()
+    cursor = db.cursor()
+
+    # 先清理该项目旧的任务快照(防止残留)
+    cursor.execute("DELETE FROM user_task_snapshot WHERE user_id = %s AND project_id = %s",
+                   (user_id, project_id))
+
+    # 插入新的
+    cursor.execute("""INSERT INTO user_task_snapshot 
+                       (user_id, project_id, task_id, task_type, task1_total, current_total,
+                       state, title, is_running, task_category)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                   (
+                       user_id, project_id, task.id, 'single', all_align, all_align,
+                       'PENDING', '自动对齐 (代码 → 需求)', 1, 'align'
+                   ))
+
 
     return jsonify({"status": "success", "task_id": task.id})
 
@@ -5107,7 +5272,7 @@ def get_alignments_from_sqlite(project_id):
         #conn = get_db_celery()
         
         # 读取name、docRanges、codeRanges三列所有数据
-        query_sql = f"SELECT name, docRanges, codeRanges, GenReq, GenMermaid FROM alignments where project_id={project_id}"
+        query_sql = f"SELECT name, docRanges, codeRanges, GenReq, GenMermaid FROM alignments where project_id={project_id} and is_code_review=0"
         # 直接用pandas读取SQL结果（简洁高效）
         # df = pd.read_sql(query_sql, conn)
         # 创建引擎
@@ -5232,9 +5397,12 @@ def export_project_results():
             replace_text_in_docx(merged_doc, replacements)
             #logger.info(replacements)
             # 处理剩余的表单
-            for i in range(0, total_num):
+            for i in range(1, total_num):
                 # 添加分页符
                 # merged_doc.add_page_break()
+                if number == 1:
+                    number += 1
+                    category_id += 1
 
                 # 为每个表单加载新的模板并填充
                 temp_doc = Document(template_path)
