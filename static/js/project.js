@@ -45,6 +45,18 @@ const app = createApp({
         /***********************
          * 基础状态
          ***********************/
+        // 问题单导出
+        const exportTasks = ref([])
+        const isRefreshing = ref(false)
+        const pollTimerIssues = ref(null)
+        const showHistoryExportDialog = ref(false)
+        // 需求反生成
+        const showReverseDialog = ref(false);
+        const selectedReverse = ref([]);
+        const isReverseRequirement = ref(false);
+        const docTocRef = ref(null);
+        const activeDocRangeId = ref(null);
+        const isDocTocCollapsed = ref(false);
         const sectionRef = ref(null);
         const tocRef = ref(null);
         const activeRangeId = ref(null);
@@ -57,18 +69,22 @@ const app = createApp({
         const errorCount = ref(0)
         const AlignTaskId = ref(null);
         const ReviewTaskId = ref(null);
+        const ReverseTaskId = ref(null);
         const nextTaskId = ref(null);
         const AlignCurrentTotal = ref(0);
         const ReviewCurrentTotal = ref(0);
+        const ReverseCurrentTotal = ref(0);
         const nextTaskCurrent = ref(0)
         const nextTaskTotal = ref(0);
         const STORAGE_ALIGN_KEY = () => `align_task_state_${getProjectId()}`
         const STORAGE_REVIEW_KEY = () => `review_task_state_${getProjectId()}`
         const pollingTimer = ref(null);
         const pollingTimerReview = ref(null);
+        const pollingTimerReverse = ref(null);
         const pollCount = ref(0);
         const pollCountReview = ref(0);
-        const MAX_POLL_COUNT = 2000;
+        const pollCountReverse = ref(0);
+        const MAX_POLL_COUNT = 9999999;
         const projectFiles = ref({
             code_files: [],
             doc_files: [],
@@ -1473,33 +1489,22 @@ const app = createApp({
          * 自动审查功能
          ***********************/
 
-
-        /** 审查的恢复状态
-         * 把当前任务状态持久化到 localStorage
-         * 在【启动、切换任务、每次进度更新】时调用
-         */
-        const saveReviewTaskState = () => {
-            const state = {
-                projectId: getProjectId(),
-                taskId: ReviewTaskId.value,
-                nextTaskId: nextTaskId.value,
-                currentTotal: ReviewCurrentTotal.value,
-                nextTaskTotal: nextTaskTotal.value,
-                title: progressTitle.value,
-                current: progressCurrent.value,
-                isRunning: isAutoReviewing.value,
-                timestamp: Date.now()
-            }
-            localStorage.setItem(STORAGE_REVIEW_KEY(), JSON.stringify(state))
-        }
-
         /**
          * 清理 localStorage (任务完成/失败/过期时调用)
          *
          */
-        const clearReviewTaskState = () => {
+         const clearReviewTaskState = async () => {
+            // 调用后端清理
+            const projectId = getProjectId()
+            try {
+                await axios.post('/api/task-snapshot/clear', {project_id: projectId, category: 'review'});
+            } catch (e) {
+                // 静默失败
+            }
+
             localStorage.removeItem(STORAGE_REVIEW_KEY())
         }
+
 
         const forceResetReviewState = () => {
             if (pollingTimerReview.value) {
@@ -1519,57 +1524,38 @@ const app = createApp({
          * 先读 localStorage, 在调后端 //get-progress/<task_id> 确认Celery任务还活着
          */
         const restoreReviewTaskState = async () => {
-            const currentProjectId = getProjectId()
-            const raw = localStorage.getItem(STORAGE_REVIEW_KEY())
-            if (!raw) return
-
-            let state
-            try {
-                state = JSON.parse(raw)
-            } catch {
-                clearReviewTaskState()
-                return
-            }
-
-            if (state.projectId !== currentProjectId) {
-                // clearTaskState()
-                return
-            }
-
-            // 超过 1 小时的旧状态直接丢弃，防止死任务残留
-            if (Date.now() - (state.timestamp || 0) > 3600000) {
-                clearReviewTaskState()
-                return
-            }
-
-            // 恢复变量
-            ReviewTaskId.value = state.taskId ?? ''
-            nextTaskId.value = state.nextTaskId ?? null
-            ReviewCurrentTotal.value = state.currentTotal ?? 0
-            nextTaskTotal.value = state.nextTaskTotal ?? 0
-
-            if (!ReviewTaskId.value) {
-                clearReviewTaskState()
-                return
-            }
+            const projectId = getProjectId()
+            if (!projectId) return;
 
             try {
+
+                // 从后端读快照，代替localStorage
+                const resp = await axios.get(`/api/task-snapshot/${projectId}/review`);
+                const snap = resp.data?.data;
+
+                // 没有进行中的任务
+                if (!snap || !snap.isRunning) return;
+
+                // 恢复变量
+                ReviewTaskId.value = snap.taskId ?? ''
+                ReviewCurrentTotal.value = snap.currentTotal ?? 0
+
+                if (!ReviewTaskId.value) return;
+
                 // 1. 先查当前任务在 Celery 里的真实状态
-                const resp = await axios.get(`/get-progress/${ReviewTaskId.value}`);
-                const current = resp.data.meta?.current;
-                const name = resp.data.meta?.name;
-                const celeryState = resp.data.state ?? 'PENDING';
+                const statusResp = await axios.get(`/get-progress/${ReviewTaskId.value}`);
+                const data = statusResp.data?.data || {};
+                const celeryState = data.state ?? 'PENDING';
 
                 // 2. 根据状态决定怎么恢复
                 if (celeryState === 'PENDING' || celeryState === 'PROGRESS') {
                     // 任务还在跑，直接恢复进度条 + 轮询
-                    startProgress(state.title || '任务处理中', ReviewCurrentTotal.value)
-                    updateProgress(current ?? 0, name ?? '')
-                    reviewProgress.value.current = current ?? 0
+                    startProgress(snap.title || '任务处理中', ReviewCurrentTotal.value)
+                    updateProgress(data.current || 0, data.name || '')
+                    reviewProgress.value.current = data.current || 0
                     reviewProgress.value.total = ReviewCurrentTotal.value
                     isAutoReviewing.value = true
 
-                    saveReviewTaskState() // 重新存一下(刷新时间戳)
                     if (!pollingTimerReview.value) {
                         pollingTimerReview.value = setInterval(getReviewProgress, 2000)
                     }
@@ -1577,64 +1563,20 @@ const app = createApp({
                 }
 
                 if (celeryState === 'SUCCESS') {
-                    // 当前任务已完成，看看有没有下一个
-                    if (nextTaskId.value) {
-                        // 查一下 task2 的状态
-                        const resp2 = await axios.get(`/get-progress/${nextTaskId.value}`);
-                        const d2Current = resp2.data.meta?.current;
-                        const d2Name = resp2.data.meta?.name;
-                        const s2 = resp2.data.state ?? 'PENDING';
-
-                        if (s2 === 'PENDING' || s2 === 'PROGRESS') {
-                            // task2 还在跑，切换到 task2 恢复
-                            ReviewTaskId.value = nextTaskId.value
-                            nextTaskId.value = null
-                            ReviewCurrentTotal.value = nextTaskTotal.value > 0
-                                ? nextTaskTotal.value
-                                : (state.nextTaskTotal ?? state.currentTotal)
-
-                            startProgress('对齐处理', nextTaskTotal.value)
-                            updateProgress(d2Current, d2Name)
-                            reviewProgress.value.current = d2Current ?? 0
-                            reviewProgress.value.total = ReviewCurrentTotal.value
-                            isAutoReviewing.value = true
-
-                            saveReviewTaskState()
-                            if (!pollingTimerReview.value) {
-                                pollingTimerReview.value = setInterval(getReviewProgress, 2000)
-                            }
-                            return
-                        }
-
-                        // task2 也结束了 (SUCCESS / FAILURE / REVOKED)
-                        clearReviewTaskState()
-                        if (s2 === 'SUCCESS') {
-                            ElMessageBox.alert('对齐完成!', '提示', {
-                            confirmButtonText: '知道了',
-                            type: 'success'
-                            });
-                        } else {
-                            ElMessageBox.alert('查询进度失败!', '提示', {
-                            confirmButtonText: '知道了',
-                            type: 'error'
-                            });
-                        }
-                        return
-                    }
                     // 没有下一个，全部完成
-                    clearReviewTaskState()
+                    await clearReviewTaskState()
                     return
                 }
 
                 // FAILURE / REVOKED / 未知状态
-                clearReviewTaskState()
+                await clearReviewTaskState()
                 ElMessageBox.alert('上次任务以失败或取消!', '提示', {
                 confirmButtonText: '知道了',
                 type: 'error'
                 });
             } catch (err) {
                 // 后端报错了 (可能是 task_id 已被 Celery 清理)
-                clearReviewTaskState()
+                await clearReviewTaskState()
             }
         }
 
@@ -1647,7 +1589,7 @@ const app = createApp({
                 isAutoReviewing.value = false;
                 reviewProgress.value = { current: 0, total: 0 };
                 stopProgress();
-                clearReviewTaskState()
+                await clearReviewTaskState()
                 return
             }
 
@@ -1659,7 +1601,7 @@ const app = createApp({
                 isAutoReviewing.value = false;
                 reviewProgress.value = { current: 0, total: 0 };
                 stopProgress();
-                clearReviewTaskState()
+                await clearReviewTaskState()
                 return
             }
             try {
@@ -1673,8 +1615,6 @@ const app = createApp({
                     const current = response.data.meta?.current || 0
                     updateProgress(current, response.data.meta?.name || 'Unknown');
 
-                    saveReviewTaskState()
-
                     reviewProgress.value.current = current
 
                     if (response.data.state === 'SUCCESS'){
@@ -1684,7 +1624,7 @@ const app = createApp({
                         isAutoReviewing.value = false;
                         reviewProgress.value = { current: 0, total: 0 };
                         stopProgress();
-                        clearReviewTaskState()
+                        await clearReviewTaskState()
                         ElMessageBox.alert('审查完成!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'success'
@@ -1698,7 +1638,7 @@ const app = createApp({
                         isAutoReviewing.value = false;
                         reviewProgress.value = { current: 0, total: 0 };
                         stopProgress();
-                        clearReviewTaskState()
+                        await clearReviewTaskState()
                         ElMessageBox.alert('审查失败!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'error'
@@ -1712,7 +1652,7 @@ const app = createApp({
                     isAutoReviewing.value = false;
                     reviewProgress.value = { current: 0, total: 0 };
                     stopProgress();
-                    clearReviewTaskState()
+                    await clearReviewTaskState()
                     ElMessage.warning(`查询进度失败: ${error.message}`);
                 }
 //                console.log(errorCount.value)
@@ -1728,6 +1668,7 @@ const app = createApp({
                 ElMessage.warning('自动审查正在进行中，请稍候...');
                 return;
             }
+            await AutoCodeSplit();
 
             isAutoReviewing.value = true;
             reviewProgress.value = { current: 0, total: 0 };
@@ -1823,7 +1764,8 @@ const app = createApp({
                     project_id: projectId,
                     requirement_files: groupedByDoc,
                     promptType: promptType,
-                    reviewedCount: reviewedCount || 0
+                    reviewedCount: reviewedCount || 0,
+                    totalReviewCount: totalReviewCount
                 });
 
                 if (reviewResponse.data.status === 'success'){
@@ -1833,7 +1775,6 @@ const app = createApp({
                 reviewProgress.value.total = totalReviewCount;
                 reviewProgress.value.current = reviewedCount;
 
-                saveReviewTaskState()
                 // 开始轮询进度
                 pollingTimerReview.value = setInterval(getReviewProgress, 2000);
                 } else {
@@ -2246,14 +2187,29 @@ const app = createApp({
               });
 
               if (response.data.status === 'success') {
-                ElMessage.success('文件上传成功！');
+//                ElMessage.success('文件上传成功！');
+                ElMessageBox.alert('文件上传成功!', '提示', {
+                        confirmButtonText: '知道了',
+                        type: 'success'
+                });
+
                 await fetchProjectMetadata();
               } else {
-                ElMessage.error(`上传失败: ${response.data.message}`);
+//                ElMessage.error(`上传失败: ${response.data.message}`);
+                ElMessageBox.alert('文件上传失败!', '提示', {
+                        confirmButtonText: '知道了',
+                        type: 'error'
+                });
+
               }
             } catch (err) {
               console.error("Error uploading files:", err);
-              ElMessage.error(`上传文件时发生网络错误: ${err.message}`);
+//              ElMessage.error(`上传文件时发生网络错误: ${err.message}`);
+              ElMessageBox.alert(`上传文件时发生网络错误: ${err.message}`, '提示', {
+                        confirmButtonText: '知道了',
+                        type: 'error'
+              });
+
             }
           };
 
@@ -2535,6 +2491,48 @@ const app = createApp({
             }
         }
 
+        // 在点击纯代码审查时判断有没有代码分解过，如果没有就自动进行代码分解(不清空一致性审查数据)
+        const AutoCodeSplit = async () => {
+            if (projectFiles.value.code_files.length === 0) {
+                ElMessage.warning('请先添加代码文件');
+                return;
+            }
+            try {
+                const response = await axios.post('/api/code-decomposition', {
+                    projectPath: projectPath.value
+                });
+                if (response.data.status === 'success') {
+                    ElMessage.success('代码分解完成！');
+                    await loadAndRenderCodeBlocks();
+                } else {
+                    ElMessage.error(`代码分解失败: ${response.data.message}`);
+                }
+
+                // 1. 获取代码分块
+                const chunksResponse = await axios.get('/api/get-code-chunks', {
+                    params: { projectPath: projectPath.value }
+                });
+                const codeBlocks = chunksResponse.data.data || [];
+                if (codeBlocks.length === 0) {
+                    ElMessage.warning('未找到代码分块，请检查代码分解结果');
+                    return;
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+
+                // 调用后端添加数据
+                const result = await axios.post('/api/add-code-data', {
+                    project_id: projectId,
+                    code_blocks: codeBlocks,
+                });
+
+            } catch (error) {
+                ElMessage.error(`代码块入库失败: ${error.message}`);
+            }
+        }
+
+
         const startAutoCodeSplit = async () => {
             if (projectFiles.value.code_files.length === 0) {
                 ElMessage.warning('请先添加代码文件');
@@ -2599,6 +2597,9 @@ const app = createApp({
                     project_id: projectId,
                     code_blocks: codeBlocks,
                 });
+
+                // 刷新列表
+                await refreshBlocksAndAlignments()
 
             } catch (error) {
                 ElMessage.error(`代码块入库失败: ${error.message}`);
@@ -2750,7 +2751,7 @@ const app = createApp({
                 pollingTimer.value = null
                 isAutoAligning.value = false;
                 stopProgress();
-                clearReviewTaskState()
+                await clearTaskState()
             } catch (err) {
                 ElMessage.warning(`停止失败: ${err.message}`);
             }
@@ -2762,31 +2763,21 @@ const app = createApp({
         }
 
         /**
-         * 把当前任务状态持久化到 localStorage
-         * 在【启动、切换任务、每次进度更新】时调用
-         */
-        const saveTaskState = () => {
-            const state = {
-                projectId: getProjectId(),
-                taskId: AlignTaskId.value,
-                nextTaskId: nextTaskId.value,
-                currentTotal: AlignCurrentTotal.value,
-                nextTaskTotal: nextTaskTotal.value,
-                title: progressTitle.value,
-                current: progressCurrent.value,
-                isRunning: isAutoAligning.value,
-                timestamp: Date.now()
-            }
-            localStorage.setItem(STORAGE_ALIGN_KEY(), JSON.stringify(state))
-        }
-
-        /**
          * 清理 localStorage (任务完成/失败/过期时调用)
          *
          */
-        const clearTaskState = () => {
+        const clearTaskState = async () => {
+            // 调用后端清理
+            const projectId = getProjectId()
+            try {
+                await axios.post('/api/task-snapshot/clear', {project_id: projectId, category: 'align'});
+            } catch (e) {
+                // 静默失败
+            }
+
             localStorage.removeItem(STORAGE_ALIGN_KEY())
         }
+
 
         const forceResetState = () => {
             if (pollingTimer.value) {
@@ -2806,64 +2797,45 @@ const app = createApp({
          * 先读 localStorage, 在调后端 //get-progress/<task_id> 确认Celery任务还活着
          */
         const restoreTaskState = async () => {
-            const currentProjectId = getProjectId()
-
-            const raw = localStorage.getItem(STORAGE_ALIGN_KEY())
-            if (!raw) return
-
-            let state
-            try {
-                state = JSON.parse(raw)
-            } catch {
-                clearTaskState()
-                return
-            }
-
-            if (state.projectId !== currentProjectId) {
-                // clearTaskState()
-                return
-            }
-
-            // 超过 1 小时的旧状态直接丢弃，防止死任务残留
-            if (Date.now() - (state.timestamp || 0) > 3600000) {
-                clearTaskState()
-                return
-            }
-
-            // 恢复变量
-            AlignTaskId.value = state.taskId ?? ''
-            nextTaskId.value = state.nextTaskId ?? null
-            // AlignCurrentTotal.value = state.currentTotal ?? 0
-            nextTaskTotal.value = state.nextTaskTotal ?? 0
-
-            if (!state.nextTaskId && (state.nextTaskTotal ?? 0) > 0) {
-                AlignCurrentTotal.value = state.nextTaskTotal
-            } else {
-                AlignCurrentTotal.value = state.currentTotal ?? 0
-            }
-
-            if (!AlignTaskId.value) {
-                clearTaskState()
-                return
-            }
+            const projectId = getProjectId()
+            if (!projectId) return;
 
             try {
+                // 从后端读快照，代替localStorage
+                const resp = await axios.get(`/api/task-snapshot/${projectId}/align`);
+                const snap = resp.data?.data;
+
+                // 没有进行中的任务
+                if (!snap || !snap.isRunning) return;
+
+                // 恢复变量 (从 snap 读，不再从state读）
+                AlignTaskId.value = snap.taskId || ''
+                nextTaskId.value = snap.nextTaskId || null
+                AlignCurrentTotal.value = snap.currentTotal || 0
+                nextTaskTotal.value = snap.task2Total || 0
+
+                if (!snap.nextTaskId && (snap.task2Total || 0) > 0) {
+                    AlignCurrentTotal.value = snap.task2Total
+                } else {
+                    AlignCurrentTotal.value = snap.currentTotal || 0
+                }
+
+                if (!AlignTaskId.value) return;
+
                 // 1. 先查当前任务在 Celery 里的真实状态
-                const resp = await axios.get(`/get-progress/${AlignTaskId.value}`);
-                const current = resp.data.meta?.current;
-                const name = resp.data.meta?.name;
-                const celeryState = resp.data.state ?? 'PENDING';
+                const statusResp = await axios.get(`/get-progress/${AlignTaskId.value}`);
+                const data = statusResp.data?.data || {};
+                const celeryState = data.state ?? 'PENDING';
 
                 // 2. 根据状态决定怎么恢复
                 if (celeryState === 'PENDING' || celeryState === 'PROGRESS') {
                     // 任务还在跑，直接恢复进度条 + 轮询
-                    startProgress(state.title || '任务处理中', AlignCurrentTotal.value)
-                    updateProgress(current ?? 0, name ?? '')
-                    alignmentProgress.value.current = current ?? 0
+                    startProgress(snap.title || '任务处理中', AlignCurrentTotal.value)
+                    updateProgress(data.current || 0, data.name || '')
+                    alignmentProgress.value.current = data.current || 0
                     alignmentProgress.value.total = AlignCurrentTotal.value
                     isAutoAligning.value = true
 
-                    saveTaskState() // 重新存一下(刷新时间戳)
                     if (!pollingTimer.value) {
                         pollingTimer.value = setInterval(getProgress, 2000)
                     }
@@ -2885,15 +2857,14 @@ const app = createApp({
                             nextTaskId.value = null
                             AlignCurrentTotal.value = nextTaskTotal.value > 0
                                 ? nextTaskTotal.value
-                                : (state.nextTaskTotal ?? state.currentTotal)
+                                : (snap.task2Total || snap.currentTotal)
 
-                            startProgress('对齐处理', nextTaskTotal.value)
+                            startProgress('对齐处理', AlignCurrentTotal.value)
                             updateProgress(d2Current, d2Name)
                             alignmentProgress.value.current = d2Current ?? 0
                             alignmentProgress.value.total = AlignCurrentTotal.value
                             isAutoAligning.value = true
 
-                            saveTaskState()
                             if (!pollingTimer.value) {
                                 pollingTimer.value = setInterval(getProgress, 2000)
                             }
@@ -2901,7 +2872,7 @@ const app = createApp({
                         }
 
                         // task2 也结束了 (SUCCESS / FAILURE / REVOKED)
-                        clearTaskState()
+                        await clearTaskState()
                         if (s2 === 'SUCCESS') {
                             ElMessageBox.alert('对齐完成!', '提示', {
                             confirmButtonText: '知道了',
@@ -2916,19 +2887,19 @@ const app = createApp({
                         return
                     }
                     // 没有下一个，全部完成
-                    clearTaskState()
+                    await clearTaskState()
                     return
                 }
 
                 // FAILURE / REVOKED / 未知状态
-                clearTaskState()
+                await clearTaskState()
                 ElMessageBox.alert('上次任务以失败或取消!', '提示', {
                 confirmButtonText: '知道了',
                 type: 'error'
                 });
             } catch (err) {
                 // 后端报错了 (可能是 task_id 已被 Celery 清理)
-                clearTaskState()
+                await clearTaskState()
             }
         }
 
@@ -2940,7 +2911,7 @@ const app = createApp({
                 pollingTimer.value = null
                 isAutoAligning.value = false;
                 stopProgress();
-                clearReviewTaskState()
+                await clearTaskState()
                 return
             }
             pollCount.value++
@@ -2950,7 +2921,7 @@ const app = createApp({
                 pollingTimer.value = null
                 isAutoAligning.value = false;
                 stopProgress();
-                clearReviewTaskState()
+                await clearTaskState()
                 return
             }
             try {
@@ -2960,8 +2931,6 @@ const app = createApp({
                 const current = response.data.meta?.current || 0
                 const name = response.data.meta?.name || 'Unknown'
                 updateProgress(current, name);
-
-                saveTaskState()
 
                 const state = response.data.state;
                 alignmentProgress.value.current = current
@@ -2976,7 +2945,6 @@ const app = createApp({
                         alignmentProgress.value.total = nextTaskTotal.value;
                         alignmentProgress.value.current = nextTaskCurrent.value;
 
-                        saveTaskState()
                         return;
                     }
 
@@ -2986,7 +2954,7 @@ const app = createApp({
                     isAutoAligning.value = false;
                     stopProgress();
 
-                    clearTaskState()
+                    await clearTaskState()
 //                        ElMessage.success('对齐完成！');
                     ElMessageBox.alert('对齐完成!', '提示', {
                         confirmButtonText: '知道了',
@@ -2999,7 +2967,7 @@ const app = createApp({
                     await fetchAllAlignments();
                     isAutoAligning.value = false;
                     stopProgress();
-                    clearTaskState()
+                    await clearTaskState()
                     ElMessageBox.alert(response.data.message, '提示', {
                         confirmButtonText: '知道了',
                         type: 'error'
@@ -3014,6 +2982,7 @@ const app = createApp({
                     pollingTimer.value = null
                     isAutoAligning.value = false;
                     stopProgress();
+                    await clearTaskState()
                     ElMessageBox.alert('查询进度失败!', '提示', {
                             confirmButtonText: '知道了',
                             type: 'error'
@@ -3063,7 +3032,9 @@ const app = createApp({
                     projectPath: projectPath.value,
                     project_id: projectId,
                     requirements: requirements,
-                    y_align: y_align
+                    abstract_length: projectFiles.value.code_files.length,
+                    y_align: y_align,
+                    all_align: all_align
                 });
 
 //                const codeFileAbstract = abstractResponse.data.status === 'success' ? abstractResponse.data.data : {};
@@ -3079,7 +3050,6 @@ const app = createApp({
                     alignmentProgress.value.total = AlignCurrentTotal.value;
                     alignmentProgress.value.current = 0;
 
-                    saveTaskState()
                     // 开始轮询进度
                     pollingTimer.value = setInterval(getProgress, 2000);
                 } else {
@@ -3132,7 +3102,8 @@ const app = createApp({
                     projectPath: projectPath.value,
                     project_id: projectId,
                     codeBlocks: codeBlocks,
-                    y_align: y_align
+                    y_align: y_align,
+                    all_align: all_align
                 });
 
                 // 初始化进度
@@ -3143,7 +3114,7 @@ const app = createApp({
                 if (abstractResponse.data.status === 'success'){
                     AlignTaskId.value = abstractResponse.data.task_id;
                     AlignCurrentTotal.value = all_align
-                    saveTaskState()
+
                     // 开始轮询进度
                     pollingTimer.value = setInterval(getProgress, 2000);
                 } else {
@@ -4780,26 +4751,15 @@ const app = createApp({
                     ElMessage.warning('没有符合条件的问题单可导出');
                     return;
                 }
-
                 // 调用后端API生成docx文件
                 const response = await axios.post('/project/export-issues-download', {
                     issues: exportableIssues,
                     formData: exportForm.value,
-                    projectPath: projectPath.value
+                    project_id: getProjectId()
                 });
 
                 if (response.data.status === 'success') {
-                    // 直接下载docx文件
-                    const docxFilename = response.data.docxFile;
-                    
-                    // 创建下载链接
-                    const downloadUrl = `/project/download-file/${docxFilename}`;
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = docxFilename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    ElMessage.success('导出任务已创建, 请在导出记录中查看')
                     
                     showExportDialog.value = false;
                 } else {
@@ -4810,6 +4770,22 @@ const app = createApp({
                 ElMessage.error('导出失败：' + error.message);
             }
         };
+
+        // 下载文件
+        const handleDownload = (filename) => {
+            if (!filename) {
+                ElMessage.warning('文件不存在')
+                return
+            }
+            const downloadUrl = `/project/download-file/${filename}`;
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
 
         // ========== 一键入库相关 ==========
         const showBatchKbDialog = ref(false);
@@ -5243,7 +5219,7 @@ const app = createApp({
                     pollingTimer.value = null
                     isAutoAligning.value = false;
                     stopProgress();
-                    clearTaskState()
+                    await clearTaskState()
                     ElMessage.info('已停止自动对齐');
                 } catch (err) {
                     ElMessage.warning(`停止失败: ${err.message}`);
@@ -5263,7 +5239,7 @@ const app = createApp({
                 reviewProgress.value = { current: 0, total: 0 };
                 // 停止进度显示
                 stopProgress();
-                clearReviewTaskState()
+                await clearReviewTaskState()
                 ElMessage.info('已停止自动审查');
             } else {
 
@@ -5272,6 +5248,215 @@ const app = createApp({
                 await startAutoReview(reviewType);
             }
         };
+
+        // 需求反生成
+        const RequirementReverse = async () => {
+            if (isReverseRequirement.value) {
+                // 停止审查
+                isReverseRequirement.value = false;
+//                await axios.post(`/api/stop-task/${ReviewTaskId.value}`)
+//                clearInterval(pollingTimerReview.value)
+//                pollingTimerReview.value = null
+//                isAutoReviewing.value = false;
+//                reviewProgress.value = { current: 0, total: 0 };
+//                // 停止进度显示
+//                stopProgress();
+//                clearReviewTaskState()
+                ElMessage.info('停止');
+            } else {
+
+                showReverseDialog.value = false;
+                isReverseRequirement.value = true;
+                // 开始生成
+                await startReverseRequirement();
+                ElMessage.info('开始');
+            }
+        };
+
+        // 开始需求反生成
+        const startReverseRequirement = async () => {
+            try {
+                const projectId = getProjectId()
+                // 调用后端进行生成
+                const Response = await axios.post('/api/reverse_requirements', {
+                    project_id: projectId,
+                    selected_reverse: selectedReverse.value
+                });
+//                if (Response.data.status === 'success'){
+//
+//                    ReverseTaskId.value = reviewResponse.data.task_id;
+//                    ReverseCurrentTotal.value = totalReviewCount
+//                    startProgress('需求反生成', totalReviewCount, reviewedCount);
+//                    ReverseProgress.value.total = totalReviewCount;
+//                    ReverseProgress.value.current = reviewedCount;
+//
+//                    // 开始轮询进度
+//                    pollingTimerReverse.value = setInterval(getReverseProgress, 2000);
+//                } else {
+//                    ElMessage.warning('任务启动失败')
+//                }
+
+            } catch (err) {
+
+                console.log(err.message)
+                ElMessage.warning(`错误: ${err.message}`)
+            }
+        }
+
+        // 查询进度
+        const getReverseProgress = async () => {
+            if (!ReverseTaskId.value) {
+                clearInterval(pollingTimerReverse.value)
+                pollingTimerReverse.value = null
+                isReverseRequirement.value = false;
+                reverseProgress.value = { current: 0, total: 0 };
+                stopProgress();
+                await clearReverseTaskState()
+                return
+            }
+
+            pollCountReverse.value++
+            if (pollCountReverse.value >= MAX_POLL_COUNT) {
+                ElMessage.info('轮询次数已达上限，已停止轮询');
+                clearInterval(pollingTimerReverse.value)
+                pollingTimerReverse.value = null
+                isReverseRequirement.value = false;
+                reverseProgress.value = { current: 0, total: 0 };
+                stopProgress();
+                await clearReverseTaskState()
+                return
+            }
+            try {
+                const response = await axios.get(`/get-progress/${ReverseTaskId.value}`);
+
+                if (response.data.code === 0) {
+                    const current = response.data.meta?.current || 0
+                    updateProgress(current, response.data.meta?.name || 'Unknown');
+
+                    reverseProgress.value.current = current
+
+                    if (response.data.state === 'SUCCESS'){
+                        clearInterval(pollingTimerReverse.value)
+                        pollingTimerReverse.value = null
+                        isReverseRequirement.value = false;
+                        reverseProgress.value = { current: 0, total: 0 };
+                        stopProgress();
+                        await clearReverseTaskState()
+                        ElMessageBox.alert('需求反生成完毕!', '提示', {
+                        confirmButtonText: '知道了',
+                        type: 'success'
+                        });
+                    }
+
+                    if (response.data.state === 'FAILURE'){
+                        clearInterval(pollingTimerReverse.value)
+                        pollingTimerReverse.value = null
+                        isReverseRequirement.value = false;
+                        reverseProgress.value = { current: 0, total: 0 };
+                        stopProgress();
+                        await clearReverseTaskState()
+                        ElMessageBox.alert('需求反生成失败!', '提示', {
+                        confirmButtonText: '知道了',
+                        type: 'error'
+                        });
+                    }
+                }
+            } catch (error) {
+                if (errorCount.value >= errorMax) {
+                    clearInterval(pollingTimerReverse.value)
+                    pollingTimerReverse.value = null
+                    isReverseRequirement.value = false;
+                    reverseProgress.value = { current: 0, total: 0 };
+                    stopProgress();
+                    await clearReverseTaskState()
+                    ElMessage.warning(`查询进度失败: ${error.message}`);
+                }
+//                console.log(errorCount.value)
+//                console.log(errorMax)
+                errorCount.value++
+            } finally {
+//                pollCountReview.value++
+            }
+        }
+
+        const clearReverseTaskState = async () => {
+            // 调用后端清理
+            const projectId = getProjectId()
+            try {
+                await axios.post('/api/task-snapshot/clear', {project_id: projectId, category: 'reverse'});
+            } catch (e) {
+                // 静默失败
+            }
+        }
+
+        const restoreReverseTaskState = async () => {
+            const projectId = getProjectId()
+            if (!projectId) return;
+
+            try {
+
+                // 从后端读快照，代替localStorage
+                const resp = await axios.get(`/api/task-snapshot/${projectId}/reverse`);
+                const snap = resp.data?.data;
+
+                // 没有进行中的任务
+                if (!snap || !snap.isRunning) return;
+
+                // 恢复变量
+                ReverseTaskId.value = snap.taskId ?? ''
+                ReverseCurrentTotal.value = snap.currentTotal ?? 0
+
+                if (!ReverseTaskId.value) return;
+
+                // 1. 先查当前任务在 Celery 里的真实状态
+                const statusResp = await axios.get(`/get-progress/${ReverseTaskId.value}`);
+                const data = statusResp.data?.data || {};
+                const celeryState = data.state ?? 'PENDING';
+
+                // 2. 根据状态决定怎么恢复
+                if (celeryState === 'PENDING' || celeryState === 'PROGRESS') {
+                    // 任务还在跑，直接恢复进度条 + 轮询
+                    startProgress(snap.title || '任务处理中', ReverseCurrentTotal.value)
+                    updateProgress(data.current || 0, data.name || '')
+                    reverseProgress.value.current = data.current || 0
+                    reverseProgress.value.total = ReverseCurrentTotal.value
+                    isReverseRequirement.value = true;
+
+                    if (!pollingTimerReverse.value) {
+                        pollingTimerReverse.value = setInterval(getReverseProgress, 2000)
+                    }
+                    return
+                }
+
+                if (celeryState === 'SUCCESS') {
+                    // 没有下一个，全部完成
+                    await clearReverseTaskState()
+                    return
+                }
+
+                // FAILURE / REVOKED / 未知状态
+                await clearReverseTaskState()
+                ElMessageBox.alert('上次任务以失败或取消!', '提示', {
+                confirmButtonText: '知道了',
+                type: 'error'
+                });
+            } catch (err) {
+                // 后端报错了 (可能是 task_id 已被 Celery 清理)
+                await clearReverseTaskState()
+            }
+        }
+
+        const forceResetReverseState = () => {
+            if (pollingTimerReverse.value) {
+                clearInterval(pollingTimerReverse.value)
+                pollingTimerReverse.value = null
+            }
+            ReverseTaskId.value = ''
+            ReverseCurrentTotal.value = 0
+            isReverseRequirement.value = false
+            stopProgress()
+        }
+
 
         /***********************
          * 重新对齐和重新审查功能
@@ -5568,6 +5753,31 @@ const app = createApp({
             }
         };
 
+        const deleteAlignmentAndJumpNext = () => {
+            if (!contextMenu.value.selectedAlignment) return;
+            const alignmentToDelete = contextMenu.value.selectedAlignment;
+
+            ElMessageBox.confirm(`确定要取消对齐关系 "${alignmentToDelete.name}" 吗？`, '取消对齐', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(async () => {
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignmentToDelete.id}&project_id=${projectId}`);
+//                    showReviewDialog.value = false;
+                    // 跳转到下一个
+                    await navigateReviewDetail(1);
+                    await fetchAlignmentSidebarPage(false, alignType.value);
+                } catch (err) {
+                    console.error("Error deleting alignment:", err);
+                    ElMessage.error(`删除失败: ${err.message}`);
+                }
+            }).catch(() => { });
+        }
+
+
         const deleteAlignment = () => {
             if (!contextMenu.value.selectedAlignment) return;
             const alignmentToDelete = contextMenu.value.selectedAlignment;
@@ -5635,31 +5845,15 @@ const app = createApp({
           innerActiveA.value = 'req-code-align'
           innerActiveB.value = 'req-code-align-kbs'
           loadDefaultPrompt()
-          // restoreTaskState()
-          // restoreReviewTaskState()
 
-          //读取localStorage 里存的是哪个项目
-          const alignRaw = localStorage.getItem(STORAGE_ALIGN_KEY())
-          const reviewRaw = localStorage.getItem(STORAGE_REVIEW_KEY())
-          let savedProjectId = ''
-          if (alignRaw || reviewRaw) {
-            try {
-                const state = JSON.parse(alignRaw) || JSON.parse(reviewRaw)
-                savedProjectId = state.projectId || ''
-            } catch {}
-          }
+          forceResetState()
+          forceResetReviewState()
+//          forceResetReverseState()
 
-          const currentProjectId = getProjectId()
-
-          //如果项目变了, 强制清掉上一个项目的定时器和状态
-          if (savedProjectId && savedProjectId !== currentProjectId) {
-            forceResetState()
-            forceResetReviewState()
-            // clearTaskState()
-          }
           // 恢复当前项目的任务
           restoreTaskState()
           restoreReviewTaskState()
+//          restoreReverseTaskState()
         })
 
         onBeforeUnmount(() => {
@@ -7234,6 +7428,16 @@ const app = createApp({
             }
             return numbers;
         };
+         // 点击目录项，平滑滚动到对应需求块
+        const scrollToDocRange = (id) => {
+            if (id == null || id === undefined || id === '') return
+            const el = document.getElementById('doc-range-' + id)
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start'})
+                activeDocRangeId.value = String(id)
+            }
+        }
+
 
         // 点击目录项，平滑滚动到对应代码块
         const scrollToRange = (index) => {
@@ -7252,37 +7456,51 @@ const app = createApp({
         }
 
         const initScrollListener = () => {
-
             if (!sectionRef.value) return
-
             const container = sectionRef.value
-            const ranges = document.querySelectorAll('.code-range')
-            if (!ranges.length) return
+
+            const codeRanges = document.querySelectorAll('.code-range')
+            const docRanges = document.querySelectorAll('.doc-range')
+
 
             if (container._scrollHandler) {
                 container.removeEventListener('scroll', container._scrollHandler)
             }
 
             const onScroll = () => {
-                const containerTop = container.scrollTop
-                const containerCenter = containerTop + container.clientHeight / 2
-
-                let closestId = null
-                let minDistance = Infinity
-                for (const range of ranges) {
-                    const rangeTop = range.offsetTop
-                    const rangeCenter = rangeTop + range.clientHeight / 2
+                const containerCenter = container.scrollTop + container.clientHeight / 2
+                let codeClosestId = null
+                let codeMinDistance = Infinity
+                for (const range of codeRanges) {
+                    const rangeCenter = range.offsetTop + range.clientHeight / 2
                     const distance = Math.abs(rangeCenter - containerCenter)
 
-                    if (distance < minDistance) {
-                        minDistance = distance
-                        closestId = range.id.replace('range-', '')
+                    if (distance < codeMinDistance) {
+                        codeMinDistance = distance
+                        codeClosestId = range.id.replace('range-', '')
                     }
                 }
 
-                if (closestId !== null){
-                    activeRangeId.value = String(closestId)
+                if (codeClosestId !== null){
+                    activeRangeId.value = String(codeClosestId)
                 }
+
+                // ============== 【新增】处理需求内容 (.doc-range) ================
+                let docClosestId = null
+                let docMinDistance = Infinity
+
+                for (const range of docRanges) {
+                    const rangeCenter = range.offsetTop + range.clientHeight / 2
+                    const distance = Math.abs(rangeCenter - containerCenter)
+                    if (distance < docMinDistance) {
+                        docMinDistance = distance
+                        docClosestId = range.id.replace('doc-range-', '')
+                    }
+                }
+                if (docClosestId !== null) {
+                    activeDocRangeId.value = String(docClosestId)
+                }
+
             }
             container.addEventListener('scroll', onScroll)
             container._scrollHandler = onScroll
@@ -7780,12 +7998,136 @@ const app = createApp({
             // 打开入库弹窗，传入所有问题单
             await openReviewDialogWithData(targetIssuesList, 'issue');
         };
+        const openHistoryExportDialog = async () => {
+            showHistoryExportDialog.value = true;
+            await loadTasks()
+            // 轮询
+            startIssuesPolling()
+        }
+
+        const loadTasks = async () => {
+            try {
+                const response = await axios.get('/project/export-tasks', {
+                    params: { project_id: getProjectId() }
+                })
+                if (response.data.status === 'success') {
+                    exportTasks.value = response.data.data || []
+                }
+            } catch (error) {
+                console.log('加载导出记录失败', error)
+            }
+        }
+
+        const startIssuesPolling = () => {
+            if (pollTimerIssues.value) return
+
+            // 检查列表里有没有 pending/processing
+            const hasProcessing = exportTasks.value.some(t => t.status === 'pending' || t.status === 'processing')
+
+            if (!hasProcessing){
+                return
+            }
+
+            // 开始轮询
+
+            pollTimerIssues.value = setInterval(async () => {
+                try {
+                    const response = await axios.get('/project/export-tasks', {
+                        params: { project_id: getProjectId() }
+                    })
+
+                    if (response.data.status !== 'success') return
+
+                    // 用task_id 做key，更新现有列表
+                    const latestMap = {}
+                    response.data.data.forEach(t => {
+                        latestMap[t.task_id] = t
+                    })
+
+                    let stillProcessing = false
+
+                    exportTasks.value.forEach((task, index) => {
+                        const latest = latestMap[task.task_id]
+                        if (latest) {
+                            // 状态发生变化时提示
+                            if (task.status !== 'success' && latest.status === 'success') {
+                                ElMessage.success('导出任务完成')
+                            } else if (task.status !== 'failure' && latest.status === 'failure') {
+                                ElMessage.error('导出失败: ' + (latest.error_msg || '未知错误'))
+                            }
+
+                            // 更新数据
+                            exportTasks.value[index] = {
+                                ...task,
+                                status: latest.status,
+                                filename: latest.filename,
+                                error_msg: latest.error_msg,
+                                completed_at: latest.completed_at
+                            }
+                        }
+                        // 检查这条任务是否还在进行中
+                        if (
+                            exportTasks.value[index].status === 'pending' ||
+                            exportTasks.value[index].status === 'processing'
+                        ) {
+                            stillProcessing = true
+                        }
+                    })
+
+                    // 全部完成，停止轮询
+                    if (!stillProcessing) {
+                        stopIssuesPolling()
+                        ElMessage.success('所有导出任务已完成')
+                    }
+
+                } catch (error) {
+                    console.error('轮询失败', error)
+                }
+            }, 2000)
+        }
+
+        const stopIssuesPolling = () => {
+            if (pollTimerIssues.value) {
+                clearInterval(pollTimerIssues.value)
+                pollTimerIssues.value = null
+            }
+        }
+
+        const IssuesDialogClose = () => {
+            stopIssuesPolling()
+            showHistoryExportDialog.value = false
+        }
+
+        const IssuesHistoryRefresh = async () => {
+            isRefreshing.value = true
+            await loadTasks()
+            isRefreshing.value = false
+        }
+
         /***********************
          * 暴露到模板
          ***********************/
         return {
+            // 问题单导出列表
+            exportTasks,
+            isRefreshing,
+            IssuesHistoryRefresh,
+            showHistoryExportDialog,
+            openHistoryExportDialog,
+            handleDownload,
+            IssuesDialogClose,
+            // 需求反生成
+            showReverseDialog,
+            isReverseRequirement,
+            RequirementReverse,
+            selectedReverse,
             alignType,
 
+            docTocRef,
+            activeDocRangeId,
+            isDocTocCollapsed,
+            scrollToDocRange,
+            deleteAlignmentAndJumpNext,
             sectionRef,
             tocRef,
             activeRangeId,

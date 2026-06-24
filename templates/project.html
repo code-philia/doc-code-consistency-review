@@ -529,6 +529,33 @@
                                                 <span v-if="!isAutoReviewing">自动审查</span>
                                                 <span v-else>停止审查</span>
                                             </el-button>
+                                            <el-button
+                                                    v-if="false"
+                                                    size="small"
+                                                    type="success"
+                                                    plain
+                                                    @click="isReverseRequirement ? RequirementReverse() : showReverseDialog = true">
+                                                <span v-if="!isReverseRequirement">需求反生成</span>
+                                                <span v-else>停止生成</span>
+                                            </el-button>
+                                            <el-dialog
+                                                    v-model="showReverseDialog"
+                                                    title="请选择生成选项"
+                                                    width="400px"
+                                                    :close-on-click-modal="false"
+                                            >
+                                                <el-checkbox-group v-model="selectedReverse">
+                                                    <el-checkbox label="req2code">需求->代码</el-checkbox>
+                                                    <el-checkbox label="code2req">代码->需求</el-checkbox>
+                                                    <el-checkbox label="codeReview">全部代码块</el-checkbox>
+                                                </el-checkbox-group>
+                                                <template #footer>
+                                                    <span class="dialog-footer">
+                                                        <el-button @click="showReverseDialog = false">取消</el-button>
+                                                        <el-button type="primary" @click="RequirementReverse">确认</el-button>
+                                                    </span>
+                                                </template>
+                                            </el-dialog>
                                             <el-dialog
                                                     v-model="showReview"
                                                     title="选择审查类型"
@@ -880,6 +907,9 @@
                                             <button class="export-btn" @click="openBatchIssueToKB" title="一键入库问题单">
                                                 <i class="fas fa-database"></i> 一键入库
                                             </button>
+                                            <button class="export-btn" @click="openHistoryExportDialog">
+                                                <i class="fas"></i> 导出记录
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="issue-actions">
@@ -956,14 +986,15 @@
                     >
                         <!-- 对齐关系右键菜单 -->
                         <template v-if="contextMenu.selectedAlignment">
-                            <div class="context-menu-item" @click="restartSelectedAlignmentFromContextMenu">
+                            <!--<div class="context-menu-item" @click="restartSelectedAlignmentFromContextMenu">-->
+                            <div class="context-menu-item" @click="PromptAlignment">
                                 <i class="fas fa-rotate-right"></i> 重新对齐
+                            </div>
+                            <div class="context-menu-item" @click="PromptReview">
+                                <i class="fas fa-tasks"></i> 重新审查
                             </div>
                             <div class="context-menu-item" @click="clearAlignmentTargetFromContextMenu">
                                 <i class="fas fa-eraser"></i> 删除对齐结果
-                            </div>
-                            <div class="context-menu-item" @click="PromptReview">
-                                <i class="fas fa-tasks"></i> 审查
                             </div>
                             <div class="context-menu-separator"></div>
                             <div class="context-menu-item" @click="renameAlignment">
@@ -1411,6 +1442,9 @@
                         >
                             <i class="fas fa-bug"></i> 入库(问题单)
                         </el-button>
+                        <el-button type="danger" size="small" @click="deleteAlignmentAndJumpNext">
+                            删除(对齐)
+                        </el-button>
 
                         <el-divider direction="vertical"></el-divider>
 
@@ -1431,8 +1465,38 @@
                     <!-- 需求内容 -->
                     <div class="review-left-section">
                         <h4><i class="fas fa-file-alt"></i> 需求内容</h4>
+                        <div
+                            v-if="selectedReviewAlignment.docRanges && selectedReviewAlignment.docRanges.length > 1"
+                            class="code-toc doc-toc"
+                            ref="docTocRef"
+                        >
+                            <div class="toc-header" @click="isDocTocCollapsed = !isDocTocCollapsed">
+                                <span><i class="fas fa-list"></i> 需求片段目录</span>
+                                <span class="toc-badge">${ selectedReviewAlignment.docRanges.length } 个文件</span>
+                                <i class="fas" :class="isDocTocCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'"></i>
+                            </div>
+                            <div v-show="!isDocTocCollapsed" class="toc-body">
+                                <div
+                                    v-for="(range, index) in selectedReviewAlignment.docRanges"
+                                    :key="'doc-toc-' + (range.id || index)"
+                                    class="toc-item"
+                                    :class="{ active: activeDocRangeId === String(range.id || index) }"
+                                    @click="scrollToDocRange(range.id || index)"
+                                >
+                                    <span class="toc-num">${ index + 1 }</span>
+                                    <span class="toc-name" :title="range.filename">${ range.filename }</span>
+                                    <span class="toc-lines">第${ range.startLine }-${ range.endLine }行</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="doc-ranges-container">
-                            <div v-for="range in selectedReviewAlignment.docRanges" :key="range.id" class="doc-range">
+                            <div v-for="(range, index) in selectedReviewAlignment.docRanges"
+                                 :key="range.id || index"
+                                 :id="'doc-range-' + (range.id || index)"
+                                 class="doc-range"
+                            >
+
                                 <div class="doc-file-info">
                                     <span class="file-name">${ range.filename }</span>
                                     <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
@@ -1735,7 +1799,75 @@
                 </div>
             </template>
         </el-dialog>
+        <!-- 导出记录弹框 -->
+        <el-dialog
+            v-model="showHistoryExportDialog"
+            title="导出记录"
+            width="900px"
+            :close-on-click-modal="false"
+            @close="IssuesDialogClose"
+        >
+            <div style="margin-bottom: 10px; text-align: right;">
+                <el-button
+                    :icon="Refresh"
+                    @click="IssuesHistoryRefresh"
+                    :loading="isRefreshing"
+                >
+                    刷新
+                </el-button>
+            </div>
+            <el-table :data="exportTasks" style="width: 100%" empty-text="暂无导出记录" :header-cell-style="{ background: '#f5f7fa' }">
+                <el-table-column type="index" width="50px" align="center"></el-table-column>
+                <el-table-column prop="created_at" label="创建时间" width="160px" align="center"></el-table-column>
+                <el-table-column prop="completed_at" label="完成时间" width="160px" align="center">
+                    <template #default="{ row }">
+                        <span v-if="row.completed_at">${ row.completed_at }</span>
+                        <span v-else style="color: #c0c4cc;">-</span>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="status" label="状态" width="100" align="center">
+                    <template #default="{ row }">
+                        <el-tag v-if="row.status === 'success'" type="success" size="small">完成</el-tag>
+                        <el-tag v-else-if="row.status === 'failure'" type="danger" size="small">失败</el-tag>
+                        <el-tag v-else-if="row.status === 'processing'" type="warning" size="small">
+                            <span class="loading-spinner"></span>
+                            处理中
+                        </el-tag>
+                        <el-tag v-else type="info" size="small">排队中</el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="filename" label="文件名" min-width="180" show-overflow-tooltip ></el-table-column>
+<!--                <el-table-column prop="error_msg" label="错误信息" min-width="180" show-overflow-tooltip>-->
+<!--                    <template #default="{ row }">-->
+<!--                        <span v-if="row.status === 'failure'" style="color: #f56c6c; font-size:12px;">-->
+<!--                            ${ row.error_msg || '未知错误' }-->
+<!--                        </span>-->
+<!--                        <span v-else style="color: #909399">-</span>-->
+<!--                    </template>-->
+<!--                </el-table-column>-->
+                <el-table-column label="操作" width="100" align="center">
+                    <template #default="{ row }">
+                        <el-button
+                            v-if="row.status === 'success' && row.filename"
+                            link
+                            type="primary"
+                            size="small"
+                            @click="handleDownload(row.filename)"
+                        >
+                            下载
+                        </el-button>
+                        <span v-else-if="row.status === 'success'" style="color: #e6a23c; font-size: 12px;">文件缺失</span>
+                        <span v-else-if="row.status === 'failure'" style="color: #f56c6c; font-size: 12px;">失败</span>
+                        <span v-else-if="row.status === 'processing'" style="color: #909399; font-size: 12px;">
+                            <span class="loading-spinner"></span>
+                            处理中
+                        </span>
+                        <span v-else style="color: #909399; font-size: 12px;">等待中...</span>
+                    </template>
+                </el-table-column>
+            </el-table>
 
+        </el-dialog>
         <!-- 导出问题单表单对话框 -->
         <el-dialog
             v-model="showExportDialog"
@@ -1787,12 +1919,12 @@
                 <!-- 第四行：问题类别 -->
                 <el-form-item label="问题类别">
                     <el-checkbox-group v-model="exportForm.issueCategories">
-                        <el-checkbox value="需求">需求</el-checkbox>
-                        <el-checkbox value="设计">设计</el-checkbox>
-                        <el-checkbox value="文档">文档</el-checkbox>
-                        <el-checkbox value="编码">编码</el-checkbox>
-                        <el-checkbox value="数据">数据</el-checkbox>
-                        <el-checkbox value="其他">其他</el-checkbox>
+                        <el-checkbox value="需求问题">需求</el-checkbox>
+                        <el-checkbox value="设计问题">设计</el-checkbox>
+                        <el-checkbox value="文档问题">文档</el-checkbox>
+                        <el-checkbox value="编码问题">编码</el-checkbox>
+                        <el-checkbox value="数据问题">数据</el-checkbox>
+                        <el-checkbox value="其他问题">其他</el-checkbox>
                     </el-checkbox-group>
                 </el-form-item>
 
