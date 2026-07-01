@@ -2423,9 +2423,14 @@
 .issue-level.low {
     background-color: #16a34a;
 }
-/* Issues list table layout and spacing */
+/* Issues list table layout and spacing 
 .issue-table {
     --issue-col-template: 40px 150px 110px 1.3fr 1.4fr 1.4fr 120px;
+}*/
+
+/* Issues list table layout and spacing */
+.issue-table {
+    --issue-col-template: 40px 100px 80px 50px 1.3fr 1.4fr 1.4fr 120px;
 }
 
 .issue-table .issue-header-row,

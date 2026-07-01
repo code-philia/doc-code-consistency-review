@@ -31,7 +31,34 @@ CREATE TABLE `abstracts` (
   `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updatedAt` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`abstract_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='摘要';
+) ENGINE=InnoDB AUTO_INCREMENT=217 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='摘要';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `alignments`
+--
+
+DROP TABLE IF EXISTS `alignments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `alignments` (
+  `id` varchar(100) NOT NULL,
+  `user_id` int NOT NULL,
+  `project_id` int NOT NULL,
+  `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `isReviewed` int DEFAULT '0',
+  `reviewThoughts` text,
+  `docRanges` text NOT NULL,
+  `codeRanges` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '代码',
+  `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` timestamp NULL DEFAULT NULL,
+  `GenReq` text,
+  `GenMermaid` text,
+  `is_code_review` tinyint(1) DEFAULT '0',
+  `align_type` varchar(100) DEFAULT NULL COMMENT '对齐类型: 需求->代码，代码->需求',
+  `is_alignment` tinyint(1) DEFAULT '0' COMMENT '是否对齐：0未对齐，1已对齐',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='对齐';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -50,7 +77,7 @@ CREATE TABLE `code_blocks` (
   `start_line` int NOT NULL COMMENT '起始行',
   `end_line` int NOT NULL COMMENT '结束行',
   `type` varchar(100) DEFAULT NULL COMMENT '代码块类型',
-  `code` MEDIUMTEXT COMMENT '代码块内容',
+  `code` mediumtext COMMENT '代码块内容',
   `related_id` json DEFAULT NULL COMMENT '关联代码块id列表',
   `related_range` json DEFAULT NULL COMMENT '关联范围映射',
   `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -58,7 +85,7 @@ CREATE TABLE `code_blocks` (
   PRIMARY KEY (`code_block_row_id`),
   UNIQUE KEY `code_block_unique` (`project_id`,`id`),
   KEY `idx_code_blocks_project_file` (`project_id`,`file`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='代码块';
+) ENGINE=InnoDB AUTO_INCREMENT=361 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='代码块';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -75,7 +102,7 @@ CREATE TABLE `doc_blocks` (
   `name` varchar(255) DEFAULT NULL COMMENT '需求块名称',
   `filename` varchar(255) NOT NULL COMMENT '需求文档相对路径',
   `type` varchar(100) DEFAULT NULL COMMENT '需求块类型',
-  `content` MEDIUMTEXT COMMENT '需求块内容',
+  `content` mediumtext COMMENT '需求块内容',
   `start` int NOT NULL COMMENT '起始字符偏移',
   `end` int NOT NULL COMMENT '结束字符偏移',
   `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -83,34 +110,31 @@ CREATE TABLE `doc_blocks` (
   PRIMARY KEY (`doc_block_id`),
   UNIQUE KEY `doc_block_unique` (`project_id`,`id`),
   KEY `idx_doc_blocks_project_file` (`project_id`,`filename`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='需求块';
+) ENGINE=InnoDB AUTO_INCREMENT=901 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='需求块';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `alignments`
+-- Table structure for table `export_tasks`
 --
 
-DROP TABLE IF EXISTS `alignments`;
+DROP TABLE IF EXISTS `export_tasks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `alignments` (
-  `id` varchar(100) NOT NULL,
-  `user_id` int NOT NULL,
+CREATE TABLE `export_tasks` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `task_id` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `project_id` int NOT NULL,
-  `name` text DEFAULT NULL,
-  `isReviewed` int DEFAULT '0',
-  `is_code_review` int DEFAULT '0',
-  `align_type` char(20) DEFAULT NULL,
-  `is_alignment` int DEFAULT '0',
-  `reviewThoughts` text,
-  `docRanges` MEDIUMTEXT NOT NULL,
-  `codeRanges` MEDIUMTEXT NOT NULL COMMENT '代码',
-  `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updatedAt` timestamp NULL DEFAULT NULL,
-  `GenReq` text,
-  `GenMermaid` text,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='对齐';
+  `user_id` int NOT NULL,
+  `export_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'reverse_requirement',
+  `status` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending' COMMENT '状态: pending/processing/success/failure',
+  `filename` varchar(500) COLLATE utf8mb4_general_ci NOT NULL,
+  `error_msg` text COLLATE utf8mb4_general_ci COMMENT '失败原因',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `completed_at` timestamp NULL DEFAULT NULL COMMENT '完成时间',
+  `url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `export_tasks_unique` (`task_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='导出任务记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -136,8 +160,9 @@ CREATE TABLE `issues` (
   `briefCode` text,
   `createdAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` timestamp NULL DEFAULT NULL,
+  `category` varchar(100) DEFAULT NULL COMMENT '类别',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -157,7 +182,7 @@ CREATE TABLE `project` (
   `update_time` varchar(100) DEFAULT NULL COMMENT '更新时间',
   `is_delete` int DEFAULT '0' COMMENT '是否删除',
   PRIMARY KEY (`project_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='项目';
+) ENGINE=InnoDB AUTO_INCREMENT=167 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='项目';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -173,7 +198,7 @@ CREATE TABLE `project_access_log` (
   `project_id` int NOT NULL COMMENT '项目id',
   `access_time` varchar(100) NOT NULL COMMENT '打开时间',
   PRIMARY KEY (`pal_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='项目打开记录';
+) ENGINE=InnoDB AUTO_INCREMENT=273 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='项目打开记录';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -196,7 +221,7 @@ CREATE TABLE `prompt` (
   `reviewCodeKbs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '代码单独审查-知识库版',
   PRIMARY KEY (`prompt_id`),
   UNIQUE KEY `prompt_unique` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='提示词表';
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='提示词表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -214,7 +239,35 @@ CREATE TABLE `user` (
   `ip` varchar(100) DEFAULT NULL COMMENT 'IP地址',
   `role` varchar(100) DEFAULT NULL COMMENT '角色',
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `user_task_snapshot`
+--
+
+DROP TABLE IF EXISTS `user_task_snapshot`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_task_snapshot` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `project_id` int NOT NULL,
+  `task_id` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `next_task_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `task_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'single',
+  `task1_total` int DEFAULT '0',
+  `task2_total` int DEFAULT '0',
+  `current_total` int DEFAULT '0',
+  `current_progress` int DEFAULT '0',
+  `state` varchar(100) COLLATE utf8mb4_general_ci DEFAULT 'PENDING',
+  `title` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `is_running` tinyint DEFAULT '1',
+  `create_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `task_category` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'align' COMMENT '任务分类: align/review',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=99 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户任务恢复表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -230,4 +283,4 @@ CREATE TABLE `user` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-20  9:16:07
+-- Dump completed on 2026-06-29 13:56:56

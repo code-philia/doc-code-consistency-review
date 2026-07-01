@@ -45,6 +45,46 @@ const app = createApp({
         /***********************
          * 基础状态
          ***********************/
+        // code分页
+        const codePage = ref(1)
+        const codeTotal = ref(0)
+
+        // doc分页
+        const docPage = ref(1)
+        const docTotal = ref(0)
+        //问题单分类
+        const issuesSelectedCategory = ref('')
+        const issuesCategoryOptions = ref([
+            { label: '全部分类', value: '' },
+            { label: '纯代码审查', value: 'codeReview' },
+            { label: '需求->代码', value: 'req2code' },
+            { label: '代码->需求', value: 'code2req' }
+        ])
+        const issueCategoryMap = {
+            'req2code': '需求->代码',
+            'code2req': '代码->需求',
+            'codeReview': '纯代码审查'
+        }
+
+        // 对齐加载部分
+        const blockLoading = ref(false)
+        const issuesLoading = ref(false)
+        // 问题单分页
+        const zhCnLocale = {
+            name: 'zh-cn',
+            el: {
+                pagination: {
+                    pagesize: '条/页',
+                    total: '共 {total} 条',
+                    goto: '前往',
+                    pageClassifier: '页'
+                }
+            }
+        }
+        const issuePage = ref(1)
+        const issuePageSize = ref(100)
+        const issueTotal = ref(0)
+//        const issues = ref([])
         // 问题单导出
         const exportTasks = ref([])
         const isRefreshing = ref(false)
@@ -114,6 +154,7 @@ const app = createApp({
         const isAutoReviewing = ref(false);
         const alignmentProgress = ref({ current: 0, total: 0 });
         const reviewProgress = ref({ current: 0, total: 0 });
+        const reverseProgress = ref({ current: 0, total: 0 });
         const showAlignmentDialog = ref(false);
         const showCodeSelectionDialog = ref(false);
         const currentSelection = ref(null);
@@ -180,6 +221,7 @@ const app = createApp({
         const codeBlocks = ref([]);
         const currentDocBlocksForHighlight = ref([]);
         const currentCodeBlocksForHighlight = ref([]);
+        const alignType = ref('req2code')
         const alignmentPage = ref(1);
         const alignmentPageSize = ref(100); // 对齐视图分页的每页展示数量
         const alignmentTotal = ref(0);
@@ -587,9 +629,9 @@ const app = createApp({
             }
         }, { deep: true });
 
-        const fetchAlignmentSidebarPage = async (resetPage = false, alignType = null) => {
+        const fetchAlignmentSidebarPage = async () => {
             if (!projectPath.value) return;
-            if (resetPage) alignmentPage.value = 1;
+//            if (resetPage) alignmentPage.value = 1;
 
             if (statusFilters.value.length === 0) {
                 sidebarAlignmentItems.value = [];
@@ -605,34 +647,20 @@ const app = createApp({
                         path: projectPath.value,
                         project_id: projectId,
                         page: alignmentPage.value,
+                        page_size: alignmentPageSize.value,
                         view_mode: viewMode.value,
                         selected_doc_file: selectedDocFile.value || '',
                         selected_code_file: selectedCodeFile.value || '',
                         status_filters: statusFilters.value.join(','),
-                        include_code_review: alignType === 'code2req' ? 'reviewed_only' : 0,
-                        align_type: alignType
+                        include_code_review: alignType.value === 'code2req' ? 'reviewed_only' : 0,
+                        align_type: alignType.value
                     }
                 });
 
                 if (response.data.status === 'success') {
-                    const pagination = response.data.pagination || {};
-                    const serverPageSize = Number(pagination.page_size) || alignmentPageSize.value;
-                    const serverTotal = Number(pagination.total) || 0;
-                    const serverTotalPages = Math.max(0, Number(pagination.pages) || Number(pagination.total_pages) || 0);
-
-                    alignmentPageSize.value = serverPageSize;
                     sidebarAlignmentItems.value = response.data.data || [];
-                    alignmentTotal.value = serverTotal;
+                    alignmentTotal.value = response.data.total;
 
-                    if (serverTotalPages > 0 && alignmentPage.value > serverTotalPages) {
-                        alignmentPage.value = serverTotalPages;
-                        await fetchAlignmentSidebarPage(false, alignType);
-                        return;
-                    }
-
-                    if (serverTotal === 0) {
-                        alignmentPage.value = 1;
-                    }
                 } else {
                     sidebarAlignmentItems.value = [];
                     alignmentTotal.value = 0;
@@ -643,6 +671,18 @@ const app = createApp({
                 alignmentTotal.value = 0;
             }
         };
+
+        const alignHandleSizeChange = (val) => {
+
+            alignmentPageSize.value = val
+            alignmentPage.value = 1
+            fetchAlignmentSidebarPage()
+        }
+
+        const alignHandleCurrentChange = (val) => {
+            alignmentPage.value = val
+            fetchAlignmentSidebarPage()
+        }
 
         const fetchSidebarBlocksPage = async (resetPage = false) => {
             if (!projectPath.value) return;
@@ -655,43 +695,23 @@ const app = createApp({
             const targetRef = isDoc ? docBlocks : codeBlocks;
             const currentFile = isDoc ? selectedDocFile.value : selectedCodeFile.value;
 
-            if (resetPage) pageRef.value = 1;
-            if (viewMode.value === 'current' && !currentFile) {
-                targetRef.value = [];
-                totalRef.value = 0;
-                return;
-            }
-
             try {
+                blockLoading.value = true;
                 const endpoint = isDoc ? '/api/get-doc-blocks' : '/api/get-code-blocks';
                 const response = await axios.get(endpoint, {
                     params: {
                         projectPath: projectPath.value,
                         project_id: projectId,
                         page: pageRef.value,
+                        page_size: pageSizeRef.value,
                         filename: viewMode.value === 'current' ? currentFile : ''
                     }
                 });
 
                 if (response.data.status === 'success') {
-                    const pagination = response.data.pagination || {};
-                    const serverPageSize = Number(pagination.page_size) || pageSizeRef.value;
-                    const serverTotal = Number(pagination.total) || 0;
-                    const serverTotalPages = Math.max(0, Number(pagination.pages) || 0);
-
-                    pageSizeRef.value = serverPageSize;
                     targetRef.value = response.data.data || [];
-                    totalRef.value = serverTotal;
+                    totalRef.value = response.data.total
 
-                    if (serverTotalPages > 0 && pageRef.value > serverTotalPages) {
-                        pageRef.value = serverTotalPages;
-                        await fetchSidebarBlocksPage(false);
-                        return;
-                    }
-
-                    if (serverTotal === 0) {
-                        pageRef.value = 1;
-                    }
                 } else {
                     targetRef.value = [];
                     totalRef.value = 0;
@@ -700,8 +720,53 @@ const app = createApp({
                 console.error('获取块分页数据失败:', error);
                 targetRef.value = [];
                 totalRef.value = 0;
+            } finally {
+                blockLoading.value = false;
             }
         };
+
+        const blockCurrentPage = computed({
+            get: () => blockType.value === 'doc' ? docBlockPage.value : codeBlockPage.value,
+            set: (val) => {
+                if (blockType.value === 'doc') {
+                    docBlockPage.value = val;
+                } else {
+                    codeBlockPage.value = val;
+                }
+            }
+        })
+
+        const blockCurrentPageSize = computed({
+            get: () => blockType.value === 'doc' ? docBlockPageSize.value : codeBlockPageSize.value,
+            set: (val) => {
+                if (blockType.value === 'doc') {
+                    docBlockPageSize.value = val;
+                } else {
+                    codeBlockPageSize.value = val;
+                }
+            }
+        })
+
+        const blockCurrentTotal = computed(() => {
+            return blockType.value === 'doc' ? docBlockTotal.value : codeBlockTotal.value
+        })
+
+        const blockHandleSizeChange = (val) => {
+
+            const isDoc = blockType.value === 'doc';
+            const pageRef = isDoc ? docBlockPage : codeBlockPage;
+            const pageSizeRef = isDoc ? docBlockPageSize : codeBlockPageSize;
+            pageSizeRef.value = val
+            pageRef.value = 1
+            fetchSidebarBlocksPage()
+        }
+
+        const blockHandleCurrentChange = (val) => {
+            const isDoc = blockType.value === 'doc';
+            const pageRef = isDoc ? docBlockPage : codeBlockPage;
+            pageRef.value = val
+            fetchSidebarBlocksPage()
+        }
          
         // 加载并渲染需求分解块
         const loadAndRenderDocBlocks = async (reload = true) => {
@@ -926,7 +991,7 @@ const app = createApp({
                     }
                     await fetchSidebarBlocksPage(false);
                     await fetchAlignments();
-                    await fetchAlignmentSidebarPage(false, alignType.value);
+                    await fetchAlignmentSidebarPage();
                 } else {
                     ElMessage.warning(response.data.message);
                 }
@@ -1209,6 +1274,73 @@ const app = createApp({
             });
         };
 
+        const fetchCodeFiles = async () => {
+            try {
+                const fileName = selectedCodeFile.value;
+                const response = await axios.get('/project/file-content', {
+                    params: {
+                        path: projectPath.value,
+                        filename: fileName,
+                        type: 'code',
+                        page: codePage.value
+                    }
+                });
+
+                if (response.data.status === 'success') {
+                    codeTotal.value = response.data.pagination?.total_pages;
+                    const renderedHtml = formatCodeWithLineNumbers(response.data.content || '');
+                    codePageRanges.value = response.data.pagination?.page_ranges || [];
+                    currentCodePage.value = response.data.pagination?.page || 1;
+                    codePageStartLine.value = response.data.start_line || 1;
+                    selectedCodeContent.value = shiftMarkdownParseOffsets(renderedHtml, response.data.page_start || 0);
+
+                    await nextTick();
+                    await loadAndRenderCodeBlocks(false);
+                }
+            } catch (error) {
+                console.error('查询代码文档失败:', error);
+                ElMessage.error(`查询代码文档失败: ${error.message}`);
+            }
+        }
+
+        const codeFileHandleCurrentChange = (val) => {
+            codePage.value = val
+            fetchCodeFiles()
+        }
+
+        const fetchDocFiles = async () => {
+            try {
+                const fileName = selectedDocFile.value;
+                const response = await axios.get('/project/file-content', {
+                    params: {
+                        path: projectPath.value,
+                        filename: fileName,
+                        type: 'doc',
+                        page: docPage.value
+                    }
+                });
+
+                if (response.data.status === 'success') {
+                    const renderedHtml = await renderMarkdown(response.data.content || '');
+                    docPageRanges.value = response.data.pagination?.page_ranges || [];
+                    currentDocPage.value = response.data.pagination?.page || 1;
+                    selectedDocContent.value = shiftMarkdownParseOffsets(renderedHtml, response.data.page_start || 0);
+                    docTotal.value = response.data.pagination?.total_pages;
+
+                    await nextTick();
+                    await loadAndRenderDocBlocks(false);
+                }
+            } catch (error) {
+                console.error('查询需求文档失败:', error);
+                ElMessage.error(`查询需求文档失败: ${error.message}`);
+            }
+        }
+
+        const docFileHandleCurrentChange = (val) => {
+            docPage.value = val
+            fetchDocFiles()
+        }
+
         const fetchFilePage = async (fileName, fileType, pageNumber = 1) => {
             const response = await axios.get('/project/file-content', {
                 params: {
@@ -1380,7 +1512,9 @@ const app = createApp({
 
             for (const pageIndex of orderedPages) {
                 if (currentDocPage.value !== pageIndex + 1) {
-                    await renderDocPage(pageIndex + 1);
+//                    await renderDocPage(pageIndex + 1);
+                    docPage.value = pageIndex + 1
+                    await fetchDocFiles()
                 } else {
                     await nextTick();
                 }
@@ -1446,7 +1580,9 @@ const app = createApp({
 
             for (const pageIndex of orderedPages) {
                 if (currentCodePage.value !== pageIndex + 1) {
-                    await renderCodePage(pageIndex + 1);
+//                    await renderCodePage(pageIndex + 1);
+                    codePage.value = pageIndex + 1
+                    await fetchCodeFiles()
                 } else {
                     await nextTick();
                 }
@@ -1625,6 +1761,7 @@ const app = createApp({
                         reviewProgress.value = { current: 0, total: 0 };
                         stopProgress();
                         await clearReviewTaskState()
+                        await fetchIssues()
                         ElMessageBox.alert('审查完成!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'success'
@@ -1639,6 +1776,7 @@ const app = createApp({
                         reviewProgress.value = { current: 0, total: 0 };
                         stopProgress();
                         await clearReviewTaskState()
+                        await fetchIssues()
                         ElMessageBox.alert('审查失败!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'error'
@@ -1646,18 +1784,22 @@ const app = createApp({
                     }
                 }
             } catch (error) {
-                if (errorCount.value >= errorMax) {
-                    clearInterval(pollingTimerReview.value)
-                    pollingTimerReview.value = null
-                    isAutoReviewing.value = false;
-                    reviewProgress.value = { current: 0, total: 0 };
-                    stopProgress();
-                    await clearReviewTaskState()
-                    ElMessage.warning(`查询进度失败: ${error.message}`);
-                }
+
+                clearInterval(pollingTimerReview.value)
+                pollingTimerReview.value = null
+                isAutoReviewing.value = false;
+                reviewProgress.value = { current: 0, total: 0 };
+                stopProgress();
+                await clearReviewTaskState()
+//                    ElMessage.warning(`查询进度失败: ${error.message}`);
+                ElMessageBox.alert('网络发生波动，请从新发起任务!', '提示', {
+                        confirmButtonText: '知道了',
+                        type: 'error'
+                });
+
 //                console.log(errorCount.value)
 //                console.log(errorMax)
-                errorCount.value++
+//                errorCount.value++
             } finally {
 //                pollCountReview.value++
             }
@@ -1841,11 +1983,23 @@ const app = createApp({
         // 加载问题单数据
         const fetchIssues = async () => {
             try {
+
+                const params = {
+                        issue_page: issuePage.value,
+                        issue_page_size: issuePageSize.value
+                    }
+                if (issuesSelectedCategory.value) {
+                    params.category = issuesSelectedCategory.value
+                }
+
+                issuesLoading.value = true;
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
-                const response = await axios.get(`/project/issues?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`);
+                const response = await axios.get(`/project/issues?path=${encodeURIComponent(projectPath.value)}&project_id=${projectId}`, {params});
+
                 if (response.data.status === 'success') {
                     const issuesData = response.data.data || [];
+                    issueTotal.value = response.data.total
 
                     // Compatibility: enrich old issues lacking brief fields
                     for (const issue of issuesData) {
@@ -1883,8 +2037,27 @@ const app = createApp({
             } catch (error) {
                 console.error('获取问题单数据失败:', error);
                 issues.value = [];
+            } finally {
+                issuesLoading.value = false;
             }
         };
+
+        // 切换分类重置到第一页
+        const issuesFilterByCategory = () => {
+            issuePage.value = 1
+            fetchIssues()
+        }
+
+        const handleSizeChange = (val) => {
+            issuePageSize.value = val
+            issuePage.value = 1
+            fetchIssues()
+        }
+
+        const handleCurrentChange = (val) => {
+            issuePage.value = val
+            fetchIssues()
+        }
 
         const fetchProjectMetadata = async () => {
             if (!projectPath.value) {
@@ -1903,7 +2076,7 @@ const app = createApp({
 
                     allAlignments.value = {};
                     await fetchAlignments();
-                    await fetchAlignmentSidebarPage(true, alignType.value);
+                    await fetchAlignmentSidebarPage();
                     await fetchSidebarBlocksPage(true);
                 } else {
                     ElMessage.error(`加载项目元数据失败: ${response.data.message}`);
@@ -1930,7 +2103,8 @@ const app = createApp({
                         selectedDocFile.value = fileName;
                         selectedDocRawContent.value = '';
                         docPageRanges.value = [];
-                        await renderDocPage(1, fileName);
+//                        await renderDocPage(1, fileName);
+                        await fetchDocFiles();
 
                         if (isFiltered.value) {
                             filteredAlignments.value = null;
@@ -1939,7 +2113,7 @@ const app = createApp({
 
                         await fetchAlignments();
                         if (rightSidebarMode.value === 'alignment') {
-                            await fetchAlignmentSidebarPage(true, alignType.value);
+                            await fetchAlignmentSidebarPage();
                         } else if (blockType.value === 'doc' || viewMode.value === 'current') {
                             await fetchSidebarBlocksPage(true);
                         }
@@ -1947,11 +2121,12 @@ const app = createApp({
                         selectedCodeFile.value = fileName;
                         selectedCodeRawContent.value = '';
                         codePageRanges.value = [];
-                        await renderCodePage(1, fileName);
+//                        await renderCodePage(1, fileName);
+                        await fetchCodeFiles();
 
                         await fetchAlignments();
                         if (rightSidebarMode.value === 'alignment') {
-                            await fetchAlignmentSidebarPage(true, alignType.value);
+                            await fetchAlignmentSidebarPage();
                         } else if (blockType.value === 'code' || viewMode.value === 'current') {
                             await fetchSidebarBlocksPage(true);
                         }
@@ -2977,18 +3152,18 @@ const app = createApp({
 
 
             } catch (error) {
-                if (errorCount.value >= errorMax) {
-                    clearInterval(pollingTimer.value)
-                    pollingTimer.value = null
-                    isAutoAligning.value = false;
-                    stopProgress();
-                    await clearTaskState()
-                    ElMessageBox.alert('查询进度失败!', '提示', {
-                            confirmButtonText: '知道了',
-                            type: 'error'
-                    });
-                }
-                errorCount.value++
+
+                clearInterval(pollingTimer.value)
+                pollingTimer.value = null
+                isAutoAligning.value = false;
+                stopProgress();
+                await clearTaskState()
+                ElMessageBox.alert('网络发生波动，请从新发起任务!', '提示', {
+                        confirmButtonText: '知道了',
+                        type: 'error'
+                });
+
+//                errorCount.value++
 
 //                ElMessage.warning(`查询进度失败: ${error.message}`);
             }
@@ -3209,11 +3384,9 @@ const app = createApp({
             };
         };
 
-        const alignType = ref('req2code')
-
         watch(alignType, (newType) => {
             alignmentPage.value = 1;
-            fetchAlignmentSidebarPage(true, newType)
+            fetchAlignmentSidebarPage()
         })
         const sidebarAlignments = computed(() => {
             if (isFiltered.value && filteredAlignments.value) {
@@ -3470,7 +3643,7 @@ const app = createApp({
 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
-                await fetchAlignmentSidebarPage(false, alignType.value);
+                await fetchAlignmentSidebarPage();
                 await fetchSidebarBlocksPage(false);
 
                 ElMessage.success('对齐关系创建成功');
@@ -3492,7 +3665,7 @@ const app = createApp({
         const refreshAlignments = async () => {
             try {                
                 await fetchAlignments();
-                await fetchAlignmentSidebarPage(false, alignType.value);
+                await fetchAlignmentSidebarPage();
             } catch (error) {
                 console.error('刷新对齐关系失败:', error);
                 ElMessage.error(`刷新失败: ${error.message}`);
@@ -3507,14 +3680,14 @@ const app = createApp({
 
         watch(statusFilters, async () => {
             if (rightSidebarMode.value === 'alignment') {
-                await fetchAlignmentSidebarPage(true, alignType.value);
+                await fetchAlignmentSidebarPage();
             }
         }, { deep: true });
 
         watch([viewMode, rightSidebarMode, blockType], async () => {
             currentSelectedBlockIndex.value = -1;
             if (rightSidebarMode.value === 'alignment') {
-                await fetchAlignmentSidebarPage(true, alignType.value);
+                await fetchAlignmentSidebarPage();
             } else {
                 await fetchSidebarBlocksPage(true);
             }
@@ -3524,7 +3697,7 @@ const app = createApp({
             currentDocBlocksForHighlight.value = [];
             currentCodeBlocksForHighlight.value = [];
             if (rightSidebarMode.value === 'alignment') {
-                await fetchAlignmentSidebarPage(true, alignType.value);
+                await fetchAlignmentSidebarPage();
             } else {
                 await fetchSidebarBlocksPage(true);
             }
@@ -3535,7 +3708,7 @@ const app = createApp({
             if (targetPage === alignmentPage.value) return;
             alignmentPage.value = targetPage;
             if (rightSidebarMode.value === 'alignment') {
-                await fetchAlignmentSidebarPage(false, alignType.value);
+                await fetchAlignmentSidebarPage();
             }
         };
 
@@ -4594,7 +4767,7 @@ const app = createApp({
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
                 await fetchAlignments();
-                await fetchAlignmentSidebarPage(false, alignType.value);
+                await fetchAlignmentSidebarPage();
                 await fetchSidebarBlocksPage(false);
                 
                 ElMessage.success('已添加到对齐关系');
@@ -4648,7 +4821,7 @@ const app = createApp({
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
                 await fetchAlignments();
-                await fetchAlignmentSidebarPage(false, alignType.value);
+                await fetchAlignmentSidebarPage();
                 await fetchSidebarBlocksPage(false);
                 
                 ElMessage.success('已添加到对齐关系');
@@ -5254,19 +5427,18 @@ const app = createApp({
             if (isReverseRequirement.value) {
                 // 停止审查
                 isReverseRequirement.value = false;
-//                await axios.post(`/api/stop-task/${ReviewTaskId.value}`)
-//                clearInterval(pollingTimerReview.value)
-//                pollingTimerReview.value = null
-//                isAutoReviewing.value = false;
-//                reviewProgress.value = { current: 0, total: 0 };
-//                // 停止进度显示
-//                stopProgress();
-//                clearReviewTaskState()
+                await axios.post(`/api/stop-task/${ReverseTaskId.value}`)
+                clearInterval(pollingTimerReverse.value)
+                pollingTimerReverse.value = null
+                isReverseRequirement.value = false;
+                reverseProgress.value = { current: 0, total: 0 };
+                // 停止进度显示
+                stopProgress();
+                await clearReverseTaskState()
                 ElMessage.info('停止');
             } else {
 
                 showReverseDialog.value = false;
-                isReverseRequirement.value = true;
                 // 开始生成
                 await startReverseRequirement();
                 ElMessage.info('开始');
@@ -5282,19 +5454,20 @@ const app = createApp({
                     project_id: projectId,
                     selected_reverse: selectedReverse.value
                 });
-//                if (Response.data.status === 'success'){
-//
-//                    ReverseTaskId.value = reviewResponse.data.task_id;
-//                    ReverseCurrentTotal.value = totalReviewCount
-//                    startProgress('需求反生成', totalReviewCount, reviewedCount);
-//                    ReverseProgress.value.total = totalReviewCount;
-//                    ReverseProgress.value.current = reviewedCount;
-//
-//                    // 开始轮询进度
-//                    pollingTimerReverse.value = setInterval(getReverseProgress, 2000);
-//                } else {
-//                    ElMessage.warning('任务启动失败')
-//                }
+                if (Response.data.status === 'success'){
+                    let stats = Response.data.stats
+                    isReverseRequirement.value = true;
+                    ReverseTaskId.value = Response.data.task_id;
+                    ReverseCurrentTotal.value = stats.total
+                    startProgress('需求反生成', stats.total, stats.generated);
+                    reverseProgress.value.total = stats.total;
+                    reverseProgress.value.current = stats.generated;
+
+                    // 开始轮询进度
+                    pollingTimerReverse.value = setInterval(getReverseProgress, 2000);
+                } else {
+                    ElMessage.warning(`任务启动失败: ${Response.data.message}`);
+                }
 
             } catch (err) {
 
@@ -5362,18 +5535,21 @@ const app = createApp({
                     }
                 }
             } catch (error) {
-                if (errorCount.value >= errorMax) {
-                    clearInterval(pollingTimerReverse.value)
-                    pollingTimerReverse.value = null
-                    isReverseRequirement.value = false;
-                    reverseProgress.value = { current: 0, total: 0 };
-                    stopProgress();
-                    await clearReverseTaskState()
-                    ElMessage.warning(`查询进度失败: ${error.message}`);
-                }
+
+                clearInterval(pollingTimerReverse.value)
+                pollingTimerReverse.value = null
+                isReverseRequirement.value = false;
+                reverseProgress.value = { current: 0, total: 0 };
+                stopProgress();
+                await clearReverseTaskState()
+                ElMessageBox.alert('网络发生波动，请从新发起任务!', '提示', {
+                        confirmButtonText: '知道了',
+                        type: 'error'
+                });
+
 //                console.log(errorCount.value)
 //                console.log(errorMax)
-                errorCount.value++
+//                errorCount.value++
             } finally {
 //                pollCountReview.value++
             }
@@ -5646,7 +5822,7 @@ const app = createApp({
         const refreshAlignmentAndBlockViews = async (blockTypeForMenu = null) => {
             await fetchAllAlignments();
             await fetchAlignments();
-            await fetchAlignmentSidebarPage(false, alignType.value);
+            await fetchAlignmentSidebarPage();
             await fetchSidebarBlocksPage(false);
 
             if (blockTypeForMenu === 'doc') {
@@ -5754,8 +5930,8 @@ const app = createApp({
         };
 
         const deleteAlignmentAndJumpNext = () => {
-            if (!contextMenu.value.selectedAlignment) return;
-            const alignmentToDelete = contextMenu.value.selectedAlignment;
+            if (!selectedReviewAlignment.value) return;
+            const alignmentToDelete = selectedReviewAlignment.value;
 
             ElMessageBox.confirm(`确定要取消对齐关系 "${alignmentToDelete.name}" 吗？`, '取消对齐', {
                 confirmButtonText: '确定',
@@ -5769,7 +5945,7 @@ const app = createApp({
 //                    showReviewDialog.value = false;
                     // 跳转到下一个
                     await navigateReviewDetail(1);
-                    await fetchAlignmentSidebarPage(false, alignType.value);
+                    await fetchAlignmentSidebarPage();
                 } catch (err) {
                     console.error("Error deleting alignment:", err);
                     ElMessage.error(`删除失败: ${err.message}`);
@@ -5777,6 +5953,43 @@ const app = createApp({
             }).catch(() => { });
         }
 
+        const deleteBlockAndJumpNext = () => {
+            const block = contextMenu.value.selectedBlock;
+            const blockTypeForMenu = contextMenu.value.selectedBlockType;
+            if (!block || !blockTypeForMenu) return;
+
+
+                ElMessageBox.confirm('确定删除当前代码块吗？', '删除块',
+                    {
+                        confirmButtonText: '删除',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
+                    }
+                ).then(async () => {
+                    try {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const projectId = urlParams.get('project_id');
+                        const response = await axios.post('/api/delete-block', {
+                            projectPath: projectPath.value,
+                            blockType: blockTypeForMenu,
+                            blockData: block,
+                            project_id: projectId
+                        });
+                        if (response.data.status === 'success') {
+                            hideContextMenu();
+                            await navigateReviewBlock(1)
+                            await refreshAlignmentAndBlockViews(blockTypeForMenu);
+                            ElMessage.success(response.data.message || '删除成功');
+                        } else {
+                            ElMessage.warning(response.data.message || '删除失败');
+                        }
+                    } catch (err) {
+                        console.error("Error deleting alignment:", err);
+                        ElMessage.error(`删除失败: ${err.message}`);
+                    }
+                }).catch(() => { });
+        };
 
         const deleteAlignment = () => {
             if (!contextMenu.value.selectedAlignment) return;
@@ -5841,6 +6054,9 @@ const app = createApp({
         
         // 可选：在组件挂载时自动恢复
         onMounted(() => {
+          // 问题单分页
+          fetchIssues()
+
           // 如果需要默认页是“对齐”，可以设置
           innerActiveA.value = 'req-code-align'
           innerActiveB.value = 'req-code-align-kbs'
@@ -5848,12 +6064,12 @@ const app = createApp({
 
           forceResetState()
           forceResetReviewState()
-//          forceResetReverseState()
+          forceResetReverseState()
 
           // 恢复当前项目的任务
           restoreTaskState()
           restoreReviewTaskState()
-//          restoreReverseTaskState()
+          restoreReverseTaskState()
         })
 
         onBeforeUnmount(() => {
@@ -5863,6 +6079,8 @@ const app = createApp({
              pollingTimer.value = null
              clearInterval(pollingTimerReview.value)
              pollingTimerReview.value = null
+             clearInterval(pollingTimerReverse.value)
+             pollingTimerReverse.value = null
          }
         })
 
@@ -6904,7 +7122,7 @@ const app = createApp({
             await loadAndRenderDocBlocks();
             await loadAndRenderCodeBlocks();
             await fetchAlignments();
-            await fetchAlignmentSidebarPage(true, alignType.value);
+            await fetchAlignmentSidebarPage();
             await fetchIssues();
             
             // 添加点击高亮需求片段的事件监听器
@@ -6966,6 +7184,7 @@ const app = createApp({
             isAutoReviewing.value = false;
             alignmentProgress.value = { current: 0, total: 0 };
             reviewProgress.value = { current: 0, total: 0 };
+            reverseProgress.value = { current: 0, total: 0 };
 
             // 弹窗
             showAlignmentDialog.value = false;
@@ -7600,7 +7819,8 @@ const app = createApp({
                 if (!nextAlignment) {
                     continue;
                 }
-
+                contextMenu.value.selectedBlock = nextBlock;
+                contextMenu.value.selectedBlockType = blockListType;
                 syncReviewDialogContext({
                     source: 'block',
                     block: nextBlock,
@@ -7664,6 +7884,19 @@ const app = createApp({
                 return;
             }
             await navigateReviewAlignment(step);
+        };
+
+        const deleteDetailAndJumpNext = async () => {
+            if (reviewDialogSource.value === 'block') {
+                deleteBlockAndJumpNext()
+                return;
+            }
+            if (reviewDialogSource.value === 'issue') {
+//                ElMessage.info('issue')
+//                await deleteSelectedIssue()
+                return;
+            }
+            deleteAlignmentAndJumpNext();
         };
 
         /***********************
@@ -8081,7 +8314,10 @@ const app = createApp({
                     }
 
                 } catch (error) {
-                    console.error('轮询失败', error)
+                    ElMessageBox.alert('网络发生波动，请从新发起任务!', '提示', {
+                            confirmButtonText: '知道了',
+                            type: 'error'
+                    });
                 }
             }, 2000)
         }
@@ -8108,6 +8344,35 @@ const app = createApp({
          * 暴露到模板
          ***********************/
         return {
+            // code分页
+            codeFileHandleCurrentChange,
+            codePage,
+            codeTotal,
+            // doc分页
+            docFileHandleCurrentChange,
+            docPage,
+            docTotal,
+            // 问题单分类
+            issuesFilterByCategory,
+            issuesSelectedCategory,
+            issuesCategoryOptions,
+            issueCategoryMap,
+            // 对齐分页
+            alignHandleSizeChange,
+            alignHandleCurrentChange,
+            alignmentPage,
+            alignmentPageSize,
+            alignmentTotal,
+            // 块加载提示
+            blockLoading,
+            issuesLoading,
+            // 问题单分页
+            zhCnLocale,
+            issuePage,
+            issuePageSize,
+            issueTotal,
+            handleSizeChange,
+            handleCurrentChange,
             // 问题单导出列表
             exportTasks,
             isRefreshing,
@@ -8121,6 +8386,7 @@ const app = createApp({
             isReverseRequirement,
             RequirementReverse,
             selectedReverse,
+            reverseProgress,
             alignType,
 
             docTocRef,
@@ -8128,6 +8394,9 @@ const app = createApp({
             isDocTocCollapsed,
             scrollToDocRange,
             deleteAlignmentAndJumpNext,
+            deleteBlockAndJumpNext,
+            deleteDetailAndJumpNext,
+            reviewDialogSource,
             sectionRef,
             tocRef,
             activeRangeId,
@@ -8160,6 +8429,13 @@ const app = createApp({
             docBlockPage,
             docBlockTotal,
             docBlockTotalPages,
+            // 块分页-新增
+            blockHandleSizeChange,
+            blockHandleCurrentChange,
+            blockCurrentPage,
+            blockCurrentPageSize,
+            blockCurrentTotal,
+            // --
             codeBlockPage,
             codeBlockTotal,
             codeBlockTotalPages,

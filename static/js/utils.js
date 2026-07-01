@@ -338,7 +338,7 @@ export function getSourceDocumentRange(rootElement, range) {
     const startOffset = involvedElements[0].start;
     const endOffset = involvedElements[involvedElements.length - 1].end;
     
-    console.log('Selected complete parse elements:', involvedElements.map(el => ({start: el.start, end: el.end})));
+    //console.log('Selected complete parse elements:', involvedElements.map(el => ({start: el.start, end: el.end})));
     
     return [startOffset, endOffset];
 }

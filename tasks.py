@@ -262,10 +262,9 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
                 issues_list = []
             
             # 需求反生成
-            #generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
-            generated_requirement = ""
-            mermaid_code =""
-            
+            # generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+            generated_requirement, mermaid_code = '', ''
+
             conn = get_db_celery()
             cur = conn.cursor()
             try:
@@ -329,10 +328,32 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
                         content = one.get('description') or one.get('content') or ''
                         status = one.get('status') or 'unconfirmed'
 
+                        # cur.execute(
+                            # 'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
+                            # 'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,category,createdAt,updatedAt) '
+                            # 'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                            # (
+                                # user_id,
+                                # project_id,
+                                # display_id,
+                                # alignment.get('id'),
+                                # severity,
+                                # title,
+                                # content,
+                                # status,
+                                # related_doc_file,
+                                # alignment.get('id'),
+                                # brief_req,
+                                # brief_code,
+                                # alignment.get('align_type') if alignment.get('align_type') else 'codeReview'
+                            # )
+                        # )
+                        
+                        
                         cur.execute(
                             'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
-                            'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-                            'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                            'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,category,createdAt,updatedAt) '
+                            'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
                             (
                                 user_id,
                                 project_id,
@@ -342,10 +363,11 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
                                 title,
                                 content,
                                 status,
-                                related_doc_file,
+                                item['doc_file'],
                                 alignment.get('id'),
                                 brief_req,
-                                brief_code
+                                brief_code,
+                                alignment.get('align_type') if alignment.get('align_type') else 'codeReview'
                             )
                         )
 
@@ -370,150 +392,150 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
     )
 
 
-@celery.task
-def review_alignment_addprompt_task(project_path, alignment, project_id, user_id, doc_file=None, user_prompt=None):
-    # 获取选定的 knowledge base
-    selected_rule_kbs = []
-    selected_issue_kbs = []
-    try:
-        metadata_file = os.path.join(project_path, 'metadata.json')
-        if os.path.exists(metadata_file):
-            with open(metadata_file, 'r', encoding='utf-8') as f:
-                metadata = json.load(f)
-                selected_kbs = metadata.get('selected_kbs', [])
-                selected_rule_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'rule']
-                selected_issue_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'issue']
-    except Exception as e:
-        logger.error(str(e), exc_info=True)
-
-    # 检索上下文
-    retrieved_rules = []
-    retrieved_issues = []
-
-    doc_ranges = alignment.get('docRanges', [])
-    code_ranges = alignment.get('codeRanges', [])
-    reviewThoughts = alignment.get('reviewThoughts', [])
-
-    # 构造查询文本
-    query_text = ""
-    if doc_ranges:
-        query_text += doc_ranges[0].get('content', '') + "\n"
-    if code_ranges:
-        query_text += code_ranges[0].get('content', '')
-
-    # 检索规则
-    for kb_name in selected_rule_kbs:
-        collection = rag_engine.get_collection('rule', kb_name)
-        if collection:
-            results = collection.query(query_texts=[query_text], n_results=3)
-            if results and results['documents']:
-                for doc in results['documents'][0]:
-                    retrieved_rules.append(doc)
-
-    # 检索问题单
-    for kb_name in selected_issue_kbs:
-        collection = rag_engine.get_collection('issue', kb_name)
-        if collection:
-            results = collection.query(query_texts=[query_text], n_results=3)
-            if results and results['documents']:
-                for doc in results['documents'][0]:
-                    retrieved_issues.append(doc)
-
-    # 1. 调用 agent 获取审查结果
-    review_process, issue = query_review_result_by_feedback(
-        doc_ranges,
-        code_ranges,
-        reviewThoughts,
-        user_prompt,
-        rules=retrieved_rules,
-        issues=retrieved_issues,
-        user_id=user_id,
-        project_path=project_path
-    )
-
-    # 2. 更新对齐关系
-    alignment['isReviewed'] = True
-    alignment['reviewThoughts'] = review_process
-
-    if isinstance(issue, list):
-        issues_list = [x for x in issue if isinstance(x, dict)]
-    elif isinstance(issue, dict):
-        issues_list = [issue]
-    else:
-        issues_list = []
-    
-    # 需求反生成
-    generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
-    
-    conn = get_db_celery()
-    cur = conn.cursor()
-
-    try:
-        cur.execute(
-            'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP '
-            'WHERE id=%s and project_id=%s',
-            (alignment.get('reviewThoughts') or '', generated_requirement or '', mermaid_code or '', alignment.get('id'), project_id)
-        )
-
-        if issues_list:
-            cur.execute(f"SELECT displayId FROM issues WHERE displayId LIKE 'ISSUE-%' and project_id={project_id}")
-            used = set()
-            for r in cur.fetchall():
-                disp = r['displayId']
-                if disp and disp.startswith('ISSUE-'):
-                    try:
-                        used.add(int(disp.split('-')[1]))
-                    except Exception as e:
-                        logger.error(str(e), exc_info=True)
-
-            next_number = (max(used) + 1) if used else 1
-
-            brief_req = _safe_first_range_field(alignment.get('docRanges', []), 'content')
-            brief_code = _safe_first_range_field(alignment.get('codeRanges', []), 'content')
-            related_doc_file = (
-                doc_file
-                or _safe_first_range_field(alignment.get('docRanges', []), 'filename')
-                or _safe_first_range_field(alignment.get('codeRanges', []), 'filename')
-            )
-
-            for one in issues_list:
-                display_id = f"ISSUE-{next_number:03d}"
-                next_number += 1
-
-                severity = one.get('level') or one.get('severity')
-                title = one.get('summary') or one.get('title') or ''
-                content = one.get('description') or one.get('content') or ''
-                status = one.get('status') or 'unconfirmed'
-
-                cur.execute(
-                    'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
-                    'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-                    'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                    (
-                        user_id,
-                        project_id,
-                        display_id,
-                        alignment.get('id'),
-                        severity,
-                        title,
-                        content,
-                        status,
-                        related_doc_file,
-                        alignment.get('id'),
-                        brief_req,
-                        brief_code
-                    )
-                )
-
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        logger.error(f"审查失败 user_prompt2: {str(e)}", exc_info=True)
-        return {"status": "error", "message": f"Failed to save review result: {str(e)}"}
-    finally:
-        conn.close()
-
-    return {"status": "success", "createdIssues": len(issues_list)}
+# @celery.task
+# def review_alignment_addprompt_task(project_path, alignment, project_id, user_id, doc_file=None, user_prompt=None):
+#     # 获取选定的 knowledge base
+#     selected_rule_kbs = []
+#     selected_issue_kbs = []
+#     try:
+#         metadata_file = os.path.join(project_path, 'metadata.json')
+#         if os.path.exists(metadata_file):
+#             with open(metadata_file, 'r', encoding='utf-8') as f:
+#                 metadata = json.load(f)
+#                 selected_kbs = metadata.get('selected_kbs', [])
+#                 selected_rule_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'rule']
+#                 selected_issue_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'issue']
+#     except Exception as e:
+#         logger.error(str(e), exc_info=True)
+#
+#     # 检索上下文
+#     retrieved_rules = []
+#     retrieved_issues = []
+#
+#     doc_ranges = alignment.get('docRanges', [])
+#     code_ranges = alignment.get('codeRanges', [])
+#     reviewThoughts = alignment.get('reviewThoughts', [])
+#
+#     # 构造查询文本
+#     query_text = ""
+#     if doc_ranges:
+#         query_text += doc_ranges[0].get('content', '') + "\n"
+#     if code_ranges:
+#         query_text += code_ranges[0].get('content', '')
+#
+#     # 检索规则
+#     for kb_name in selected_rule_kbs:
+#         collection = rag_engine.get_collection('rule', kb_name)
+#         if collection:
+#             results = collection.query(query_texts=[query_text], n_results=3)
+#             if results and results['documents']:
+#                 for doc in results['documents'][0]:
+#                     retrieved_rules.append(doc)
+#
+#     # 检索问题单
+#     for kb_name in selected_issue_kbs:
+#         collection = rag_engine.get_collection('issue', kb_name)
+#         if collection:
+#             results = collection.query(query_texts=[query_text], n_results=3)
+#             if results and results['documents']:
+#                 for doc in results['documents'][0]:
+#                     retrieved_issues.append(doc)
+#
+#     # 1. 调用 agent 获取审查结果
+#     review_process, issue = query_review_result_by_feedback(
+#         doc_ranges,
+#         code_ranges,
+#         reviewThoughts,
+#         user_prompt,
+#         rules=retrieved_rules,
+#         issues=retrieved_issues,
+#         user_id=user_id,
+#         project_path=project_path
+#     )
+#
+#     # 2. 更新对齐关系
+#     alignment['isReviewed'] = True
+#     alignment['reviewThoughts'] = review_process
+#
+#     if isinstance(issue, list):
+#         issues_list = [x for x in issue if isinstance(x, dict)]
+#     elif isinstance(issue, dict):
+#         issues_list = [issue]
+#     else:
+#         issues_list = []
+#
+#     # 需求反生成
+#     generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+#
+#     conn = get_db_celery()
+#     cur = conn.cursor()
+#
+#     try:
+#         cur.execute(
+#             'UPDATE alignments SET isReviewed=1, reviewThoughts=%s, GenReq=%s, GenMermaid=%s, updatedAt=CURRENT_TIMESTAMP '
+#             'WHERE id=%s and project_id=%s',
+#             (alignment.get('reviewThoughts') or '', generated_requirement or '', mermaid_code or '', alignment.get('id'), project_id)
+#         )
+#
+#         if issues_list:
+#             cur.execute(f"SELECT displayId FROM issues WHERE displayId LIKE 'ISSUE-%' and project_id={project_id}")
+#             used = set()
+#             for r in cur.fetchall():
+#                 disp = r['displayId']
+#                 if disp and disp.startswith('ISSUE-'):
+#                     try:
+#                         used.add(int(disp.split('-')[1]))
+#                     except Exception as e:
+#                         logger.error(str(e), exc_info=True)
+#
+#             next_number = (max(used) + 1) if used else 1
+#
+#             brief_req = _safe_first_range_field(alignment.get('docRanges', []), 'content')
+#             brief_code = _safe_first_range_field(alignment.get('codeRanges', []), 'content')
+#             related_doc_file = (
+#                 doc_file
+#                 or _safe_first_range_field(alignment.get('docRanges', []), 'filename')
+#                 or _safe_first_range_field(alignment.get('codeRanges', []), 'filename')
+#             )
+#
+#             for one in issues_list:
+#                 display_id = f"ISSUE-{next_number:03d}"
+#                 next_number += 1
+#
+#                 severity = one.get('level') or one.get('severity')
+#                 title = one.get('summary') or one.get('title') or ''
+#                 content = one.get('description') or one.get('content') or ''
+#                 status = one.get('status') or 'unconfirmed'
+#
+#                 cur.execute(
+#                     'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
+#                     'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
+#                     'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+#                     (
+#                         user_id,
+#                         project_id,
+#                         display_id,
+#                         alignment.get('id'),
+#                         severity,
+#                         title,
+#                         content,
+#                         status,
+#                         related_doc_file,
+#                         alignment.get('id'),
+#                         brief_req,
+#                         brief_code
+#                     )
+#                 )
+#
+#         conn.commit()
+#     except Exception as e:
+#         conn.rollback()
+#         logger.error(f"审查失败 user_prompt2: {str(e)}", exc_info=True)
+#         return {"status": "error", "message": f"Failed to save review result: {str(e)}"}
+#     finally:
+#         conn.close()
+#
+#     return {"status": "success", "createdIssues": len(issues_list)}
 
 
 @celery.task(bind=True)
@@ -931,8 +953,47 @@ def gen_requirement(doc_ranges, code_ranges):
 
 
 @celery.task(bind=True)
-def gen_requirement_task(self, alignments, project_id):
-    pass
+def gen_requirement_task(self, alignments, total, generated):
+    db = get_db_celery()
+    cursor = db.cursor()
+    try:
+        for i, alignment in enumerate(alignments, generated):
+            # if alignment['GenReq']:
+            #     continue
+            self.update_state(
+                state="PROGRESS",
+                meta={
+                    'current': i,
+                    'total': total,
+                    'name': alignment['name'],
+                    'status': f'任务进行中{i}/{total}...'
+                }
+            )
+            code_ranges = json.loads(alignment['codeRanges'])
+            doc_ranges = json.loads(alignment['docRanges'])
+            # 需求反生成
+            generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+
+            cursor.execute("""
+                UPDATE alignments
+                SET GenReq = %s,
+                    GenMermaid = %s
+                WHERE id = %s
+            """, (generated_requirement, mermaid_code, alignment['id']))
+            db.commit()
+        self.update_state(
+            state="SUCCESS",
+            meta={}
+        )
+    except Exception as e:
+        self.update_state(
+            state="FAILURE",
+            message=f"需求反生成失败:{e}"
+        )
+        db.rollback()
+        logger.error(f"需求反生成失败:{str(e)}", exc_info=True)
+    finally:
+        db.close()
 
 
 @celery.task(bind=True)
@@ -974,7 +1035,9 @@ def export_issues_task(self, data, docx_path):
             replacements["BBBBB"] = f"{form_data.get('issueId', '')}_1"
             replacements["CCCCC"] = form_data.get('productId', '')
             replacements["DDDDD"] = form_data.get('discoveryMethod', '')
-            replacements["EEEEE"] = form_data.get('issueTracking', '')
+            #replacements["EEEEE"] = form_data.get('issueTracking', '')
+            replacements["EEEEE"] = f"{form_data.get('issueTracking', '')}_1"
+            
             replacements["GGGGG"] = current_date
 
             # 处理问题类别
@@ -994,17 +1057,27 @@ def export_issues_task(self, data, docx_path):
 
             # 替换第一个文档的占位符
             replace_text_in_docx(merged_doc, replacements)
+            
+            # 【新增代码开始】
+            from docx.oxml.ns import qn
+            from docx.oxml import OxmlElement
+            
+            # 创建分页符元素 <w:br w:type="page"/>
+            page_break = OxmlElement('w:br')
+            page_break.set(qn('w:type'), 'page')
+            merged_doc.element.body.append(page_break)
 
             cursor.execute("""
                         UPDATE export_tasks SET status = 'processing'
                         WHERE task_id = %s
                     """, (self.request.id,))
             db.commit()
-
+            
+            
             # 处理剩余的问题单
             for i, issue in enumerate(issues[1:], 2):
                 # 添加分页符
-                # merged_doc.add_page_break()
+                #merged_doc.add_page_break()
 
                 # 为每个问题单加载新的模板并填充
                 temp_doc = Document(template_path)
@@ -1018,7 +1091,8 @@ def export_issues_task(self, data, docx_path):
                 replacements["BBBBB"] = f"{form_data.get('issueId', '')}_{i}"
                 replacements["CCCCC"] = form_data.get('productId', '')
                 replacements["DDDDD"] = form_data.get('discoveryMethod', '')
-                replacements["EEEEE"] = form_data.get('issueTracking', '')
+                replacements["EEEEE"] = f"{form_data.get('issueTracking', '')}_{i}"#form_data.get('issueTracking', '')
+                
                 replacements["GGGGG"] = current_date
 
                 # 处理问题类别
@@ -1042,7 +1116,12 @@ def export_issues_task(self, data, docx_path):
                 # 直接拼接填充好的页面内容到合并文档
                 for element in temp_doc.element.body:
                     merged_doc.element.body.append(element)
-
+                    
+                # 添加分页符
+                page_break = OxmlElement('w:br')
+                page_break.set(qn('w:type'), 'page')
+                merged_doc.element.body.append(page_break)
+                
             # 保存合并后的文档
             merged_doc.save(docx_path)
         else:

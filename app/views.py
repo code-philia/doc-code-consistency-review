@@ -1604,71 +1604,124 @@ def auto_markdown_split():
         doc_repo_path = os.path.join(project_path, 'doc_repo')
         if not os.path.exists(doc_repo_path):
             return jsonify({'status':'error', 'message': '文档目录不存在'})
-
-        # 查找所有markdown文件
-        md_files = []
-        for root, dirs, files in os.walk(doc_repo_path):
-            for file in files:
-                if file.lower().endswith('.md'):
-                    md_files.append(os.path.join(root, file))
         
-        # 如果用户上传的不是markdown文件，就去格式转换后的文件夹中找对应的markdown文件
-        if not md_files:
-            # 获取项目中格式转换后的文档文件
-            doc_repo_path = os.path.join(project_path, 'doc_repo_converted')
-            if not os.path.exists(doc_repo_path):
-                return jsonify({'status':'error', 'message': '文档目录不存在'})
+        annotations_dir = os.path.join(project_path, 'annotations')
+        
+        if os.path.exists(annotations_dir): 
+            json_files = [f for f in os.listdir(annotations_dir) if f.endswith('.json')]
+            if json_files:
+            
+                annotation_file = os.path.join(annotations_dir, json_files[0])
+                with open(annotation_file, 'r', encoding='utf-8') as f:
+                    annotation_data = json.load(f)
 
+                # 解析docFiles建立映射
+                doc_files = annotation_data.get('docFiles', [])
+                doc_id_to_name = {doc['id']: doc['name'] for doc in doc_files}
+
+                # 解析annotations构建需求点
+                annotations = annotation_data.get('annotations', [])
+                processed_count = 0
+
+                req_blocks = []
+
+                next_block_id = 1
+                for annotation in annotations:
+                    doc_ranges = annotation.get('docRanges', [])
+                    category = annotation.get('category')
+
+
+                    # 获取文档ID
+                    document_id = doc_ranges[0].get('documentId')
+                    doc_name = doc_id_to_name.get(document_id)
+
+                    if not doc_name:
+                        continue
+
+                    # 构建需求块对象 (扁平化，每个docRange作为一个独立的块)
+                    for doc_range in doc_ranges:
+                        req_block = {
+                            'id': next_block_id,
+                            'name':category,
+                            'type': category,
+                            'filename': doc_name,
+                            'documentId': doc_name,
+                            'content': doc_range.get('content'),
+                            'start': doc_range.get('start'),
+                            'end': doc_range.get('end')
+                        }
+                        req_blocks.append(req_block)
+                        processed_count += 1
+                        next_block_id += 1
+
+                replace_doc_blocks(project_path, req_blocks)
+        
+        else:
+        
             # 查找所有markdown文件
             md_files = []
             for root, dirs, files in os.walk(doc_repo_path):
                 for file in files:
                     if file.lower().endswith('.md'):
                         md_files.append(os.path.join(root, file))
+            
+            # 如果用户上传的不是markdown文件，就去格式转换后的文件夹中找对应的markdown文件
             if not md_files:
-                return jsonify({'status':'error', 'message': '未找到Markdown文档'})
+                # 获取项目中格式转换后的文档文件
+                doc_repo_path = os.path.join(project_path, 'doc_repo_converted')
+                if not os.path.exists(doc_repo_path):
+                    return jsonify({'status':'error', 'message': '文档目录不存在'})
 
-        processed_count = 0
-        req_blocks = []
+                # 查找所有markdown文件
+                md_files = []
+                for root, dirs, files in os.walk(doc_repo_path):
+                    for file in files:
+                        if file.lower().endswith('.md'):
+                            md_files.append(os.path.join(root, file))
+                if not md_files:
+                    return jsonify({'status':'error', 'message': '未找到Markdown文档'})
 
-        # 处理每个markdown文件
-        next_block_id = 1
-        for md_file in md_files:
-            with open(md_file, 'r', encoding='utf-8') as f:
-                md_content = f.read()
+            processed_count = 0
+            req_blocks = []
 
-            # 分解markdown内容
-            doc_name = os.path.basename(md_file)
-            blocks = chunk_markdown(doc_name, md_content)
+            # 处理每个markdown文件
+            next_block_id = 1
+            for md_file in md_files:
+                with open(md_file, 'r', encoding='utf-8') as f:
+                    md_content = f.read()
 
-            if not blocks:
-                continue
+                # 分解markdown内容
+                doc_name = os.path.basename(md_file)
+                blocks = chunk_markdown(doc_name, md_content)
+
+                if not blocks:
+                    continue
 
 
-            # 构建需求块
-            for block_info in blocks:
-                content = block_info['content']
-                if  '#' in content:
-                    first_line = content.split('\n')[0]
-                    chunk_name = first_line.lstrip('#')
-                else:
-                    chunk_name = _compact_title_from_text(content, 24)
+                # 构建需求块
+                for block_info in blocks:
+                    content = block_info['content']
+                    if  '#' in content:
+                        first_line = content.split('\n')[0]
+                        chunk_name = first_line.lstrip('#')
+                    else:
+                        chunk_name = _compact_title_from_text(content, 24)
 
-                req_block = {
-                    'id': next_block_id,
-                    'name': chunk_name,
-                    'type': block_info.get('type') or chunk_name,
-                    'filename': doc_name,
-                    'documentId': doc_name,
-                    'content': block_info['content'],
-                    'start': block_info['start'],
-                    'end': block_info['end']
-                }
-                req_blocks.append(req_block)
-                processed_count += 1
-                next_block_id += 1
+                    req_block = {
+                        'id': next_block_id,
+                        'name': chunk_name,
+                        'type': block_info.get('type') or chunk_name,
+                        'filename': doc_name,
+                        'documentId': doc_name,
+                        'content': block_info['content'],
+                        'start': block_info['start'],
+                        'end': block_info['end']
+                    }
+                    req_blocks.append(req_block)
+                    processed_count += 1
+                    next_block_id += 1
 
-        replace_doc_blocks(project_path, req_blocks)
+            replace_doc_blocks(project_path, req_blocks)
 
         return jsonify({
             'status': 'success',
@@ -2439,6 +2492,7 @@ def reverse_requirements():
     data = request.json
     project_id = data.get('project_id')
     selected_reverse = data.get('selected_reverse')
+    user_id = current_user.user_id
 
     # sql = "SELECT * FROM alignments WHERE project_id=%s"
     params = [int(project_id)]
@@ -2466,28 +2520,52 @@ def reverse_requirements():
     db = get_db()
     cursor = db.cursor()
 
+    # 查询统计
     stats_sql = f"""
         SELECT
             COUNT(*) as total,
             SUM(CASE WHEN COALESCE(GenReq, '') = '' THEN 1 ELSE 0 END) as pending,
             SUM(CASE WHEN COALESCE(GenReq, '') <> '' THEN 1 ELSE 0 END) as done
         FROM alignments
-        WHERE project_id = %s {where_extra}   
+        WHERE project_id = %s AND codeRanges != '[]' {where_extra}   
     """
-    print(stats_sql)
+    # print(stats_sql)
     cursor.execute(stats_sql, params)
     row = cursor.fetchone()
-    total_count = row['total']
-    pending_count = row['pending']
-    generated_count = row['done']
+
+    if not row['total'] or not row['pending']:
+        return jsonify({'status': 'error', 'message': '没有可以需求反生成的数据'})
+
+    # 查询数据
+    data_sql = f"SELECT * FROM alignments WHERE project_id = %s " \
+               f"AND codeRanges != '[]' AND (GenReq is null OR GenReq = '') {where_extra}"
+    cursor.execute(data_sql, params)
+    alignments = cursor.fetchall()
+
+    from tasks import gen_requirement_task
+    task = gen_requirement_task.delay(alignments, int(row['total']), int(row['done']))
+
+    # 先清理该项目旧的任务快照(防止残留)
+    cursor.execute("DELETE FROM user_task_snapshot WHERE user_id = %s AND project_id = %s",
+                   (user_id, project_id))
+
+    # 插入新的
+    cursor.execute("""INSERT INTO user_task_snapshot 
+                               (user_id, project_id, task_id, task_type, task1_total, current_total,
+                               state, title, is_running, task_category)
+                               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                   (
+                       user_id, project_id, task.id, 'single', int(row['total']), int(row['total']),
+                       'PENDING', '需求反生成', 1, 'reverse'
+                   ))
 
     return jsonify({
         "status": "success",
-        "task_id": 0,
+        "task_id": task.id,
         "stats": {
-            "total": total_count,
-            "pending": pending_count,
-            "generated": generated_count,
+            "total": row['total'],
+            "pending": row['pending'],
+            "generated": row['done'],
         }
     })
 
@@ -2532,7 +2610,6 @@ def review_alignment():
                        user_id, project_id, task.id, 'single', total_review_count, total_review_count,
                        'PENDING', '自动审查', 1, 'review'
                    ))
-
 
     return jsonify({"status": "success", "task_id": task.id})
 
@@ -2683,8 +2760,8 @@ def review_alignment_addprompt():
 
                 cur.execute(
                     'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
-                    'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt) '
-                    'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                    'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,category,createdAt,updatedAt) '
+                    'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
                     (
                         current_user.user_id,
                         project_id,
@@ -2697,7 +2774,8 @@ def review_alignment_addprompt():
                         related_doc_file if related_doc_file else alignment.get('codeRanges').get('filename'),
                         alignment.get('id'),
                         brief_req,
-                        brief_code
+                        brief_code,
+                        alignment.get('align_type') if alignment.get('align_type') else 'codeReview'
                     )
                 )
 
@@ -2911,6 +2989,7 @@ def get_alignments():
     status_filters = _parse_csv_query_arg(request.args.get('status_filters'))
     include_code_review = request.args.get('include_code_review')
     page = request.args.get('page', type=int)
+    page_size = request.args.get('page_size', type=int)
     align_type = request.args.get('align_type')
     print('get(`/project/alignments, project_id:', project_id)
     
@@ -2933,38 +3012,17 @@ def get_alignments():
         if align_type:
             filtered = [item for item in filtered if item.get('align_type') == align_type]
         if page:
-            paged = _paginate_items(filtered, page or 1, ALIGNMENT_SIDEBAR_PAGE_SIZE)
+            paged = _paginate_items(filtered, page or 1, page_size)
             return jsonify({
                 "status": "success",
                 "data": paged['items'],
-                "pagination": paged['pagination']
+                "total": paged['pagination']['total'],
+                "page": paged['pagination']['page'],
+                "page_size": paged['pagination']['page_size']
             }), 200
 
         result = {alignment['id']: alignment for alignment in filtered}
-        # conn = get_db()
-        # cur = conn.cursor()
-        #
-        # query = f"SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review,is_alignment,align_type " \
-        #         f"FROM alignments where project_id={project_id}"
-        # cur.execute(query)
-        #
-        # rows = cur.fetchall()
-        # result = {}
-        #
-        # for r in rows:
-        #     alignment = {
-        #         'id': r['id'],
-        #         'name': r['name'],
-        #         'isReviewed': bool(r['isReviewed']),
-        #         'reviewThoughts': r['reviewThoughts'] or '',
-        #         'docRanges': pyjson.loads(r['docRanges'] or '[]'),
-        #         'codeRanges': pyjson.loads(r['codeRanges'] or '[]'),
-        #         'isCodeReview': r['is_code_review'],
-        #         'is_alignment': r['is_alignment'],
-        #         'align_type': r['align_type']
-        #     }
-        #     result[alignment['id']] = alignment
-        # print(result)
+
         return jsonify({"status": "success", "data": result}), 200
     except Exception as e:
 
@@ -3115,13 +3173,32 @@ def get_issues():
     try:
         project_path = request.args.get('path')
         project_id = request.args.get('project_id')
+        issue_page = request.args.get('issue_page', 1, type=int)
+        issue_page_size = request.args.get('issue_page_size', 20, type=int)
+        category = request.args.get('category', '')
+
+        if issue_page < 1:
+            issue_page = 1
+        if issue_page_size < 1 or issue_page_size > 100:
+            issue_page_size = 20
+
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径参数'})
-        # conn = get_db_conn(project_path)
+
+        offset = (issue_page - 1) * issue_page_size
+
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT id,displayId,alignmentId,severity,title,content,status,relatedDocFile,relatedRequirementId,briefRequirement,briefCode,createdAt,updatedAt '
-                    f'FROM issues where project_id={project_id} ORDER BY id ASC')
+
+        where_clause = f"project_id={project_id} "
+        if category:
+            where_clause += f"AND category='{category}' "
+
+        cur.execute(f"select count(*) as total from issues where {where_clause}")
+        total = cur.fetchone()['total']
+
+        cur.execute(f'SELECT * FROM issues where {where_clause} ORDER BY id DESC LIMIT %s OFFSET %s',
+                    (issue_page_size, offset))
         rows = cur.fetchall()
         issues = []
         for r in rows:
@@ -3138,10 +3215,12 @@ def get_issues():
                 'briefRequirement': r['briefRequirement'] or '',
                 'briefCode': r['briefCode'] or '',
                 'createdDate': r['createdAt'],
-                'updatedDate': r['updatedAt']
+                'updatedDate': r['updatedAt'],
+                'category': r['category']
             })
         # conn.close()
-        return jsonify({'status': 'success', 'data': issues})
+        return jsonify({'status': 'success', 'data': issues,
+                        'total': total, 'issue_page': issue_page, 'issue_page_size': issue_page_size})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
@@ -3471,7 +3550,7 @@ def get_doc_blocks():
                 resolved_project_id,
                 filename=filename,
                 page=page or 1,
-                page_size=BLOCK_SIDEBAR_PAGE_SIZE
+                page_size=page_size
             )
         else:
             doc_blocks = get_doc_blocks_by_project(project_path, resolved_project_id, filename)
@@ -3495,7 +3574,9 @@ def get_doc_blocks():
                 block['matchedAlignmentReviewed'] = bool(matched_alignment.get('isReviewed')) if matched_alignment else False
 
         if pagination is not None:
-            return jsonify({'status': 'success', 'data': doc_blocks, 'pagination': pagination})
+            return jsonify({'status': 'success', 'data': doc_blocks,
+                            'total': pagination['total'], 'page': pagination['page'],
+                            'page_size': pagination['page_size']})
 
         return jsonify({'status': 'success', 'data': doc_blocks})
     except Exception as e:
@@ -3521,7 +3602,7 @@ def get_code_blocks():
                 resolved_project_id,
                 filename=filename,
                 page=page or 1,
-                page_size=BLOCK_SIDEBAR_PAGE_SIZE
+                page_size=page_size
             )
         else:
             code_blocks = get_code_blocks_by_project(project_path, resolved_project_id, filename)
@@ -3580,7 +3661,8 @@ def get_code_blocks():
                 block['matchedCodeReviewReviewed'] = bool(matched_code_review_alignment.get('isReviewed')) if matched_code_review_alignment else False
 
         if pagination is not None:
-            return jsonify({'status': 'success', 'data': code_blocks, 'pagination': pagination})
+            return jsonify({'status': 'success', 'data': code_blocks, 'total': pagination['total'], 'page': pagination['page'],
+                            'page_size': pagination['page_size']})
 
         return jsonify({'status': 'success', 'data': code_blocks})
     except Exception as e:

@@ -488,19 +488,23 @@
                                     <div class="content-card workspace-content-card workspace-content-card--doc">
                                         <div class="content-text-doc">
                                             <div class="doc-content-scroll" v-html="selectedDocContent" @mouseup="handleDocSelection"></div>
-                                            <div class="doc-pagination-bar" v-if="selectedDocFile">
-                                                <div class="doc-pagination-info">
-                                                    第 ${ currentDocPage } / ${ totalDocPages } 页
-                                                </div>
-                                                <div class="doc-pagination-actions">
-                                                    <el-button size="small" text :disabled="currentDocPage <= 1" @click="goToDocFirstPage">首页</el-button>
-                                                    <el-button size="small" text :disabled="currentDocPage <= 1" @click="goToDocPrevPage">上一页</el-button>
-                                                    <el-button size="small" text :disabled="currentDocPage >= totalDocPages" @click="goToDocNextPage">下一页</el-button>
-                                                    <el-button size="small" text :disabled="currentDocPage >= totalDocPages" @click="goToDocLastPage">尾页</el-button>
-                                                </div>
+                                            <div class="pagination-wrapper" v-if="selectedDocFile">
+                                                <el-config-provider :locale="zhCnLocale">
+                                                    <el-pagination
+                                                        small
+                                                        :pager-count="5"
+                                                        v-model:current-page="docPage"
+                                                        :page-size="1"
+                                                        :total="docTotal"
+                                                        layout="total,prev,pager,next,jumper"
+                                                        @current-change="docFileHandleCurrentChange"
+                                                    ></el-pagination>
+                                                </el-config-provider>
                                             </div>
                                         </div>
                                     </div>
+
+
                                 </el-splitter-panel>
                                 <el-splitter-panel class="split-panel code-panel" :min="200" size="40%">
                                     <div class="panel-title workspace-panel-title">
@@ -530,7 +534,6 @@
                                                 <span v-else>停止审查</span>
                                             </el-button>
                                             <el-button
-                                                    v-if="false"
                                                     size="small"
                                                     type="success"
                                                     plain
@@ -585,16 +588,29 @@
                                     </div>
                                     <div class="content-card workspace-content-card workspace-content-card--code">
                                         <div class="content-text-code" v-html="selectedCodeContent" @mouseup="handleCodeSelection" :style="'counter-reset: listing ' + (codePageStartLine - 1)"></div>
-                                        <div class="doc-pagination-bar" v-if="selectedCodeFile">
-                                            <div class="doc-pagination-info">
-                                                第 ${ currentCodePage } / ${ totalCodePages } 页
-                                            </div>
-                                            <div class="doc-pagination-actions">
-                                                <el-button size="small" text :disabled="currentCodePage <= 1" @click="goToCodeFirstPage">首页</el-button>
-                                                <el-button size="small" text :disabled="currentCodePage <= 1" @click="goToCodePrevPage">上一页</el-button>
-                                                <el-button size="small" text :disabled="currentCodePage >= totalCodePages" @click="goToCodeNextPage">下一页</el-button>
-                                                <el-button size="small" text :disabled="currentCodePage >= totalCodePages" @click="goToCodeLastPage">尾页</el-button>
-                                            </div>
+<!--                                        <div class="doc-pagination-bar" v-if="selectedCodeFile">-->
+<!--                                            <div class="doc-pagination-info">-->
+<!--                                                第 ${ currentCodePage } / ${ totalCodePages } 页-->
+<!--                                            </div>-->
+<!--                                            <div class="doc-pagination-actions">-->
+<!--                                                <el-button size="small" text :disabled="currentCodePage <= 1" @click="goToCodeFirstPage">首页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="currentCodePage <= 1" @click="goToCodePrevPage">上一页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="currentCodePage >= totalCodePages" @click="goToCodeNextPage">下一页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="currentCodePage >= totalCodePages" @click="goToCodeLastPage">尾页</el-button>-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+                                        <div class="pagination-wrapper" v-if="selectedCodeFile">
+                                            <el-config-provider :locale="zhCnLocale">
+                                                <el-pagination
+                                                    small
+                                                    :pager-count="5"
+                                                    v-model:current-page="codePage"
+                                                    :page-size="1"
+                                                    :total="codeTotal"
+                                                    layout="total,prev,pager,next,jumper"
+                                                    @current-change="codeFileHandleCurrentChange"
+                                                ></el-pagination>
+                                            </el-config-provider>
                                         </div>
                                     </div>
                                 </el-splitter-panel>
@@ -793,16 +809,30 @@
                                                 暂无对齐结果
                                             </div>
                                         </div>
-                                        <div class="doc-pagination-bar" v-if="alignmentTotal > 0">
-                                            <div class="doc-pagination-info">
-                                                第 ${ alignmentPage } / ${ alignmentTotalPages } 页，共 ${ alignmentTotal } 条
-                                            </div>
-                                            <div class="doc-pagination-actions">
-                                                <el-button size="small" text :disabled="alignmentPage <= 1" @click="goToAlignmentPage(1)">首页</el-button>
-                                                <el-button size="small" text :disabled="alignmentPage <= 1" @click="goToAlignmentPage(alignmentPage - 1)">上一页</el-button>
-                                                <el-button size="small" text :disabled="alignmentPage >= alignmentTotalPages" @click="goToAlignmentPage(alignmentPage + 1)">下一页</el-button>
-                                                <el-button size="small" text :disabled="alignmentPage >= alignmentTotalPages" @click="goToAlignmentPage(alignmentTotalPages)">尾页</el-button>
-                                            </div>
+<!--                                        <div class="doc-pagination-bar" v-if="alignmentTotal > 0">-->
+<!--                                            <div class="doc-pagination-info">-->
+<!--                                                第 ${ alignmentPage } / ${ alignmentTotalPages } 页，共 ${ alignmentTotal } 条-->
+<!--                                            </div>-->
+<!--                                            <div class="doc-pagination-actions">-->
+<!--                                                <el-button size="small" text :disabled="alignmentPage <= 1" @click="goToAlignmentPage(1)">首页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="alignmentPage <= 1" @click="goToAlignmentPage(alignmentPage - 1)">上一页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="alignmentPage >= alignmentTotalPages" @click="goToAlignmentPage(alignmentPage + 1)">下一页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="alignmentPage >= alignmentTotalPages" @click="goToAlignmentPage(alignmentTotalPages)">尾页</el-button>-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+                                        <div class="pagination-wrapper">
+                                            <el-config-provider :locale="zhCnLocale">
+                                                <el-pagination
+                                                    small
+                                                    :pager-count="5"
+                                                    v-model:current-page="alignmentPage"
+                                                    v-model:page-size="alignmentPageSize"
+                                                    :total="alignmentTotal"
+                                                    layout="total,prev,pager,next,jumper"
+                                                    @size-change="alignHandleSizeChange"
+                                                    @current-change="alignHandleCurrentChange"
+                                                ></el-pagination>
+                                            </el-config-provider>
                                         </div>
                                     </div>
 
@@ -825,7 +855,7 @@
                                                 </el-radio-group>
                                             </div>
                                         </div>
-                                        <div class="alignment-list alignment-list--block">
+                                        <div class="alignment-list alignment-list--block" v-loading="blockLoading" element-loading-text="加载中...">
                                             <div v-if="displayedBlocks && displayedBlocks.length > 0">
                                                  <div
                                                    v-for="(block, index) in displayedBlocks"
@@ -875,20 +905,34 @@
                                                      </div>
                                                 </div>
                                             </div>
-                                            <div v-else class="sidebar-empty-message">
+                                            <div v-if="!blockLoading && (!displayedBlocks || displayedBlocks.length === 0)" class="sidebar-empty-message">
                                                 暂无${ blockType === 'doc' ? '需求' : '代码' }块数据
                                             </div>
                                         </div>
-                                        <div class="doc-pagination-bar" v-if="(blockType === 'doc' ? docBlockTotal : codeBlockTotal) > 0">
-                                            <div class="doc-pagination-info">
-                                                第 ${ blockType === 'doc' ? docBlockPage : codeBlockPage } / ${ blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages } 页，共 ${ blockType === 'doc' ? docBlockTotal : codeBlockTotal } 条
-                                            </div>
-                                            <div class="doc-pagination-actions">
-                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) <= 1" @click="goToBlockPage(1)">首页</el-button>
-                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) <= 1" @click="goToBlockPage((blockType === 'doc' ? docBlockPage : codeBlockPage) - 1)">上一页</el-button>
-                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) >= (blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)" @click="goToBlockPage((blockType === 'doc' ? docBlockPage : codeBlockPage) + 1)">下一页</el-button>
-                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) >= (blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)" @click="goToBlockPage(blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)">尾页</el-button>
-                                            </div>
+<!--                                        <div class="doc-pagination-bar" v-if="(blockType === 'doc' ? docBlockTotal : codeBlockTotal) > 0">-->
+<!--                                            <div class="doc-pagination-info">-->
+<!--                                                第 ${ blockType === 'doc' ? docBlockPage : codeBlockPage } / ${ blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages } 页，共 ${ blockType === 'doc' ? docBlockTotal : codeBlockTotal } 条-->
+<!--                                            </div>-->
+<!--                                            <div class="doc-pagination-actions">-->
+<!--                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) <= 1" @click="goToBlockPage(1)">首页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) <= 1" @click="goToBlockPage((blockType === 'doc' ? docBlockPage : codeBlockPage) - 1)">上一页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) >= (blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)" @click="goToBlockPage((blockType === 'doc' ? docBlockPage : codeBlockPage) + 1)">下一页</el-button>-->
+<!--                                                <el-button size="small" text :disabled="(blockType === 'doc' ? docBlockPage : codeBlockPage) >= (blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)" @click="goToBlockPage(blockType === 'doc' ? docBlockTotalPages : codeBlockTotalPages)">尾页</el-button>-->
+<!--                                            </div>-->
+<!--                                        </div>-->
+                                        <div class="pagination-wrapper">
+                                            <el-config-provider :locale="zhCnLocale">
+                                                <el-pagination
+                                                    small
+                                                    :pager-count="5"
+                                                    v-model:current-page="blockCurrentPage"
+                                                    v-model:page-size="blockCurrentPageSize"
+                                                    :total="blockCurrentTotal"
+                                                    layout="total,prev,pager,next,jumper"
+                                                    @size-change="blockHandleSizeChange"
+                                                    @current-change="blockHandleCurrentChange"
+                                                ></el-pagination>
+                                            </el-config-provider>
                                         </div>
                                     </div>
                                 </el-splitter-panel>
@@ -900,6 +944,23 @@
                                 <div class="issue-header-bar">
                                     <div class="issue-title-bar">
                                         <h3><i class="fas fa-exclamation-triangle"></i> 问题单列表 (${issues ? issues.length : 0})</h3>
+
+                                        <div class="issue-filter-bar">
+                                            <el-select
+                                                v-model="issuesSelectedCategory"
+                                                placeholder="全部分类"
+                                                size="small"
+                                                style="width:140px"
+                                                @change="issuesFilterByCategory">
+                                                <el-option
+                                                    v-for="opt in issuesCategoryOptions"
+                                                    :key="opt.value"
+                                                    :label="opt.label"
+                                                    :value="opt.value" />
+
+                                            </el-select>
+                                        </div>
+
                                         <div class="export-btn-group">
                                             <button class="export-btn" @click="openExportDialog" title="导出问题单">
                                                 <i class="fas fa-download"></i> 导出问题单
@@ -913,7 +974,7 @@
                                         </div>
                                     </div>
                                     <div class="issue-actions">
-                                        <button class="action-btn action-btn--neutral" @click="refreshIssuesSorting">
+                                        <button class="action-btn action-btn--neutral" @click="fetchIssues">
                                             <i class="fas fa-sync-alt"></i> 刷新
                                         </button>
                                         <button class="action-btn action-btn--success" @click="confirmIssue">
@@ -927,7 +988,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="issue-table">
+                                <div class="issue-table" v-loading="issuesLoading">
                                     <div class="issue-row issue-header-row">
                                         <div class="issue-cell issue-checkbox-cell">
                                             <input type="checkbox"
@@ -936,6 +997,7 @@
                                                    @click.stop="selectAllIssues">
                                         </div>
                                         <div class="issue-cell issue-id-cell">ID</div>
+                                        <div class="issue-cell issue-category-cell">审查类型</div>
                                         <div class="issue-cell issue-level-cell">等级</div>
                                         <div class="issue-cell issue-description-cell">问题描述</div>
                                         <div class="issue-cell issue-req-cell">相关需求</div>
@@ -955,6 +1017,7 @@
                                             <input type="checkbox" :checked="selectedIssueIds.has(issue.id)">
                                         </div>
                                         <div class="issue-cell issue-id-cell">${ issue.displayId || 'ISSUE-???' }</div>
+                                        <div class="issue-cell issue-category-cell">${ issueCategoryMap[issue.category] || issue.category || '-' }</div>
                                         <div class="issue-cell issue-level-cell">
                                             <span class="issue-level" :class="issue.level?.toLowerCase()">
                                                 ${ issueLevelText(issue.level) }
@@ -974,6 +1037,19 @@
                                             </span>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="pagination-wrapper">
+                                    <el-config-provider :locale="zhCnLocale">
+                                        <el-pagination
+                                            v-model:current-page="issuePage"
+                                            v-model:page-size="issuePageSize"
+                                            :page-sizes="[10,20,50,100]"
+                                            :total="issueTotal"
+                                            layout="total,sizes,prev,pager,next,jumper"
+                                            @size-change="handleSizeChange"
+                                            @current-change="handleCurrentChange"
+                                        ></el-pagination>
+                                    </el-config-provider>
                                 </div>
                             </div>
                         </el-splitter-panel>
@@ -1442,8 +1518,10 @@
                         >
                             <i class="fas fa-bug"></i> 入库(问题单)
                         </el-button>
-                        <el-button type="danger" size="small" @click="deleteAlignmentAndJumpNext">
-                            删除(对齐)
+                        <el-button
+                            v-if="reviewDialogSource !== 'issue'"
+                            type="danger" size="small" @click="deleteDetailAndJumpNext">
+                            删除
                         </el-button>
 
                         <el-divider direction="vertical"></el-divider>
