@@ -334,6 +334,21 @@
             <el-splitter-panel class="main-content">
                 <!-- 项目视图（默认显示） -->
                 <div class="stats-view main-workspace-stats" id="statsView">
+                    <div class="stats-toolbar">
+                        <div class="stats-toolbar-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span>项目统计</span>
+                        </div>
+                        <el-button
+                            size="small"
+                            type="primary"
+                            plain
+                            :loading="statsRefreshing"
+                            @click="refreshStatsData()"
+                        >
+                            <i class="fas fa-rotate-right" style="margin-right: 6px;"></i>刷新统计
+                        </el-button>
+                    </div>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-title">
@@ -358,23 +373,29 @@
                             <div class="stat-title">
                                 <i class="fas fa-link"></i> 需求-代码对齐对数
                             </div>
-                            <div class="stat-value">${ totalAlignedRequirements }</div>
-                            <div class="stat-description">已确认的需求与代码对应关系</div>
+                            <div class="stat-value">${ allAlignmentItems.length }</div>
+                            <div class="stat-description">按当前项目中的对齐关系类型展示数量</div>
+                            <div class="progress-stat" v-for="item in alignmentCountRows" :key="item.key">
+                                <div class="progress-label">
+                                    <span>${ item.label }</span>
+                                    <span>${ item.value }</span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="stat-card">
                             <div class="stat-title">
                                 <i class="fas fa-search"></i> 审查进度
                             </div>
-                            <div class="stat-value">${ totalReviewedRequirements }/${ totalAlignedRequirements }</div>
-                            <div class="stat-description">已审查的对齐关系数量</div>
-                            <div class="progress-stat">
+                            <div class="stat-value">${ totalReviewedRequirements }/${ allAlignmentItems.length }</div>
+                            <div class="stat-description">按对齐关系类型展示审查完成情况</div>
+                            <div class="progress-stat" v-for="item in reviewProgressRows" :key="item.key">
                                 <div class="progress-label">
-                                    <span>完成度</span>
-                                    <span>${ totalAlignedRequirements > 0 ? Math.round((totalReviewedRequirements / totalAlignedRequirements) * 100) : 0 }%</span>
+                                    <span>${ item.label }</span>
+                                    <span>${ item.reviewed }/${ item.total } (${ item.total > 0 ? Math.round((item.reviewed / item.total) * 100) : 0 }%)</span>
                                 </div>
                                 <div class="progress-big">
-                                    <div class="progress-big-bar" :style="`width: ${totalAlignedRequirements > 0 ? Math.round((totalReviewedRequirements / totalAlignedRequirements) * 100) : 0}%`"></div>
+                                    <div class="progress-big-bar" :style="`width: ${item.total > 0 ? Math.round((item.reviewed / item.total) * 100) : 0}%`"></div>
                                 </div>
                             </div>
                         </div>
@@ -383,15 +404,15 @@
                             <div class="stat-title">
                                 <i class="fas fa-bug"></i> 问题单总数
                             </div>
-                            <div class="stat-value">${ issues.length }</div>
-                            <div class="stat-description">发现的问题单条目总数</div>
-                            <div class="progress-stat">
+                            <div class="stat-value">${ issueStatusStats.all }</div>
+                            <div class="stat-description">按问题单状态展示全量数量</div>
+                            <div class="progress-stat" v-for="item in issueStatusRows" :key="item.key">
                                 <div class="progress-label">
-                                    <span>已确认</span>
-                                    <span>${ Math.round((issues.filter(i => i.status === 'confirmed').length / Math.max(issues.length, 1)) * 100) }%</span>
-                                </div>
-                                <div class="progress-big">
-                                    <div class="progress-big-bar" :style="`width: ${Math.round((issues.filter(i => i.status === 'confirmed').length / Math.max(issues.length, 1)) * 100)}%`"></div>
+                                    <span>
+                                        <span v-if="item.statusClass" class="issue-status" :class="item.statusClass">${ item.label }</span>
+                                        <span v-else>${ item.label }</span>
+                                    </span>
+                                    <span>${ item.value }</span>
                                 </div>
                             </div>
                         </div>
@@ -400,31 +421,43 @@
                     <h3 style="margin-bottom: 15px; color: var(--text-primary);">
                         <i class="fas fa-file-alt"></i> 需求文档对齐进度
                     </h3>
-                    <table class="files-table">
+                    <div class="stat-description" style="margin-bottom: 10px;">
+                        对齐进度 = 包含在非纯代码审查对齐关系中的需求块数 / 该文件总需求块数
+                    </div>
+                    <table class="files-table stats-files-table stats-files-table--doc">
+                        <colgroup>
+                            <col class="col-icon">
+                            <col class="col-file">
+                            <col class="col-metric">
+                            <col class="col-metric">
+                            <col class="col-progress">
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th class="file-icon-cell"></th>
                                 <th>文件名</th>
+                                <th class="align-center">需求块数</th>
+                                <th class="align-center">已对齐需求块数</th>
                                 <th class="align-center">对齐进度</th>
-                                <th class="align-center">对齐需求数</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="file in projectFiles.doc_files" :key="file">
                                 <td class="file-icon-cell"><i class="fas fa-file-alt file-icon"></i></td>
                                 <td>${ file }</td>
+                                <td class="align-center">${ requirementStats[file] ? requirementStats[file].totalBlocks : 0 }</td>
+                                <td class="align-center">${ requirementStats[file] ? requirementStats[file].alignedBlocks : 0 }</td>
                                 <td class="file-progress-cell align-center">
                                     <div class="file-progress">
-                                        <span class="file-progress-value">${ requirementStats[file] ? Math.round((requirementStats[file].alignedRequirements / Math.max(requirementStats[file].totalRequirements, 1)) * 100) : 0 }%</span>
+                                        <span class="file-progress-value">${ requirementStats[file] ? ((requirementStats[file].alignedBlocks / Math.max(requirementStats[file].totalBlocks, 1)) * 100).toFixed(2) : '0.00' }%</span>
                                         <div class="file-progress-bar">
-                                            <div class="file-progress-fill" :style="`width: ${requirementStats[file] ? Math.round((requirementStats[file].alignedRequirements / Math.max(requirementStats[file].totalRequirements, 1)) * 100) : 0}%`"></div>
+                                            <div class="file-progress-fill" :style="`width: ${requirementStats[file] ? Math.round((requirementStats[file].alignedBlocks / Math.max(requirementStats[file].totalBlocks, 1)) * 100) : 0}%`"></div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="align-center">${ requirementStats[file] ? requirementStats[file].alignedRequirements : 0 }/${ requirementStats[file] ? requirementStats[file].totalRequirements : 0 }</td>
                             </tr>
                             <tr v-if="projectFiles.doc_files.length === 0">
-                                <td colspan="4" class="empty-message">暂无需求文档</td>
+                                <td colspan="5" class="empty-message">暂无需求文档</td>
                             </tr>
                         </tbody>
                     </table>
@@ -432,11 +465,25 @@
                     <h3 style="margin: 25px 0 15px; color: var(--text-primary);">
                         <i class="fas fa-code"></i> 代码文件对齐进度
                     </h3>
-                    <table class="files-table">
+                    <div class="stat-description" style="margin-bottom: 10px;">
+                        对齐进度 = 包含在非纯代码审查对齐关系中的代码块数 / 该文件总代码块数
+                    </div>
+                    <table class="files-table stats-files-table stats-files-table--code">
+                        <colgroup>
+                            <col class="col-icon">
+                            <col class="col-file">
+                            <col class="col-metric">
+                            <col class="col-metric">
+                            <col class="col-progress">
+                            <col class="col-metric">
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th class="file-icon-cell"></th>
                                 <th>文件名</th>
+                                <th class="align-center">代码块数</th>
+                                <th class="align-center">已对齐代码块数</th>
+                                <th class="align-center">对齐进度</th>
                                 <th class="align-center">代码行数</th>
                             </tr>
                         </thead>
@@ -444,10 +491,20 @@
                             <tr v-for="file in projectFiles.code_files" :key="file">
                                 <td class="file-icon-cell"><i class="fas fa-file-code file-icon"></i></td>
                                 <td>${ file }</td>
+                                <td class="align-center">${ codeFileStats[file] ? codeFileStats[file].totalBlocks : 0 }</td>
+                                <td class="align-center">${ codeFileStats[file] ? codeFileStats[file].alignedBlocks : 0 }</td>
+                                <td class="file-progress-cell align-center">
+                                    <div class="file-progress">
+                                        <span class="file-progress-value">${ codeFileStats[file] ? Math.round((codeFileStats[file].alignedBlocks / Math.max(codeFileStats[file].totalBlocks, 1)) * 100) : 0 }%</span>
+                                        <div class="file-progress-bar">
+                                            <div class="file-progress-fill" :style="`width: ${codeFileStats[file] ? Math.round((codeFileStats[file].alignedBlocks / Math.max(codeFileStats[file].totalBlocks, 1)) * 100) : 0}%`"></div>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td class="code-lines-cell align-center">${ codeFileLines[file] || 0 }</td>
                             </tr>
                             <tr v-if="projectFiles.code_files.length === 0">
-                                <td colspan="3" class="empty-message">暂无代码文件</td>
+                                <td colspan="6" class="empty-message">暂无代码文件</td>
                             </tr>
                         </tbody>
                     </table>

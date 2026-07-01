@@ -84,6 +84,13 @@ const app = createApp({
         const issuePage = ref(1)
         const issuePageSize = ref(100)
         const issueTotal = ref(0)
+        const statsRefreshing = ref(false)
+        const issueStatusStats = ref({
+            all: 0,
+            confirmed: 0,
+            false_positive: 0,
+            unchecked: 0
+        })
 //        const issues = ref([])
         // 问题单导出
         const exportTasks = ref([])
@@ -2000,6 +2007,12 @@ const app = createApp({
                 if (response.data.status === 'success') {
                     const issuesData = response.data.data || [];
                     issueTotal.value = response.data.total
+                    issueStatusStats.value = {
+                        all: Number(response.data.issue_status_stats?.all || 0),
+                        confirmed: Number(response.data.issue_status_stats?.confirmed || 0),
+                        false_positive: Number(response.data.issue_status_stats?.false_positive || 0),
+                        unchecked: Number(response.data.issue_status_stats?.unchecked || 0)
+                    }
 
                     // Compatibility: enrich old issues lacking brief fields
                     for (const issue of issuesData) {
@@ -2037,6 +2050,12 @@ const app = createApp({
             } catch (error) {
                 console.error('获取问题单数据失败:', error);
                 issues.value = [];
+                issueStatusStats.value = {
+                    all: 0,
+                    confirmed: 0,
+                    false_positive: 0,
+                    unchecked: 0
+                };
             } finally {
                 issuesLoading.value = false;
             }
@@ -2084,6 +2103,82 @@ const app = createApp({
             } catch (err) {
                 console.error("Error fetching project metadata:", err);
                 ElMessage.error(`加载项目元数据失败: ${err.message}`);
+            }
+        };
+
+        const fetchStatsMetadata = async () => {
+            if (!projectPath.value) {
+                return;
+            }
+
+            const response = await axios.get(`/project/metadata?path=${encodeURIComponent(projectPath.value)}`);
+            if (response.data.status !== 'success') {
+                throw new Error(response.data.message || '加载统计元数据失败');
+            }
+
+            const metadata = response.data.metadata || {};
+            projectFiles.value.code_files = metadata.code_files || [];
+            projectFiles.value.doc_files = metadata.doc_files || [];
+            projectName.value = metadata.project_name || projectName.value;
+            codeFileLines.value = metadata.code_file_lines || {};
+            codeScale.value = metadata.code_scale || 0;
+        };
+
+        const fetchStatsBlocks = async () => {
+            if (!projectPath.value) {
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+
+            const [docResponse, codeResponse] = await Promise.all([
+                axios.get('/api/get-doc-blocks', {
+                    params: {
+                        projectPath: projectPath.value,
+                        project_id: projectId
+                    }
+                }),
+                axios.get('/api/get-code-blocks', {
+                    params: {
+                        projectPath: projectPath.value,
+                        project_id: projectId
+                    }
+                })
+            ]);
+
+            if (docResponse.data.status !== 'success') {
+                throw new Error(docResponse.data.message || '加载需求块失败');
+            }
+            if (codeResponse.data.status !== 'success') {
+                throw new Error(codeResponse.data.message || '加载代码块失败');
+            }
+
+            docBlocks.value = docResponse.data.data || [];
+            codeBlocks.value = codeResponse.data.data || [];
+        };
+
+        const refreshStatsData = async ({ silent = false } = {}) => {
+            if (!projectPath.value) {
+                return;
+            }
+
+            try {
+                statsRefreshing.value = true;
+                await fetchStatsMetadata();
+                await fetchStatsBlocks();
+                await fetchAllAlignments();
+                await fetchIssues();
+                if (!silent) {
+                    ElMessage.success('统计数据已刷新');
+                }
+            } catch (error) {
+                console.error('刷新统计数据失败:', error);
+                if (!silent) {
+                    ElMessage.error(`刷新统计失败: ${error.message}`);
+                }
+            } finally {
+                statsRefreshing.value = false;
             }
         };
 
@@ -2450,80 +2545,221 @@ const app = createApp({
         /***********************
          * 统计数据计算
          ***********************/
+        const normalizeDocBlockKey = (block) => {
+            if (!block) return '';
+            const filename = block.filename || block.documentId || '';
+            const start = block.start ?? '';
+            const end = block.end ?? '';
+            return `${filename}::${start}::${end}`;
+        };
+
+        const normalizeCodeBlockKey = (block) => {
+            if (!block) return '';
+            const filename = block.file || block.filename || block.documentId || '';
+            const startLine = block.startLine ?? (Array.isArray(block.range) ? block.range[0] : '');
+            const endLine = block.endLine ?? (Array.isArray(block.range) ? block.range[1] : '');
+            return `${filename}::${startLine}::${endLine}`;
+        };
+
         const requirementStats = computed(() => {
             const stats = {};
+            const docBlockMap = new Map();
+
             projectFiles.value.doc_files.forEach(docFile => {
                 stats[docFile] = {
-                    totalRequirements: 0,
-                    alignedRequirements: 0
+                    totalBlocks: 0,
+                    alignedBlocks: new Set()
                 };
             });
 
-            // 基于所有文档的对齐数据计算统计信息
-            Object.keys(allAlignments.value).forEach(docFile => {
-                const alignments = allAlignments.value[docFile] || [];
-                if (stats[docFile]) {
-                    stats[docFile].totalRequirements = alignments.length;
-                    stats[docFile].alignedRequirements = alignments.filter(alignment =>
-                        alignment.codeRanges && alignment.codeRanges.length > 0
-                    ).length;
+            (docBlocks.value || []).forEach(block => {
+                const file = block.filename || block.documentId || '';
+                if (!stats[file]) {
+                    stats[file] = {
+                        totalBlocks: 0,
+                        alignedBlocks: new Set()
+                    };
+                }
+                stats[file].totalBlocks += 1;
+                docBlockMap.set(normalizeDocBlockKey(block), file);
+            });
+
+            allAlignmentItems.value.forEach(alignment => {
+                if (Number(alignment.isCodeReview || 0) === 1) {
+                    return;
+                }
+                (alignment.docRanges || []).forEach(range => {
+                    const file = docBlockMap.get(normalizeDocBlockKey(range));
+                    if (file && stats[file]) {
+                        stats[file].alignedBlocks.add(normalizeDocBlockKey(range));
+                    }
+                });
+            });
+
+            const result = {};
+            Object.entries(stats).forEach(([file, value]) => {
+                result[file] = {
+                    totalBlocks: value.totalBlocks,
+                    alignedBlocks: value.alignedBlocks.size
+                };
+            });
+            return result;
+        });
+
+        const totalRequirements = computed(() => {
+            return Object.values(requirementStats.value).reduce((sum, stat) => sum + stat.totalBlocks, 0);
+        });
+
+        const totalAlignedRequirements = computed(() => {
+            return Object.values(requirementStats.value).reduce((sum, stat) => sum + stat.alignedBlocks, 0);
+        });
+
+        const allAlignmentItems = computed(() => {
+            const seen = new Set();
+            const items = [];
+
+            Object.values(allAlignments.value).forEach(alignments => {
+                alignments.forEach(alignment => {
+                    if (!alignment || !alignment.id || seen.has(alignment.id)) {
+                        return;
+                    }
+                    seen.add(alignment.id);
+                    items.push(alignment);
+                });
+            });
+
+            return items;
+        });
+
+        const totalReviewedRequirements = computed(() => {
+            return allAlignmentItems.value.filter(alignment => alignment.isReviewed).length;
+        });
+
+        const alignmentCountByType = computed(() => {
+            const stats = {
+                req2code: 0,
+                code2req: 0,
+                codeReview: 0
+            };
+
+            allAlignmentItems.value.forEach(alignment => {
+                if (Number(alignment.isCodeReview || 0) === 1) {
+                    stats.codeReview += 1;
+                } else if (alignment.align_type === 'req2code') {
+                    stats.req2code += 1;
+                } else if (alignment.align_type === 'code2req') {
+                    stats.code2req += 1;
                 }
             });
 
             return stats;
         });
 
-        const totalRequirements = computed(() => {
-            return Object.values(requirementStats.value).reduce((sum, stat) => sum + stat.totalRequirements, 0);
-        });
+        const alignmentCountRows = computed(() => ([
+            { key: 'req2code', label: '需求->代码', value: alignmentCountByType.value.req2code },
+            { key: 'code2req', label: '代码->需求', value: alignmentCountByType.value.code2req },
+            { key: 'codeReview', label: '纯代码审查', value: alignmentCountByType.value.codeReview }
+        ]));
 
-        const totalAlignedRequirements = computed(() => {
-            return Object.values(requirementStats.value).reduce((sum, stat) => sum + stat.alignedRequirements, 0);
-        });
+        const reviewProgressByType = computed(() => {
+            const stats = {
+                req2code: { total: 0, reviewed: 0 },
+                code2req: { total: 0, reviewed: 0 },
+                codeReview: { total: 0, reviewed: 0 }
+            };
 
-        const totalReviewedRequirements = computed(() => {
-            let reviewedCount = 0;
-            Object.values(allAlignments.value).forEach(alignments => {
-                alignments.forEach(alignment => {
-                    if (alignment.isReviewed) {
-                        reviewedCount++;
-                    }
-                });
-            });
-            return reviewedCount;
-        });
+            allAlignmentItems.value.forEach(alignment => {
+                let key = null;
 
-        const codeFileStats = computed(() => {
-            const stats = {};
-            projectFiles.value.code_files.forEach(codeFile => {
-                stats[codeFile] = {
-                    totalAlignments: 0,
-                    coveredRequirements: 0
-                };
-            });
+                if (Number(alignment.isCodeReview || 0) === 1) {
+                    key = 'codeReview';
+                } else if (alignment.align_type === 'req2code') {
+                    key = 'req2code';
+                } else if (alignment.align_type === 'code2req') {
+                    key = 'code2req';
+                }
 
-            // 基于所有文档的对齐数据计算代码文件统计信息
-            Object.values(allAlignments.value).forEach(alignments => {
-                alignments.forEach(alignment => {
-                    if (alignment.codeRanges && alignment.codeRanges.length > 0) {
-                        alignment.codeRanges.forEach(codeRange => {
-                            const codeFile = codeRange.filename;
-                            if (stats[codeFile]) {
-                                stats[codeFile].alignmentCount++;
-                            }
-                        });
-                        // 每个对齐关系代表一个被覆盖的需求
-                        const uniqueCodeFiles = [...new Set(alignment.codeRanges.map(cr => cr.filename))];
-                        uniqueCodeFiles.forEach(codeFile => {
-                            if (stats[codeFile]) {
-                                stats[codeFile].coveredRequirements++;
-                            }
-                        });
-                    }
-                });
+                if (!key) {
+                    return;
+                }
+
+                stats[key].total += 1;
+                if (alignment.isReviewed) {
+                    stats[key].reviewed += 1;
+                }
             });
 
             return stats;
+        });
+
+        const reviewProgressRows = computed(() => ([
+            { key: 'req2code', label: '需求->代码', ...reviewProgressByType.value.req2code },
+            { key: 'code2req', label: '代码->需求', ...reviewProgressByType.value.code2req },
+            { key: 'codeReview', label: '纯代码审查', ...reviewProgressByType.value.codeReview }
+        ]));
+
+        const issueStatusRows = computed(() => ([
+            { key: 'confirmed', label: '已确认', value: issueStatusStats.value.confirmed || 0, statusClass: 'confirmed' },
+            { key: 'false_positive', label: '误报', value: issueStatusStats.value.false_positive || 0, statusClass: 'false_positive' },
+            { key: 'unchecked', label: '未检查', value: issueStatusStats.value.unchecked || 0, statusClass: 'unconfirmed' },
+            { key: 'all', label: '全部', value: issueStatusStats.value.all || 0, statusClass: '' }
+        ]));
+
+        const codeFileStats = computed(() => {
+            const stats = {};
+            const codeBlockMap = new Map();
+            projectFiles.value.code_files.forEach(codeFile => {
+                stats[codeFile] = {
+                    totalBlocks: 0,
+                    alignedBlocks: new Set(),
+                    codeReviewBlocks: new Set(),
+                    reviewedCodeReviewBlocks: new Set()
+                };
+            });
+
+            (codeBlocks.value || []).forEach(block => {
+                const file = block.file || block.filename || block.documentId || '';
+                if (!stats[file]) {
+                    stats[file] = {
+                        totalBlocks: 0,
+                        alignedBlocks: new Set(),
+                        codeReviewBlocks: new Set(),
+                        reviewedCodeReviewBlocks: new Set()
+                    };
+                }
+                stats[file].totalBlocks += 1;
+                codeBlockMap.set(normalizeCodeBlockKey(block), file);
+            });
+
+            allAlignmentItems.value.forEach(alignment => {
+                (alignment.codeRanges || []).forEach(range => {
+                    const key = normalizeCodeBlockKey(range);
+                    const file = codeBlockMap.get(key);
+                    if (!file || !stats[file]) {
+                        return;
+                    }
+
+                    if (Number(alignment.isCodeReview || 0) === 1) {
+                        stats[file].codeReviewBlocks.add(key);
+                        if (alignment.isReviewed) {
+                            stats[file].reviewedCodeReviewBlocks.add(key);
+                        }
+                    } else {
+                        stats[file].alignedBlocks.add(key);
+                    }
+                });
+            });
+
+            const result = {};
+            Object.entries(stats).forEach(([file, value]) => {
+                result[file] = {
+                    totalBlocks: value.totalBlocks,
+                    alignedBlocks: value.alignedBlocks.size,
+                    codeReviewBlocks: value.codeReviewBlocks.size,
+                    reviewedCodeReviewBlocks: value.reviewedCodeReviewBlocks.size
+                };
+            });
+            return result;
         });
 
         /***********************
@@ -7118,12 +7354,12 @@ const app = createApp({
          ***********************/
         onMounted(async () => {
             await fetchProjectMetadata();
+            await refreshStatsData({ silent: true });
             // 先加载分解块数据，再加载对齐数据
             await loadAndRenderDocBlocks();
             await loadAndRenderCodeBlocks();
             await fetchAlignments();
             await fetchAlignmentSidebarPage();
-            await fetchIssues();
             
             // 添加点击高亮需求片段的事件监听器
             const docPanel = document.querySelector('.content-text-doc');
@@ -8514,7 +8750,14 @@ const app = createApp({
             totalRequirements,
             totalAlignedRequirements,
             totalReviewedRequirements,
+            allAlignmentItems,
+            alignmentCountRows,
+            reviewProgressRows,
             codeFileStats,
+            issueStatusStats,
+            issueStatusRows,
+            refreshStatsData,
+            statsRefreshing,
 
             // 自动审查功能
             startAutoReview,

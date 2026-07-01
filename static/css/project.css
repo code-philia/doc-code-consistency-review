@@ -351,6 +351,27 @@
     overflow-y: auto;
 }
 
+.stats-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.stats-toolbar-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.stats-toolbar-title i {
+    color: var(--accent-color);
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -371,38 +392,48 @@
 }
 
 .stat-title {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #475569;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
 }
 
 .stat-title i {
-    margin-right: 5px;
+    margin-right: 8px;
     color: var(--accent-color);
 }
 
 .stat-value {
-    font-size: 22px;
+    font-size: 25px;
+    line-height: 1.05;
     font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+    margin-bottom: 8px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .stat-description {
-    font-size: 10px;
-    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    line-height: 1.5;
 }
 
 .progress-stat {
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
 .progress-label {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
     margin-bottom: 4px;
 }
 
@@ -420,6 +451,7 @@
 
 .files-table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     background-color: white;
     box-shadow: 0 1px 5px rgba(0,0,0,0.1);
@@ -458,13 +490,43 @@
 .files-table th.align-center,
 .files-table td.align-center {
     text-align: center !important;
-    padding-right: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    vertical-align: middle;
 }
 
 .file-progress-cell,
 .code-lines-cell {
     text-align: center !important;
     vertical-align: middle;
+}
+
+.files-table th,
+.files-table td {
+    vertical-align: middle;
+}
+
+.files-table th:nth-child(2),
+.files-table td:nth-child(2) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stats-files-table col.col-icon {
+    width: 28px;
+}
+
+.stats-files-table col.col-file {
+    width: auto;
+}
+
+.stats-files-table col.col-metric {
+    width: 108px;
+}
+
+.stats-files-table col.col-progress {
+    width: 184px;
 }
 
 .file-progress {
@@ -474,7 +536,7 @@
 }
 
 .file-icon-cell {
-    width: 24px;
+    width: 28px;
 }
 
 .file-icon {
@@ -482,7 +544,7 @@
 }
 
 .file-progress-cell {
-    width: 120px;
+    width: 140px;
 }
 
 .file-progress {

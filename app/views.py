@@ -3197,6 +3197,26 @@ def get_issues():
         cur.execute(f"select count(*) as total from issues where {where_clause}")
         total = cur.fetchone()['total']
 
+        cur.execute(
+            """
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) AS confirmed,
+                SUM(CASE WHEN status = 'false_positive' THEN 1 ELSE 0 END) AS false_positive,
+                SUM(CASE WHEN status IS NULL OR status = '' OR status = 'unconfirmed' THEN 1 ELSE 0 END) AS unchecked
+            FROM issues
+            WHERE project_id = %s
+            """,
+            (project_id,)
+        )
+        stats_row = cur.fetchone() or {}
+        issue_status_stats = {
+            'all': int(stats_row.get('total') or 0),
+            'confirmed': int(stats_row.get('confirmed') or 0),
+            'false_positive': int(stats_row.get('false_positive') or 0),
+            'unchecked': int(stats_row.get('unchecked') or 0),
+        }
+
         cur.execute(f'SELECT * FROM issues where {where_clause} ORDER BY id DESC LIMIT %s OFFSET %s',
                     (issue_page_size, offset))
         rows = cur.fetchall()
@@ -3220,7 +3240,8 @@ def get_issues():
             })
         # conn.close()
         return jsonify({'status': 'success', 'data': issues,
-                        'total': total, 'issue_page': issue_page, 'issue_page_size': issue_page_size})
+                        'total': total, 'issue_page': issue_page, 'issue_page_size': issue_page_size,
+                        'issue_status_stats': issue_status_stats})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
