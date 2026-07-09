@@ -45,6 +45,8 @@ const app = createApp({
         /***********************
          * 基础状态
          ***********************/
+        // 匹配块和问题单
+        const issueAlignmentIds = ref(new Set())
         // code分页
         const codePage = ref(1)
         const codeTotal = ref(0)
@@ -81,6 +83,7 @@ const app = createApp({
                 }
             }
         }
+        
         const issuePage = ref(1)
         const issuePageSize = ref(100)
         const issueTotal = ref(0)
@@ -92,6 +95,7 @@ const app = createApp({
             unchecked: 0
         })
 //        const issues = ref([])
+
         // 问题单导出
         const exportTasks = ref([])
         const isRefreshing = ref(false)
@@ -1082,6 +1086,7 @@ const app = createApp({
             //console.log(exportfilename)
             
             //删除临时文件
+            if (!exportfilename) return;
             const res = await axios.post('/project/delete-export-files', {
                filename: exportfilename
             });
@@ -1113,7 +1118,16 @@ const app = createApp({
 			  responseType: 'blob',
 			  timeout: 30000
 			});
-            
+			const contentType = response.headers['content-type'];
+			if (contentType && contentType.includes('application/json')){
+			    const text = await response.data.text();
+			    const json = JSON.parse(text);
+
+			    if (json.status === 'warning' || json.status === 'error'){
+			        ElMessage.warning(json.message);
+			        return;
+			    }
+			}
             
             // 获取 Content-Disposition 头
             const contentDisposition = response.headers['content-disposition'];
@@ -2046,7 +2060,9 @@ const app = createApp({
                     });
 
                     issues.value = issuesData;
+                    refreshIssueIds(issuesData)
                 }
+            
             } catch (error) {
                 console.error('获取问题单数据失败:', error);
                 issues.value = [];
@@ -2060,6 +2076,7 @@ const app = createApp({
                 issuesLoading.value = false;
             }
         };
+
 
         // 切换分类重置到第一页
         const issuesFilterByCategory = () => {
@@ -2077,12 +2094,13 @@ const app = createApp({
             issuePage.value = val
             fetchIssues()
         }
-
+            
         const fetchProjectMetadata = async () => {
             if (!projectPath.value) {
                 ElMessage.error("项目路径不存在，无法加载文件列表。");
                 return;
             }
+
             try {
                 const response = await axios.get(`/project/metadata?path=${encodeURIComponent(projectPath.value)}`);
                 if (response.data.status === 'success') {
@@ -2103,6 +2121,7 @@ const app = createApp({
             } catch (err) {
                 console.error("Error fetching project metadata:", err);
                 ElMessage.error(`加载项目元数据失败: ${err.message}`);
+                                ElMessage.error(`加载项目元数据失败: ${err.message}`);
             }
         };
 
@@ -2761,7 +2780,9 @@ const app = createApp({
             });
             return result;
         });
-
+        
+        
+        
         /***********************
          * 需求分解功能
          ***********************/
@@ -4066,6 +4087,35 @@ const app = createApp({
 
             return { docIndex, codeIndex };
         };
+
+        const refreshIssueIds = (issues) => {
+            issueAlignmentIds.value.clear()
+//            console.log(issues)
+            for (let i = 0; i < issues.length; i++) {
+                const issue = issues[i]
+                if (issue.alignmentId) {
+                    issueAlignmentIds.value.add(issue.alignmentId)
+                }
+            }
+
+        }
+
+        const blockHasIssue = (block) => {
+            if (blockType.value !== 'code') return;
+
+            const matchedId = getMatchedAlignmentIdForBlock(block, blockType.value, true)
+//            console.log(matchedId)
+            if (matchedId) {
+                return issueAlignmentIds.value.has(matchedId)
+            }
+            return false
+        }
+
+        const alignmentHasIssue = (alignment) => {
+//            console.log(alignment.id)
+//            console.log(issueAlignmentIds.value)
+            return alignment && alignment.id && issueAlignmentIds.value.has(alignment.id)
+        }
 
         // 处理块列表点击
         const handleBlockItemClick = async (block, index) => {
@@ -7363,6 +7413,7 @@ const app = createApp({
             
             // 添加点击高亮需求片段的事件监听器
             const docPanel = document.querySelector('.content-text-doc');
+            
             if (docPanel) {
                 docPanel.addEventListener('dblclick', handleHighlightBlockClick);
                 docPanel.addEventListener('contextmenu', handleHighlightBlockRightClick);
@@ -8580,6 +8631,9 @@ const app = createApp({
          * 暴露到模板
          ***********************/
         return {
+            // 对齐视图/块视图匹配问题单变色
+            blockHasIssue,
+            alignmentHasIssue,
             // code分页
             codeFileHandleCurrentChange,
             codePage,

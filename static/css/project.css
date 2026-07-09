@@ -372,6 +372,7 @@
     color: var(--accent-color);
 }
 
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -409,11 +410,11 @@
 .stat-value {
     font-size: 25px;
     line-height: 1.05;
-    font-weight: 600;
     letter-spacing: -0.03em;
     color: #0f172a;
     margin-bottom: 8px;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+    font-weight: 600;
 }
 
 .stat-description {
@@ -493,6 +494,7 @@
     padding-left: 12px !important;
     padding-right: 12px !important;
     vertical-align: middle;
+
 }
 
 .file-progress-cell,
@@ -500,6 +502,7 @@
     text-align: center !important;
     vertical-align: middle;
 }
+
 
 .files-table th,
 .files-table td {
@@ -528,6 +531,8 @@
 .stats-files-table col.col-progress {
     width: 184px;
 }
+
+
 
 .file-progress {
     margin: 0 auto;
@@ -3928,6 +3933,7 @@
     border-radius: 2px;
 }
 
+
 /* 主体工作区：新增结构类微调（不覆盖原有颜色/尺寸） */
 
 /* 文件计数 */
@@ -4110,6 +4116,8 @@
 .workspace-panel-actions .el-button-group + .el-button {
     margin-left: 0 !important;
 }
+
+
 .manual-align-dialog .el-dialog {
     height: 520px;
     display: flex;
@@ -4167,4 +4175,8 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+.issue-bg {
+    background-color: #fee2e2 !important;
 }
