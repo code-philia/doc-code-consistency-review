@@ -349,6 +349,7 @@
                             <i class="fas fa-rotate-right" style="margin-right: 6px;"></i>刷新统计
                         </el-button>
                     </div>
+
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-title">
@@ -407,7 +408,7 @@
                             <div class="stat-value">${ issueStatusStats.all }</div>
                             <div class="stat-description">按问题单状态展示全量数量</div>
                             <div class="progress-stat" v-for="item in issueStatusRows" :key="item.key">
-                                <div class="progress-label">
+                                <div class="progress-label"> 
                                     <span>
                                         <span v-if="item.statusClass" class="issue-status" :class="item.statusClass">${ item.label }</span>
                                         <span v-else>${ item.label }</span>
@@ -500,7 +501,7 @@
                                             <div class="file-progress-fill" :style="`width: ${codeFileStats[file] ? Math.round((codeFileStats[file].alignedBlocks / Math.max(codeFileStats[file].totalBlocks, 1)) * 100) : 0}%`"></div>
                                         </div>
                                     </div>
-                                </td>
+                                </td>           
                                 <td class="code-lines-cell align-center">${ codeFileLines[file] || 0 }</td>
                             </tr>
                             <tr v-if="projectFiles.code_files.length === 0">
@@ -813,6 +814,7 @@
                                                  >
                                                     <div
                                                         class="alignment-list-item"
+                                                        :class="{ 'issue-bg': alignmentHasIssue(alignment) }"
                                                         @click="handleAlignmentItemClick(alignment); toggleAlignmentExpansion(alignment.id)"
                                                         @contextmenu.prevent="showContextMenu($event, alignment)"
                                                     >
@@ -918,7 +920,10 @@
                                                    v-for="(block, index) in displayedBlocks"
                                                    :key="index"
                                                    class="alignment-list-item block-list-item"
-                                                   :class="{ 'selected': currentSelectedBlockIndex === index }"
+                                                   :class="{
+                                                    'selected': currentSelectedBlockIndex === index,
+                                                    'issue-bg': blockHasIssue(block)
+                                                   }"
                                                    :id="'block-item-' + index"
                                                    @click="handleBlockItemClick(block, index)"
                                                    @contextmenu.prevent="handleBlockItemContextMenu($event, block, index, blockType)"
