@@ -40,13 +40,42 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
     :return: 分块结果列表，每个元素包含代码内容和行号范围
     """
     global index
-    
+    # print(f'正在处理======================:{filename}')
     if os.path.isdir(file_path):
         return []
     # 读取文件内容，保留原始行（不包括空行）
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
         lines = [line.rstrip('\n') for line in f.readlines()]
-    
+
+    ext = os.path.splitext(file_path)[1].lower()
+    start = 0
+    if ext in ('.v', '.sv', '.vhd'):
+        # print(f'正在处理fpga:{filename}')
+        # 过滤 fpga文件开头注释
+        i, total = 0, len(lines)
+        while i < total:
+            s = lines[i].strip()
+            if not s:  # 空行跳过
+                i += 1
+                continue
+            if s.startswith('//') or s.startswith('--'):
+                i += 1
+                continue
+            if s.startswith('/*'):
+                if '*/' in s:  # 单行 /* */
+                    i += 1
+                    continue
+                for j in range(i, total):  # 多行 /* */
+                    if '*/' in lines[j]:
+                        i = j + 1
+                        break
+                else:
+                    i = total
+                continue
+            break
+        # lines = lines[i:]
+        start = i
+    # print(f'处理完成fpga:{filename}')
     total_lines = len(lines)
 
     if total_lines == 0:
@@ -54,6 +83,8 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
     
     # 标记已处理的行
     processed = [False] * total_lines
+    if start > 0:
+        processed[:start] = [True] * start
     chunks = []
     
     # 定义分块模式和处理函数，按优先级排序
@@ -139,7 +170,7 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
     comment_dict= {} # 存储结构体/函数前的注释
     
     # 处理所有行，确保每一行都被处理
-    i = 0
+    i = start
     while i < total_lines:
         #print(lines[i])
         if processed[i]:
@@ -366,7 +397,8 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
         print(f"成功处理文件: {os.path.basename(file_path)}")
         print(f"总代码行数: {total_lines}")
         print(f"生成块数量: {len(chunks)}")
-        
+    
+    # print(f'处理完成======================:{filename}')
     # return output_json # main调试用
     return chunks # 集成到前端时，返回代码块
 

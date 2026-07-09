@@ -1993,41 +1993,68 @@ def abstract_code_from_project():
         exclude_folders = ['.git', '.idea']
         # 基于文件名后缀，指定文件类型
         include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html', '.vhd', '.v', '.sv', '.adb', '.ads']
+        # 从FPGA代码中去除'.adb', '.ads'
+        flag_FPGA = False
+        adb_file_path_list = []
+        adb_rel_path_list = []
+        include_files_FPGA = ['.vhd', '.v', '.sv']
+        include_files_Ada = ['.adb', '.ads']
+        
+        file_path_list = []
+        rel_path_list = []
         # 遍历文件夹
-        file_abstract = {}
         for root, dirs, files in os.walk(code_file_path):
             dirs[:] = [d for d in dirs if d not in exclude_folders]
             for file in files:
                 if os.path.splitext(file)[1] in include_files:
+                    if os.path.splitext(file)[1] in include_files_FPGA:
+                        flag_FPGA = True
+                    # 从FPGA代码中去除'.adb', '.ads'
+                    if flag_FPGA and os.path.splitext(file)[1] in include_files_Ada:
+                        continue
                     file_path = os.path.join(root, file)
                     rel_path = os.path.relpath(file_path, code_file_path)
-
-                    if not df.empty:
-                        # 先看数据库里有没有已经生成好的代码摘要
-                        row_data = df[df['filename'] == rel_path]
-
-                        # 数据库有该代码文件的摘要
-                        if not row_data.empty:
-                            logger.info('数据库有该代码文件的摘要')
-                            abstract_data = row_data['abstract'].values[0]
-                            file_abstract[rel_path] = abstract_data
-                        # 数据库没有该代码文件的摘要
-                        else:
-                            file_path = os.path.join(root, file)
-                            codefile_abstract = generate_abstract(file_path)
-                            file_abstract[rel_path] = codefile_abstract
-
-                            # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
-                            save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id,
-                                                current_user.user_id)
-
-                    # 数据库里代码摘要这张表是空的，需要新生成
+                    if os.path.splitext(file)[1] in include_files_Ada:
+                        adb_file_path_list.append(file_path)
+                        adb_rel_path_list.append(rel_path)
                     else:
-                        file_path = os.path.join(root, file)
-                        codefile_abstract = generate_abstract(file_path)
-                        file_abstract[rel_path] = codefile_abstract
-                        # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
-                        save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id, current_user.user_id)
+                        file_path_list.append(file_path)
+                        rel_path_list.append(rel_path)
+        if not flag_FPGA:
+            file_path_list.extend(adb_file_path_list)      
+            rel_path_list.extend(adb_rel_path_list)      
+        
+        # 遍历文件列表
+        file_abstract = {}
+        for i in range(0, len(file_path_list)):
+            file_path = file_path_list[i]
+            rel_path = rel_path_list[i]
+            if not df.empty:
+                # 先看数据库里有没有已经生成好的代码摘要
+                row_data = df[df['filename'] == rel_path]
+
+                # 数据库有该代码文件的摘要
+                if not row_data.empty:
+                    logger.info('数据库有该代码文件的摘要')
+                    abstract_data = row_data['abstract'].values[0]
+                    file_abstract[rel_path] = abstract_data
+                # 数据库没有该代码文件的摘要
+                else:
+                    #file_path = os.path.join(root, file)
+                    codefile_abstract = generate_abstract(file_path)
+                    file_abstract[rel_path] = codefile_abstract
+
+                    # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
+                    save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id,
+                                        current_user.user_id)
+
+            # 数据库里代码摘要这张表是空的，需要新生成
+            else:
+                #file_path = os.path.join(root, file)
+                codefile_abstract = generate_abstract(file_path)
+                file_abstract[rel_path] = codefile_abstract
+                # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
+                save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id, current_user.user_id)
 
         # logger.info(file_abstract)
         # sys.exit()
@@ -3187,6 +3214,9 @@ def get_issues():
 
         offset = (issue_page - 1) * issue_page_size
 
+        
+        
+        
         conn = get_db()
         cur = conn.cursor()
 
@@ -3221,6 +3251,8 @@ def get_issues():
                     (issue_page_size, offset))
         rows = cur.fetchall()
         issues = []
+
+        
         for r in rows:
             issues.append({
                 'id': str(r['id']),
@@ -3238,6 +3270,7 @@ def get_issues():
                 'updatedDate': r['updatedAt'],
                 'category': r['category']
             })
+        
         # conn.close()
         return jsonify({'status': 'success', 'data': issues,
                         'total': total, 'issue_page': issue_page, 'issue_page_size': issue_page_size,
@@ -3528,6 +3561,7 @@ def code_decomposition():
 
         return jsonify({'status': 'success', 'message': '代码分解完成，结果已保存', 'processedCount': processed_count})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)})
 
 # 没看到有调用的地方，先注释了
@@ -5375,7 +5409,9 @@ def get_alignments_from_sqlite(project_id):
         #conn = get_db_celery()
         
         # 读取name、docRanges、codeRanges三列所有数据
-        query_sql = f"SELECT name, docRanges, codeRanges, GenReq, GenMermaid FROM alignments where project_id={project_id} and is_code_review=0"
+        query_sql = f"SELECT name, docRanges, codeRanges, GenReq, GenMermaid FROM alignments " \
+                    f"where project_id={project_id} " \
+                    f"AND (is_alignment = 1 or (is_code_review = 1 and isReviewed = 1))"
         # 直接用pandas读取SQL结果（简洁高效）
         # df = pd.read_sql(query_sql, conn)
         # 创建引擎

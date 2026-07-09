@@ -254,6 +254,11 @@ def create_chunk(filename, start, end, lines):
 def get_all_files_with_relative_paths(base_path, type = 'code'):
     """递归遍历目录，获取所有文件的相对路径"""
     all_files = []
+    adb_files = []
+    # 从FPGA代码中去除'.adb', '.ads'
+    flag_FPGA = False
+    include_files_FPGA = ['.vhd', '.v', '.sv']
+    include_files_Ada = ['.adb', '.ads']
     # 基于文件名后缀，指定文件类型
     for root, _, files in os.walk(base_path):
         for file in files:
@@ -261,10 +266,19 @@ def get_all_files_with_relative_paths(base_path, type = 'code'):
                 continue
             if type == 'doc' and not (file.endswith('.docx') or file.endswith('.md')):
                 continue
-            
+            if os.path.splitext(file)[1] in include_files_FPGA:
+                flag_FPGA = True
+            # 从FPGA代码中去除'.adb', '.ads'
+            if flag_FPGA and os.path.splitext(file)[1] in include_files_Ada:
+                continue
             relative_path = os.path.relpath(os.path.join(root, file), base_path)
-            all_files.append(relative_path)
             
+            if os.path.splitext(file)[1] in include_files_Ada:
+                adb_files.append(relative_path)
+            else:
+                all_files.append(relative_path)
+    if not flag_FPGA:
+        all_files.extend(adb_files)
     return all_files
 
 def convert_doc_to_markdown(doc_repo_path, parseDocMethod):
