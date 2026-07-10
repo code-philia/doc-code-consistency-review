@@ -1181,91 +1181,97 @@
         <el-dialog
             v-model="showAlignmentDialog"
             title="添加需求到对齐关系"
-            width="500px"
-            class="manual-align-dialog"
+            width="1040px"
+            class="manual-align-dialog manual-align-dialog--doc"
             :close-on-click-modal="false"
             @close="resetManualAlignFromBlock"
         >
             <div v-if="currentSelection" class="manual-align-dialog-body">
-                <div class="selection-preview">
-                    ${ currentSelection.content }
-                </div>
+                <div class="manual-align-shell">
+                    <div class="manual-align-sidebar">
+                        <div class="manual-align-sidebar-panel">
+                            <div class="manual-align-panel-section">
+                                <div class="manual-align-panel-title">当前需求选区</div>
+                            </div>
 
-                <div class="annotation-options manual-align-dialog-content">
-                    <div
-                        v-if="existingAlignmentsReq2Code.length > 0 || existingAlignmentsCode2Req.length > 0"
-                        class="manual-align-existing-section"
-                    >
-                        <p style="margin: 10px 0 15px; font-size: 14px;">选择要添加到的对齐关系:</p>
-
-                        <el-tabs v-model="existingAlignTab" type="card" class="existing-align-tabs">
-                            <el-tab-pane label="需求→代码" name="req2code">
-                                <div class="existing-align-select-wrap">
-                                    <el-select
-                                        v-model="selectedExistingAlignmentId"
-                                        placeholder="请选择需求→代码对齐关系"
-                                        style="width: 100%;"
-                                        filterable
-                                        clearable
-                                    >
-                                        <el-option
-                                            v-for="alignment in existingAlignmentsReq2Code"
-                                            :key="alignment.id"
-                                            :label="alignment.name"
-                                            :value="alignment.id"
-                                        />
-                                    </el-select>
-                                    <div v-if="existingAlignmentsReq2Code.length === 0" class="existing-align-empty">暂无需求→代码对齐关系</div>
+                            <div class="manual-align-panel-section manual-align-panel-section--preview">
+                                <div class="selection-preview selection-preview--manual">
+                                    <div class="manual-align-doc-preview">
+                                        <div class="doc-content-scroll" v-html="manualDocSelectionContent"></div>
+                                    </div>
                                 </div>
-                            </el-tab-pane>
-                            <el-tab-pane label="代码→需求" name="code2req">
-                                <div class="existing-align-select-wrap">
-                                    <el-select
-                                        v-model="selectedExistingAlignmentId"
-                                        placeholder="请选择代码→需求对齐关系"
-                                        style="width: 100%;"
-                                        filterable
-                                        clearable
-                                    >
-                                        <el-option
-                                            v-for="alignment in existingAlignmentsCode2Req"
-                                            :key="alignment.id"
-                                            :label="alignment.name"
-                                            :value="alignment.id"
-                                        />
-                                    </el-select>
-                                    <div v-if="existingAlignmentsCode2Req.length === 0" class="existing-align-empty">暂无代码→需求对齐关系</div>
-                                </div>
-                            </el-tab-pane>
-                        </el-tabs>
-
-                        <el-divider>或</el-divider>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <p style="margin: 10px 0 15px; font-size: 14px;">创建新的对齐关系:</p>
-                        <el-input
-                            v-model="newAlignmentName"
-                            placeholder="为该需求点命名"
-                        ></el-input>
+                    <div class="manual-align-workbench">
+                        <div class="manual-align-operation-panel">
+                            <el-tabs v-model="manualActionTab" class="manual-align-operation-tabs">
+                                <el-tab-pane v-if="hasExistingManualAlignments" label="添加到已有对齐关系" name="existing"></el-tab-pane>
+                                <el-tab-pane label="新建对齐关系" name="createAlignment"></el-tab-pane>
+                                <el-tab-pane label="新建需求块" name="createBlock"></el-tab-pane>
+                            </el-tabs>
+
+                            <div class="manual-align-action-bar">
+                                <template v-if="manualActionTab === 'existing'">
+                                    <div class="manual-align-action-fields">
+                                        <el-tabs v-model="existingAlignTab" type="card" class="existing-align-tabs existing-align-tabs--compact">
+                                            <el-tab-pane label="需求→代码" name="req2code"></el-tab-pane>
+                                            <el-tab-pane label="代码→需求" name="code2req"></el-tab-pane>
+                                        </el-tabs>
+                                        <el-select
+                                            v-model="selectedExistingAlignmentId"
+                                            :placeholder="existingAlignTab === 'code2req' ? '请选择代码→需求对齐关系' : '请选择需求→代码对齐关系'"
+                                            class="manual-align-select"
+                                            filterable
+                                            clearable
+                                        >
+                                            <el-option
+                                                v-for="alignment in currentExistingAlignments"
+                                                :key="alignment.id"
+                                                :label="alignment.name"
+                                                :value="alignment.id"
+                                            />
+                                        </el-select>
+                                    </div>
+                                    <el-button type="primary" @click="submitManualAction" :disabled="!selectedExistingAlignmentId">添加</el-button>
+                                </template>
+
+                                <template v-else-if="manualActionTab === 'createAlignment'">
+                                    <div class="manual-align-action-fields">
+                                        <el-input
+                                            v-model="newAlignmentName"
+                                            placeholder="请输入新的对齐关系名称"
+                                        ></el-input>
+                                    </div>
+                                    <el-button type="primary" @click="submitManualAction">创建</el-button>
+                                </template>
+
+                                <template v-else>
+                                    <div class="manual-align-action-fields">
+                                        <el-input
+                                            v-model="newBlockName"
+                                            placeholder="请输入需求块名称"
+                                        ></el-input>
+                                    </div>
+                                    <el-button type="primary" @click="submitManualAction">创建</el-button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="manual-align-preview-panel">
+                            <div class="manual-align-preview-panel__body">
+                                <div class="manual-align-preview-empty">
+                                    <div class="manual-align-preview-empty__title">需求侧无调用图预览</div>
+                                    <div class="manual-align-preview-empty__desc">
+                                        在上方选择添加到已有对齐关系、创建新的对齐关系，或直接将当前选区保存为需求块。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <template #footer>
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                    <el-button @click="createBlockOnly('doc')" :disabled="manualAlignFromBlock">新建块</el-button>
-                    <div>
-                        <el-button
-                            plain
-                            @click="addToSelectedExistingAlignment"
-                            :disabled="!selectedExistingAlignmentId"
-                        >
-                            添加到已有对齐关系
-                        </el-button>
-                        <el-button type="primary" @click="createAlignment">创建新对齐关系</el-button>
-                    </div>
-                </div>
-            </template>
         </el-dialog>
 
         <el-dialog
@@ -1853,91 +1859,157 @@
         <el-dialog
             v-model="showCodeSelectionDialog"
             title="添加代码到对齐关系"
-            width="500px"
-            class="manual-align-dialog"
+            width="1320px"
+            class="manual-align-dialog manual-align-dialog--code"
             :close-on-click-modal="false"
             @close="resetManualAlignFromBlock"
         >
             <div v-if="currentSelection" class="manual-align-dialog-body">
-                <div class="selection-preview">
-                    ${ currentSelection.content }
-                </div>
+                <div class="manual-align-shell manual-align-shell--wide">
+                    <div class="manual-align-sidebar">
+                        <div class="manual-align-sidebar-panel">
+                            <div class="manual-align-panel-section">
+                                <div class="manual-align-panel-title">当前代码选区</div>
+                            </div>
 
-                <div class="annotation-options manual-align-dialog-content">
-                    <div
-                        v-if="existingAlignmentsReq2Code.length > 0 || existingAlignmentsCode2Req.length > 0"
-                        class="manual-align-existing-section"
-                    >
-                        <p style="margin: 10px 0 15px; font-size: 14px;">选择要添加到的对齐关系:</p>
-
-                        <el-tabs v-model="existingAlignTab" type="card" class="existing-align-tabs">
-                            <el-tab-pane label="需求→代码" name="req2code">
-                                <div class="existing-align-select-wrap">
-                                    <el-select
-                                        v-model="selectedExistingAlignmentId"
-                                        placeholder="请选择需求→代码对齐关系"
-                                        style="width: 100%;"
-                                        filterable
-                                        clearable
-                                    >
-                                        <el-option
-                                            v-for="alignment in existingAlignmentsReq2Code"
-                                            :key="alignment.id"
-                                            :label="alignment.name"
-                                            :value="alignment.id"
-                                        />
-                                    </el-select>
-                                    <div v-if="existingAlignmentsReq2Code.length === 0" class="existing-align-empty">暂无需求→代码对齐关系</div>
+                            <div class="manual-align-panel-section manual-align-panel-section--preview">
+                                <div class="selection-preview selection-preview--manual selection-preview--manual-code">
+                                    <div
+                                        class="manual-align-code-preview"
+                                        v-html="manualCodeSelectionContent"
+                                        :style="'counter-reset: listing ' + manualCodeSelectionCounterStart"
+                                    ></div>
                                 </div>
-                            </el-tab-pane>
-                            <el-tab-pane label="代码→需求" name="code2req">
-                                <div class="existing-align-select-wrap">
-                                    <el-select
-                                        v-model="selectedExistingAlignmentId"
-                                        placeholder="请选择代码→需求对齐关系"
-                                        style="width: 100%;"
-                                        filterable
-                                        clearable
-                                    >
-                                        <el-option
-                                            v-for="alignment in existingAlignmentsCode2Req"
-                                            :key="alignment.id"
-                                            :label="alignment.name"
-                                            :value="alignment.id"
-                                        />
-                                    </el-select>
-                                    <div v-if="existingAlignmentsCode2Req.length === 0" class="existing-align-empty">暂无代码→需求对齐关系</div>
-                                </div>
-                            </el-tab-pane>
-                        </el-tabs>
+                            </div>
 
-                        <el-divider>或</el-divider>
+                            <div class="manual-align-panel-section">
+                                <div class="manual-align-meta-list">
+                                    <div v-if="currentCodeSelectionBlock" class="manual-align-meta-row">
+                                        <span>文件</span>
+                                        <strong>${ currentCodeSelectionBlock.file || currentCodeSelectionBlock.filename }</strong>
+                                    </div>
+                                    <div v-if="currentCodeSelectionBlock" class="manual-align-meta-row">
+                                        <span>行范围</span>
+                                        <strong>${ currentCodeSelectionBlock.range ? currentCodeSelectionBlock.range[0] : currentCodeSelectionBlock.startLine } - ${ currentCodeSelectionBlock.range ? currentCodeSelectionBlock.range[1] : currentCodeSelectionBlock.endLine }</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="manual-align-panel-section manual-align-panel-section--callgraph">
+                                <div class="manual-align-panel-desc manual-align-panel-desc--tight">${ currentCodeSelectionCallGraphHint }</div>
+                                <div class="manual-align-toggle-row">
+                                    <span>启用调用图扩展</span>
+                                    <el-switch
+                                        v-model="callGraphEnabled"
+                                        :disabled="!currentCodeSelectionSupportsCallGraph"
+                                    ></el-switch>
+                                </div>
+                                <div class="call-graph-control-row">
+                                    <span class="call-graph-depth-label">展开深度</span>
+                                    <el-input-number
+                                        v-model="callGraphDepth"
+                                        :min="1"
+                                        :max="5"
+                                        :disabled="!callGraphEnabled || !currentCodeSelectionSupportsCallGraph"
+                                        size="small"
+                                    ></el-input-number>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <p style="margin: 10px 0 15px; font-size: 14px;">创建新的对齐关系:</p>
-                        <el-input
-                            v-model="newAlignmentName"
-                            placeholder="为该代码块命名"
-                        ></el-input>
+                    <div class="manual-align-workbench">
+                        <div class="manual-align-operation-panel">
+                            <el-tabs v-model="manualActionTab" class="manual-align-operation-tabs">
+                                <el-tab-pane v-if="hasExistingManualAlignments" label="添加到已有对齐关系" name="existing"></el-tab-pane>
+                                <el-tab-pane label="新建对齐关系" name="createAlignment"></el-tab-pane>
+                                <el-tab-pane label="新建代码块" name="createBlock"></el-tab-pane>
+                            </el-tabs>
+
+                            <div class="manual-align-action-bar">
+                                <template v-if="manualActionTab === 'existing'">
+                                    <div class="manual-align-action-fields">
+                                        <el-tabs v-model="existingAlignTab" type="card" class="existing-align-tabs existing-align-tabs--compact">
+                                            <el-tab-pane label="需求→代码" name="req2code"></el-tab-pane>
+                                            <el-tab-pane label="代码→需求" name="code2req"></el-tab-pane>
+                                        </el-tabs>
+                                        <el-select
+                                            v-model="selectedExistingAlignmentId"
+                                            :placeholder="existingAlignTab === 'code2req' ? '请选择代码→需求对齐关系' : '请选择需求→代码对齐关系'"
+                                            class="manual-align-select"
+                                            filterable
+                                            clearable
+                                        >
+                                            <el-option
+                                                v-for="alignment in currentExistingAlignments"
+                                                :key="alignment.id"
+                                                :label="alignment.name"
+                                                :value="alignment.id"
+                                            />
+                                        </el-select>
+                                    </div>
+                                    <el-button type="primary" @click="submitManualAction" :disabled="!selectedExistingAlignmentId">添加</el-button>
+                                </template>
+
+                                <template v-else-if="manualActionTab === 'createAlignment'">
+                                    <div class="manual-align-action-fields">
+                                        <el-input
+                                            v-model="newAlignmentName"
+                                            placeholder="请输入新的对齐关系名称"
+                                        ></el-input>
+                                    </div>
+                                    <el-button type="primary" @click="submitManualAction">创建</el-button>
+                                </template>
+
+                                <template v-else>
+                                    <div class="manual-align-action-fields">
+                                        <el-input
+                                            v-model="newBlockName"
+                                            placeholder="请输入代码块名称"
+                                        ></el-input>
+                                    </div>
+                                    <el-button type="primary" @click="submitManualAction">创建</el-button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="call-graph-preview-panel">
+                            <div class="call-graph-preview-header">
+                                <span>调用图预览</span>
+                                <div class="call-graph-preview-toolbar">
+                                    <span class="call-graph-preview-loading" v-if="callGraphLoading">加载中...</span>
+                                    <span v-else class="call-graph-zoom-text">${ Math.round(callGraphZoom * 100) }%</span>
+                                    <el-button-group size="small">
+                                        <el-button @click="zoomCallGraph(1.2)" :disabled="!callGraphMermaid || callGraphLoading || !!callGraphError">+</el-button>
+                                        <el-button @click="zoomCallGraph(1 / 1.2)" :disabled="!callGraphMermaid || callGraphLoading || !!callGraphError">-</el-button>
+                                        <el-button @click="fitCallGraphToViewport" :disabled="!callGraphMermaid || callGraphLoading || !!callGraphError">适配</el-button>
+                                        <el-button @click="resetCallGraphViewport" :disabled="!callGraphMermaid || callGraphLoading || !!callGraphError">重置</el-button>
+                                    </el-button-group>
+                                </div>
+                            </div>
+                            <div v-if="callGraphError" class="call-graph-preview-message call-graph-preview-message--error">
+                                ${ callGraphError }
+                            </div>
+                            <div v-else-if="!callGraphEnabled" class="call-graph-preview-message">
+                                开启 Call Graph 后展示当前函数的双向调用关系
+                            </div>
+                            <div v-else-if="callGraphLoading" class="call-graph-preview-message">
+                                正在生成调用图预览...
+                            </div>
+                            <div v-else-if="!callGraphMermaid" class="call-graph-preview-message">
+                                当前没有可展示的调用图
+                            </div>
+                            <div
+                                id="code-call-graph-viewport"
+                                class="manual-align-call-graph"
+                                v-show="!!callGraphMermaid && !callGraphLoading && !callGraphError"
+                            >
+                                <div id="code-call-graph-wrapper" class="manual-align-call-graph__wrapper"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <template #footer>
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                    <el-button @click="createBlockOnly('code')" :disabled="manualAlignFromBlock">新建块</el-button>
-                    <div>
-                        <el-button
-                            plain
-                            @click="addToSelectedExistingAlignment"
-                            :disabled="!selectedExistingAlignmentId"
-                        >
-                            添加到已有对齐关系
-                        </el-button>
-                        <el-button type="primary" @click="createAlignment">创建新对齐关系</el-button>
-                    </div>
-                </div>
-            </template>
         </el-dialog>
         <!-- 导出记录弹框 -->
         <el-dialog

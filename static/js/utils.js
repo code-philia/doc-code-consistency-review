@@ -132,6 +132,47 @@ function inlineCodeHandler(state, node) {
     return state.applyData(node, codeElement);
 }
 
+function inlineMathHandler(state, node) {
+    const codeElement = {
+        type: 'element',
+        tagName: 'code',
+        properties: {
+            className: ['language-math', 'math-inline'],
+            'parse-start': node.position.start.offset,
+            'parse-end': node.position.end.offset
+        },
+        children: [{ type: 'text', value: node.value }]
+    };
+    state.patch(node, codeElement);
+    return state.applyData(node, codeElement);
+}
+
+function mathBlockHandler(state, node) {
+    const codeElement = {
+        type: 'element',
+        tagName: 'code',
+        properties: {
+            className: ['language-math', 'math-display'],
+            'parse-start': node.position.start.offset,
+            'parse-end': node.position.end.offset
+        },
+        children: [{ type: 'text', value: node.value }]
+    };
+    state.patch(node, codeElement);
+
+    const preElement = {
+        type: 'element',
+        tagName: 'pre',
+        properties: {
+            'parse-start': node.position.start.offset,
+            'parse-end': node.position.end.offset
+        },
+        children: [codeElement]
+    };
+    state.patch(node, preElement);
+    return state.applyData(node, preElement);
+}
+
 /**
  * Custom handler for math and other unknown nodes, ensuring they get position attributes.
  */
@@ -167,8 +208,40 @@ const customHandlers = {
     thematicBreak: wrapHandler('hr'),
     text: textHandler,
     code: codeHandler,
-    inlineCode: inlineCodeHandler
+    inlineCode: inlineCodeHandler,
+    inlineMath: inlineMathHandler,
+    math: mathBlockHandler
 };
+
+function propagateMathSourceRanges(html) {
+    if (!html || typeof document === 'undefined') {
+        return html;
+    }
+
+    const template = document.createElement('template');
+    template.innerHTML = html;
+
+    const mathRoots = template.content.querySelectorAll('.katex');
+    mathRoots.forEach((mathRoot) => {
+        const sourceOwner = mathRoot.closest('[parse-start][parse-end]');
+        if (!sourceOwner) {
+            return;
+        }
+
+        const start = sourceOwner.getAttribute('parse-start');
+        const end = sourceOwner.getAttribute('parse-end');
+        if (start == null || end == null) {
+            return;
+        }
+
+        [mathRoot, ...mathRoot.querySelectorAll('*')].forEach((node) => {
+            node.setAttribute('parse-start', start);
+            node.setAttribute('parse-end', end);
+        });
+    });
+
+    return template.innerHTML;
+}
 
 /**
  * Renders Markdown to HTML using unified/remark, adding position attributes.
@@ -190,7 +263,7 @@ export async function renderMarkdown(content) {
             .use(rehypeStringify)
             .process(content);
 
-        return String(file);
+        return propagateMathSourceRanges(String(file));
     } catch (error) {
         console.error("Markdown rendering error:", error);
         throw error; // Re-throw to be caught by the caller
@@ -277,69 +350,50 @@ export function normalizePath(path) {
  ****************************/
 // 获取原始文档中的范围 - 简化版本，确保选中完整的parse元素
 export function getSourceDocumentRange(rootElement, range) {
-    // 查找所有涉及到的具有parse-start和parse-end属性的元素
-    const involvedElements = [];
-    
-    // 获取选择范围内的所有节点
-    const walker = document.createTreeWalker(
-        rootElement,
-        NodeFilter.SHOW_ELEMENT,
-        {
-            acceptNode: function(node) {
-                // 检查节点是否与选择范围相交
-                if (node.hasAttribute && node.hasAttribute('parse-start') && node.hasAttribute('parse-end')) {
-                    const nodeRange = document.createRange();
-                    nodeRange.selectNodeContents(node);
-                    
-                    // 检查是否与用户选择范围相交
-                    try {
-                        const startComparison = range.compareBoundaryPoints(Range.END_TO_START, nodeRange);
-                        const endComparison = range.compareBoundaryPoints(Range.START_TO_END, nodeRange);
-                        
-                        // 如果有交集，则包含此元素
-                        if (startComparison <= 0 && endComparison >= 0) {
-                            return NodeFilter.FILTER_ACCEPT;
-                        }
-                    } catch (e) {
-                        // 如果比较失败，检查节点是否在选择范围内
-                        if (range.intersectsNode && range.intersectsNode(node)) {
-                            return NodeFilter.FILTER_ACCEPT;
-                        }
-                    }
-                }
-                return NodeFilter.FILTER_SKIP;
-            }
-        }
-    );
-    
-    let node;
-    while (node = walker.nextNode()) {
-        const parseStart = parseInt(node.getAttribute('parse-start'));
-        const parseEnd = parseInt(node.getAttribute('parse-end'));
-        
-        if (!isNaN(parseStart) && !isNaN(parseEnd)) {
-            involvedElements.push({
-                element: node,
-                start: parseStart,
-                end: parseEnd
-            });
-        }
-    }
-    
-    // 如果没有找到任何parse元素，返回[0, 0]
-    if (involvedElements.length === 0) {
+    if (!rootElement || !range) {
         return [0, 0];
     }
-    
-    // 按起始位置排序
-    involvedElements.sort((a, b) => a.start - b.start);
-    
-    // 返回第一个元素的开始位置和最后一个元素的结束位置
-    const startOffset = involvedElements[0].start;
-    const endOffset = involvedElements[involvedElements.length - 1].end;
-    
-    //console.log('Selected complete parse elements:', involvedElements.map(el => ({start: el.start, end: el.end})));
-    
+
+    const intersectsNodeSafe = (node) => {
+        try {
+            return typeof range.intersectsNode === 'function' && range.intersectsNode(node);
+        } catch (error) {
+            return false;
+        }
+    };
+
+    const candidates = Array.from(rootElement.querySelectorAll('[parse-start][parse-end]'))
+        .filter(intersectsNodeSafe)
+        .map((node) => ({
+            start: Number.parseInt(node.getAttribute('parse-start'), 10),
+            end: Number.parseInt(node.getAttribute('parse-end'), 10)
+        }))
+        .filter(({ start, end }) => Number.isFinite(start) && Number.isFinite(end) && end > start);
+
+    if (!candidates.length) {
+        return [0, 0];
+    }
+
+    const uniqueCandidates = Array.from(
+        new Map(candidates.map((item) => [`${item.start}:${item.end}`, item])).values()
+    );
+
+    const minimalCandidates = uniqueCandidates.filter((candidate) => {
+        return !uniqueCandidates.some((other) => {
+            if (other === candidate) {
+                return false;
+            }
+            const isStrictSubset = other.start >= candidate.start &&
+                other.end <= candidate.end &&
+                (other.start > candidate.start || other.end < candidate.end);
+            return isStrictSubset;
+        });
+    });
+
+    const selectedRanges = minimalCandidates.length ? minimalCandidates : uniqueCandidates;
+    const startOffset = Math.min(...selectedRanges.map((item) => item.start));
+    const endOffset = Math.max(...selectedRanges.map((item) => item.end));
+
     return [startOffset, endOffset];
 }
 

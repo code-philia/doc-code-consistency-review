@@ -10,6 +10,14 @@ import {
     clearDecompositionHighlights, renderDecompositionBlock, updateDecompositionPositions
 } from './utils.js';
 import { mermaid } from './thirdParty/bundle.js';
+mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: 'strict',
+    flowchart: {
+        htmlLabels: false,
+        useMaxWidth: false,
+    },
+});
 
 /****************************
  * 工具函数
@@ -170,6 +178,19 @@ const app = createApp({
         const showCodeSelectionDialog = ref(false);
         const currentSelection = ref(null);
         const manualAlignFromBlock = ref(false);
+        const currentCodeSelectionBlock = ref(null);
+        const projectCallGraphMetadata = ref({ status: 'unavailable', error_message: '', source_file_count: 0 });
+        const callGraphEnabled = ref(false);
+        const callGraphDepth = ref(3);
+        const callGraphLoading = ref(false);
+        const callGraphError = ref('');
+        const callGraphMermaid = ref('');
+        const callGraphResolvedCodeRanges = ref([]);
+        const callGraphCenterBlock = ref(null);
+        const callGraphCenterFunction = ref(null);
+        const callGraphZoom = ref(1);
+        const callGraphPanX = ref(0);
+        const callGraphPanY = ref(0);
         const newAlignmentName = ref('');
         const showReviewDialog = ref(false);
         const showAlignmentDirectionDialog = ref(false);
@@ -242,10 +263,13 @@ const app = createApp({
         const codeBlockPage = ref(1);
         const codeBlockPageSize = ref(100);
         const codeBlockTotal = ref(0);
+        const allAlignments = ref({});
 
         // 手动对齐弹窗：已有对齐关系选项卡
+        const manualActionTab = ref('existing');
         const existingAlignTab = ref('req2code');
         const selectedExistingAlignmentId = ref('');
+        const newBlockName = ref('');
         const projectAlignmentPool = computed(() => {
             const flattened = Object.values(allAlignments.value || {}).flat();
             const uniqueAlignments = new Map();
@@ -273,13 +297,98 @@ const app = createApp({
                 ? existingAlignmentsCode2Req.value
                 : existingAlignmentsReq2Code.value;
         });
+        const hasExistingManualAlignments = computed(() => {
+            return existingAlignmentsReq2Code.value.length > 0 || existingAlignmentsCode2Req.value.length > 0;
+        });
         watch(existingAlignTab, () => {
             selectedExistingAlignmentId.value = '';
+        });
+        watch(hasExistingManualAlignments, (hasAny) => {
+            if (!hasAny && manualActionTab.value === 'existing') {
+                manualActionTab.value = 'createAlignment';
+            }
+        });
+        watch(callGraphEnabled, async (enabled) => {
+            if (!showCodeSelectionDialog.value) {
+                return;
+            }
+            if (!enabled) {
+                callGraphLoading.value = false;
+                callGraphError.value = '';
+                callGraphMermaid.value = '';
+                callGraphResolvedCodeRanges.value = [];
+                callGraphCenterBlock.value = null;
+                callGraphCenterFunction.value = null;
+                const container = document.getElementById('code-call-graph-wrapper');
+                if (container) {
+                    container.innerHTML = '';
+                }
+                return;
+            }
+            await refreshCallGraphPreview();
+        });
+        watch(callGraphDepth, async (depth, previousDepth) => {
+            if (depth === previousDepth) {
+                return;
+            }
+            const numericDepth = Math.max(1, Math.min(Number(depth) || 3, 8));
+            if (numericDepth !== depth) {
+                callGraphDepth.value = numericDepth;
+                return;
+            }
+            if (showCodeSelectionDialog.value && callGraphEnabled.value) {
+                await refreshCallGraphPreview();
+            }
         });
         const ensureProjectAlignmentsLoaded = async () => {
             if (projectAlignmentPool.value.length > 0) return;
             await fetchAllAlignments();
         };
+        const normalizeCallGraphMetadata = (metadata) => ({
+            status: metadata?.status || 'unavailable',
+            updated_at: metadata?.updated_at || null,
+            error_message: metadata?.error_message || '',
+            source_file_count: Number(metadata?.source_file_count || 0),
+        });
+        const callGraphStatusMessage = computed(() => {
+            const metadata = projectCallGraphMetadata.value || {};
+            const status = metadata.status || 'unavailable';
+            const labelMap = {
+                ready: '调用图已就绪',
+                building: '调用图正在后台重建',
+                failed: '调用图构建失败',
+                stale: '调用图需要重建',
+                unavailable: '当前项目不可用调用图',
+            };
+            const base = labelMap[status] || '调用图状态未知';
+            return metadata.error_message ? `${base}: ${metadata.error_message}` : base;
+        });
+        const currentCodeSelectionSupportsCallGraph = computed(() => {
+            if (!currentSelection.value || currentSelection.value.type !== 'code') {
+                return false;
+            }
+            if (!manualAlignFromBlock.value) {
+                return true;
+            }
+            const block = currentCodeSelectionBlock.value;
+            return !!(block && ((block.type || '').toLowerCase() === 'function'));
+        });
+        const currentCodeSelectionCallGraphHint = computed(() => {
+            if (!currentSelection.value || currentSelection.value.type !== 'code') {
+                return '请先选择代码';
+            }
+            if (manualAlignFromBlock.value && ((currentCodeSelectionBlock.value?.type || '').toLowerCase()) !== 'function') {
+                return '仅函数块支持调用图';
+            }
+            const status = projectCallGraphMetadata.value?.status || 'unavailable';
+            if (status === 'ready') {
+                return '将按当前选区定位所属函数，并双向展开调用关系';
+            }
+            if (status === 'building') {
+                return '调用图正在后台重建；开启后会优先检查现有图文件，缺失时自动构建';
+            }
+            return '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选区定位函数并查询';
+        });
         
         // KB Application State
         const showKbAppDialog = ref(false);
@@ -627,9 +736,6 @@ const app = createApp({
         /***********************
          * 文件加载相关方法
          ***********************/
-        // 存储所有文档的对齐数据
-        const allAlignments = ref({});
-
         // 监听对齐数据变化，更新高亮
         watch(alignmentResults, async () => {
             if (selectedDocFile.value) {
@@ -1281,6 +1387,17 @@ const app = createApp({
                 return markdownContent; // 渲染失败时返回原文
             }
         };
+        const manualDocSelectionContent = computed(() => {
+            return renderMarkdownWithLatex(currentSelection.value?.content || '');
+        });
+        const manualCodeSelectionContent = computed(() => {
+            return formatCodeWithLineNumbers(currentSelection.value?.content || '');
+        });
+        const manualCodeSelectionCounterStart = computed(() => {
+            const block = currentCodeSelectionBlock.value;
+            const startLine = block?.range?.[0] || block?.startLine || 1;
+            return Math.max(0, Number(startLine) - 1);
+        });
 
         const totalDocPages = computed(() => docPageRanges.value.length || 1);
         const totalCodePages = computed(() => codePageRanges.value.length || 1);
@@ -2110,6 +2227,7 @@ const app = createApp({
                     projectName.value = metadata.project_name || projectName.value; //urlParams.get('name')
                     codeFileLines.value = metadata.code_file_lines || {};
                     codeScale.value = metadata.code_scale || 0;
+                    projectCallGraphMetadata.value = normalizeCallGraphMetadata(metadata.call_graph);
 
                     allAlignments.value = {};
                     await fetchAlignments();
@@ -2141,6 +2259,7 @@ const app = createApp({
             projectName.value = metadata.project_name || projectName.value;
             codeFileLines.value = metadata.code_file_lines || {};
             codeScale.value = metadata.code_scale || 0;
+            projectCallGraphMetadata.value = normalizeCallGraphMetadata(metadata.call_graph);
         };
 
         const fetchStatsBlocks = async () => {
@@ -2265,8 +2384,22 @@ const app = createApp({
 
         const resetManualAlignFromBlock = () => {
             manualAlignFromBlock.value = false;
+            manualActionTab.value = hasExistingManualAlignments.value ? 'existing' : 'createAlignment';
             existingAlignTab.value = 'req2code';
             selectedExistingAlignmentId.value = '';
+            newBlockName.value = '';
+            currentCodeSelectionBlock.value = null;
+            callGraphEnabled.value = false;
+            callGraphDepth.value = 3;
+            callGraphLoading.value = false;
+            callGraphError.value = '';
+            callGraphMermaid.value = '';
+            callGraphResolvedCodeRanges.value = [];
+            callGraphCenterBlock.value = null;
+            callGraphCenterFunction.value = null;
+            callGraphZoom.value = 1;
+            callGraphPanX.value = 0;
+            callGraphPanY.value = 0;
         };
 
         const getSelectionRawContent = async (selection) => {
@@ -2335,6 +2468,200 @@ const app = createApp({
             resolved.startLine = startLine;
             resolved.endLine = endLine;
             return resolved;
+        };
+
+        const getCurrentCodeBlocks = async () => {
+            if (!selectedCodeFile.value) return [];
+            let blocks = currentCodeBlocksForHighlight.value || [];
+            if (!blocks.length || !blocks.some(block => block.file === selectedCodeFile.value)) {
+                await loadAndRenderCodeBlocks(true);
+                blocks = currentCodeBlocksForHighlight.value || [];
+            }
+            return blocks.filter(block => block.file === selectedCodeFile.value);
+        };
+
+        const findFirstIntersectingCodeBlockForLines = async (fileName, startLine, endLine) => {
+            const blocks = await getCurrentCodeBlocks();
+            return blocks.find(block => {
+                if (block.file !== fileName || !Array.isArray(block.range) || block.range.length !== 2) {
+                    return false;
+                }
+                return Math.max(Number(block.range[0]), Number(startLine)) <= Math.min(Number(block.range[1]), Number(endLine));
+            }) || null;
+        };
+
+        const buildCodeRangeFromBlock = async (block) => {
+            if (!block) return null;
+            const fileName = block.file || block.filename || selectedCodeFile.value;
+            const blockStartLine = Array.isArray(block.range) ? Number(block.range[0]) : Number(block.startLine);
+            const blockEndLine = Array.isArray(block.range) ? Number(block.range[1]) : Number(block.endLine);
+            let content = block.code || block.content || '';
+            let start = Number(block.start);
+            let end = Number(block.end);
+            const codeFileContent = (fileName === selectedCodeFile.value && selectedCodeRawContent.value)
+                ? selectedCodeRawContent.value
+                : await fetchRawFileContentOnly(fileName, 'code');
+            if (!Number.isFinite(start) || !Number.isFinite(end)) {
+                const offsets = getOffsetsFromLineRange(codeFileContent, blockStartLine, blockEndLine);
+                start = offsets.start;
+                end = offsets.end;
+            }
+            if (!content) {
+                content = codeFileContent.slice(start, end);
+            }
+            return {
+                documentId: fileName,
+                filename: fileName,
+                start,
+                end,
+                startLine: blockStartLine,
+                endLine: blockEndLine,
+                content,
+            };
+        };
+
+        const buildCodeBlockDataFromRange = (codeRange) => {
+            if (!codeRange) {
+                return null;
+            }
+            const fileName = codeRange.filename || codeRange.file || codeRange.documentId || selectedCodeFile.value;
+            const startLine = Number(codeRange.startLine);
+            const endLine = Number(codeRange.endLine);
+            if (!fileName || !Number.isFinite(startLine) || !Number.isFinite(endLine)) {
+                return null;
+            }
+            return {
+                name: codeRange.name || getCodeBlockFunctionName({ content: codeRange.content || '' }),
+                file: fileName,
+                filename: fileName,
+                range: [startLine, endLine],
+                startLine,
+                endLine,
+                content: codeRange.content || '',
+                code: codeRange.content || '',
+                type: codeRange.type || 'function',
+            };
+        };
+
+        const persistCodeBlockData = async (blockData) => {
+            if (!blockData) {
+                return true;
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            const blockResp = await axios.post('/api/add-block', {
+                projectPath: projectPath.value,
+                blockType: 'code',
+                blockData,
+                projectId
+            });
+            if (blockResp.data?.status === 'error') {
+                throw new Error(blockResp.data?.message || '未知错误');
+            }
+            return true;
+        };
+
+        const persistCallGraphResolvedBlocksIfNeeded = async () => {
+            if (!callGraphEnabled.value || !Array.isArray(callGraphResolvedCodeRanges.value) || callGraphResolvedCodeRanges.value.length === 0) {
+                return true;
+            }
+            for (const codeRange of callGraphResolvedCodeRanges.value) {
+                const blockData = buildCodeBlockDataFromRange(codeRange);
+                if (!blockData) {
+                    continue;
+                }
+                await persistCodeBlockData(blockData);
+            }
+            return true;
+        };
+
+        const resolveCurrentCodeSelectionBlock = async () => {
+            if (!currentSelection.value || currentSelection.value.type !== 'code') {
+                return null;
+            }
+            if (manualAlignFromBlock.value && currentCodeSelectionBlock.value) {
+                return currentCodeSelectionBlock.value;
+            }
+            const { startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
+            const matchedBlock = await findFirstIntersectingCodeBlockForLines(
+                currentSelection.value.documentId,
+                startLine,
+                endLine
+            );
+            currentCodeSelectionBlock.value = matchedBlock;
+            return matchedBlock;
+        };
+
+        const resolveCurrentCodeSelectionTarget = async () => {
+            if (!currentSelection.value || currentSelection.value.type !== 'code') {
+                return null;
+            }
+            const block = await resolveCurrentCodeSelectionBlock();
+            if (block) {
+                return {
+                    block,
+                    file: block.file || block.filename || currentSelection.value.documentId,
+                    startLine: Array.isArray(block.range) ? Number(block.range[0]) : Number(block.startLine),
+                    endLine: Array.isArray(block.range) ? Number(block.range[1]) : Number(block.endLine),
+                };
+            }
+            const { startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
+            return {
+                block: null,
+                file: currentSelection.value.documentId,
+                startLine,
+                endLine,
+            };
+        };
+
+        const resolveCodeRangesForManualAlignment = async () => {
+            if (callGraphEnabled.value && callGraphResolvedCodeRanges.value.length > 0) {
+                return callGraphResolvedCodeRanges.value.slice();
+            }
+            const block = await resolveCurrentCodeSelectionBlock();
+            if (block) {
+                const codeRange = await buildCodeRangeFromBlock(block);
+                return codeRange ? [codeRange] : [];
+            }
+
+            if (!currentSelection.value) {
+                return [];
+            }
+            const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
+            return [{
+                documentId: currentSelection.value.documentId,
+                filename: currentSelection.value.documentId,
+                start,
+                end,
+                startLine,
+                endLine,
+                content: currentSelection.value.content
+            }];
+        };
+
+        const getSuggestedBlockName = (type) => {
+            if (!currentSelection.value) return '';
+            if (type === 'doc') {
+                return extractPlainTextFromMarkdown(currentSelection.value.content || '', 40) || '需求块';
+            }
+            const block = currentCodeSelectionBlock.value;
+            if (block) {
+                return getCodeBlockFunctionName(block);
+            }
+            return getCodeBlockFunctionName({ content: currentSelection.value.content });
+        };
+
+        const initializeManualActionState = ({ defaultTab = null } = {}) => {
+            if (defaultTab) {
+                manualActionTab.value = defaultTab;
+            } else {
+                manualActionTab.value = hasExistingManualAlignments.value ? 'existing' : 'createAlignment';
+            }
+            selectedExistingAlignmentId.value = '';
+            newAlignmentName.value = '';
+            newBlockName.value = currentSelection.value
+                ? getSuggestedBlockName(currentSelection.value.type === 'code' ? 'code' : 'doc')
+                : '';
         };
 
         const buildFileTree = (files, fileType) => {
@@ -2934,6 +3261,10 @@ const app = createApp({
                     projectPath: projectPath.value
                 });
                 if (response.data.status === 'success') {
+                    projectCallGraphMetadata.value = normalizeCallGraphMetadata({
+                        status: response.data.call_graph_status,
+                        error_message: response.data.call_graph_message,
+                    });
                     ElMessage.success('代码分解完成！');
                     await loadAndRenderCodeBlocks();
                 } else {
@@ -3000,6 +3331,10 @@ const app = createApp({
                     projectPath: projectPath.value
                 });
                 if (response.data.status === 'success') {
+                    projectCallGraphMetadata.value = normalizeCallGraphMetadata({
+                        status: response.data.call_graph_status,
+                        error_message: response.data.call_graph_message,
+                    });
                     ElMessage.success('代码分解完成！');
                     await loadAndRenderCodeBlocks();
                 } else {
@@ -3136,6 +3471,10 @@ const app = createApp({
                     projectPath: projectPath.value
                 });
                 if (resp.data && resp.data.status === 'success') {
+                    projectCallGraphMetadata.value = normalizeCallGraphMetadata({
+                        status: resp.data.call_graph_status,
+                        error_message: resp.data.call_graph_message,
+                    });
                     success = true;
                 }
             } catch (e) {
@@ -3676,8 +4015,8 @@ const app = createApp({
                     };
                     await ensureProjectAlignmentsLoaded();
                     resetManualAlignFromBlock();
+                    initializeManualActionState();
                     showAlignmentDialog.value = true;
-                    newAlignmentName.value = '';
                 }
             }
         };
@@ -3688,12 +4027,13 @@ const app = createApp({
                 return;
             }
             const currentCodeContent = type === 'code' ? await ensureCurrentRawFileContent('code') : '';
+            const customBlockName = (newBlockName.value || '').trim();
 
             const buildBlockDataFromSelection = (selectionType) => {
                 let blockData = {};
                 if (selectionType === 'doc') {
                     blockData = {
-                        name: extractPlainTextFromMarkdown(currentSelection.value.content || '', 40) || '需求块',
+                        name: customBlockName || extractPlainTextFromMarkdown(currentSelection.value.content || '', 40) || '需求块',
                         filename: currentSelection.value.documentId,
                         start: currentSelection.value.start,
                         end: currentSelection.value.end,
@@ -3706,7 +4046,7 @@ const app = createApp({
                         currentSelection.value.end
                     );
                     blockData = {
-                        name: getCodeBlockFunctionName({ content: currentSelection.value.content }),
+                        name: customBlockName || getCodeBlockFunctionName(currentCodeSelectionBlock.value || { content: currentSelection.value.content }),
                         file: currentSelection.value.documentId,
                         range: [startLine, endLine],
                         content: currentSelection.value.content
@@ -3731,10 +4071,9 @@ const app = createApp({
                     ElMessage.success(response.data.message);
                     showAlignmentDialog.value = false;
                     showCodeSelectionDialog.value = false;
-                    // 刷新块列表 (如果需要)
-                    // 暂时没有刷新块列表的API调用，因为块通常是在加载时获取的。
-                    // 但为了即时反馈，我们可以在前端手动更新列表，或者重新加载页面
-                    // 这里选择简单的提示成功，因为块视图可能需要刷新才能看到。
+                    currentSelection.value = null;
+                    resetManualAlignFromBlock();
+                    await refreshCurrentSelectionHighlights();
                 } else if (response.data.status === 'warning') {
                     ElMessage.warning(response.data.message);
                 } else {
@@ -3779,6 +4118,42 @@ const app = createApp({
             };
         };
 
+        const persistCurrentSelectionBlockIfNeeded = async () => {
+            if (!currentSelection.value || manualAlignFromBlock.value) {
+                return true;
+            }
+            if (
+                currentSelection.value.type === 'code' &&
+                callGraphEnabled.value &&
+                Array.isArray(callGraphResolvedCodeRanges.value) &&
+                callGraphResolvedCodeRanges.value.length > 0
+            ) {
+                return true;
+            }
+
+            const shouldPersistSelectionBlock = currentSelection.value.type !== 'code' || !(await resolveCurrentCodeSelectionBlock());
+            const blockPayload = shouldPersistSelectionBlock ? await buildBlockDataFromCurrentSelection() : null;
+            if (!blockPayload) {
+                return true;
+            }
+            if (blockPayload.blockType === 'code') {
+                await persistCodeBlockData(blockPayload.blockData);
+                return true;
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            const blockResp = await axios.post('/api/add-block', {
+                projectPath: projectPath.value,
+                blockType: blockPayload.blockType,
+                blockData: blockPayload.blockData,
+                projectId: projectId
+            });
+            if (blockResp.data?.status === 'error') {
+                throw new Error(blockResp.data?.message || '未知错误');
+            }
+            return true;
+        };
+
         const createAlignment = async () => {
             const id = generateUUIDLike();
 
@@ -3788,9 +4163,12 @@ const app = createApp({
             }
             if (!newAlignmentName.value.trim()) {
                 if (currentSelection.value.type === 'code') {
-                    // 代码块：直接使用内容的前20个字符
-                    newAlignmentName.value = currentSelection.value.content.substring(0, 20).trim();
-                    //newAlignmentName.value = currentSelection.value.content.trim();
+                    const block = await resolveCurrentCodeSelectionBlock();
+                    if (block) {
+                        newAlignmentName.value = getCodeBlockFunctionName(block);
+                    } else {
+                        newAlignmentName.value = currentSelection.value.content.substring(0, 20).trim();
+                    }
                 } else if (manualAlignFromBlock.value) {
                     newAlignmentName.value = extractPlainTextFromMarkdown(currentSelection.value.content, 20);
                 } else {
@@ -3831,17 +4209,12 @@ const app = createApp({
             };
 
             if (currentSelection.value.type === 'code') {
-                const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
-
-                newAlignment.codeRanges.push({
-                    documentId: currentSelection.value.documentId,
-                    filename: currentSelection.value.documentId,
-                    start: start,
-                    end: end,
-                    startLine: startLine,
-                    endLine: endLine,
-                    content: currentSelection.value.content
-                });
+                const codeRanges = await resolveCodeRangesForManualAlignment();
+                if (codeRanges.length === 0) {
+                    ElMessage.warning('当前代码选区未命中可添加的代码块');
+                    return;
+                }
+                newAlignment.codeRanges.push(...codeRanges);
             } else {
                 const { start, end, startLine, endLine } = await resolveDocSelectionRange(currentSelection.value);
 
@@ -3858,22 +4231,8 @@ const app = createApp({
             // 先将当前选中内容保存为块（写入 doc_blocks/code_blocks jsonl）
             if (!manualAlignFromBlock.value) {
                 try {
-
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const projectId = urlParams.get('project_id');
-                    const blockPayload = await buildBlockDataFromCurrentSelection();
-                    if (blockPayload) {
-                        const blockResp = await axios.post('/api/add-block', {
-                            projectPath: projectPath.value,
-                            blockType: blockPayload.blockType,
-                            blockData: blockPayload.blockData,
-                            projectId: projectId
-                        });
-                        if (blockResp.data?.status === 'error') {
-                            ElMessage.error('创建对齐关系前保存块失败: ' + (blockResp.data?.message || '未知错误'));
-                            return;
-                        }
-                    }
+                    await persistCurrentSelectionBlockIfNeeded();
+                    await persistCallGraphResolvedBlocksIfNeeded();
                 } catch (err) {
                     console.error('创建对齐关系前保存块失败:', err);
                     ElMessage.error('创建对齐关系前保存块失败: ' + (err.response?.data?.message || err.message));
@@ -3900,8 +4259,7 @@ const app = createApp({
 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
-                await fetchAlignmentSidebarPage();
-                await fetchSidebarBlocksPage(false);
+                await refreshCurrentSelectionHighlights({ refreshAlignments: true });
 
                 ElMessage.success('对齐关系创建成功');
             } catch (err) {
@@ -3933,6 +4291,20 @@ const app = createApp({
         const refreshBlocksAndAlignments = async () => {
              await refreshAlignments();
              await refreshBlocks();
+        };
+
+        const refreshCurrentSelectionHighlights = async ({ refreshAlignments: shouldRefreshAlignments = false } = {}) => {
+            if (shouldRefreshAlignments) {
+                await fetchAlignments();
+                await fetchAlignmentSidebarPage();
+            }
+            await fetchSidebarBlocksPage(false);
+            if (selectedDocFile.value) {
+                await loadAndRenderDocBlocks(true);
+            }
+            if (selectedCodeFile.value) {
+                await loadAndRenderCodeBlocks(true);
+            }
         };
 
         watch(statusFilters, async () => {
@@ -4658,10 +5030,8 @@ const app = createApp({
                 return;
             }
 
-            // 显示块右键菜单
-            if (block) {
-                showBlockContextMenu(event, block, 'doc');
-            }
+            // 已对齐高亮块优先使用对齐关系菜单，确保可直接查看所属对齐关系详情
+            showContextMenu(event, correspondingAlignment, block, 'doc');
 
             // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
             handleHighlightBlockClick(event);
@@ -4709,10 +5079,8 @@ const app = createApp({
                 return;
             }
 
-            // 显示块右键菜单
-            if (block) {
-                showBlockContextMenu(event, block, 'code');
-            }
+            // 已对齐高亮块优先使用对齐关系菜单，确保可直接查看所属对齐关系详情
+            showContextMenu(event, correspondingAlignment, block, 'code');
 
             // 同时执行左键点击的功能（代码跳转和对齐关系筛选）
             handleHighlightBlockClick(event);
@@ -4954,6 +5322,215 @@ const app = createApp({
             scrollToFirstAndHighlightAll(elements);
         };
 
+        const renderCallGraphPreview = async () => {
+            await nextTick();
+            const wrapper = document.getElementById('code-call-graph-wrapper');
+            if (!wrapper) {
+                throw new Error('调用图容器未挂载');
+            }
+            if (!callGraphMermaid.value) {
+                wrapper.innerHTML = '';
+                return;
+            }
+            await renderMermaidIntoElement(wrapper, callGraphMermaid.value, 'code-call-graph');
+            initializeCallGraphViewport();
+        };
+
+        const refreshCallGraphPreview = async () => {
+            if (!showCodeSelectionDialog.value || !callGraphEnabled.value) {
+                return;
+            }
+            if (!currentCodeSelectionSupportsCallGraph.value) {
+                callGraphError.value = currentCodeSelectionCallGraphHint.value;
+                callGraphMermaid.value = '';
+                callGraphResolvedCodeRanges.value = [];
+                return;
+            }
+
+            const target = await resolveCurrentCodeSelectionTarget();
+            if (!target || !target.file || !Number.isFinite(target.startLine) || !Number.isFinite(target.endLine)) {
+                callGraphError.value = '当前选区无法解析为有效代码范围';
+                callGraphMermaid.value = '';
+                callGraphResolvedCodeRanges.value = [];
+                return;
+            }
+
+            callGraphLoading.value = true;
+            callGraphError.value = '';
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const response = await axios.post('/api/call-graph/preview', {
+                    projectPath: projectPath.value,
+                    project_id: projectId,
+                    file: target.file,
+                    startLine: target.startLine,
+                    endLine: target.endLine,
+                    maxDepth: callGraphDepth.value,
+                });
+                if (response.data?.call_graph_status) {
+                    projectCallGraphMetadata.value = normalizeCallGraphMetadata({
+                        status: response.data.call_graph_status,
+                        error_message: response.data?.status === 'success' ? '' : response.data?.message,
+                    });
+                }
+                if (response.data?.status !== 'success') {
+                    callGraphError.value = response.data?.message || '调用图预览失败';
+                    callGraphMermaid.value = '';
+                    callGraphResolvedCodeRanges.value = [];
+                    return;
+                }
+                callGraphCenterBlock.value = response.data.center_block || null;
+                callGraphCenterFunction.value = response.data.center_function || null;
+                callGraphResolvedCodeRanges.value = response.data.code_ranges || [];
+                callGraphMermaid.value = response.data.mermaid_code || '';
+                await renderCallGraphPreview();
+            } catch (error) {
+                console.error('调用图预览失败:', error);
+                callGraphError.value = error.response?.data?.message || error.message || '调用图预览失败';
+                callGraphMermaid.value = '';
+                callGraphResolvedCodeRanges.value = [];
+            } finally {
+                callGraphLoading.value = false;
+            }
+        };
+
+        const getCallGraphViewport = () => document.getElementById('code-call-graph-viewport');
+        const getCallGraphWrapper = () => document.getElementById('code-call-graph-wrapper');
+
+        const applyCallGraphTransform = () => {
+            const wrapper = getCallGraphWrapper();
+            if (!wrapper) {
+                return;
+            }
+            wrapper.style.transform = `translate(${callGraphPanX.value}px, ${callGraphPanY.value}px) scale(${callGraphZoom.value})`;
+        };
+
+        const resetCallGraphViewport = () => {
+            callGraphZoom.value = 1;
+            callGraphPanX.value = 0;
+            callGraphPanY.value = 0;
+            applyCallGraphTransform();
+        };
+
+        const zoomCallGraph = (factor) => {
+            const viewport = getCallGraphViewport();
+            const wrapper = getCallGraphWrapper();
+            const svg = wrapper?.querySelector('svg');
+            if (!viewport || !wrapper || !svg) {
+                return;
+            }
+            const rect = viewport.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const oldZoom = callGraphZoom.value;
+            const nextZoom = Math.max(0.1, Math.min(6, oldZoom * factor));
+            const zoomRatio = nextZoom / oldZoom;
+            callGraphPanX.value = centerX - (centerX - callGraphPanX.value) * zoomRatio;
+            callGraphPanY.value = centerY - (centerY - callGraphPanY.value) * zoomRatio;
+            callGraphZoom.value = nextZoom;
+            applyCallGraphTransform();
+        };
+
+        const fitCallGraphToViewport = () => {
+            const viewport = getCallGraphViewport();
+            const wrapper = getCallGraphWrapper();
+            const svg = wrapper?.querySelector('svg');
+            if (!viewport || !wrapper || !svg) {
+                return;
+            }
+            wrapper.style.transform = 'translate(0px, 0px) scale(1)';
+            const svgRect = svg.getBoundingClientRect();
+            const availableWidth = Math.max(viewport.clientWidth - 32, 120);
+            const availableHeight = Math.max(viewport.clientHeight - 32, 120);
+            const scaleX = availableWidth / Math.max(svgRect.width, 1);
+            const scaleY = availableHeight / Math.max(svgRect.height, 1);
+            callGraphZoom.value = Math.max(0.1, Math.min(6, Math.min(scaleX, scaleY, 1)));
+            callGraphPanX.value = 0;
+            callGraphPanY.value = 0;
+            applyCallGraphTransform();
+        };
+
+        const initializeCallGraphViewport = () => {
+            const viewport = getCallGraphViewport();
+            const wrapper = getCallGraphWrapper();
+            const svg = wrapper?.querySelector('svg');
+            if (!viewport || !wrapper || !svg) {
+                return;
+            }
+
+            svg.removeAttribute('width');
+            svg.style.width = 'auto';
+            svg.style.height = 'auto';
+            svg.style.maxWidth = 'none';
+            svg.style.display = 'block';
+
+            if (!viewport.dataset.bound) {
+                let dragging = false;
+                let startX = 0;
+                let startY = 0;
+                let originX = 0;
+                let originY = 0;
+
+                viewport.addEventListener('wheel', (event) => {
+                    event.preventDefault();
+                    const rect = viewport.getBoundingClientRect();
+                    const mouseX = event.clientX - rect.left;
+                    const mouseY = event.clientY - rect.top;
+                    const oldZoom = callGraphZoom.value;
+                    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+                    const nextZoom = Math.max(0.1, Math.min(6, oldZoom * zoomFactor));
+                    const zoomRatio = nextZoom / oldZoom;
+                    callGraphPanX.value = mouseX - (mouseX - callGraphPanX.value) * zoomRatio;
+                    callGraphPanY.value = mouseY - (mouseY - callGraphPanY.value) * zoomRatio;
+                    callGraphZoom.value = nextZoom;
+                    applyCallGraphTransform();
+                }, { passive: false });
+
+                viewport.addEventListener('mousedown', (event) => {
+                    dragging = true;
+                    startX = event.clientX;
+                    startY = event.clientY;
+                    originX = callGraphPanX.value;
+                    originY = callGraphPanY.value;
+                    viewport.classList.add('is-dragging');
+                });
+
+                window.addEventListener('mousemove', (event) => {
+                    if (!dragging) {
+                        return;
+                    }
+                    callGraphPanX.value = originX + (event.clientX - startX);
+                    callGraphPanY.value = originY + (event.clientY - startY);
+                    applyCallGraphTransform();
+                });
+
+                window.addEventListener('mouseup', () => {
+                    if (!dragging) {
+                        return;
+                    }
+                    dragging = false;
+                    viewport.classList.remove('is-dragging');
+                });
+
+                viewport.dataset.bound = 'true';
+            }
+
+            fitCallGraphToViewport();
+        };
+
+        const prepareCodeSelectionDialog = async (selection, sourceBlock = null) => {
+            currentSelection.value = selection;
+            resetManualAlignFromBlock();
+            currentCodeSelectionBlock.value = sourceBlock;
+            await ensureProjectAlignmentsLoaded();
+            if (!sourceBlock) {
+                await resolveCurrentCodeSelectionBlock();
+            }
+            initializeManualActionState();
+            showCodeSelectionDialog.value = true;
+        };
+
         // 处理代码选择
         const handleCodeSelection = async (event) => {
             const selection = window.getSelection();
@@ -4967,17 +5544,15 @@ const app = createApp({
                 const [start, end] = getSourceDocumentRange(editorDiv, range);
                 if (end - start > 0) {
                     const codeContent = await ensureCurrentRawFileContent('code');
-                    currentSelection.value = {
+                    const selectionPayload = {
                         type: 'code',
                         documentId: selectedCodeFile.value,
                         start,
                         end,
                         content: codeContent.slice(start, end)
                     };
-                    await ensureProjectAlignmentsLoaded();
                     resetManualAlignFromBlock();
-                    showCodeSelectionDialog.value = true;
-                    newAlignmentName.value = '';
+                    await prepareCodeSelectionDialog(selectionPayload);
                 }
             }
         };
@@ -5012,19 +5587,14 @@ const app = createApp({
             if (!currentSelection.value || !alignment) return;
 
             if (currentSelection.value.type === 'code') {
-                const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
+                const codeRanges = await resolveCodeRangesForManualAlignment();
+                if (!codeRanges.length) {
+                    ElMessage.warning('当前代码选区未命中可添加的代码块');
+                    return;
+                }
 
-                const codeRange = {
-                    documentId: currentSelection.value.documentId,
-                    filename: currentSelection.value.documentId, // 文件名
-                    start: start,
-                    end: end,
-                    startLine: startLine, // 起始行号
-                    endLine: endLine, // 结束行号
-                    content: currentSelection.value.content
-                };
-                
-                if ((alignment.codeRanges || []).some(range => isSameRangeEntry(range, codeRange))) {
+                const newRanges = codeRanges.filter(codeRange => !((alignment.codeRanges || []).some(range => isSameRangeEntry(range, codeRange))));
+                if (!newRanges.length) {
                     showCodeSelectionDialog.value = false;
                     resetManualAlignFromBlock();
                     currentSelection.value = null;
@@ -5032,7 +5602,7 @@ const app = createApp({
                     return;
                 }
 
-                alignment.codeRanges.push(codeRange);
+                alignment.codeRanges.push(...newRanges);
             }
 
             showCodeSelectionDialog.value = false;
@@ -5052,9 +5622,7 @@ const app = createApp({
                 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
-                await fetchAlignments();
-                await fetchAlignmentSidebarPage();
-                await fetchSidebarBlocksPage(false);
+                await refreshCurrentSelectionHighlights({ refreshAlignments: true });
                 
                 ElMessage.success('已添加到对齐关系');
             } catch (err) {
@@ -5106,9 +5674,7 @@ const app = createApp({
                 
                 // 更新所有对齐数据以保持统计信息同步
                 await fetchAllAlignments();
-                await fetchAlignments();
-                await fetchAlignmentSidebarPage();
-                await fetchSidebarBlocksPage(false);
+                await refreshCurrentSelectionHighlights({ refreshAlignments: true });
                 
                 ElMessage.success('已添加到对齐关系');
             } catch (err) {
@@ -5131,12 +5697,36 @@ const app = createApp({
                 return;
             }
 
+            try {
+                await persistCurrentSelectionBlockIfNeeded();
+                await persistCallGraphResolvedBlocksIfNeeded();
+            } catch (err) {
+                console.error('添加到已有对齐关系前保存块失败:', err);
+                ElMessage.error('添加到已有对齐关系前保存块失败: ' + (err.response?.data?.message || err.message));
+                return;
+            }
+
             if (currentSelection.value?.type === 'code') {
                 await addToAlignment(alignment);
                 return;
             }
 
             await addDocToAlignment(alignment);
+        };
+
+        const submitManualAction = async () => {
+            const selectionType = currentSelection.value?.type === 'code' ? 'code' : 'doc';
+            if (manualActionTab.value === 'existing') {
+                await addToSelectedExistingAlignment();
+                return;
+            }
+            if (manualActionTab.value === 'createAlignment') {
+                await createAlignment();
+                return;
+            }
+            if (manualActionTab.value === 'createBlock') {
+                await createBlockOnly(selectionType);
+            }
         };
 
         // 导出表单相关状态
@@ -7037,8 +7627,8 @@ const app = createApp({
                         content: block.content || ''
                     };
                     manualAlignFromBlock.value = true;
-                    newAlignmentName.value = '';
                     await ensureProjectAlignmentsLoaded();
+                    initializeManualActionState();
                     hideContextMenu();
                     showAlignmentDialog.value = true;
                     return;
@@ -7064,10 +7654,8 @@ const app = createApp({
 
                 currentSelection.value = selection;
                 manualAlignFromBlock.value = true;
-                newAlignmentName.value = '';
-                await ensureProjectAlignmentsLoaded();
                 hideContextMenu();
-                showCodeSelectionDialog.value = true;
+                await prepareCodeSelectionDialog(selection, block);
             } catch (error) {
                 console.error('打开手动对齐弹窗失败:', error);
                 ElMessage.error(`打开手动对齐弹窗失败: ${error.message}`);
@@ -7634,13 +8222,12 @@ const app = createApp({
             element.innerHTML = sanitizeSvgMarkup(svgMarkup);
         };
 
-        const renderMermaidFlowchart = async (mermaidCode) => {
-            const element = getFlowchartContainer();
+        const renderMermaidIntoElement = async (element, mermaidCode, idPrefix = 'mermaid-graph') => {
             if (!element) {
                 throw new Error('未找到流程图容器');
             }
             element.innerHTML = '';
-            const { svg } = await mermaid.render(`mermaid-graph-${Date.now()}`, mermaidCode);
+            const { svg } = await mermaid.render(`${idPrefix}-${Date.now()}`, mermaidCode);
             element.innerHTML = svg;
         };
 
@@ -7663,7 +8250,7 @@ const app = createApp({
             }
 
             try {
-                await renderMermaidFlowchart(normalized);
+                await renderMermaidIntoElement(element, normalized, 'mermaid-flowchart');
             } catch (mermaidError) {
                 throw new Error('旧版Mermaid流程图渲染失败: ' + (mermaidError?.message || '未知错误'));
             }
@@ -8759,6 +9346,7 @@ const app = createApp({
             reviewBlockFromContextMenu,
             showBlockReviewResultFromContextMenu,
             deleteBlockFromContextMenu,
+            getCodeBlockFunctionName,
             renameAlignment,
             deleteAlignment,
             removeRange,
@@ -8775,6 +9363,30 @@ const app = createApp({
             existingAlignmentsCode2Req,
             selectedExistingAlignmentId,
             manualAlignFromBlock,
+
+            //手动对齐相关
+            submitManualAction,
+            currentCodeSelectionBlock,
+            manualActionTab,
+            currentExistingAlignments,
+            hasExistingManualAlignments,
+            newBlockName,
+            manualDocSelectionContent,
+            manualCodeSelectionContent,
+            manualCodeSelectionCounterStart,
+
+            //调用图相关
+            callGraphEnabled,
+            callGraphDepth,
+            callGraphLoading,
+            callGraphError,
+            callGraphMermaid,
+            callGraphZoom,
+            currentCodeSelectionSupportsCallGraph,
+            currentCodeSelectionCallGraphHint,
+            zoomCallGraph,
+            fitCallGraphToViewport,
+            resetCallGraphViewport,
             resetManualAlignFromBlock,
             removeFile,
             
