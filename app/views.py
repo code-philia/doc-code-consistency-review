@@ -1,4 +1,5 @@
 import os
+import threading
 
 from celery import chain
 from flask_login import login_manager, login_required, current_user
@@ -51,6 +52,16 @@ import re
 import zipfile
 
 from .code_block import get_all_code_blocks, get_codefile_blocks
+from .call_graph import (
+    build_project_call_graph,
+    code_block_to_code_range,
+    ensure_project_call_graph,
+    find_first_intersecting_code_block,
+    get_call_graph_metadata,
+    mark_call_graph_building,
+    query_function_graph,
+    resolve_code_block_to_function,
+)
 
 import logging
 import chromadb
@@ -79,6 +90,34 @@ BLOCK_SIDEBAR_PAGE_SIZE = 100
 
 def project_now_str():
     return datetime.now(ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _call_graph_status_message(metadata):
+    if not isinstance(metadata, dict):
+        return '调用图不可用'
+    status = metadata.get('status') or 'unavailable'
+    error_message = metadata.get('error_message') or ''
+    mapping = {
+        'ready': '调用图已就绪',
+        'building': '调用图正在后台重建',
+        'failed': '调用图构建失败',
+        'stale': '调用图需要重建',
+        'unavailable': '当前项目不可用调用图',
+    }
+    base = mapping.get(status, '调用图状态未知')
+    return f'{base}: {error_message}' if error_message else base
+
+
+def _start_call_graph_rebuild(project_path):
+    mark_call_graph_building(project_path)
+
+    def _worker():
+        try:
+            build_project_call_graph(project_path)
+        except Exception:
+            traceback.print_exc()
+
+    threading.Thread(target=_worker, name='call-graph-rebuild', daemon=True).start()
 
 
 def _resolve_doc_block_name(block_data):
@@ -956,6 +995,8 @@ def get_project_metadata():
                 with open(metadata_file, 'w', encoding='utf-8') as f:
                     json.dump(metadata, f, indent=4, ensure_ascii=False)
 
+        metadata['call_graph'] = get_call_graph_metadata(project_path)
+
         return jsonify({"status": "success", "metadata": metadata}), 200
 
     except (json.JSONDecodeError, Exception) as e:
@@ -1086,6 +1127,9 @@ def upload_files():
 
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
+
+        if file_type == 'code':
+            _start_call_graph_rebuild(project_path)
 
         return jsonify({"status": "success"}), 200
 
@@ -1291,6 +1335,9 @@ def remove_file_content():
 
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
+
+        if file_type == 'code':
+            _start_call_graph_rebuild(project_path)
 
         message = '目录已递归删除' if node_type == 'directory' else '文件已删除'
         return jsonify({"status": "success", "message": message, "removed_files": matched_files}), 200
@@ -3558,11 +3605,131 @@ def code_decomposition():
         replace_code_blocks(project_path, all_code_blocks)
 
         processed_count = len(all_code_blocks)
+        call_graph_result = build_project_call_graph(project_path)
+        call_graph_metadata = call_graph_result.get('metadata') or get_call_graph_metadata(project_path)
 
-        return jsonify({'status': 'success', 'message': '代码分解完成，结果已保存', 'processedCount': processed_count})
+        return jsonify({
+            'status': 'success',
+            'message': '代码分解完成，结果已保存',
+            'processedCount': processed_count,
+            'call_graph_status': call_graph_metadata.get('status'),
+            'call_graph_message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
+        })
     except Exception as e:
         traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)})
+
+
+@bp.route('/api/call-graph/preview', methods=['POST'])
+def call_graph_preview():
+    try:
+        data = request.get_json() or {}
+        project_path = data.get('projectPath')
+        project_id = data.get('project_id')
+        file = data.get('file')
+        start_line = _safe_int(data.get('startLine'))
+        end_line = _safe_int(data.get('endLine'))
+        max_depth = max(1, min(_safe_int(data.get('maxDepth'), 3), 8))
+
+        if not project_path or not file or start_line <= 0 or end_line <= 0:
+            return jsonify({
+                'status': 'error',
+                'call_graph_status': 'unavailable',
+                'message': '缺少调用图预览所需参数'
+            }), 400
+
+        ensure_result = ensure_project_call_graph(project_path)
+        metadata = ensure_result.get('metadata') or get_call_graph_metadata(project_path)
+        if not ensure_result.get('payload'):
+            return jsonify({
+                'status': 'error',
+                'call_graph_status': metadata.get('status'),
+                'message': ensure_result.get('message') or _call_graph_status_message(metadata),
+            })
+
+        resolved_project_id = resolve_project_id(project_path, project_id)
+        function_id = resolve_code_block_to_function(
+            project_path,
+            resolved_project_id,
+            file,
+            start_line,
+            end_line,
+        )
+        if not function_id:
+            return jsonify({
+                'status': 'error',
+                'call_graph_status': metadata.get('status'),
+                'message': '当前选区未命中可查询调用图的函数块',
+            })
+
+        preview = query_function_graph(
+            project_path,
+            function_id,
+            max_depth=max_depth,
+            direction='both',
+        )
+        center_block = find_first_intersecting_code_block(
+            project_path,
+            resolved_project_id,
+            file,
+            start_line,
+            end_line,
+        )
+        if not center_block:
+            center_function = preview['center_function']
+            center_block = {
+                'id': None,
+                'name': center_function.get('qualified_name') or center_function.get('name'),
+                'type': 'function',
+                'file': center_function.get('file'),
+                'filename': center_function.get('file'),
+                'range': [
+                    int(center_function.get('line') or 0),
+                    int(center_function.get('end_line') or center_function.get('line') or 0),
+                ],
+            }
+        return jsonify({
+            'status': 'success',
+            'call_graph_status': metadata.get('status'),
+            'message': '调用图预览已生成' if not ensure_result.get('built') else '调用图已构建并生成预览',
+            'center_block': {
+                'id': center_block.get('id'),
+                'name': center_block.get('name'),
+                'type': center_block.get('type'),
+                'file': center_block.get('file') or center_block.get('filename'),
+                'range': center_block.get('range'),
+                'codeRange': code_block_to_code_range(project_path, center_block),
+            },
+            'center_function': {
+                'id': preview['center_function'].get('id'),
+                'name': preview['center_function'].get('name'),
+                'qualified_name': preview['center_function'].get('qualified_name'),
+                'file': preview['center_function'].get('file'),
+                'line': preview['center_function'].get('line'),
+                'end_line': preview['center_function'].get('end_line'),
+                'signature': preview['center_function'].get('signature'),
+            },
+            'function_nodes': [
+                {
+                    'id': item.get('id'),
+                    'name': item.get('name'),
+                    'qualified_name': item.get('qualified_name'),
+                    'file': item.get('file'),
+                    'line': item.get('line'),
+                    'end_line': item.get('end_line'),
+                }
+                for item in preview.get('nodes', [])
+            ],
+            'mermaid_code': preview.get('mermaid_code') or '',
+            'code_ranges': preview.get('code_ranges', []),
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({
+            'status': 'error',
+            'call_graph_status': 'failed',
+            'message': str(e),
+        }), 500
 
 # 没看到有调用的地方，先注释了
 @bp.route('/project/alignment-by-id', methods=['GET'])

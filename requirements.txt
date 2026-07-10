@@ -21,3 +21,6 @@ pandas
 chromadb
 torch
 transformers
+tree-sitter
+tree-sitter-c
+tree-sitter-cpp
