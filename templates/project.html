@@ -1897,12 +1897,12 @@
 
                             <div class="manual-align-panel-section manual-align-panel-section--callgraph">
                                 <div class="manual-align-panel-desc manual-align-panel-desc--tight">${ currentCodeSelectionCallGraphHint }</div>
-                                <div class="manual-align-toggle-row">
-                                    <span>启用调用图扩展</span>
-                                    <el-switch
-                                        v-model="callGraphEnabled"
-                                        :disabled="!currentCodeSelectionSupportsCallGraph"
-                                    ></el-switch>
+                                <div class="call-graph-control-row call-graph-control-row--stacked">
+                                    <span class="call-graph-depth-label">查询起点</span>
+                                    <el-radio-group v-model="callGraphStartMode" size="small">
+                                        <el-radio-button label="function">当前函数</el-radio-button>
+                                        <el-radio-button label="line">当前行</el-radio-button>
+                                    </el-radio-group>
                                 </div>
                                 <div class="call-graph-control-row">
                                     <span class="call-graph-depth-label">展开深度</span>
@@ -1910,9 +1910,23 @@
                                         v-model="callGraphDepth"
                                         :min="1"
                                         :max="5"
-                                        :disabled="!callGraphEnabled || !currentCodeSelectionSupportsCallGraph"
+                                        :disabled="!currentCodeSelectionSupportsCallGraph"
                                         size="small"
                                     ></el-input-number>
+                                </div>
+                                <div class="manual-align-toggle-row">
+                                    <span>双向获取</span>
+                                    <el-switch
+                                        v-model="callGraphBidirectional"
+                                        :disabled="!currentCodeSelectionSupportsCallGraph"
+                                    ></el-switch>
+                                </div>
+                                <div class="manual-align-toggle-row">
+                                    <span>启用调用图扩展</span>
+                                    <el-switch
+                                        v-model="callGraphEnabled"
+                                        :disabled="!currentCodeSelectionSupportsCallGraph"
+                                    ></el-switch>
                                 </div>
                             </div>
                         </div>
@@ -1978,12 +1992,13 @@
                                 <span>调用图预览</span>
                                 <div class="call-graph-preview-toolbar">
                                     <span class="call-graph-preview-loading" v-if="callGraphLoading">加载中...</span>
-                                    <span v-else class="call-graph-zoom-text">${ Math.round(callGraphZoom * 100) }%</span>
+                                    <span v-else-if="callGraphSupportsViewportControls" class="call-graph-zoom-text">${ Math.round(callGraphZoom * 100) }%</span>
+                                    <span v-else-if="callGraphPreviewItems.length > 1" class="call-graph-zoom-text">共 ${ callGraphPreviewItems.length } 张图</span>
                                     <el-button-group size="small">
-                                        <el-button @click="zoomCallGraph(1.2)" :disabled="!callGraphMermaid || callGraphLoading || !!callGraphError">+</el-button>
-                                        <el-button @click="zoomCallGraph(1 / 1.2)" :disabled="!callGraphMermaid || callGraphLoading || !!callGraphError">-</el-button>
-                                        <el-button @click="fitCallGraphToViewport" :disabled="!callGraphMermaid || callGraphLoading || !!callGraphError">适配</el-button>
-                                        <el-button @click="resetCallGraphViewport" :disabled="!callGraphMermaid || callGraphLoading || !!callGraphError">重置</el-button>
+                                        <el-button @click="zoomCallGraph(1.2)" :disabled="!callGraphSupportsViewportControls">+</el-button>
+                                        <el-button @click="zoomCallGraph(1 / 1.2)" :disabled="!callGraphSupportsViewportControls">-</el-button>
+                                        <el-button @click="fitCallGraphToViewport" :disabled="!callGraphSupportsViewportControls">适配</el-button>
+                                        <el-button @click="resetCallGraphViewport" :disabled="!callGraphSupportsViewportControls">重置</el-button>
                                     </el-button-group>
                                 </div>
                             </div>
@@ -1991,20 +2006,40 @@
                                 ${ callGraphError }
                             </div>
                             <div v-else-if="!callGraphEnabled" class="call-graph-preview-message">
-                                开启 Call Graph 后展示当前函数的双向调用关系
+                                ${ callGraphStartMode === 'line'
+                                    ? (callGraphBidirectional ? '开启 Call Graph 后展示当前选中行内各函数调用对应的多张双向调用图' : '开启 Call Graph 后展示当前选中行内各函数调用对应的多张调用图')
+                                    : (callGraphBidirectional ? '开启 Call Graph 后展示当前函数双向展开的调用关系' : '开启 Call Graph 后展示当前函数向外展开的调用关系') }
                             </div>
                             <div v-else-if="callGraphLoading" class="call-graph-preview-message">
                                 正在生成调用图预览...
                             </div>
-                            <div v-else-if="!callGraphMermaid" class="call-graph-preview-message">
+                            <div v-else-if="!callGraphPreviewItems.length" class="call-graph-preview-message">
                                 当前没有可展示的调用图
                             </div>
                             <div
                                 id="code-call-graph-viewport"
                                 class="manual-align-call-graph"
-                                v-show="!!callGraphMermaid && !callGraphLoading && !callGraphError"
+                                v-show="callGraphPreviewItems.length === 1 && !callGraphLoading && !callGraphError"
                             >
                                 <div id="code-call-graph-wrapper" class="manual-align-call-graph__wrapper"></div>
+                            </div>
+                            <div
+                                v-show="callGraphPreviewItems.length > 1 && !callGraphLoading && !callGraphError"
+                                class="call-graph-preview-list"
+                            >
+                                <div
+                                    v-for="(preview, index) in callGraphPreviewItems"
+                                    :key="(preview.root_function && preview.root_function.id) || index"
+                                    class="call-graph-preview-card"
+                                >
+                                    <div class="call-graph-preview-card__header">
+                                        <span class="call-graph-preview-card__title">${ preview.title || ('调用图 ' + (index + 1)) }</span>
+                                        <span v-if="preview.call_site_line" class="call-graph-preview-card__meta">调用行 ${ preview.call_site_line }</span>
+                                    </div>
+                                    <div class="call-graph-preview-card__body">
+                                        <div :id="`code-call-graph-wrapper-${index}`" class="call-graph-preview-card__canvas"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

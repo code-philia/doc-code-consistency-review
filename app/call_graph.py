@@ -230,6 +230,17 @@ def _ranges_intersect(start_a: int, end_a: int, start_b: int, end_b: int) -> boo
     return max(int(start_a), int(start_b)) <= min(int(end_a), int(end_b))
 
 
+def _dedupe_preserve_order(items: Sequence[str]) -> List[str]:
+    seen = set()
+    result: List[str] = []
+    for item in items:
+        if not item or item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return result
+
+
 def find_first_intersecting_code_block(
     project_path: str,
     project_id: Optional[int],
@@ -379,6 +390,23 @@ def code_block_to_code_range(project_path: str, block: Dict[str, object]) -> Dic
     return _normalize_code_block_range(project_path, block)
 
 
+def build_selection_code_range(
+    project_path: str,
+    file: str,
+    start_line: int,
+    end_line: int,
+) -> Dict[str, object]:
+    return _normalize_code_block_range(
+        project_path,
+        {
+            "file": file,
+            "filename": file,
+            "type": "selection",
+            "range": [int(start_line), int(end_line)],
+        },
+    )
+
+
 def is_function_code_block(block: Optional[Dict[str, object]]) -> bool:
     return _is_function_block(block)
 
@@ -401,6 +429,32 @@ def _build_forward_edges(payload: Dict[str, object], reachable_ids: Sequence[str
     return edges
 
 
+def _build_bidirectional_partition(
+    payload: Dict[str, object],
+    center_function_id: str,
+    max_depth: int,
+) -> Tuple[set[str], set[str]]:
+    forward_result = query_function_result(
+        payload,
+        function_id=center_function_id,
+        max_depth=max_depth,
+        direction="forward",
+        include_source=False,
+    )
+    backward_result = query_function_result(
+        payload,
+        function_id=center_function_id,
+        max_depth=max_depth,
+        direction="backward",
+        include_source=False,
+    )
+    callee_ids = set(forward_result.get("summary", {}).get("reachable_function_ids", []))
+    caller_ids = set(backward_result.get("summary", {}).get("reachable_function_ids", []))
+    callee_ids.discard(center_function_id)
+    caller_ids.discard(center_function_id)
+    return caller_ids, callee_ids
+
+
 def _mermaid_node_id(function_id: str) -> str:
     return "n_" + "".join(ch if ch.isalnum() else "_" for ch in function_id)
 
@@ -409,8 +463,17 @@ def _escape_mermaid_label(label: str) -> str:
     return label.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def _build_mermaid_code(center_function_id: str, nodes: Sequence[Dict[str, object]], edges: Sequence[Tuple[str, str]]) -> str:
+def _build_mermaid_code(
+    center_function_id: str,
+    nodes: Sequence[Dict[str, object]],
+    edges: Sequence[Tuple[str, str]],
+    *,
+    direction: str = "forward",
+    caller_ids: Optional[set[str]] = None,
+    callee_ids: Optional[set[str]] = None,
+) -> str:
     lines = ["flowchart LR"]
+    hidden_link_indexes: List[int] = []
     if not nodes:
         return "\n".join(lines)
 
@@ -418,9 +481,53 @@ def _build_mermaid_code(center_function_id: str, nodes: Sequence[Dict[str, objec
         function_id = node.get("id") or ""
         label = f"{node.get('qualified_name') or node.get('name') or function_id}<br/>{node.get('file')}:{node.get('line')}"
         lines.append(f'    {_mermaid_node_id(function_id)}["{_escape_mermaid_label(label)}"]')
+    if direction == "both":
+        left_nodes = [
+            _mermaid_node_id(node.get("id") or "")
+            for node in nodes
+            if (node.get("id") or "") in (caller_ids or set())
+        ]
+        right_nodes = [
+            _mermaid_node_id(node.get("id") or "")
+            for node in nodes
+            if (node.get("id") or "") in (callee_ids or set())
+        ]
+        if left_nodes:
+            lines.append('    subgraph callers_side[" "]')
+            lines.append("        direction TB")
+            for node_id in left_nodes:
+                lines.append(f"        {node_id}")
+            lines.append("    end")
+        if right_nodes:
+            lines.append('    subgraph callees_side[" "]')
+            lines.append("        direction TB")
+            for node_id in right_nodes:
+                lines.append(f"        {node_id}")
+            lines.append("    end")
     if edges:
         for caller_id, callee_id in edges:
             lines.append(f"    {_mermaid_node_id(caller_id)} --> {_mermaid_node_id(callee_id)}")
+    if direction == "both":
+        lines.append("    classDef hidden fill:transparent,stroke:transparent,color:transparent;")
+        if left_nodes:
+            lines.append("    style callers_side fill:transparent,stroke:transparent,color:transparent;")
+        if right_nodes:
+            lines.append("    style callees_side fill:transparent,stroke:transparent,color:transparent;")
+        if caller_ids:
+            lines.append('    callers_anchor[" "]')
+            lines.append("    class callers_anchor hidden")
+            hidden_link_indexes.append(len(edges) + len(hidden_link_indexes))
+            lines.append(f"    callers_anchor --> {_mermaid_node_id(center_function_id)}")
+        if callee_ids:
+            lines.append('    callees_anchor[" "]')
+            lines.append("    class callees_anchor hidden")
+            hidden_link_indexes.append(len(edges) + len(hidden_link_indexes))
+            lines.append(f"    {_mermaid_node_id(center_function_id)} --> callees_anchor")
+        if hidden_link_indexes:
+            joined_indexes = ",".join(str(index) for index in hidden_link_indexes)
+            lines.append(
+                f"    linkStyle {joined_indexes} stroke:transparent,color:transparent,fill:none,stroke-width:0px;"
+            )
     lines.append("    classDef center fill:#f8dcc8,stroke:#b55422,stroke-width:2px,color:#3c2415;")
     lines.append(f"    class {_mermaid_node_id(center_function_id)} center")
     return "\n".join(lines)
@@ -477,11 +584,128 @@ def _function_to_block_like(project_path: str, function_info: Dict[str, object])
     }
 
 
+def resolve_called_functions_in_line_range(
+    project_path: str,
+    file: str,
+    start_line: int,
+    end_line: int,
+) -> List[Dict[str, object]]:
+    payload = load_project_call_graph(project_path)
+    if not payload:
+        return []
+
+    functions = payload.get("functions") or {}
+    matches: List[Dict[str, object]] = []
+    for function in sorted(
+        functions.values(),
+        key=lambda item: (item.get("file") or "", int(item.get("line") or 0), item.get("qualified_name") or item.get("name") or ""),
+    ):
+        if function.get("file") != file:
+            continue
+        func_start = int(function.get("line") or 0)
+        func_end = int(function.get("end_line") or func_start)
+        if not _ranges_intersect(start_line, end_line, func_start, func_end):
+            continue
+        for call in function.get("calls") or []:
+            call_line = int(call.get("line") or 0)
+            if call_line < start_line or call_line > end_line:
+                continue
+            for target_id in call.get("resolved_targets") or []:
+                target = functions.get(target_id)
+                if not target:
+                    continue
+                matches.append(
+                    {
+                        "function_id": target_id,
+                        "call_site_line": call_line,
+                        "raw_callee": call.get("raw_callee") or call.get("simple_name") or target.get("qualified_name") or target.get("name"),
+                        "function": target,
+                    }
+                )
+
+    seen = set()
+    ordered_matches: List[Dict[str, object]] = []
+    for item in sorted(
+        matches,
+        key=lambda entry: (
+            int(entry.get("call_site_line") or 0),
+            (entry.get("function") or {}).get("qualified_name") or (entry.get("function") or {}).get("name") or "",
+            entry.get("function_id") or "",
+        ),
+    ):
+        function_id = item.get("function_id")
+        if not function_id or function_id in seen:
+            continue
+        seen.add(function_id)
+        ordered_matches.append(item)
+    return ordered_matches
+
+
+def _merge_code_ranges(range_lists: Sequence[Sequence[Dict[str, object]]]) -> List[Dict[str, object]]:
+    merged: List[Dict[str, object]] = []
+    seen = set()
+    for items in range_lists:
+        for item in items or []:
+            key = (
+                item.get("filename") or item.get("file") or item.get("documentId"),
+                int(item.get("startLine") or 0),
+                int(item.get("endLine") or 0),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(item)
+    return merged
+
+
+def _build_preview_item(preview: Dict[str, object]) -> Dict[str, object]:
+    root_function = preview.get("center_function") or {}
+    return {
+        "root_function": {
+            "id": root_function.get("id"),
+            "name": root_function.get("name"),
+            "qualified_name": root_function.get("qualified_name"),
+            "file": root_function.get("file"),
+            "line": root_function.get("line"),
+            "end_line": root_function.get("end_line"),
+            "signature": root_function.get("signature"),
+        },
+        "title": root_function.get("qualified_name") or root_function.get("name") or root_function.get("id") or "",
+        "mermaid_code": preview.get("mermaid_code") or "",
+        "code_ranges": preview.get("code_ranges") or [],
+        "reachable_function_ids": preview.get("reachable_function_ids") or [],
+    }
+
+
+def query_multiple_function_graphs(
+    project_path: str,
+    function_ids: Sequence[str],
+    max_depth: int = DEFAULT_CALL_GRAPH_DEPTH,
+    direction: str = "forward",
+) -> Dict[str, object]:
+    unique_function_ids = _dedupe_preserve_order(list(function_ids))
+    previews: List[Dict[str, object]] = []
+    all_code_ranges: List[Sequence[Dict[str, object]]] = []
+    for function_id in unique_function_ids:
+        preview = query_function_graph(
+            project_path,
+            function_id,
+            max_depth=max_depth,
+            direction=direction,
+        )
+        previews.append(_build_preview_item(preview))
+        all_code_ranges.append(preview.get("code_ranges") or [])
+    return {
+        "previews": previews,
+        "code_ranges": _merge_code_ranges(all_code_ranges),
+    }
+
+
 def query_function_graph(
     project_path: str,
     function_id: str,
     max_depth: int = DEFAULT_CALL_GRAPH_DEPTH,
-    direction: str = "both",
+    direction: str = "forward",
 ) -> Dict[str, object]:
     payload = load_project_call_graph(project_path)
     if not payload:
@@ -498,6 +722,10 @@ def query_function_graph(
     reachable_ids = result.get("summary", {}).get("reachable_function_ids", [])
     nodes = _function_nodes_in_order(payload, reachable_ids)
     edges = _build_forward_edges(payload, reachable_ids)
+    caller_ids: set[str] = set()
+    callee_ids: set[str] = set()
+    if direction == "both":
+        caller_ids, callee_ids = _build_bidirectional_partition(payload, function_id, safe_depth)
     project_id = get_project_id_by_path(project_path)
     code_ranges = []
     seen_ranges = set()
@@ -522,7 +750,14 @@ def query_function_graph(
         "nodes": nodes,
         "edges": [{"caller_id": caller_id, "callee_id": callee_id} for caller_id, callee_id in edges],
         "reachable_function_ids": reachable_ids,
-        "mermaid_code": _build_mermaid_code(result["query"]["root_function_id"], nodes, edges),
+        "mermaid_code": _build_mermaid_code(
+            result["query"]["root_function_id"],
+            nodes,
+            edges,
+            direction=direction,
+            caller_ids=caller_ids,
+            callee_ids=callee_ids,
+        ),
         "code_ranges": code_ranges,
         "max_depth": safe_depth,
         "direction": direction,

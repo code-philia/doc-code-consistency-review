@@ -188,10 +188,13 @@ const app = createApp({
         const currentCodeSelectionBlock = ref(null);
         const projectCallGraphMetadata = ref({ status: 'unavailable', error_message: '', source_file_count: 0 });
         const callGraphEnabled = ref(false);
+        const callGraphStartMode = ref('function');
+        const callGraphBidirectional = ref(false);
         const callGraphDepth = ref(3);
         const callGraphLoading = ref(false);
         const callGraphError = ref('');
         const callGraphMermaid = ref('');
+        const callGraphPreviewItems = ref([]);
         const callGraphResolvedCodeRanges = ref([]);
         const callGraphCenterBlock = ref(null);
         const callGraphCenterFunction = ref(null);
@@ -322,24 +325,43 @@ const app = createApp({
                 manualActionTab.value = 'createAlignment';
             }
         });
+        const clearCallGraphPreviewState = () => {
+            callGraphLoading.value = false;
+            callGraphError.value = '';
+            callGraphMermaid.value = '';
+            callGraphPreviewItems.value = [];
+            callGraphResolvedCodeRanges.value = [];
+            callGraphCenterBlock.value = null;
+            callGraphCenterFunction.value = null;
+            callGraphZoom.value = 1;
+            callGraphPanX.value = 0;
+            callGraphPanY.value = 0;
+        };
         watch(callGraphEnabled, async (enabled) => {
             if (!showCodeSelectionDialog.value) {
                 return;
             }
             if (!enabled) {
-                callGraphLoading.value = false;
-                callGraphError.value = '';
-                callGraphMermaid.value = '';
-                callGraphResolvedCodeRanges.value = [];
-                callGraphCenterBlock.value = null;
-                callGraphCenterFunction.value = null;
-                const container = document.getElementById('code-call-graph-wrapper');
-                if (container) {
-                    container.innerHTML = '';
-                }
+                clearCallGraphPreviewState();
                 return;
             }
             await refreshCallGraphPreview();
+        });
+        watch(callGraphStartMode, async (mode, previousMode) => {
+            if (mode === previousMode) {
+                return;
+            }
+            if (showCodeSelectionDialog.value && callGraphEnabled.value) {
+                await refreshCallGraphPreview();
+            }
+        });
+        watch(callGraphBidirectional, async (enabled, previousEnabled) => {
+            if (enabled === previousEnabled) {
+                return;
+            }
+            if (showCodeSelectionDialog.value && callGraphEnabled.value) {
+                await refreshCallGraphPreview();
+            }
         });
         watch(callGraphDepth, async (depth, previousDepth) => {
             if (depth === previousDepth) {
@@ -382,27 +404,54 @@ const app = createApp({
             if (!currentSelection.value || currentSelection.value.type !== 'code') {
                 return false;
             }
+            if (callGraphStartMode.value === 'line') {
+                return true;
+            }
             if (!manualAlignFromBlock.value) {
                 return true;
             }
             const block = currentCodeSelectionBlock.value;
             return !!(block && ((block.type || '').toLowerCase() === 'function'));
         });
+        const callGraphSupportsViewportControls = computed(() => {
+            return (
+                callGraphPreviewItems.value.length === 1 &&
+                !!callGraphMermaid.value &&
+                !callGraphLoading.value &&
+                !callGraphError.value
+            );
+        });
         const currentCodeSelectionCallGraphHint = computed(() => {
             if (!currentSelection.value || currentSelection.value.type !== 'code') {
                 return '请先选择代码';
             }
-            if (manualAlignFromBlock.value && ((currentCodeSelectionBlock.value?.type || '').toLowerCase()) !== 'function') {
+            if (
+                callGraphStartMode.value === 'function' &&
+                manualAlignFromBlock.value &&
+                ((currentCodeSelectionBlock.value?.type || '').toLowerCase()) !== 'function'
+            ) {
                 return '仅函数块支持调用图';
             }
             const status = projectCallGraphMetadata.value?.status || 'unavailable';
             if (status === 'ready') {
-                return '将按当前选区定位所属函数，并双向展开调用关系';
+                return callGraphStartMode.value === 'line'
+                    ? (callGraphBidirectional.value
+                        ? '将基于当前选中行内出现的函数调用，分别双向展开调用关系'
+                        : '将基于当前选中行内出现的函数调用，分别向外展开调用关系')
+                    : (callGraphBidirectional.value
+                        ? '将按当前选区定位所属函数，并双向展开调用关系'
+                        : '将按当前选区定位所属函数，并向外展开被调用关系');
             }
             if (status === 'building') {
                 return '调用图正在后台重建；开启后会优先检查现有图文件，缺失时自动构建';
             }
-            return '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选区定位函数并查询';
+            return callGraphStartMode.value === 'line'
+                ? (callGraphBidirectional.value
+                    ? '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选中行内的函数调用分别双向查询'
+                    : '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选中行内的函数调用分别查询')
+                : (callGraphBidirectional.value
+                    ? '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选区定位函数并双向查询调用关系'
+                    : '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选区定位函数并向外查询调用关系');
         });
         
         // KB Application State
@@ -2411,16 +2460,10 @@ const app = createApp({
             newBlockName.value = '';
             currentCodeSelectionBlock.value = null;
             callGraphEnabled.value = false;
+            callGraphStartMode.value = 'function';
+            callGraphBidirectional.value = false;
             callGraphDepth.value = 3;
-            callGraphLoading.value = false;
-            callGraphError.value = '';
-            callGraphMermaid.value = '';
-            callGraphResolvedCodeRanges.value = [];
-            callGraphCenterBlock.value = null;
-            callGraphCenterFunction.value = null;
-            callGraphZoom.value = 1;
-            callGraphPanX.value = 0;
-            callGraphPanY.value = 0;
+            clearCallGraphPreviewState();
         };
 
         const getSelectionRawContent = async (selection) => {
@@ -2612,10 +2655,19 @@ const app = createApp({
             currentCodeSelectionBlock.value = matchedBlock;
             return matchedBlock;
         };
- 
+
         const resolveCurrentCodeSelectionTarget = async () => {
             if (!currentSelection.value || currentSelection.value.type !== 'code') {
                 return null;
+            }
+            const { startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
+            if (callGraphStartMode.value === 'line') {
+                return {
+                    block: null,
+                    file: currentSelection.value.documentId,
+                    startLine,
+                    endLine,
+                };
             }
             const block = await resolveCurrentCodeSelectionBlock();
             if (block) {
@@ -2626,7 +2678,6 @@ const app = createApp({
                     endLine: Array.isArray(block.range) ? Number(block.range[1]) : Number(block.endLine),
                 };
             }
-            const { startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
             return {
                 block: null,
                 file: currentSelection.value.documentId,
@@ -2634,7 +2685,7 @@ const app = createApp({
                 endLine,
             };
         };
- 
+
         const resolveCodeRangesForManualAlignment = async () => {
             if (callGraphEnabled.value && callGraphResolvedCodeRanges.value.length > 0) {
                 return callGraphResolvedCodeRanges.value.slice();
@@ -5365,21 +5416,52 @@ const app = createApp({
             const elements = await ensureDocFileAndPageForRange(firstDocRange);
             scrollToFirstAndHighlightAll(elements);
         };
-        
+
+        const getCallGraphWrapperId = (index = 0) => (
+            index === 0 ? 'code-call-graph-wrapper' : `code-call-graph-wrapper-${index}`
+        );
+        const getCallGraphViewportId = (index = 0) => (
+            index === 0 ? 'code-call-graph-viewport' : `code-call-graph-viewport-${index}`
+        );
+
         const renderCallGraphPreview = async () => {
             await nextTick();
-            const wrapper = document.getElementById('code-call-graph-wrapper');
-            if (!wrapper) {
-                throw new Error('调用图容器未挂载');
-            }
-            if (!callGraphMermaid.value) {
-                wrapper.innerHTML = '';
+            if (!Array.isArray(callGraphPreviewItems.value) || callGraphPreviewItems.value.length === 0) {
+                const wrapper = document.getElementById(getCallGraphWrapperId(0));
+                if (wrapper) {
+                    wrapper.innerHTML = '';
+                }
                 return;
             }
-            await renderMermaidIntoElement(wrapper, callGraphMermaid.value, 'code-call-graph');
-            initializeCallGraphViewport();
+
+            if (callGraphPreviewItems.value.length === 1) {
+                const wrapper = document.getElementById(getCallGraphWrapperId(0));
+                if (!wrapper) {
+                    throw new Error('调用图容器未挂载');
+                }
+                if (!callGraphMermaid.value) {
+                    wrapper.innerHTML = '';
+                    return;
+                }
+                await renderMermaidIntoElement(wrapper, callGraphMermaid.value, 'code-call-graph');
+                initializeCallGraphViewport(0);
+                return;
+            }
+
+            for (let index = 0; index < callGraphPreviewItems.value.length; index += 1) {
+                const item = callGraphPreviewItems.value[index];
+                const wrapper = document.getElementById(`code-call-graph-wrapper-${index}`);
+                if (!wrapper) {
+                    continue;
+                }
+                if (!item?.mermaid_code) {
+                    wrapper.innerHTML = '';
+                    continue;
+                }
+                await renderMermaidIntoElement(wrapper, item.mermaid_code, `code-call-graph-${index}`);
+            }
         };
- 
+
         const refreshCallGraphPreview = async () => {
             if (!showCodeSelectionDialog.value || !callGraphEnabled.value) {
                 return;
@@ -5387,18 +5469,20 @@ const app = createApp({
             if (!currentCodeSelectionSupportsCallGraph.value) {
                 callGraphError.value = currentCodeSelectionCallGraphHint.value;
                 callGraphMermaid.value = '';
+                callGraphPreviewItems.value = [];
                 callGraphResolvedCodeRanges.value = [];
                 return;
             }
- 
+
             const target = await resolveCurrentCodeSelectionTarget();
             if (!target || !target.file || !Number.isFinite(target.startLine) || !Number.isFinite(target.endLine)) {
                 callGraphError.value = '当前选区无法解析为有效代码范围';
                 callGraphMermaid.value = '';
+                callGraphPreviewItems.value = [];
                 callGraphResolvedCodeRanges.value = [];
                 return;
             }
- 
+
             callGraphLoading.value = true;
             callGraphError.value = '';
             try {
@@ -5411,6 +5495,8 @@ const app = createApp({
                     startLine: target.startLine,
                     endLine: target.endLine,
                     maxDepth: callGraphDepth.value,
+                    startMode: callGraphStartMode.value,
+                    bidirectional: callGraphBidirectional.value,
                 });
                 if (response.data?.call_graph_status) {
                     projectCallGraphMetadata.value = normalizeCallGraphMetadata({
@@ -5421,45 +5507,49 @@ const app = createApp({
                 if (response.data?.status !== 'success') {
                     callGraphError.value = response.data?.message || '调用图预览失败';
                     callGraphMermaid.value = '';
+                    callGraphPreviewItems.value = [];
                     callGraphResolvedCodeRanges.value = [];
                     return;
                 }
+                const previews = Array.isArray(response.data.previews) ? response.data.previews : [];
                 callGraphCenterBlock.value = response.data.center_block || null;
                 callGraphCenterFunction.value = response.data.center_function || null;
                 callGraphResolvedCodeRanges.value = response.data.code_ranges || [];
-                callGraphMermaid.value = response.data.mermaid_code || '';
+                callGraphPreviewItems.value = previews;
+                callGraphMermaid.value = (previews[0]?.mermaid_code) || response.data.mermaid_code || '';
                 await renderCallGraphPreview();
             } catch (error) {
                 console.error('调用图预览失败:', error);
                 callGraphError.value = error.response?.data?.message || error.message || '调用图预览失败';
                 callGraphMermaid.value = '';
+                callGraphPreviewItems.value = [];
                 callGraphResolvedCodeRanges.value = [];
             } finally {
                 callGraphLoading.value = false;
             }
         };
- 
-        const getCallGraphViewport = () => document.getElementById('code-call-graph-viewport');
-        const getCallGraphWrapper = () => document.getElementById('code-call-graph-wrapper');
- 
+
+        const getCallGraphViewport = (index = 0) => document.getElementById(getCallGraphViewportId(index));
+        const getCallGraphWrapper = (index = 0) => document.getElementById(getCallGraphWrapperId(index));
+
         const applyCallGraphTransform = () => {
-            const wrapper = getCallGraphWrapper();
+            const wrapper = getCallGraphWrapper(0);
             if (!wrapper) {
                 return;
             }
             wrapper.style.transform = `translate(${callGraphPanX.value}px, ${callGraphPanY.value}px) scale(${callGraphZoom.value})`;
         };
- 
+
         const resetCallGraphViewport = () => {
             callGraphZoom.value = 1;
             callGraphPanX.value = 0;
             callGraphPanY.value = 0;
             applyCallGraphTransform();
         };
- 
+
         const zoomCallGraph = (factor) => {
-            const viewport = getCallGraphViewport();
-            const wrapper = getCallGraphWrapper();
+            const viewport = getCallGraphViewport(0);
+            const wrapper = getCallGraphWrapper(0);
             const svg = wrapper?.querySelector('svg');
             if (!viewport || !wrapper || !svg) {
                 return;
@@ -5475,10 +5565,10 @@ const app = createApp({
             callGraphZoom.value = nextZoom;
             applyCallGraphTransform();
         };
- 
+
         const fitCallGraphToViewport = () => {
-            const viewport = getCallGraphViewport();
-            const wrapper = getCallGraphWrapper();
+            const viewport = getCallGraphViewport(0);
+            const wrapper = getCallGraphWrapper(0);
             const svg = wrapper?.querySelector('svg');
             if (!viewport || !wrapper || !svg) {
                 return;
@@ -5489,20 +5579,21 @@ const app = createApp({
             const availableHeight = Math.max(viewport.clientHeight - 32, 120);
             const scaleX = availableWidth / Math.max(svgRect.width, 1);
             const scaleY = availableHeight / Math.max(svgRect.height, 1);
-            callGraphZoom.value = Math.max(0.1, Math.min(6, Math.min(scaleX, scaleY, 1)));
-            callGraphPanX.value = 0;
-            callGraphPanY.value = 0;
+            const nextZoom = Math.max(0.1, Math.min(6, Math.min(scaleX, scaleY, 1)));
+            callGraphZoom.value = nextZoom;
+            callGraphPanX.value = (viewport.clientWidth - svgRect.width * nextZoom) / 2;
+            callGraphPanY.value = (viewport.clientHeight - svgRect.height * nextZoom) / 2;
             applyCallGraphTransform();
         };
- 
-        const initializeCallGraphViewport = () => {
-            const viewport = getCallGraphViewport();
-            const wrapper = getCallGraphWrapper();
+
+        const initializeCallGraphViewport = (index = 0) => {
+            const viewport = getCallGraphViewport(index);
+            const wrapper = getCallGraphWrapper(index);
             const svg = wrapper?.querySelector('svg');
             if (!viewport || !wrapper || !svg) {
                 return;
             }
- 
+
             svg.removeAttribute('width');
             svg.style.width = 'auto';
             svg.style.height = 'auto';
@@ -5559,10 +5650,14 @@ const app = createApp({
  
                 viewport.dataset.bound = 'true';
             }
- 
-            fitCallGraphToViewport();
+
+            if (index === 0) {
+                requestAnimationFrame(() => {
+                    fitCallGraphToViewport();
+                });
+            }
         };
- 
+
         const prepareCodeSelectionDialog = async (selection, sourceBlock = null) => {
             currentSelection.value = selection;
             resetManualAlignFromBlock();
@@ -9435,14 +9530,18 @@ const app = createApp({
             manualDocSelectionContent,
             manualCodeSelectionContent,
             manualCodeSelectionCounterStart,
- 
+
             //调用图相关
             callGraphEnabled,
+            callGraphStartMode,
+            callGraphBidirectional,
             callGraphDepth,
             callGraphLoading,
             callGraphError,
             callGraphMermaid,
+            callGraphPreviewItems,
             callGraphZoom,
+            callGraphSupportsViewportControls,
             currentCodeSelectionSupportsCallGraph,
             currentCodeSelectionCallGraphHint,
             zoomCallGraph,

@@ -4615,7 +4615,15 @@
 .call-graph-preview-message--error {
     color: #b42318;
 }
- 
+
+.call-graph-control-row--stacked {
+    align-items: flex-start;
+}
+
+.call-graph-control-row--stacked .el-radio-group {
+    flex-wrap: wrap;
+}
+
 .manual-align-call-graph {
     position: relative;
     flex: 1 1 auto;
@@ -4649,7 +4657,72 @@
     max-width: none;
     min-width: 420px;
 }
- 
+
+.call-graph-preview-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--manual-align-space-4);
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    padding: var(--manual-align-space-1);
+}
+
+.call-graph-preview-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+    border: 1px solid var(--manual-align-card-border);
+    border-radius: calc(var(--manual-align-card-radius) - 2px);
+    background: rgba(255, 255, 255, 0.92);
+    overflow: hidden;
+}
+
+.call-graph-preview-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--manual-align-space-3);
+    padding: var(--manual-align-space-3) var(--manual-align-space-4);
+    border-bottom: 1px solid var(--manual-align-card-border);
+    background: #f7f9fc;
+}
+
+.call-graph-preview-card__title {
+    min-width: 0;
+    font-size: var(--manual-align-text-size);
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.call-graph-preview-card__meta {
+    flex: 0 0 auto;
+    font-size: var(--manual-align-muted-size);
+    color: #738198;
+}
+
+.call-graph-preview-card__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: var(--manual-align-space-4);
+    background: radial-gradient(circle at 1px 1px, rgba(219, 228, 241, 0.75) 1px, transparent 0) 0 0 / 24px 24px, #fbfcff;
+}
+
+.call-graph-preview-card__canvas {
+    min-width: max-content;
+    min-height: max-content;
+}
+
+.call-graph-preview-card__canvas svg {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: none;
+    min-width: 420px;
+}
+
 .existing-align-tabs {
     min-height: 0;
 }

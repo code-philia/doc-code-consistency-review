@@ -53,6 +53,19 @@ import re
 import zipfile
 
 from .code_block import get_all_code_blocks, get_codefile_blocks
+from .call_graph import (
+    build_selection_code_range,
+    build_project_call_graph,
+    code_block_to_code_range,
+    ensure_project_call_graph,
+    find_first_intersecting_code_block,
+    get_call_graph_metadata,
+    mark_call_graph_building,
+    query_multiple_function_graphs,
+    query_function_graph,
+    resolve_called_functions_in_line_range,
+    resolve_code_block_to_function,
+)
 
 import logging
 import chromadb
@@ -3700,7 +3713,12 @@ def call_graph_preview():
         start_line = _safe_int(data.get('startLine'))
         end_line = _safe_int(data.get('endLine'))
         max_depth = max(1, min(_safe_int(data.get('maxDepth'), 3), 8))
- 
+        start_mode = (data.get('startMode') or 'function').strip().lower()
+        bidirectional = bool(data.get('bidirectional'))
+        graph_direction = 'both' if bidirectional else 'forward'
+        if start_mode not in {'function', 'line'}:
+            start_mode = 'function'
+
         if not project_path or not file or start_line <= 0 or end_line <= 0:
             return jsonify({
                 'status': 'error',
@@ -3718,6 +3736,82 @@ def call_graph_preview():
             })
  
         resolved_project_id = resolve_project_id(project_path, project_id)
+        if start_mode == 'line':
+            called_functions = resolve_called_functions_in_line_range(
+                project_path,
+                file,
+                start_line,
+                end_line,
+            )
+            if not called_functions:
+                return jsonify({
+                    'status': 'error',
+                    'call_graph_status': metadata.get('status'),
+                    'query_mode': start_mode,
+                    'message': '当前选中行内未命中可查询调用图的函数调用',
+                })
+
+            preview_bundle = query_multiple_function_graphs(
+                project_path,
+                [item.get('function_id') for item in called_functions],
+                max_depth=max_depth,
+                direction=graph_direction,
+            )
+            selection_code_range = build_selection_code_range(
+                project_path,
+                file,
+                start_line,
+                end_line,
+            )
+            selection_block = {
+                'id': None,
+                'name': selection_code_range.get('name'),
+                'type': 'selection',
+                'file': file,
+                'filename': file,
+                'range': [start_line, end_line],
+                'codeRange': selection_code_range,
+            }
+            previews = []
+            for index, item in enumerate(preview_bundle.get('previews') or []):
+                preview_item = dict(item)
+                preview_item['call_site_line'] = called_functions[index].get('call_site_line')
+                preview_item['call_site_name'] = called_functions[index].get('raw_callee')
+                previews.append(preview_item)
+
+            return jsonify({
+                'status': 'success',
+                'call_graph_status': metadata.get('status'),
+                'query_mode': start_mode,
+                'message': (
+                    f'调用图预览已生成，共 {len(previews)} 个起点'
+                    if not ensure_result.get('built')
+                    else f'调用图已构建并生成 {len(previews)} 个预览'
+                ),
+                'center_block': selection_block,
+                'center_function': None,
+                'selection_block': selection_block,
+                'previews': previews,
+                'mermaid_code': previews[0].get('mermaid_code') if previews else '',
+                'code_ranges': [selection_code_range] + (preview_bundle.get('code_ranges') or []),
+                'called_functions': [
+                    {
+                        'function_id': item.get('function_id'),
+                        'call_site_line': item.get('call_site_line'),
+                        'call_site_name': item.get('raw_callee'),
+                        'function': {
+                            'id': (item.get('function') or {}).get('id'),
+                            'name': (item.get('function') or {}).get('name'),
+                            'qualified_name': (item.get('function') or {}).get('qualified_name'),
+                            'file': (item.get('function') or {}).get('file'),
+                            'line': (item.get('function') or {}).get('line'),
+                            'end_line': (item.get('function') or {}).get('end_line'),
+                        }
+                    }
+                    for item in called_functions
+                ],
+            })
+
         function_id = resolve_code_block_to_function(
             project_path,
             resolved_project_id,
@@ -3736,7 +3830,7 @@ def call_graph_preview():
             project_path,
             function_id,
             max_depth=max_depth,
-            direction='both',
+            direction=graph_direction,
         )
         center_block = find_first_intersecting_code_block(
             project_path,
@@ -3761,6 +3855,7 @@ def call_graph_preview():
         return jsonify({
             'status': 'success',
             'call_graph_status': metadata.get('status'),
+            'query_mode': start_mode,
             'message': '调用图预览已生成' if not ensure_result.get('built') else '调用图已构建并生成预览',
             'center_block': {
                 'id': center_block.get('id'),
@@ -3792,6 +3887,23 @@ def call_graph_preview():
             ],
             'mermaid_code': preview.get('mermaid_code') or '',
             'code_ranges': preview.get('code_ranges', []),
+            'previews': [
+                {
+                    'root_function': {
+                        'id': preview['center_function'].get('id'),
+                        'name': preview['center_function'].get('name'),
+                        'qualified_name': preview['center_function'].get('qualified_name'),
+                        'file': preview['center_function'].get('file'),
+                        'line': preview['center_function'].get('line'),
+                        'end_line': preview['center_function'].get('end_line'),
+                        'signature': preview['center_function'].get('signature'),
+                    },
+                    'title': preview['center_function'].get('qualified_name') or preview['center_function'].get('name'),
+                    'mermaid_code': preview.get('mermaid_code') or '',
+                    'code_ranges': preview.get('code_ranges', []),
+                    'reachable_function_ids': preview.get('reachable_function_ids', []),
+                }
+            ],
         })
     except Exception as e:
         traceback.print_exc()
