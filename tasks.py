@@ -7,6 +7,9 @@ from datetime import datetime
 import pandas as pd
 from celery import Celery
 from docx import Document
+from docx.oxml import parse_xml, OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Pt
 
 from app import create_app
 from app.agent import query_review_result, query_review_result_by_feedback, query_codefile_from_abstract, \
@@ -27,7 +30,7 @@ from app.views import (
     filter_non_abstract_files,
     _get_doc_blocks_for_matching,
     _match_doc_ranges_from_related_reqs,
-    _get_or_build_code_blocks_for_file,
+    _get_or_build_code_blocks_for_file, SECRET_LEVEL_MAP,
 )
 
 celery = Celery(
@@ -328,28 +331,6 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
                         content = one.get('description') or one.get('content') or ''
                         status = one.get('status') or 'unconfirmed'
 
-                        # cur.execute(
-                            # 'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
-                            # 'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,category,createdAt,updatedAt) '
-                            # 'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                            # (
-                                # user_id,
-                                # project_id,
-                                # display_id,
-                                # alignment.get('id'),
-                                # severity,
-                                # title,
-                                # content,
-                                # status,
-                                # related_doc_file,
-                                # alignment.get('id'),
-                                # brief_req,
-                                # brief_code,
-                                # alignment.get('align_type') if alignment.get('align_type') else 'codeReview'
-                            # )
-                        # )
-                        
-                        
                         cur.execute(
                             'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
                             'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,category,createdAt,updatedAt) '
@@ -1004,6 +985,7 @@ def export_issues_task(self, data, docx_path):
 
         issues = data.get('issues', [])
         form_data = data.get('formData', {})
+        secret_level = data.get('secret_level')
         template_path = os.path.join(os.path.dirname(__file__), 'templates/', '问题单模板.docx')
         # 创建临时目录存储文件
         temp_dir = os.path.join(os.path.dirname(__file__), 'app/', 'temp_exports')
@@ -1025,6 +1007,13 @@ def export_issues_task(self, data, docx_path):
             # 处理第一个问题单作为基础文档
             first_issue = issues[0]
             merged_doc = Document(template_path)
+
+            export_prompt = SECRET_LEVEL_MAP[secret_level]
+            p = merged_doc.paragraphs[0].insert_paragraph_before(export_prompt) if merged_doc.paragraphs \
+                else merged_doc.add_paragraph(export_prompt)
+            p.alignment = 0
+            run = p.runs[0]
+            set_run_font(run)
 
             replacements = {}
             # 替换页码信息
@@ -1056,7 +1045,7 @@ def export_issues_task(self, data, docx_path):
             replacements["CONTENTCONTENT"] = first_issue.get('description', '')
 
             # 替换第一个文档的占位符
-            replace_text_in_docx(merged_doc, replacements)
+            replace_text_in_docx(merged_doc, replacements, 'issue')
             
             # 【新增代码开始】
             from docx.oxml.ns import qn
@@ -1111,7 +1100,7 @@ def export_issues_task(self, data, docx_path):
                 replacements["CONTENTCONTENT"] = issue.get('description', '')
 
                 # 替换模板中的占位符
-                replace_text_in_docx(temp_doc, replacements)
+                replace_text_in_docx(temp_doc, replacements, 'issue')
 
                 # 直接拼接填充好的页面内容到合并文档
                 for element in temp_doc.element.body:
@@ -1151,3 +1140,25 @@ def export_issues_task(self, data, docx_path):
         logger.error(f"生成问题单文件失败:{str(e)}", exc_info=True)
     finally:
         db.close()
+
+
+def set_run_font(run, font_name='SimSun', font_size=Pt(10), color=None):
+    """
+    设置 run 字体，解决跨平台乱码
+    """
+
+    east_asia_map = {
+        'Microsoft YaHei': '微软雅黑',
+        'SimSun': '宋体(中文正体)',
+        'SimHei': '黑体',
+        'KaiTi': '楷体',
+        'FangSong': '仿宋'
+    }
+
+    run.font.name = font_name
+    run.font.size = font_size
+    if color:
+        run.font.color.rgb = color
+
+    east_asia = east_asia_map.get(font_name, font_name)
+    run._element.rPr.rFonts.set(qn('w:eastAsia'), east_asia)

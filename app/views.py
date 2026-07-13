@@ -2,6 +2,7 @@ import os
 import threading
 
 from celery import chain
+from docx.shared import Pt, RGBColor
 from flask_login import login_manager, login_required, current_user
 from .db import (
     DB_CONFIG,
@@ -52,16 +53,6 @@ import re
 import zipfile
 
 from .code_block import get_all_code_blocks, get_codefile_blocks
-from .call_graph import (
-    build_project_call_graph,
-    code_block_to_code_range,
-    ensure_project_call_graph,
-    find_first_intersecting_code_block,
-    get_call_graph_metadata,
-    mark_call_graph_building,
-    query_function_graph,
-    resolve_code_block_to_function,
-)
 
 import logging
 import chromadb
@@ -75,6 +66,18 @@ import pymysql
 from .utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
 from .utils import convert_docfile_to_markdown
 from .agent import smart_parse_doc
+
+from .call_graph import (
+    build_project_call_graph,
+    code_block_to_code_range,
+    ensure_project_call_graph,
+    find_first_intersecting_code_block,
+    get_call_graph_metadata,
+    mark_call_graph_building,
+    query_function_graph,
+    resolve_code_block_to_function,
+)
+
 # 配置日志
 handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -87,37 +90,23 @@ logger.setLevel(logging.INFO)
 ALIGNMENT_SIDEBAR_PAGE_SIZE = 100
 BLOCK_SIDEBAR_PAGE_SIZE = 100
 
+SECRET_LEVEL_MAP = {
+    'public': '公开',
+    'internal': '内部',
+    'secret': '秘密★10年',
+    'confidential': '机密★20年'
+}
+
+SECRET_LEVEL_EXTENSION_MAP = {
+    'public': '公开',
+    'internal': '内部',
+    'secret': '秘密',
+    'confidential': '机密'
+}
+
 
 def project_now_str():
     return datetime.now(ZoneInfo("Asia/Shanghai")).strftime('%Y-%m-%d %H:%M:%S')
-
-
-def _call_graph_status_message(metadata):
-    if not isinstance(metadata, dict):
-        return '调用图不可用'
-    status = metadata.get('status') or 'unavailable'
-    error_message = metadata.get('error_message') or ''
-    mapping = {
-        'ready': '调用图已就绪',
-        'building': '调用图正在后台重建',
-        'failed': '调用图构建失败',
-        'stale': '调用图需要重建',
-        'unavailable': '当前项目不可用调用图',
-    }
-    base = mapping.get(status, '调用图状态未知')
-    return f'{base}: {error_message}' if error_message else base
-
-
-def _start_call_graph_rebuild(project_path):
-    mark_call_graph_building(project_path)
-
-    def _worker():
-        try:
-            build_project_call_graph(project_path)
-        except Exception:
-            traceback.print_exc()
-
-    threading.Thread(target=_worker, name='call-graph-rebuild', daemon=True).start()
 
 
 def _resolve_doc_block_name(block_data):
@@ -133,7 +122,34 @@ def _resolve_code_block_name(block_data):
         or _default_code_block_name(block_data.get('code') or block_data.get('content') or '', 60)
     )
 
-
+def _call_graph_status_message(metadata):
+    if not isinstance(metadata, dict):
+        return '调用图不可用'
+    status = metadata.get('status') or 'unavailable'
+    error_message = metadata.get('error_message') or ''
+    mapping = {
+        'ready': '调用图已就绪',
+        'building': '调用图正在后台重建',
+        'failed': '调用图构建失败',
+        'stale': '调用图需要重建',
+        'unavailable': '当前项目不可用调用图',
+    }
+    base = mapping.get(status, '调用图状态未知')
+    return f'{base}: {error_message}' if error_message else base
+ 
+ 
+def _start_call_graph_rebuild(project_path):
+    mark_call_graph_building(project_path)
+ 
+    def _worker():
+        try:
+            build_project_call_graph(project_path)
+        except Exception:
+            traceback.print_exc()
+ 
+    threading.Thread(target=_worker, name='call-graph-rebuild', daemon=True).start()
+    
+    
 def _safe_int(value, default=0):
     try:
         return int(value)
@@ -367,6 +383,7 @@ def create_project():
     project_location = data.get('projectLocation')
     project_id = data.get('project_id')
     parseDocMethod = data.get('parseDocMethod')
+    project_secret_level = data.get('projectSecretLevel')
     #print(f'parseDocMethod=======:{parseDocMethod}')
     
     code = project_location.split('_')[-1]
@@ -377,14 +394,14 @@ def create_project():
         return jsonify({"status": "error", "message": "项目名称和路径不能为空。"}), 400
 
     if creation_type == 'blank':
-        return create_blank_project(project_name, project_location, parseDocMethod)
+        return create_blank_project(project_name, project_location, parseDocMethod,project_secret_level)
     elif creation_type == 'folder':
-        return create_project_from_folder(project_name, project_location, parseDocMethod, project_id=project_id)
+        return create_project_from_folder(project_name, project_location, parseDocMethod, project_secret_level,project_id=project_id)
     else:
         return jsonify({"status": "error", "message": "无效的创建类型。"}), 400
 
 
-def create_blank_project(project_name, project_location, parseDocMethod):
+def create_blank_project(project_name, project_location, parseDocMethod, project_secret_level):
     """处理创建空白项目的逻辑"""
     project_path = os.path.join(project_location, project_name)
     if os.path.exists(project_path):
@@ -417,9 +434,9 @@ def create_blank_project(project_name, project_location, parseDocMethod):
         # init_project_db(project_path)
         auto_load_rag_db(project_path)
         sql = f"""
-            insert into project(user_id,last_opened,name,path,create_time,update_time) 
+            insert into project(user_id,last_opened,name,path,create_time,update_time, project_secret_level) 
             values({current_user.user_id}, "{now_str}", "{project_name}", 
-            "{project_path}", "{now_str}", "{now_str}");
+            "{project_path}", "{now_str}", "{now_str}", "{project_secret_level}");
             """
         # print('sql:', sql)
 
@@ -433,7 +450,7 @@ def create_blank_project(project_name, project_location, parseDocMethod):
         return jsonify({"status": "error", "message": f"创建目录或文件时出错: {e}"}), 500
 
 
-def create_project_from_folder(project_name, folder_path, parseDocMethod, project_id=None):
+def create_project_from_folder(project_name, folder_path, parseDocMethod, project_secret_level, project_id=None):
     """处理从现有文件夹创建项目的逻辑"""
     project_path = folder_path # 项目路径就是用户选择的文件夹
     if not os.path.isdir(project_path):
@@ -508,10 +525,10 @@ def create_project_from_folder(project_name, folder_path, parseDocMethod, projec
             new_id = project_id
         else:
             sql = """
-                insert into project(user_id,last_opened,name,path,create_time,update_time)
-                values(%s, %s, %s, %s, %s, %s)
+                insert into project(user_id,last_opened,name,path,create_time,update_time,project_secret_level)
+                values(%s, %s, %s, %s, %s, %s, %s)
             """
-            params = (current_user.user_id, now_str, project_name, project_path, now_str, now_str)
+            params = (current_user.user_id, now_str, project_name, project_path, now_str, now_str, project_secret_level)
             c.execute(sql, params)
             new_id = c.lastrowid
 
@@ -994,9 +1011,9 @@ def get_project_metadata():
                 # Write back changes
                 with open(metadata_file, 'w', encoding='utf-8') as f:
                     json.dump(metadata, f, indent=4, ensure_ascii=False)
-
+                    
         metadata['call_graph'] = get_call_graph_metadata(project_path)
-
+        
         return jsonify({"status": "success", "metadata": metadata}), 200
 
     except (json.JSONDecodeError, Exception) as e:
@@ -1119,7 +1136,16 @@ def upload_files():
                 filename = os.path.basename(file.filename)
                 if filename.endswith(('.md', '.docx')):
                     doc_file_path = os.path.join(doc_repo_path, filename)
-                    file.save(doc_file_path)
+                    #print(doc_file_path)
+                    # 去除文件名中的空格，重新保存
+                    new_filename = process_word_file(doc_file_path)
+                    if new_filename:
+                        filename = new_filename
+                        doc_file_path = os.path.join(doc_repo_path, filename)
+                        file.save(doc_file_path)
+                        #print("新保存的文件名！！！！！！！！！！！")
+                        #print(doc_file_path)
+                    
                     if filename.endswith('.docx'):
                         convert_docfile_to_markdown(doc_file_path, doc_repo_path, parseDocMethod)
 
@@ -1127,10 +1153,10 @@ def upload_files():
 
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
-
+        
         if file_type == 'code':
             _start_call_graph_rebuild(project_path)
-
+        
         return jsonify({"status": "success"}), 200
 
     except Exception as e:
@@ -1181,7 +1207,9 @@ def upload_folder():
         files = request.files.getlist('files')
         paths = request.form.getlist('paths')
         folder_name = request.form.get('folderName')
+        project_secret_level = request.form.get('projectSecretLevel')
         project_name = (request.form.get('projectName') or folder_name or '').strip()
+
 
         if not files or not folder_name:
             return jsonify({"status": "error", "message": "没有接收到文件或文件夹名称"}), 400
@@ -1198,12 +1226,25 @@ def upload_folder():
             target_folder_path = os.path.join(TESTDATA_DIR, f"{folder_name}_{timestamp}")
         # 创建目标文件夹
         os.makedirs(target_folder_path, exist_ok=True)
-
+        include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html', '.vhd', '.v', '.sv', '.adb', '.ads']
         # 保存所有文件，保持目录结构
         for file, relative_path in zip(files, paths):
             if not file.filename:
                 continue
-
+                
+            filename = os.path.basename(file.filename)
+            # 去除文件名中的空格，重新保存
+            if filename.endswith(('.md', '.docx')):
+ 
+                # 1. 分离目录路径和文件名
+                dir_name, file_name = os.path.split(relative_path)
+                # 2. 替换文件名中的空格
+                new_file_name = file_name.replace(" ", "_")
+                # 3. 拼接新路径
+                relative_path = os.path.join(dir_name, new_file_name)
+                #print("新保存的文件名！！！！！！！！！！！")
+                #print(f"新路径：{relative_path}")
+                
             # 移除文件夹名称前缀，获取相对路径
             if relative_path.startswith(folder_name + '/'):
                 file_relative_path = relative_path[len(folder_name) + 1:]
@@ -1224,13 +1265,33 @@ def upload_folder():
 
             # 保存文件
             file.save(target_file_path)
+            # ext = os.path.splitext(file.filename)[1].lower()
+            # if ext in include_files:
+            #     print(f'ext:{ext}, filename:{file.filename}')
+            #     # ===== 文本文件：检测编码 -> 统一转 UTF-8 =====
+            #     raw_bytes = file.read()
+            #
+            #     try:
+            #         content = raw_bytes.decode('utf-8')
+            #     except UnicodeDecodeError:
+            #         content = raw_bytes.decode('gbk', errors='ignore')
+            #
+            #     content = content.replace('\r\n', '\n').replace('\r', '\n')
+            #
+            #     with open(target_file_path, 'w', encoding='utf-8') as f:
+            #         f.write(content)
+            #
+            # else:
+            #     # 其他文件
+            #     # 保存文件
+            #     file.save(target_file_path)
 
         sql = f"""
-                insert into project(user_id,last_opened,name,path,create_time,update_time) 
-                values(%s, %s, %s, %s, %s, %s);
+                insert into project(user_id,last_opened,name,path,create_time,update_time,project_secret_level) 
+                values(%s, %s, %s, %s, %s, %s, %s);
                 """
         # print('sql:', sql)
-        params = (current_user.user_id, now_str, project_name, target_folder_path, now_str, now_str)
+        params = (current_user.user_id, now_str, project_name, target_folder_path, now_str, now_str, project_secret_level)
         db = get_db()
         c = db.cursor()
         c.execute(sql, params)
@@ -1247,6 +1308,7 @@ def upload_folder():
 
     except Exception as e:
         print(f"Error during folder upload: {e}")
+        traceback.print_exc()
         return jsonify({"status": "error", "message": f"文件夹上传失败: {str(e)}"}), 500
 
 
@@ -1335,9 +1397,6 @@ def remove_file_content():
 
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=4, ensure_ascii=False)
-
-        if file_type == 'code':
-            _start_call_graph_rebuild(project_path)
 
         message = '目录已递归删除' if node_type == 'directory' else '文件已删除'
         return jsonify({"status": "success", "message": message, "removed_files": matched_files}), 200
@@ -1484,15 +1543,23 @@ def _resolve_project_file_path(project_path, filename, file_type):
 
 
 def _read_text_file_with_fallback(file_path):
-    encodings = ['utf-8', 'gbk', 'gb2312', 'iso-8859-1']
+    # encodings = ['utf-8', 'gbk', 'gb2312', 'iso-8859-1']
+    encodings = ['utf-8', 'gbk', 'gb2312']
     with open(file_path, 'rb') as f:
         content = f.read()
     for enc in encodings:
         try:
-            return content.decode(enc)
-        except UnicodeDecodeError:
+            res = content.decode(enc)
+            # print(f'成功enc:{enc}')
+            return res
+        except UnicodeDecodeError as e:
+            pos = e.start
+            # print(f'{enc}失败位置:{pos}')
+            # print(f'问题字节:{hex(content[pos])}')
+            # print(f'上下文: {repr(content[max(0,pos-3):pos+4])}')
+            # traceback.print_exc()
             continue
-    return content.decode('utf-8', errors='ignore')
+    return content.decode('gbk', errors='ignore')
 
 
         
@@ -1824,6 +1891,7 @@ def export_issues_download():
     issues = data.get('issues', [])
     form_data = data.get('formData', {})
     project_id = data.get('project_id')
+    secret_level = data.get('secret_level')
 
     if not issues:
         return jsonify({'status': 'error', 'message': '没有问题单可导出'})
@@ -1831,7 +1899,8 @@ def export_issues_download():
     temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
     # 生成docx文件名
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    docx_filename = f"问题单导出_{form_data.get('issueId', 'BBB')}_{timestamp}.docx"
+    docx_filename = f"问题单导出_{form_data.get('issueId', 'BBB')}_{timestamp}" \
+                    f"({SECRET_LEVEL_EXTENSION_MAP[secret_level]}).docx"
     docx_path = os.path.join(temp_dir, docx_filename)
 
     from tasks import export_issues_task
@@ -3605,6 +3674,7 @@ def code_decomposition():
         replace_code_blocks(project_path, all_code_blocks)
 
         processed_count = len(all_code_blocks)
+        
         call_graph_result = build_project_call_graph(project_path)
         call_graph_metadata = call_graph_result.get('metadata') or get_call_graph_metadata(project_path)
 
@@ -3615,10 +3685,10 @@ def code_decomposition():
             'call_graph_status': call_graph_metadata.get('status'),
             'call_graph_message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
         })
+        
     except Exception as e:
         traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)})
-
 
 @bp.route('/api/call-graph/preview', methods=['POST'])
 def call_graph_preview():
@@ -3630,14 +3700,14 @@ def call_graph_preview():
         start_line = _safe_int(data.get('startLine'))
         end_line = _safe_int(data.get('endLine'))
         max_depth = max(1, min(_safe_int(data.get('maxDepth'), 3), 8))
-
+ 
         if not project_path or not file or start_line <= 0 or end_line <= 0:
             return jsonify({
                 'status': 'error',
                 'call_graph_status': 'unavailable',
                 'message': '缺少调用图预览所需参数'
             }), 400
-
+ 
         ensure_result = ensure_project_call_graph(project_path)
         metadata = ensure_result.get('metadata') or get_call_graph_metadata(project_path)
         if not ensure_result.get('payload'):
@@ -3646,7 +3716,7 @@ def call_graph_preview():
                 'call_graph_status': metadata.get('status'),
                 'message': ensure_result.get('message') or _call_graph_status_message(metadata),
             })
-
+ 
         resolved_project_id = resolve_project_id(project_path, project_id)
         function_id = resolve_code_block_to_function(
             project_path,
@@ -3661,7 +3731,7 @@ def call_graph_preview():
                 'call_graph_status': metadata.get('status'),
                 'message': '当前选区未命中可查询调用图的函数块',
             })
-
+ 
         preview = query_function_graph(
             project_path,
             function_id,
@@ -3729,8 +3799,8 @@ def call_graph_preview():
             'status': 'error',
             'call_graph_status': 'failed',
             'message': str(e),
-        }), 500
-
+        }), 500        
+        
 # 没看到有调用的地方，先注释了
 @bp.route('/project/alignment-by-id', methods=['GET'])
 def get_alignment_by_id():
@@ -5611,6 +5681,7 @@ def export_project_results():
     # 1. 获取项目路径（用于定位project.db）
     project_path = request.args.get('path')
     project_id = request.args.get('project_id')
+    secret_level = request.args.get('secret_level')
     if not project_path or not os.path.isdir(project_path):
         return jsonify({"status": "error", "message": "无效的项目路径。"}), 400
 
@@ -5669,7 +5740,13 @@ def export_project_results():
 
             # 处理第一个测试项表格作为基础文档
             merged_doc = Document(template_path)
-
+            export_prompt = SECRET_LEVEL_MAP[secret_level]
+            p = merged_doc.paragraphs[0].insert_paragraph_before(export_prompt) if merged_doc.paragraphs \
+                else merged_doc.add_paragraph(export_prompt)
+            p.alignment = 0
+            run = p.runs[0]
+            run.font.size = Pt(10)
+            # run.font.color.rgb = RGBColor(128, 128, 128)
             number = 1 # 测试项编号
             category_id = 1 #章节号
 
@@ -5700,7 +5777,7 @@ def export_project_results():
             replacements["FFFFF"] = df.loc[number, "GenMermaid"] if df.loc[number, "GenMermaid"] is not None else ""
 
             # 替换第一个文档的占位符
-            replace_text_in_docx(merged_doc, replacements)
+            replace_text_in_docx(merged_doc, replacements, 'result')
             #logger.info(replacements)
             # 处理剩余的表单
             for i in range(1, total_num):
@@ -5742,7 +5819,7 @@ def export_project_results():
                 category_id += 1
 
                 # 替换模板中的占位符
-                replace_text_in_docx(temp_doc, replacements)
+                replace_text_in_docx(temp_doc, replacements, 'result')
 
 
                 # 直接拼接填充好的页面内容到合并文档

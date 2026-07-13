@@ -26,14 +26,14 @@ API_KEY = os.environ.get("API_KEY", "0")
 # MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3-8B")
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
-MODEL_NAME = "Qwen3-32B"
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:8001/v1")
+# MODEL_NAME = "Qwen3-32B"
 
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
 # MODEL_NAME = "/llm"
 
-# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.230:7022/v1")
-# MODEL_NAME = "qwen3.6-27b"
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:1025/v1")
+MODEL_NAME = "qwen3.6-27b"
 
 MAX_REQ = 3 # 最大重复次数
 

@@ -1,7 +1,10 @@
-import os
+﻿import os
 import markdown
 from bs4 import BeautifulSoup
 import re
+
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 
 from app.docx_utils import freeze_numbering
 from doc2md import docToMd
@@ -356,11 +359,12 @@ def chunk_list(code_blocks, max_chunk_size):
 
 
 
-def replace_text_in_docx(doc, replacements):
+def replace_text_in_docx(doc, replacements, export_type):
     """在DOCX文档中替换文本，保持原有格式"""
     
     def replace_text_in_runs(paragraph, old_text, new_text):
         """在段落的runs中替换文本，保持格式"""
+        modified_runs = []
         full_text = paragraph.text
         if old_text not in full_text:
             return False
@@ -404,6 +408,7 @@ def replace_text_in_docx(doc, replacements):
                            new_text + 
                            run.text[relative_end:])
             run.text = new_run_text
+            modified_runs.append(run)
         else:
             # 替换文本跨越多个runs
             for i, run_info in enumerate(runs_to_modify):
@@ -412,19 +417,22 @@ def replace_text_in_docx(doc, replacements):
                 if i == 0:  # 第一个run
                     relative_start = start_pos - run_info['start']
                     run.text = run.text[:relative_start] + new_text
+                    modified_runs.append(run)
                 elif i == len(runs_to_modify) - 1:  # 最后一个run
                     relative_end = end_pos - run_info['start']
                     run.text = run.text[relative_end:]
                 else:  # 中间的runs
                     run.text = ""
         
-        return True
-    
+        return modified_runs
+
+    all_modified_runs = []
     # 替换段落中的文本
     for paragraph in doc.paragraphs:
         for old_text, new_text in replacements.items():
             if old_text in paragraph.text:
-                replace_text_in_runs(paragraph, old_text, new_text)
+                modified = replace_text_in_runs(paragraph, old_text, new_text)
+                all_modified_runs.extend(modified)
     
     # 替换表格中的文本
     for table in doc.tables:
@@ -433,7 +441,30 @@ def replace_text_in_docx(doc, replacements):
                 for paragraph in cell.paragraphs:
                     for old_text, new_text in replacements.items():
                         if old_text in paragraph.text:
-                            replace_text_in_runs(paragraph, old_text, new_text)
+                            modified = replace_text_in_runs(paragraph, old_text, new_text)
+                            all_modified_runs.extend(modified)
+
+    # 统一给被修改的run设置字体
+    seen = set()
+    for run in all_modified_runs:
+        if id(run) not in seen:
+            seen.add(id(run))
+            # 设置中文字体
+            run.font.name = 'Times New Roman'
+            rPr = run._element.get_or_add_rPr()
+            rFonts = rPr.find(qn('w:rFonts'))
+            if rFonts is None:
+                rFonts = OxmlElement('w:rFonts')
+                rPr.insert(0, rFonts)
+            if export_type == 'issue':
+                rFonts.set(qn('w:ascii'), 'Times New Roman')
+                rFonts.set(qn('w:hAnsi'), 'Times New Roman')
+                rFonts.set(qn('w:eastAsia'), '宋体(中文正文)')
+            else:
+                rFonts.set(qn('w:ascii'), '等线(西文正文)')
+                rFonts.set(qn('w:hAnsi'), '等线(西文正文)')
+                rFonts.set(qn('w:eastAsia'), '等线(中文正文)')
+
 
 def generate_issue_content(issue, form_data):
     """生成问题单文件内容"""

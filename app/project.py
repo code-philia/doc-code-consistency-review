@@ -45,7 +45,7 @@ def get_recent_projects():
     # 管理员用户记录查询project_access_log表
     if current_user.role == 'admin':
         sql = f"""
-        select t.last_access as last_opened, p.name, p.path, p.project_id
+        select t.last_access as last_opened, p.name, p.path, p.project_id, p.project_secret_level
         from project p
         left join (
             select project_id, max(access_time) as last_access
@@ -57,7 +57,8 @@ def get_recent_projects():
         """
     else:
         sql = f"""
-        select last_opened, name, path, project_id from project where user_id={current_user.user_id}
+        select last_opened, name, path, project_id, project_secret_level 
+        from project where user_id={current_user.user_id}
         order by last_opened desc;
         """
     db = get_db()
@@ -70,7 +71,8 @@ def get_recent_projects():
             'last_opened': _serialize_project_time(row['last_opened']),
             'name': row['name'],
             'path': row['path'],
-            'id': row['project_id']
+            'id': row['project_id'],
+            'secret_level': row['project_secret_level']
         })
 
     return jsonify({"status": "success", "recentProjects": history})

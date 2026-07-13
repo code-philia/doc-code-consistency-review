@@ -70,6 +70,7 @@ const app = createApp({
             projectName: '',
             projectLocation: '',
             parseDocMethod: 'default',
+            secretLevel: ''
         });
         
         const recentProjects = ref([]);
@@ -340,18 +341,11 @@ const app = createApp({
             const projectLocation = 'testdata'//(projectForm.projectLocation || '').trim();
             let projectName = (projectForm.projectName || '').trim();
             let parseDocMethod = (projectForm.parseDocMethod || '').trim();
-
-            /* if (!projectLocation) {
-                ElMessage.error('请填写项目存放路径');
+            let projectSecretLevel = projectForm.secretLevel || ''
+            if (!projectSecretLevel) {
+                ElMessage.error('请选择密级');
                 return;
-            } */
-
-            // 项目名可选，默认使用路径最后一级
-            /* if (!projectName) {
-                const pathParts = projectLocation.replace(/\\/g, '/').split('/').filter(Boolean);
-                projectName = pathParts[pathParts.length - 1] || '新项目';
-                projectForm.projectName = projectName;
-            } */
+            }
 
             isCreating.value = true;
             //console.log(projectForm)
@@ -362,6 +356,7 @@ const app = createApp({
                     formData.append('projectLocation', projectLocation);
                     formData.append('folderName', selectedFolderName.value || projectName);
                     formData.append('parseDocMethod', parseDocMethod);
+                    formData.append('projectSecretLevel', projectSecretLevel);
 
                     selectedFolderFiles.value.forEach(file => {
                         formData.append('files', file);
@@ -371,22 +366,12 @@ const app = createApp({
                     const resu = await axios.post('/project/upload-folder', formData, {
                         headers: { 'Content-Type': 'multipart/form-data' }
                     });
-                    /* 
-                    if (res.data.status === 'success') {
-                        showNewProjForm.value = false;
-                        ElMessage.success('创建成功');
-                        window.projectId = res.data.new_id;
-                        openProject({
-                            name: res.data.folderName || projectName,
-                            path: res.data.serverPath,
-                            project_id: res.data.new_id
-                        });
-                    }   */
-                    
+
                     const res = await axios.post('/project/create', {
                         projectName: resu.data.projectName || projectName,
                         projectLocation: resu.data.serverPath || projectLocation,
                         parseDocMethod: parseDocMethod,
+                        projectSecretLevel: projectSecretLevel,
                         creationType: 'folder',
                         project_id: resu.data.new_id
                     });
@@ -409,6 +394,7 @@ const app = createApp({
                     const res = await axios.post('/project/create', {
                         projectName: projectName,
                         projectLocation: projectLocation,
+                        projectSecretLevel: projectSecretLevel,
                         creationType: 'blank',
                         project_id: window.projectId
                     });
@@ -445,6 +431,7 @@ const app = createApp({
             console.log('project:', project)
             const project_id = getProjectId(project);
             console.log('project_id:', project_id)
+            let secretLevel = projectForm.secretLevel || project.secret_level
             axios.post('/project/open', {
                 name: project.name,
                 path: project.path,
@@ -456,7 +443,7 @@ const app = createApp({
                     const encodedPath = encodeURIComponent(verifiedPath);
                     const encodedName = encodeURIComponent(project.name);
                     const project_id = res.data.project_id
-                    window.location.href = `/project?name=${encodedName}&path=${encodedPath}&project_id=${project_id}`;
+                    window.location.href = `/project?name=${encodedName}&path=${encodedPath}&project_id=${project_id}&secretLevel=${secretLevel}`;
                 } else {
                     ElMessage.error(res.data.message);
                 }
@@ -558,11 +545,28 @@ const app = createApp({
                 selectedFolderFiles.value = files;
                 selectedFolderName.value = folderName;
 
+                // 密级映射
+                const secretLevelMap = {
+                    '公开': 'public',
+                    '内部': 'internal',
+                    '秘密': 'secret',
+                    '机密': 'confidential'
+                }
+
+                // 自动识别密级 (兼容中英混用括号)
+                const match = folderName.match(/[（(](公开|内部|秘密|机密)[）)]/);
+                if (match) {
+                    const detected = secretLevelMap[match[1]];
+                    if (detected) {
+                        projectForm.secretLevel = detected;
+                    }
+                }
+
                 if (!projectForm.projectName) {
                     projectForm.projectName = folderName;
                 }
 
-                ElMessage.success(`已选择源文件夹：${folderName}（${files.length} 个文件）`);
+                ElMessage.success(`已选择源文件夹：${folderName}（${files.length} 个文件）密级: ${projectForm.secretLevel}`);
             } catch (error) {
                 console.error('文件夹选择失败:', error);
                 ElMessage.error(`选择失败: ${error.message}`);

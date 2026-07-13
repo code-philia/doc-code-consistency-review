@@ -158,7 +158,17 @@
                                                     <el-radio-button label="enhanced">公式加强解析</el-radio-button>
                                                 </el-radio-group>
                                             </el-form-item>
-                                            
+
+                                            <!-- 新增: 密级选择 -->
+                                            <el-form-item label="请选择密级">
+                                                <el-radio-group v-model="projectForm.secretLevel">
+                                                    <el-radio-button label="public">公开</el-radio-button>
+                                                    <el-radio-button label="internal">内部</el-radio-button>
+                                                    <el-radio-button label="secret">秘密</el-radio-button>
+                                                    <el-radio-button label="confidential">机密</el-radio-button>
+                                                </el-radio-group>
+                                            </el-form-item>
+
                                         </el-form>   
                                     </div>
                                 </div>
@@ -279,7 +289,7 @@
                         </el-select>
 
                         <button class="action-btn primary" @click="openCreateKbDialog" style="margin-right: 10px;">新建知识库</button>
-                        <button class="action-btn" @click="openImportReviewDialog">上传文件</button>
+                        <button class="action-btn" @click="openImportReviewDialog()">上传文件</button>
                     </div>
                     <div v-else style="display: flex; align-items: center; gap: 10px;">
                         <el-button @click="backToKbList">返回知识库列表</el-button>
