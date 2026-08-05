@@ -329,6 +329,10 @@
                                     <el-dropdown-menu>
                                         <el-dropdown-item command="view"><i class="fas fa-eye"></i> 查看内容</el-dropdown-item>
                                         <el-dropdown-item command="rename"><i class="fas fa-edit"></i> 重命名</el-dropdown-item>
+                                        <!-- 新增：权限管理，只有创建者/管理员可见 -->
+                                        <el-dropdown-item v-if="kb.is_owner" command="permission">
+                                          <i class="fas fa-user-shield"></i> 权限管理
+                                        </el-dropdown-item>
                                         <el-dropdown-item command="delete" divided style="color: #f56c6c;"><i class="fas fa-trash-alt"></i> 删除</el-dropdown-item>
                                     </el-dropdown-menu>
                                 </template>
@@ -433,11 +437,41 @@
                                     <el-option label="其他" value="other"></el-option>
                                 </el-select>
                             </el-form-item>
-                            <el-form-item label="知识库编辑权限">
-                                <el-input v-model="createKbForm.editors" placeholder="请输入用户，多个用户用逗号分隔"></el-input>
+                            <el-form-item label="编辑权限">
+                              <el-popover placement="bottom-start" :width="340" trigger="click">
+                                <template #reference>
+                                  <el-input v-model="permEditorsText" readonly placeholder="请选择用户">
+                                    <template #suffix><i class="fas fa-chevron-down"></i></template>
+                                  </el-input>
+                                </template>
+                                <el-input v-model="editorsFilterText" placeholder="搜索用户" clearable
+                                          style="margin-bottom: 8px;"></el-input>
+                                <div style="max-height: 300px; overflow: auto;">
+                                  <el-tree ref="permEditorsTree" :data="userTree" show-checkbox node-key="id"
+                                           default-expand-all :props="{ label: 'label', children: 'children' }"
+                                           :filter-node-method="filterUserNode"
+                                           @check="onPermEditorsCheck">
+                                  </el-tree>
+                                </div>
+                              </el-popover>
                             </el-form-item>
-                            <el-form-item label="知识库使用权限">
-                                <el-input v-model="createKbForm.viewers" placeholder="请输入用户，多个用户用逗号分隔"></el-input>
+                            <el-form-item label="使用权限">
+                              <el-popover placement="bottom-start" :width="340" trigger="click">
+                                <template #reference>
+                                  <el-input v-model="permViewersText" readonly placeholder="请选择用户">
+                                    <template #suffix><i class="fas fa-chevron-down"></i></template>
+                                  </el-input>
+                                </template>
+                                <el-input v-model="viewersFilterText" placeholder="搜索用户" clearable
+                                          style="margin-bottom: 8px;"></el-input>
+                                <div style="max-height: 300px; overflow: auto;">
+                                  <el-tree ref="permViewersTree" :data="userTree" show-checkbox node-key="id"
+                                           default-expand-all :props="{ label: 'label', children: 'children' }"
+                                           :filter-node-method="filterUserNode"
+                                           @check="onPermViewersCheck">
+                                  </el-tree>
+                                </div>
+                              </el-popover>
                             </el-form-item>
                         </el-form>
                     </el-tab-pane>
@@ -463,6 +497,54 @@
                     <el-button @click="showCreateKbDialog = false">取消</el-button>
                     <el-button type="primary" :loading="isCreatingKb" @click="createKbAndContinueUpload">确定并上传文件</el-button>
                 </template>
+            </el-dialog>
+            <!-- 权限管理弹窗 -->
+            <el-dialog v-model="permDialogVisible" title="权限管理" width="480px">
+              <el-form label-width="120px">
+                <el-form-item label="知识库">
+                  <span>${ permForm.kb_name }</span>
+                </el-form-item>
+                <el-form-item label="编辑权限">
+                  <el-popover placement="bottom-start" :width="340" trigger="click">
+                    <template #reference>
+                      <el-input v-model="permEditorsText" readonly placeholder="请选择用户">
+                        <template #suffix><i class="fas fa-chevron-down"></i></template>
+                      </el-input>
+                    </template>
+                    <el-input v-model="editorsFilterText" placeholder="搜索用户" clearable
+                              style="margin-bottom: 8px;"></el-input>
+                    <div style="max-height: 300px; overflow: auto;">
+                      <el-tree ref="permEditorsTree" :data="userTree" show-checkbox node-key="id"
+                               default-expand-all :props="{ label: 'label', children: 'children' }"
+                               :filter-node-method="filterUserNode"
+                               @check="onPermEditorsCheck">
+                      </el-tree>
+                    </div>
+                  </el-popover>
+                </el-form-item>
+                <el-form-item label="使用权限">
+                  <el-popover placement="bottom-start" :width="340" trigger="click">
+                    <template #reference>
+                      <el-input v-model="permViewersText" readonly placeholder="请选择用户">
+                        <template #suffix><i class="fas fa-chevron-down"></i></template>
+                      </el-input>
+                    </template>
+                    <el-input v-model="viewersFilterText" placeholder="搜索用户" clearable
+                              style="margin-bottom: 8px;"></el-input>
+                    <div style="max-height: 300px; overflow: auto;">
+                      <el-tree ref="permViewersTree" :data="userTree" show-checkbox node-key="id"
+                               default-expand-all :props="{ label: 'label', children: 'children' }"
+                               :filter-node-method="filterUserNode"
+                               @check="onPermViewersCheck">
+                      </el-tree>
+                    </div>
+                  </el-popover>
+                </el-form-item>
+              </el-form>
+              <template #footer>
+                <el-button @click="permDialogVisible = false">取 消</el-button>
+                <el-button type="primary" :loading="permSaving" @click="savePermission">保 存</el-button>
+              </template>
             </el-dialog>
             
             <!-- 底部区域 -->
