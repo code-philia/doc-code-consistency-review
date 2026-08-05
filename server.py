@@ -1,5 +1,9 @@
-from waitress import serve
+﻿from waitress import serve
 from app import create_app
+import os
+
+
+print(f"[ENV] WORD_CONVERT_API = {os.getenv('WORD_CONVERT_API', '未设置')}")
 
 app = create_app()
 
