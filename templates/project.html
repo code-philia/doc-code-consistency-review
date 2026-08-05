@@ -44,10 +44,10 @@
             <div class="menu-item">
                 文件
                 <div class="dropdown">
-                    <div class="dropdown-item" @click="addFile('doc', 'file')"><i class="fas fa-file-alt"></i> 添加需求文档 (文件)</div>
-                    <div class="dropdown-item" @click="addFile('doc', 'folder')"><i class="fas fa-folder"></i> 添加需求文档 (文件夹)</div>
-                    <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (文件)</div>
-                    <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (文件夹)</div>
+                    <div class="dropdown-item" @click="addFile('doc', 'file')"><i class="fas fa-file-alt"></i> 添加需求文档 (单个文件)</div>
+                    <div class="dropdown-item" @click="addFile('doc', 'folder')"><i class="fas fa-folder"></i> 添加需求文档 (多个文件)</div>
+                    <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (单个文件)</div>
+                    <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (多个文件)</div>
                 </div>
 
                 <!-- 选择解析方式弹窗 -->
@@ -108,12 +108,170 @@
                     </div>
                 </div>
             </div>
+            <div class="menu-item">
+                <!-- 所有人可见：提交反馈 -->
+                <div @click="openFeedbackDialog">
+                  问题反馈
+                </div>
+            </div>
+            <div class="menu-item">
+                <!-- 管理员可见：查看反馈 + 徽标 -->
+                <el-badge
+                  v-if="isAdmin"
+                  :value="pendingCount"
+                  :hidden="pendingCount === 0"
+                  :max="99"
+                >
+                  <div @click="openFeedbackList">
+                    查看反馈
+                  </div>
+                </el-badge>
+            </div>
         </div>
         <div class="view-switcher">
             <button id="alignmentButton" class="view-btn active" onclick="switchView('alignment')">功能视图</button>
             <button id="statsButton" class="view-btn" onclick="switchView('stats')">统计视图</button>
         </div>
     </div>
+
+    <!-- ==================== 反馈提交弹窗 ==================== -->
+    <el-dialog
+        v-model="feedbackVisible"
+        title="意见反馈"
+        width="560px"
+        :close-on-click-modal="false"
+        destroy-on-close
+      >
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-width="100px"
+          class="feedback-form"
+        >
+          <el-form-item label="反馈标题" prop="title">
+            <el-input
+              v-model="form.title"
+              placeholder="请输入标题，简要说明问题"
+              maxlength="50"
+              show-word-limit
+            />
+          </el-form-item>
+
+          <el-form-item label="反馈类型" prop="feedback_type">
+            <el-radio-group v-model="form.feedback_type">
+              <el-radio :label="1">问题</el-radio>
+              <el-radio :label="2">优化建议</el-radio>
+            </el-radio-group>
+          </el-form-item>
+
+          <el-form-item label="期望解决时间" prop="expect_resolve_time">
+            <el-date-picker
+              v-model="form.expect_resolve_time"
+              type="date"
+              placeholder="请选择期望解决时间"
+              value-format="YYYY-MM-DD"
+              :disabled-date="disabledDate"
+              style="width: 100%"
+            />
+          </el-form-item>
+
+          <el-form-item label="反馈内容" prop="content">
+            <el-input
+              v-model="form.content"
+              type="textarea"
+              :rows="5"
+              placeholder="请详细描述你遇到的问题或优化建议..."
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+        </el-form>
+
+        <template #footer>
+          <el-button @click="feedbackVisible = false">取消</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">提交反馈</el-button>
+        </template>
+      </el-dialog>
+
+    <!-- ==================== 反馈列表弹窗 ==================== -->
+    <el-dialog
+        v-model="feedbackListVisible"
+        title="用户反馈列表"
+        width="1000px"
+        :close-on-click-modal="false"
+        destroy-on-close
+        @closed="fetchPendingCount"
+      >
+        <div class="filter-bar">
+          <el-select v-model="query.feedback_type" placeholder="反馈类型" clearable style="width: 120px;">
+            <el-option label="问题" :value="1"></el-option>
+            <el-option label="优化建议" :value="2"></el-option>
+          </el-select>
+          <el-select v-model="query.status" placeholder="状态" clearable style="width: 120px;">
+            <el-option label="待处理" :value="0"></el-option>
+            <el-option label="已处理" :value="1"></el-option>
+            <el-option label="已关闭" :value="2"></el-option>
+          </el-select>
+          <el-button type="primary" @click="fetchList">查询</el-button>
+        </div>
+
+        <el-table
+          :data="tableData"
+          v-loading="loading"
+          border
+          style="width: 100%; margin-top: 12px;"
+          :height="400"
+        >
+          <el-table-column prop="id" label="ID" width="60"></el-table-column>
+          <el-table-column prop="title" label="标题" min-width="140" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="feedback_type_text" label="类型" width="100" align="center">
+            <template #default="{ row }">
+              <el-tag :type="row.feedback_type === 1 ? 'danger' : 'success'" size="small">
+                ${ row.feedback_type_text }
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="expect_resolve_time" label="期望解决时间" width="130" align="center"></el-table-column>
+          <el-table-column prop="content" label="反馈内容" min-width="180" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="submitter" label="提交人" width="100" align="center"></el-table-column>
+          <el-table-column prop="status_text" label="状态" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag :type="statusTagType(row.status)" size="small">
+                ${ row.status_text }
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="created_at" label="提交时间" width="160" align="center"></el-table-column>
+          <el-table-column label="操作" width="100" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-dropdown @command="(cmd) => handleStatusChange(row, cmd)">
+                <el-button type="primary" link size="small">
+                  状态变更<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item :command="0" :disabled="row.status === 0">设为待处理</el-dropdown-item>
+                    <el-dropdown-item :command="1" :disabled="row.status === 1">设为已处理</el-dropdown-item>
+                    <el-dropdown-item :command="2" :disabled="row.status === 2">关闭</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-config-provider :locale="zhCnLocale">
+            <el-pagination
+              v-model:current-page="query.page"
+              v-model:page-size="query.page_size"
+              :total="total"
+              :page-sizes="[10, 20, 50]"
+              layout="total, sizes, prev, pager, next"
+              class="pagination-bar"
+              @change="fetchList"
+            ></el-pagination>
+        </el-config-provider>
+      </el-dialog>
 
     <!-- 知识库应用对话框 -->
     <el-dialog

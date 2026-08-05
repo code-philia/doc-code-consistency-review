@@ -290,6 +290,7 @@
 
                         <button class="action-btn primary" @click="openCreateKbDialog" style="margin-right: 10px;">新建知识库</button>
                         <button class="action-btn" @click="openImportReviewDialog()">上传文件</button>
+                        <button class="action-btn" @click="openAddItemDialog">新增要点</button>
                     </div>
                     <div v-else style="display: flex; align-items: center; gap: 10px;">
                         <el-button @click="backToKbList">返回知识库列表</el-button>
@@ -543,12 +544,12 @@
                             :auto-upload="false"
                             :on-change="handleImportFileChange"
                             :file-list="importFileList"
-                            :limit="1"
-                            accept=".docx,.json"
+                            accept=".docx,.json,.doc"
+                            multiple
                         >
                             <el-button type="primary">选择文件</el-button>
                             <template #tip>
-                                <div class="el-upload__tip">支持 .docx 或 .json</div>
+                                <div class="el-upload__tip">支持 .doc .docx 或 .json</div>
                             </template>
                         </el-upload>
                     </el-form-item>
@@ -594,6 +595,11 @@
                     @selection-change="handleReviewSelectionChange"
                 >
                     <el-table-column type="selection" width="55"></el-table-column>
+                    <el-table-column label="来源文件" width="180">
+                        <template #default="scope">
+                            <el-tag size="small" type="info">${ scope.row._sourceFile || '-' }</el-tag>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="id" label="ID" width="100"></el-table-column>
                     <el-table-column label="内容摘要">
                         <template #default="scope">
@@ -609,6 +615,68 @@
                     </el-table-column>
                 </el-table>
             </div>
+        </el-dialog>
+
+        <!-- 新增要点弹窗 -->
+        <el-dialog
+            v-model="showAddItemDialog"
+            :title="dialogTitle"
+            width="600px"
+            :close-on-click-model="false"
+        >
+            <el-form label-width="90px">
+                <!-- 知识库选择 -->
+                <el-form-item label="目标知识库" v-if="!currentKb">
+                    <el-select
+                        v-model="selectedKbName"
+                        placeholder="请选择知识库"
+                        style="width: 100%"
+                        @change="onSelectKb"
+                    >
+                        <el-option
+                            v-for="kb in configurableKbs"
+                            :key="kb.name"
+                            :label="getKbLabel(kb)"
+                            :value="kb.name"
+                        />
+                    </el-select>
+                </el-form-item>
+
+                <el-form-item v-else label="目标知识库">
+                    <el-input :value="currentKb.name" disabled />
+                </el-form-item>
+
+                <!-- 动态字段渲染 -->
+                <template v-if="currentSchema">
+                    <el-form-item
+                        v-for="field in currentSchema.fields"
+                        :key="field.key"
+                        :label="field.label"
+                        :required="field.required"
+                    >
+                        <el-input
+                            v-model="addItemForm[field.key]"
+                            :type="field.type === 'textarea' ? 'textarea' : 'text'"
+                            :rows="field.type === 'textarea' ? 5 : undefined"
+                            :placeholder="'请输入' + field.label"
+                        />
+
+                    </el-form-item>
+                </template>
+
+                <el-alert
+                    v-else
+                    title="该类型在不支持手动新增"
+                    type="warning"
+                    :closable="false"
+                />
+
+            </el-form>
+
+            <template #footer>
+                <el-button @click="showAddItemDialog = false">取 消</el-button>
+                <el-button type="primary" @click="submitAddItem" :loading="addItemLoading">确 定</el-button>
+            </template>
         </el-dialog>
 
         <!-- 详情弹窗 -->

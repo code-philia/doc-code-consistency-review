@@ -4832,3 +4832,68 @@
 .issue-bg {
     background-color: #fee2e2 !important;
 }
+
+.feedback-area {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 0px 16px;
+}
+
+.feedback-btn {
+    width: auto !important;
+    padding: 2px 8px !important;
+    font-size: 13px;
+    height: 28px !important;
+}
+
+.feedback-area .el-badge {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.feedback-area .el-badge__content.is-fixed {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+    margin-left: 4px;
+}
+
+/* 弹窗内样式 */
+.feedback-form {
+  padding: 10px 20px 0 10px;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-bar {
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 12px;
+}
+
+.feedback-table .el-table__header th,
+.feedback-table .el-table__cell {
+    white-space: nowrap !important;
+}
+
+.feedback-table .el-table__header th {
+    text-align: center;
+}
+
+.pagination-bar {
+    margin-top: 12px;
+    justify-content: flex-end;
+}

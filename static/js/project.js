@@ -291,11 +291,21 @@ const app = createApp({
             return Array.from(uniqueAlignments.values());
         });
 
+        const isChinese = (str) => /^[\u4e00-\u9fa5]/.test(str);
+
         // 手动对齐下拉框按id排序
         const alignmentSort = (a, b) => {
-            const idA = String(a.id || a.alignment_id);
-            const idB = String(b.id || b.alignment_id);
-            return idA.localeCompare(idB);
+            const nameA = String(a.name);
+            const nameB = String(b.name);
+
+            const aIsZh = isChinese(nameA);
+            const bIsZh = isChinese(nameB);
+
+            // 英文在前，中文在后
+            if (aIsZh && !bIsZh) return 1;
+            if (!aIsZh && bIsZh) return -1;
+
+            return nameA.localeCompare(nameB, 'zh');
         }
         const existingAlignmentsReq2Code = computed(() => {
             return projectAlignmentPool.value.filter(item =>
@@ -2844,7 +2854,7 @@ const app = createApp({
           }
 
           if (fileType === 'doc') {
-            input.accept = '.md,.docx';
+            input.accept = '.md,.docx,.doc';
           }
 
           input.onchange = async (e) => {
@@ -9370,10 +9380,177 @@ const app = createApp({
             isRefreshing.value = false
         }
 
+        // ========== 权限 & 徽标 ==========
+        const isAdmin = ref(false);
+        const pendingCount = ref(0);
+
+        const initAdmin = async () => {
+          // 按你项目实际改：localStorage / cookie / 接口 获取角色
+          try {
+            const res = await axios.get('/login/current_user');
+            if (res.data.code === 200) {
+              isAdmin.value = res.data.data.role === 'admin';
+              console.log(isAdmin.value)
+              // 或者 userInfo.role_id === 1 等，按你实际来
+            }
+          } catch (e) {
+            // 静默失败
+          }
+        };
+
+        const fetchPendingCount = async () => {
+          if (!isAdmin.value) return;
+          try {
+            const res = await axios.get('/api/feedback/pending_count');
+            if (res.data.code === 200) {
+              pendingCount.value = res.data.data.count;
+            }
+          } catch (e) {
+            // 静默失败
+          }
+        };
+
+        // ========== 反馈提交弹窗 ==========
+        const feedbackVisible = ref(false);
+        const formRef = ref();
+        const submitting = ref(false);
+        const form = ref({
+          title: '',
+          feedback_type: 1,
+          expect_resolve_time: '',
+          content: ''
+        });
+
+        const rules = {
+          title: [
+            { required: true, message: '请输入反馈标题', trigger: 'blur' },
+            { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+          ],
+          feedback_type: [
+            { required: true, message: '请选择反馈类型', trigger: 'change' }
+          ],
+          content: [
+            { required: true, message: '请输入反馈内容', trigger: 'blur' },
+            { min: 5, message: '内容至少 5 个字符', trigger: 'blur' }
+          ]
+        };
+
+        const disabledDate = (time) => {
+          return time.getTime() < Date.now() - 86400000;
+        };
+
+        const openFeedbackDialog = () => {
+          feedbackVisible.value = true;
+          form.value = { title: '', feedback_type: 1, expect_resolve_time: '', content: '' };
+          setTimeout(() => formRef.value?.resetFields(), 0);
+        };
+
+        const handleSubmit = async () => {
+          const valid = await formRef.value.validate().catch(() => false);
+          if (!valid) return;
+
+          submitting.value = true;
+          try {
+            const res = await axios.post('/api/feedback/submit', form.value);
+            if (res.data.code === 200) {
+              ElMessage.success('反馈提交成功，我们会尽快处理！');
+              feedbackVisible.value = false;
+              form.value = { title: '', feedback_type: 1, expect_resolve_time: '', content: '' };
+            } else {
+              ElMessage.error(res.data.msg || '提交失败');
+            }
+          } catch (err) {
+            ElMessage.error(err.response?.data?.msg || '网络错误');
+          } finally {
+            submitting.value = false;
+          }
+        };
+
+        // ========== 反馈列表弹窗 ==========
+        const feedbackListVisible = ref(false);
+        const loading = ref(false);
+        const tableData = ref([]);
+        const total = ref(0);
+        const query = ref({
+          page: 1,
+          page_size: 10,
+          feedback_type: null,
+          status: null
+        });
+
+        const statusTagType = (status) => {
+          const map = { 0: 'warning', 1: 'success', 2: 'info' };
+          return map[status] || 'info';
+        };
+
+        const openFeedbackList = () => {
+          feedbackListVisible.value = true;
+          query.value.page = 1;
+          fetchList();
+        };
+
+        const fetchList = async () => {
+          loading.value = true;
+          try {
+            const res = await axios.get('/api/feedback/list', { params: query.value });
+            if (res.data.code === 200) {
+              tableData.value = res.data.data.list;
+              total.value = res.data.data.total;
+            }
+          } catch (err) {
+            ElMessage.error('获取列表失败');
+          } finally {
+            loading.value = false;
+          }
+        };
+
+        const handleStatusChange = async (row, status) => {
+          try {
+            await ElMessageBox.confirm('确定要变更该反馈状态吗？', '提示', { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消'});
+            const res = await axios.post('/api/feedback/update_status', { id: row.id, status });
+            if (res.data.code === 200) {
+              ElMessage.success('状态更新成功');
+              fetchList();
+            } else {
+              ElMessage.error(res.data.msg);
+            }
+          } catch {
+            // 取消
+          }
+        };
+
+        // ========== 生命周期 ==========
+        onMounted(async () => {
+          await initAdmin();
+          await fetchPendingCount();
+        });
+
         /***********************
          * 暴露到模板
          ***********************/
         return {
+            // 问题反馈
+            isAdmin,
+            pendingCount,
+            feedbackVisible,
+            formRef,
+            submitting,
+            form,
+            rules,
+            disabledDate,
+            openFeedbackDialog,
+            handleSubmit,
+            feedbackListVisible,
+            loading,
+            tableData,
+            total,
+            query,
+            statusTagType,
+            openFeedbackList,
+            fetchList,
+            handleStatusChange,
+            fetchPendingCount,
+
             // 对齐视图/块视图匹配问题单变色
             blockHasIssue,
             alignmentHasIssue,

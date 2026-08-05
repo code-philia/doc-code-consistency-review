@@ -61,6 +61,34 @@ const app = createApp({
 
     delimiters: ['${', '}'],
     setup() {
+        // 知识库类型字段配置 (可扩展)
+        const KB_TYPE_SCHEMA = {
+            checklist: {
+                label: '必查清单',
+                contentField: 'detail', // 哪个字段作为检索内容
+                fields: [
+                    { key: 'mark', label: '标识', required: true, type: 'input'},
+                    { key: 'review_item', label: '审查项', required: true, type: 'input'},
+                    { key: 'detail', label: '详情', required: true, type: 'textarea'}
+                ]
+            }
+            // 后续扩展在这里加:
+            // coding_rule: {}
+        }
+
+        // 获取当前类型配置
+        const currentSchema = computed(() => {
+            const type = currentKb.value?.type || selectedKbType.value;
+            return KB_TYPE_SCHEMA[type] || null;
+        })
+
+        // 新增知识库条目
+        const showAddItemDialog = ref(false);
+        const addItemLoading = ref(false);
+        const selectedKbName = ref('');
+        const selectedKbType = ref('');
+        const addItemForm = reactive({});
+
         // ====== 状态 ======
         const showNewProjForm = ref(false);
         const creationType = ref('blank');
@@ -142,7 +170,7 @@ const app = createApp({
 
         // 本地文件选择回调
         const handleImportFileChange = (_file, fileList) => {
-            if (fileList.length > 1) fileList.splice(0, 1);
+            // if (fileList.length > 1) fileList.splice(0, 1);
             importFileList.value = fileList;
             
         };
@@ -178,7 +206,11 @@ const app = createApp({
                     return;
                 }
                 formData.append('use_server_file', 'false');
-                formData.append('file', importFileList.value[0].raw);
+                // 遍历所有文件
+                importFileList.value.forEach((item) => {
+                    formData.append('file', item.raw);
+                })
+                // formData.append('file', importFileList.value[0].raw);
             }
             
             isUploading.value = true;
@@ -188,8 +220,22 @@ const app = createApp({
                 });
 
                 if (response.data.status === 'success') {
-                    previewTableData.value = response.data.data;
-                    
+                    // 把多文件结果扁平化成表格需要的格式
+                    const respData = response.data.data;
+
+                    // 判断是多文件结构
+                    if (Array.isArray(respData) && respData.length > 0 && respData[0].preview_data !== undefined) {
+                        previewTableData.value = respData.flatMap(item =>
+                            item.preview_data.map(row => ({
+                                ...row,
+                                _sourceFile: item.filename
+                            }))
+                        )
+                    } else {
+                        // 单文件兼容
+                        previewTableData.value = respData;
+                    }
+
                     if (previewTableData.value.length === 0) {
                         ElMessage.warning("未解析到有效数据，请检查文档格式");
                     } else {
@@ -241,23 +287,40 @@ const app = createApp({
                 'GenReq': '生成需求',
                 'GenMermaid': '生成流程图',
             };
+            displayItem = {};
+            const kbType = row.type || row.kbType || currentKb.value?.type || ''
+            const schema = KB_TYPE_SCHEMA[kbType];
+            console.log(schema)
 
-            const translate = (key) => keyMap[key] || key;
-
-            // 如果包含 meta 字段且是对象，说明是知识库条目
-            if (row.meta && typeof row.meta === 'object') {
-                displayItem['编号 (ID)'] = row.id;
-                displayItem['内容 (Content)'] = row.content;
-                
-                for (const [k, v] of Object.entries(row.meta)) {
-                    displayItem[translate(k)] = v;
+            if (schema) {
+                // 有配置的类型, 只显示 schema 里定义的字段
+                if (row.meta && typeof row.meta === 'object') {
+                    schema.fields.forEach(f => {
+                        if (row.meta[f.key] !== undefined && row.meta[f.key] !== ''){
+                            displayItem[f.label] = row.meta[f.key]
+                        }
+                    })
                 }
             } else {
-                // 否则是导入预览条目
-                for (const [k, v] of Object.entries(row)) {
-                    displayItem[translate(k)] = v;
+                const translate = (key) => keyMap[key] || key;
+
+                // 如果包含 meta 字段且是对象，说明是知识库条目
+                if (row.meta && typeof row.meta === 'object') {
+                    displayItem['编号 (ID)'] = row.id;
+                    displayItem['内容 (Content)'] = row.content;
+
+                    for (const [k, v] of Object.entries(row.meta)) {
+                        displayItem[translate(k)] = v;
+                    }
+                } else {
+                    // 否则是导入预览条目
+                    for (const [k, v] of Object.entries(row)) {
+                        displayItem[translate(k)] = v;
+                    }
                 }
             }
+
+
 
             currentDetailItem.value = displayItem;
             showDetailDialog.value = true;
@@ -277,23 +340,23 @@ const app = createApp({
 
             isCommitting.value = true;
             try {
-                const payload = {
-                    kbType: targetKb.type,
-                    kbName: targetKb.name,
-                    append: true
-                };
-                
+
+                const formData = new FormData();
+                formData.append('kbType', targetKb.type)
+                formData.append('kbName', targetKb.name)
+                formData.append('append', true)
+
                 if (fileSourceMode.value === 'server') {
-                    payload.annotationFile = selectedServerFile.value;
-                    payload.sourceFileName = selectedServerFile.value;
+                    formData.append('annotationFiles', selectedServerFile.value)
                 } else {
-                    if (importFileList.value.length > 0) {
-                        payload.annotationFile = importFileList.value[0].name;
-                        payload.sourceFileName = importFileList.value[0].name;
-                    }
+                    importFileList.value.forEach(item => {
+                        formData.append('annotationFiles', item.raw)
+                    })
                 }
 
-                const response = await axios.post('/api/rag/build', payload);
+                const response = await axios.post('/api/rag/build', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data'}
+                });
 
                 if (response.data.status === 'success') {
                     ElMessage.success('入库成功！');
@@ -997,12 +1060,152 @@ const app = createApp({
             return kbList.value.slice();
         });
 
+        const getKbLabel = (kb) => {
+            const schema = KB_TYPE_SCHEMA[kb.type];
+            return `${kb.name} (${schema ? schema.label : kb.type})`
+        }
+
+        const dialogTitle = computed(() => {
+            const schema = currentSchema.value;
+            return '新增' + (schema ? schema.label : '') + '条目'
+        })
+
+        // 打开弹窗
+        const openAddItemDialog = () => {
+            // 如果在知识库详情页
+            if (currentKb.value){
+                if(!KB_TYPE_SCHEMA[currentKb.value.type]){
+                    ElMessage.warning(`当前类型 [${currentKb.value.type}] 暂不支持手动新增`)
+                    return;
+                }
+                selectedKbName.value = currentKb.value.name;
+                selectedKbType.value = currentKb.value.type;
+            } else {
+                // 在列表页: 筛选出已配置类型的知识库
+                selectedKbName.value = ''
+                selectedKbType.value = ''
+            }
+
+            // 重置表单
+            resetAddItemForm();
+            showAddItemDialog.value = true;
+        }
+
+        // 重置表单 (根据当前类型配置初始化字段)
+        const resetAddItemForm = () => {
+            const schema = currentSchema.value;
+            console.log('schema:',schema)
+            if (!schema) return;
+
+            Object.keys(addItemForm).forEach(key => delete addItemForm[key]);
+            schema.fields.forEach(f => {
+                addItemForm[f.key] = '';
+                console.log('init:', f.key, addItemForm[f.key])
+            });
+            console.log('form:', addItemForm)
+        };
+
+        // 选择知识库后 (列表页用)
+        const onSelectKb = (kbName) => {
+            const kb = filteredKBs.value.find(k => k.name === kbName);
+            if (kb) {
+                selectedKbType.value = kb.type;
+                resetAddItemForm();
+            }
+        }
+
+        // 提交
+        const submitAddItem = async () => {
+            const schema = currentSchema.value;
+            if(!schema){
+                ElMessage.error('未找到该类型的字段配置')
+                return;
+            }
+
+            // 校验必填
+            for (const field of schema.fields) {
+                if (field.required && !addItemForm[field.key]?.trim()){
+                    ElMessage.warning(`请输入${field.label}`)
+                    return;
+                }
+            }
+
+            const kbName = currentKb.value? currentKb.value.name : selectedKbName.value;
+            if (!kbName){
+                ElMessage.warning('请选择目标知识库')
+                return;
+            }
+
+            // 组装 full_data
+            const fullData = {}
+            schema.fields.forEach(f => {
+                fullData[f.key] = addItemForm[f.key];
+            })
+
+            // content 取配置的 contentField
+            const content = addItemForm[schema.contentField] || '';
+            if (!content.trim()){
+                ElMessage.warning(`${schema.fields.find(f => f.key === schema.contentField)?.label || '内容'}不能为空`)
+                    return;
+            }
+
+            addItemLoading.value = true;
+
+            try {
+                const res = await fetch('/api/rag/add_items', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        kbName: kbName,
+                        kbType: selectedKbType.value,
+                        append: true,
+                        items: [{
+                            content: content,
+                            full_data: fullData
+                        }]
+                    })
+                }).then(r => r.json());
+
+                if (res.status === 'success' || res.status === 'warning') {
+                    ElMessage.success('新增成功')
+                    showAddItemDialog.value = false;
+                    if (currentKb.value) handleKbAction('view', currentKb.value)
+                } else {
+                    ElMessage.error(res.message || '新增失败')
+                }
+            } catch (e) {
+                ElMessage.error('网络请求失败')
+                console.error(e)
+            } finally {
+                addItemLoading.value = false;
+            }
+        }
+
+        // 列表页可选的知识库 (只显示已配置类型的)
+        const configurableKbs = computed(() => {
+            return filteredKBs.value.filter(kb => KB_TYPE_SCHEMA[kb.type])
+        })
+
         // ====== 初始化 ======
         fetchRecentProjects();
         fetchKBs();
 
         // ====== 暴露到模板 ======
         return {
+            // 新增要点
+            openAddItemDialog,
+            showAddItemDialog,
+            currentSchema,
+            selectedKbName,
+            configurableKbs,
+            KB_TYPE_SCHEMA,
+            addItemForm,
+            getKbLabel,
+            dialogTitle,
+            onSelectKb,
+            resetAddItemForm,
+            submitAddItem,
+
             showNewProjForm,
             creationType,
             projectForm,
