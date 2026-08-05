@@ -5,6 +5,7 @@ from celery import chain
 from docx.shared import Pt, RGBColor
 from flask_login import login_manager, login_required, current_user
 
+from utils.kb_permission import kb_perm_required
 from utils.word_parser import preprocess_files
 from .db import (
     DB_CONFIG,
@@ -32,7 +33,7 @@ os.environ["OMP_NUM_THREADS"]="128"
 import time
 import traceback
 from .project import project_access, get_project_id_by_name
-from flask import Flask, json, render_template, request, jsonify, send_file, Blueprint
+from flask import Flask, json, render_template, request, jsonify, send_file, Blueprint, current_app
 import sqlite3
 import json as pyjson
 import socket
@@ -1083,6 +1084,156 @@ def save_project_kbs():
         return jsonify({"status": "success", "message": "知识库配置已保存"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@bp.route('/project/upload-files-async', methods=['POST'])
+@login_required
+def upload_files_async():
+    project_path = request.form.get('path')
+    project_id = request.form.get('project_id')
+    file_type = request.form.get('fileType')
+    files = request.files.getlist('files')
+    parseDocMethod = request.form.get('parseDocMethod')
+
+    if not all([project_path, project_id, file_type, files]):
+        return jsonify({"status": "error", "message": "请求参数不完整。"}), 400
+
+    try:
+        # ===== 中转：文件先落临时目录，任务里再转回 FileStorage =====
+        temp_dir = os.path.join('./', uuid.uuid4().hex)
+        os.makedirs(temp_dir, exist_ok=True)
+
+        temp_files = []
+        for f in files:
+            # 文件名用纯 uuid（f.filename 可能是 webkitRelativePath 含 '/'，直接拼会出错）
+            # 原始相对路径存在 origin_name 里，任务里还原
+            save_path = os.path.join(temp_dir, uuid.uuid4().hex)
+            f.save(save_path)
+            temp_files.append({'temp_path': save_path, 'origin_name': f.filename})
+
+        # ===== 提交 Celery 任务 =====
+        from tasks import upload_files_task
+        task = upload_files_task.delay(project_path, file_type, parseDocMethod, temp_files)
+
+        # ===== 插状态表 =====
+        title = temp_files[0]['origin_name'] if len(temp_files) == 1 else f'{len(temp_files)} 个文件'
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT INTO user_task_snapshot
+                (user_id, project_id, task_id, task_type, task_category, title, state, is_running)
+            VALUES (%s, %s, %s, 'upload', 'upload', %s, 'PENDING', 1)
+        """, (current_user.user_id, project_id, task.id, title))
+        db.commit()
+
+        return jsonify({"status": "success", "task_id": task.id}), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+def do_upload_files_logic(project_path, file_type, files, parseDocMethod, task=None):
+    files = preprocess_files(files)
+
+    try:
+
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        with open(metadata_file, 'r', encoding='utf-8') as f:
+            metadata = json.load(f)
+
+        if file_type == 'code':
+            code_repo_path = metadata.get('code_repo')
+            for i, file in enumerate(files):
+                if task:
+                    # print(i, '======================')
+
+                    from tasks import _update_snapshot
+                    _update_snapshot(task.request.id, state='PROCESSING',
+                                     title=f'正在处理 {file.filename} ({i}/{len(files)})',
+                                     current_progress=int(i / len(files) * 100))
+                    # time.sleep(10)
+                # 保留包含中文的原始相对路径
+                relative_path = file.filename.replace('\\', '/')
+
+                # 安全检查：防止目录遍历攻击 (e.g., ../../secret.txt)
+                # 1. 路径拼接后进行规范化
+                dest_path = os.path.abspath(os.path.join(code_repo_path, relative_path))
+                # 2. 确保目标路径仍然在 code_repo 目录内
+                if not dest_path.startswith(os.path.abspath(code_repo_path)):
+                    return jsonify({"status": "error", "message": f"检测到不安全的路径: {relative_path}"}), 400
+
+                # 创建目标目录并保存文件
+                dest_dir = os.path.dirname(dest_path)
+                os.makedirs(dest_dir, exist_ok=True)
+                file.save(dest_path)
+
+            # 更新元数据
+            metadata['code_files'] = get_all_files_with_relative_paths(code_repo_path, type='code')
+            code_file_lines = {}
+            total_loc = 0
+            for f in metadata['code_files']:
+                loc = count_lines_of_code(os.path.join(code_repo_path, f))
+                code_file_lines[f] = loc
+                total_loc += loc
+            metadata['code_scale'] = total_loc
+            metadata['code_file_lines'] = code_file_lines
+
+        elif file_type == 'annotation':
+            # 1. 既然 project_path 是根目录，我们在这里手动拼接 annotations
+            target_dir = os.path.join(project_path, 'annotations')
+
+            # 2. 如果文件夹不存在，自动创建
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+
+            # 3. 保存文件
+            for file in files:
+                # 只取文件名，防止路径包含多余信息
+                filename = os.path.basename(file.filename)
+                save_dest = os.path.join(target_dir, filename)
+                file.save(save_dest)
+                print(f"标注文件已保存至: {save_dest}")
+
+        elif file_type == 'doc':
+            doc_repo_path = metadata.get('doc_repo')
+            for i, file in enumerate(files):
+
+                filename = os.path.basename(file.filename)
+                if task:
+                    from tasks import _update_snapshot
+                    _update_snapshot(task.request.id, state='PROCESSING',
+                                     title=f'正在处理 {filename} ({i}/{len(files)})',
+                                     current_progress=int(i / len(files) * 100))
+                # time.sleep(10)
+                if filename.endswith(('.md', '.docx')):
+                    doc_file_path = os.path.join(doc_repo_path, filename)
+                    # print(doc_file_path)
+                    # 去除文件名中的空格，重新保存
+                    new_filename = process_word_file(doc_file_path)
+                    if new_filename:
+                        filename = new_filename
+                    # print("新保存的文件名！！！！！！！！！！！")
+                    # print(doc_file_path)
+                    doc_file_path = os.path.join(doc_repo_path, filename)
+                    file.save(doc_file_path)
+                    if filename.endswith('.docx'):
+                        convert_docfile_to_markdown(doc_file_path, doc_repo_path, parseDocMethod)
+
+            metadata['doc_files'] = get_all_files_with_relative_paths(doc_repo_path, type='doc')
+
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=4, ensure_ascii=False)
+
+        if file_type == 'code':
+            _start_call_graph_rebuild(project_path)
+
+        return {'status': 'success'}
+
+    except Exception as e:
+        print(f"Error during file upload: {e}")
+
+        raise Exception(f"服务器处理文件上传时出错: {e}")
+
 
 @bp.route('/project/upload-files', methods=['POST'])
 def upload_files():
@@ -5116,8 +5267,10 @@ def list_annotation_files():
 
     return jsonify({"status": "success", "files": files})
 
+
 # 2. 构建知识库 (调用 rag_chroma)
 @bp.route('/api/rag/build', methods=['POST'])
+@kb_perm_required(need="edit")
 def build_rag_db():
 
     if request.content_type and 'multipart/form-data' in request.content_type:
@@ -5347,6 +5500,7 @@ def build_rag_db():
 
 
 @bp.route('/api/rag/add_items', methods=['POST'])
+@kb_perm_required(need="edit")
 def add_items_to_kb():
     """专用于接收前端内存中的 items 数组，直接新建或追加到知识库"""
     data = request.json
@@ -5497,6 +5651,7 @@ def list_testdata():
     files = [f for f in os.listdir(TESTDATA_DIR) if os.path.isfile(os.path.join(TESTDATA_DIR, f)) and not f.startswith('.')]
     return jsonify({"status": "success", "files": files})
 
+
 @bp.route('/api/kb/create', methods=['POST'])
 def create_kb():
     """创建空知识库（先建库，再上传文件）"""
@@ -5533,8 +5688,9 @@ def create_kb():
             "security_level": security_level,
             "language": language,
             "parse_method": parse_method,
-            "editors": editors,
-            "viewers": viewers,
+            "owner": str(current_user.get_id()),
+            "editors": [str(x) for x in editors],
+            "viewers": [str(x) for x in viewers],
             "create_time": now,
             "update_time": now,
             "doc_count": 0,
@@ -5546,15 +5702,39 @@ def create_kb():
     except Exception as e:
         return jsonify({"status": "error", "message": f"创建失败: {e}"})
 
+
+@bp.route("/api/kb/update_permission", methods=["POST"])
+@login_required
+@kb_perm_required(need="owner")         # 只有创建者和管理员能改权限
+def kb_update_permission(kb_meta=None):
+    data = request.get_json()
+    kb_name = data.get("name")
+    editors = data.get("editors", [])   # 期望是数组
+    viewers = data.get("viewers", [])
+
+    kb_meta["editors"] = [str(x) for x in editors]
+    kb_meta["viewers"] = [str(x) for x in viewers]
+    kb_meta["update_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    kb_root = current_app.config["KB_ROOT"]
+    meta_file = os.path.join(kb_root, kb_name, "metadata.json")
+    try:
+        with open(meta_file, "w", encoding="utf-8") as f:
+            json.dump(kb_meta, f, ensure_ascii=False, indent=2)
+        return jsonify({"status": "success", "message": "权限更新成功"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"权限更新失败：{e}"})
+
+
 @bp.route('/api/list-kbs', methods=['GET'])
 def list_kbs():
     kb_root = os.path.join(PROJECT_ROOT, "../rag_database")
-    kbs = []
 
+    kbs = []
     if os.path.exists(kb_root):
         for kb_name in os.listdir(kb_root):
             kb_path = os.path.join(kb_root, kb_name)
-            if not os.path.isdir(kb_path): continue
+            if not os.path.isdir(kb_path):
+                continue
 
             kb_info = {
                 "name": kb_name,
@@ -5564,13 +5744,14 @@ def list_kbs():
                 "description": "",
                 "security_level": "内部"
             }
+
             # 读取 metadata 决定类型
             meta_file = os.path.join(kb_path, "metadata.json")
             if os.path.exists(meta_file):
                 try:
                     with open(meta_file, 'r', encoding='utf-8') as f:
                         meta = json.load(f)
-                        kb_info.update(meta)
+                    kb_info.update(meta)
                 except Exception as e:
                     print(f"[KB] 读取元数据失败 {kb_name}: {e}")
 
@@ -5578,12 +5759,33 @@ def list_kbs():
                 mtime = os.path.getmtime(kb_path)
                 kb_info["create_time"] = datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
 
+            # ===== 新增：权限过滤开始 =====
+            user_id = str(current_user.get_id())
+            is_admin = current_user.role == 'admin'
+
+            editors = [str(x) for x in kb_info.get("editors", [])]
+            viewers = [str(x) for x in kb_info.get("viewers", [])]
+            is_owner = is_admin or str(kb_info.get("owner")) == user_id
+            # print(f'name:{user_id}, is_admin:{is_admin}, is_owner:{is_owner}, editors:{editors}, viewers:{viewers}')
+            if not is_owner:
+                # editors/viewers 都为空 = 公开库，所有人可见
+                if editors or viewers:
+                    if user_id not in editors and user_id not in viewers:
+                        continue   # 无使用权限，跳过不返回
+
+            # 顺带给前端返回操作权限，控制按钮显隐
+            kb_info["is_owner"] = is_owner
+            kb_info["can_edit"] = is_owner or (not editors and not viewers) or (user_id in editors)
+            # ===== 新增：权限过滤结束 =====
+
             kbs.append(kb_info)
 
     kbs.sort(key=lambda x: x["create_time"], reverse=True)
     return jsonify({"status": "success", "kbs": kbs})
 
+
 @bp.route('/api/kb/delete', methods=['POST'])
+@kb_perm_required(need="owner")
 def delete_kb():
     """删除知识库"""
     data = request.json
@@ -5600,24 +5802,27 @@ def delete_kb():
 
     try:
         import chromadb.api.client
-        if hasattr(chromadb.api.client, 'SharedSystemClient'):
-            chromadb.api.client.SharedSystemClient.clear_system_cache()
-            print("[KB] 已释放 ChromaDB 底层 SQLite 文件句柄")
+        import gc
+        chromadb.api.client.SharedSystemClient.clear_system_cache()
+        gc.collect()
+        print("[KB] 已释放 ChromaDB 底层 SQLite 文件句柄")
     except Exception as e:
-        print(f"[KB] 释放 ChromaDB 缓存时出现警告 (可忽略): {e}")
+        print(f"[KB] 释放 ChromaDB 资源失败: {e}")
 
     kb_path = os.path.join(PROJECT_ROOT, "../rag_database", kb_name)
 
     if os.path.exists(kb_path):
         try:
-            shutil.rmtree(kb_path, ignore_errors=True)
+            shutil.rmtree(kb_path)
             return jsonify({"status": "success", "message": "知识库已彻底删除"})
         except Exception as e:
             return jsonify({"status": "error", "message": f"删除文件夹失败: {e}"})
     else:
         return jsonify({"status": "error", "message": "知识库不存在"})
 
+
 @bp.route('/api/kb/rename', methods=['POST'])
+@kb_perm_required(need="owner")
 def rename_kb():
     """重命名知识库"""
     data = request.json
@@ -5653,6 +5858,7 @@ def rename_kb():
     except Exception as e:
         return jsonify({"status": "error", "message": f"重命名失败: {e}"})
 
+
 @bp.route('/api/kb/items', methods=['GET'])
 def get_kb_items():
     """获取知识库条目"""
@@ -5666,7 +5872,9 @@ def get_kb_items():
     result = rag_engine.get_all_items(kb_type, kb_name, limit)
     return jsonify(result)
 
+
 @bp.route('/api/kb/item/delete', methods=['POST'])
+@kb_perm_required(need="edit")
 def delete_kb_item():
     """删除知识库条目"""
     data = request.json
@@ -5696,7 +5904,9 @@ def delete_kb_item():
 
     return jsonify(result)
 
+
 @bp.route('/preview', methods=['POST'])
+@kb_perm_required(need="edit")
 def preview_file():
     doc_type = request.form.get('doc_type')
     use_server_file = request.form.get('use_server_file') == 'true'

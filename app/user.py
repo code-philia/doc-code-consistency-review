@@ -5,6 +5,11 @@ from .db import get_db
 
 user_bp = Blueprint('user', __name__)
 
+# 部门代码 -> 显示名
+DEPARTMENT_NAMES = {
+    'HQ': '公司总部'
+}
+
 
 class User(UserMixin):
     def __init__(self, user_id, username, password, ip, name, role):
@@ -18,6 +23,15 @@ class User(UserMixin):
     def get_id(self):
         """重写get_id方法，返回用户标识符"""
         return str(self.user_id)
+
+    @classmethod
+    def get_all(cls):
+        """获取全部用户，供权限选择用"""
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT user_id, name, department FROM user")
+        rows = cursor.fetchall()
+        return rows
 
     @staticmethod
     def get(user_id):
@@ -48,7 +62,7 @@ class User(UserMixin):
         c = db.cursor()
         c.execute(f'select user_id, username, password, ip, name, role from user where ip="{ip}"')
         row = c.fetchone()
-        #print('row', row)
+        # print('row', row)
         if row:
             return User(row['user_id'], row['username'], row['password'], row['ip'], row['name'], row['role'])
         return None
@@ -107,7 +121,6 @@ def logout():
 @user_bp.route('/login/current_user', methods=['GET'])
 @login_required
 def get_current_user():
-
     data = {
         'user_id': current_user.user_id,
         'username': current_user.username,
@@ -116,6 +129,30 @@ def get_current_user():
     }
 
     return jsonify({'code': 200, 'data': data})
+
+
+@user_bp.route('/api/user_tree', methods=['GET'])
+@login_required
+def user_tree():
+    users = User.get_all()
+
+    # 按部门分组，组装成 el-tree 需要的数据结构
+    dept_map = {}
+    for u in users:
+        dept_code = (u['department'] or '').strip()
+        dept = DEPARTMENT_NAMES.get(dept_code, dept_code) if dept_code else '未分组'
+        dept_map.setdefault(dept, []).append({
+            "id": str(u["user_id"]),                        # 叶子节点 id = user_id
+            "label": f"{u['name']}（{u['user_id']}）",
+        })
+
+    tree = [{
+        "id": f"dept_{dept}",        # 部门节点 id 加前缀，避免和 user_id 冲突
+        "label": dept,
+        "children": children,
+    } for dept, children in dept_map.items()]
+
+    return jsonify({"status": "success", "data": tree})
 
 
 @user_bp.route('/add/<int:x>/<int:y>')
