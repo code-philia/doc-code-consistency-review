@@ -1,0 +1,18 @@
+230服务器doc转docx常用命令
+
+230 自测用
+curl -X POST http://127.0.0.1:5009/convert -F "file=@/home/sxx/test.doc" --output /home/sxx/result.docx
+
+docker 命令
+docker-compose logs -f 看日志
+
+docker-compose restart 更新代码 重启用
+
+docker ps | grep doc-converter 查看服务运行状态
+
+# 更新yml文件
+# 1. 停止并删除旧容器（确保配置被重新加载）
+docker-compose down doc-converter
+
+# 2. 重新构建并启动（强制重新创建容器）
+docker-compose up -d --force-recreate --build doc-converter

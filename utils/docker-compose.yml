@@ -1,0 +1,27 @@
+﻿
+
+services:
+  converter:
+    image: fpga-cpu-outline:v0.1
+    container_name: doc-converter
+    restart: unless-stopped
+    ports:
+      - "5009:5009"
+    volumes:
+      # 挂载代码
+      - /home/sxx/converter:/app
+      # 挂载外部 Python 环境
+      - /home/sxx/soft:/opt/env
+    working_dir: /app
+    environment:
+      - PATH=/opt/env/bin:/usr/local/sbin:/usr/local/bin/:/usr/sbin:/usr/bin:/sbin:/bin
+      - PYTHONUNBUFFERED=1
+    command: >
+      /opt/env/bin/python -m gunicorn
+      -w 2
+      -b 0.0.0.0:5009
+      --timeout 300
+      --access-logfile -
+      --error-logfile -
+      --capture-output
+      ubuntu_converter:app
