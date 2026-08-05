@@ -53,6 +53,10 @@ const app = createApp({
         /***********************
          * 基础状态
          ***********************/
+        // 文件上传
+        const uploadTaskState = ref({ show: false, text: '', percent: null })
+        let uploadPollTimer = null
+
         const SECRET_LEVEL_EXTENSION_MAP = {
             'public': '公开',
             'internal': '内部',
@@ -2848,15 +2852,12 @@ const app = createApp({
           const input = document.createElement('input');
           input.type = 'file';
           input.multiple = selectionMode === 'file';
-
           if (selectionMode === 'folder') {
             input.webkitdirectory = true;
           }
-
           if (fileType === 'doc') {
             input.accept = '.md,.docx,.doc';
           }
-
           input.onchange = async (e) => {
             const files = e.target.files;
             if (!files || files.length === 0) {
@@ -2867,108 +2868,119 @@ const app = createApp({
             formData.append('path', projectPath.value);
             formData.append('fileType', fileType);
             formData.append('parseDocMethod', parseDocMethod);
-            // 打印所有字段debug
-            /* for (let [key, value] of formData.entries()) {
-              console.log(key, value);
-            } */
+            formData.append('project_id', getProjectId());          // 【新增】projectId
             for (let i = 0; i < files.length; i++) {
               const path = files[i].webkitRelativePath || files[i].name;
               formData.append('files', files[i], path);
             }
 
-            ElMessage.info('文件正在上传，请稍候...');
+            // 【改】原来的 ElMessage.info('文件正在上传，请稍候...') 换成状态卡片
+            uploadTaskState.value = { show: true, text: '文件上传中...', percent: 0 };
+
             try {
-              const response = await axios.post('/project/upload-files', formData, {
+              const response = await axios.post('/project/upload-files-async', formData, {   // 【改】异步接口
                 headers: {
                   'Content-Type': 'multipart/form-data'
+                },
+                // 【新增】上传进度
+                onUploadProgress: (ev) => {
+                  if (ev.total) {
+                    uploadTaskState.value.percent = Math.round(ev.loaded * 100 / ev.total);
+                  }
                 }
               });
 
+              // 【改】成功只代表"任务已提交"，改为启动轮询
               if (response.data.status === 'success') {
-//                ElMessage.success('文件上传成功！');
-                ElMessageBox.alert('文件上传成功!', '提示', {
-                        confirmButtonText: '知道了',
-                        type: 'success'
-                });
-
-                await fetchProjectMetadata();
+                console.log('[upload] 任务已提交, task_id = ', response.data.task_id)
+                startUploadPolling();
               } else {
-//                ElMessage.error(`上传失败: ${response.data.message}`);
-                ElMessageBox.alert('文件上传失败!', '提示', {
-                        confirmButtonText: '知道了',
-                        type: 'error'
+                uploadTaskState.value.show = false;
+                ElMessageBox.alert(`上传失败: ${response.data.message}`, '提示', {
+                  confirmButtonText: '知道了',
+                  type: 'error'
                 });
-
               }
             } catch (err) {
+              uploadTaskState.value.show = false;                     // 【新增】关掉状态卡片
               console.error("Error uploading files:", err);
-//              ElMessage.error(`上传文件时发生网络错误: ${err.message}`);
               ElMessageBox.alert(`上传文件时发生网络错误: ${err.message}`, '提示', {
-                        confirmButtonText: '知道了',
-                        type: 'error'
+                confirmButtonText: '知道了',
+                type: 'error'
               });
-
             }
           };
-
           input.click();
         };
          
-        /* const addFile = (fileType, selectionMode) => {
-            const input = document.createElement('input');
-            input.type = 'file';
+        // ================== 新增：轮询上传任务状态 ==================
+        const startUploadPolling = () => {
+          console.log('[upload] 开始轮询')
+          uploadTaskState.value = { show: true, text: '文档处理中，请稍候...', percent: null }
 
-            // 'file'模式下允许选择多个文件
-            input.multiple = selectionMode === 'file';
+          clearInterval(uploadPollTimer)
+          uploadPollTimer = setInterval(async () => {
+            try {
+              const res = await axios.get(`/api/task-snapshot/${getProjectId()}/upload`)
+              console.log('[upload] 轮询返回:', res.data)
+              const data = res.data.data
+              if (!data) {
 
-            if (selectionMode === 'folder') {
-                input.webkitdirectory = true;
+                console.log('[upload] 没查到任务记录, 继续等')
+                return
+              }
+              console.log('[upload] state =', data.state, 'isRunning =', data.isRunning)
+
+              if (data.state === 'PENDING') {
+                uploadTaskState.value.text = '排队等待中...'
+                uploadTaskState.value.percent = null
+              } else if (data.state === 'PROCESSING') {
+                uploadTaskState.value.text = data.title || '文档处理中...'
+                uploadTaskState.value.percent = data.currentProgress ?? null
+              } else if (data.state === 'SUCCESS') {
+                clearInterval(uploadPollTimer)
+                uploadTaskState.value.show = false
+                ElMessageBox.alert('文件上传成功！', '提示', {
+                  confirmButtonText: '知道了',
+                  type: 'success'
+                })
+                // clearUploadSnapshot()
+                await fetchProjectMetadata()          // 原来成功后的刷新挪到这里
+              } else if (data.state === 'FAILURE') {
+                clearInterval(uploadPollTimer)
+                uploadTaskState.value.show = false
+                ElMessageBox.alert(`上传失败: ${data.title || '处理失败'}`, '提示', {
+                  confirmButtonText: '知道了',
+                  type: 'error'
+                })
+                // clearUploadSnapshot()
+              }
+            } catch (e) {
+              // 单次轮询失败不清定时器，下一轮再试
+              console.error('[upload] 轮询出错:', e)
             }
+          }, 2000)
+        }
 
-            // 对文档类型进行文件格式过滤
-            if (fileType === 'doc') {
-                input.accept = '.md,.docx';
+        // ================== 新增：清除上传任务标记 ==================
+        const clearUploadSnapshot = () => {
+          axios.post('/api/task-snapshot/clear', {
+            project_id: getProjectId(),
+            category: 'upload'
+          }).catch(() => {})
+        }
+
+        // ================== 新增：页面加载时恢复上传任务轮询 ==================
+        const resumeUploadTaskIfRunning = async () => {
+          try {
+            const res = await axios.get(`/api/task-snapshot/${getProjectId()}/upload`)
+            const data = res.data.data
+            if (data && data.isRunning) {
+              startUploadPolling()
+              if (data.title) uploadTaskState.value.text = data.title
             }
-
-            input.onchange = async (e) => {
-                const files = e.target.files;
-                if (!files || files.length === 0) {
-                    return; // 用户取消了选择
-                }
-
-                const formData = new FormData();
-                formData.append('path', projectPath.value);
-                formData.append('fileType', fileType);
-
-                for (let i = 0; i < files.length; i++) {
-                    // 如果是文件夹上传，浏览器会提供 webkitRelativePath
-                    const path = files[i].webkitRelativePath || files[i].name;
-                    formData.append('files', files[i], path);
-                }
-
-                ElMessage.info('文件正在上传，请稍候...');
-
-                try {
-                    const response = await axios.post('/project/upload-files', formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    });
-
-                    if (response.data.status === 'success') {
-                        ElMessage.success('文件上传成功！');
-                        await fetchProjectMetadata(); // 刷新文件列表
-                    } else {
-                        ElMessage.error(`上传失败: ${response.data.message}`);
-                    }
-                } catch (err) {
-                    console.error("Error uploading files:", err);
-                    ElMessage.error(`上传文件时发生网络错误: ${err.message}`);
-                }
-            };
-
-            input.click();
-        }; */
+          } catch (e) { /* 查询失败不影响页面正常使用 */ }
+        }
 
         /***********************
          * 统计数据计算
@@ -4904,7 +4916,7 @@ const app = createApp({
             //    expandedAlignmentIds.value.push(alignment.id);
             //}
 
-            statusFilters.value = ['unaligned', 'unreviewed', 'reviewed'];
+            // statusFilters.value = ['unaligned', 'unreviewed', 'reviewed'];
             await nextTick();
             scrollToAlignmentInSidebar(alignment.id);
 
@@ -7069,6 +7081,7 @@ const app = createApp({
                         
                         // 刷新筛选状态下的对齐列表
                         refreshFilteredAlignments();
+                        await fetchAlignmentSidebarPage();
                         
                         ElMessage.info('对齐关系已取消。');
                     }
@@ -7120,6 +7133,7 @@ const app = createApp({
              clearInterval(pollingTimerReverse.value)
              pollingTimerReverse.value = null
          }
+         clearInterval(uploadPollTimer)
         })
 
         // 从后端加载
@@ -9390,7 +9404,7 @@ const app = createApp({
             const res = await axios.get('/login/current_user');
             if (res.data.code === 200) {
               isAdmin.value = res.data.data.role === 'admin';
-              console.log(isAdmin.value)
+              // console.log(isAdmin.value)
               // 或者 userInfo.role_id === 1 等，按你实际来
             }
           } catch (e) {
@@ -9521,6 +9535,7 @@ const app = createApp({
 
         // ========== 生命周期 ==========
         onMounted(async () => {
+          resumeUploadTaskIfRunning()
           await initAdmin();
           await fetchPendingCount();
         });
@@ -9529,6 +9544,8 @@ const app = createApp({
          * 暴露到模板
          ***********************/
         return {
+            // 上传文件
+            uploadTaskState,
             // 问题反馈
             isAdmin,
             pendingCount,

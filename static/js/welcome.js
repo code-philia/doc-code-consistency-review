@@ -61,6 +61,22 @@ const app = createApp({
 
     delimiters: ['${', '}'],
     setup() {
+        // ===== 用户树 =====
+        const userTree = ref([]);
+        const permEditorsTree = ref(null);
+        const permViewersTree = ref(null);
+        const editorsFilterText = ref('');
+        const viewersFilterText = ref('');
+        // ===== 权限管理相关 =====
+        const permDialogVisible = ref(false);
+        const permSaving = ref(false);
+        const userOptions = ref([]);
+        const permForm = reactive({
+          kb_name: '',
+          editors: [],
+          viewers: [],
+        });
+
         // 知识库类型字段配置 (可扩展)
         const KB_TYPE_SCHEMA = {
             checklist: {
@@ -192,7 +208,8 @@ const app = createApp({
 
             const formData = new FormData();
             formData.append('doc_type', importDocType.value);
-            
+            formData.append('kbName', targetKb.name);
+
             if (fileSourceMode.value === 'server') {
                 if (!selectedServerFile.value) {
                     ElMessage.warning('请选择一个服务器文件');
@@ -249,9 +266,16 @@ const app = createApp({
                 } else {
                     ElMessage.error(`解析失败: ${response.data.message}`);
                 }
-            } catch (error) {
-                console.error(error);
-                ElMessage.error('请求发生错误');
+            } catch (e) {
+                if (e.response) {
+                    const status = e.response.status;
+                    const msg = e.response.data?.message || '请求失败'
+                    if (status === 403){
+                        ElMessage.warning(msg);
+                    } else {
+                        ElMessage.error("请求失败");
+                    }
+                }
             } finally {
                 isUploading.value = false;
             }
@@ -370,9 +394,16 @@ const app = createApp({
                 } else {
                     ElMessage.error(`入库失败: ${response.data.message}`);
                 }
-            } catch (error) {
-                console.error(error);
-                ElMessage.error('提交失败');
+            } catch (e) {
+                if (e.response) {
+                    const status = e.response.status;
+                    const msg = e.response.data?.message || '请求失败'
+                    if (status === 403){
+                        ElMessage.warning(msg);
+                    } else {
+                        ElMessage.error("请求失败");
+                    }
+                }
             } finally {
                 isCommitting.value = false;
             }
@@ -742,9 +773,7 @@ const app = createApp({
             security_level: '内部',
             type: 'coding_rule',
             language: '中文',
-            parse_method: '通用解析方法',
-            editors: '',
-            viewers: ''
+            parse_method: '通用解析方法'
         });
         const currentKb = ref(null);
         const kbItems = ref([]);
@@ -807,9 +836,11 @@ const app = createApp({
             createKbForm.type = 'coding_rule';
             createKbForm.language = '中文';
             createKbForm.parse_method = '通用解析方法';
-            createKbForm.editors = '';
-            createKbForm.viewers = '';
+            permForm.editors = [];
+            permForm.viewers = [];
             showCreateKbDialog.value = true;
+            // loadUserOptions();
+            loadUserTree();
         };
 
         const openImportDialogForKb = (kb) => {
@@ -839,8 +870,8 @@ const app = createApp({
                     type: createKbForm.type,
                     language: createKbForm.language,
                     parse_method: createKbForm.parse_method,
-                    editors: parseUserList(createKbForm.editors),
-                    viewers: parseUserList(createKbForm.viewers)
+                    editors: permForm.editors,
+                    viewers: permForm.viewers
                 };
                 const res = await axios.post('/api/kb/create', payload);
                 if (res.data.status === 'success') {
@@ -911,7 +942,15 @@ const app = createApp({
                     ElMessage.error(res.data.message);
                 }
             } catch (e) {
-                ElMessage.error("获取知识库文件失败");
+                if (e.response) {
+                    const status = e.response.status;
+                    const msg = e.response.data?.message || '请求失败'
+                    if (status === 403){
+                        ElMessage.warning(msg);
+                    } else {
+                        ElMessage.error("请求失败");
+                    }
+                }
             }
         };
 
@@ -973,6 +1012,8 @@ const app = createApp({
                 ).then(() => {
                     deleteKb(kb);
                 }).catch(() => {});
+            } else if (cmd === 'permission') {
+                openPermissionDialog(kb);
             }
         };
 
@@ -1016,7 +1057,15 @@ const app = createApp({
                     ElMessage.error(res.data.message);
                 }
             } catch (e) {
-                ElMessage.error("删除失败");
+                if (e.response) {
+                    const status = e.response.status;
+                    const msg = e.response.data?.message || '请求失败'
+                    if (status === 403){
+                        ElMessage.warning(msg);
+                    } else {
+                        ElMessage.error("请求失败");
+                    }
+                }
             }
         };
 
@@ -1034,7 +1083,15 @@ const app = createApp({
                     ElMessage.error(res.data.message);
                 }
             } catch (e) {
-                ElMessage.error("请求失败");
+                if (e.response) {
+                    const status = e.response.status;
+                    const msg = e.response.data?.message || '请求失败'
+                    if (status === 403){
+                        ElMessage.warning(msg);
+                    } else {
+                        ElMessage.error("请求失败");
+                    }
+                }
             }
         };
 
@@ -1051,7 +1108,15 @@ const app = createApp({
                     ElMessage.error(res.data.message);
                 }
             } catch (e) {
-                ElMessage.error("请求失败");
+                if (e.response) {
+                    const status = e.response.status;
+                    const msg = e.response.data?.message || '请求失败'
+                    if (status === 403){
+                        ElMessage.warning(msg);
+                    } else {
+                        ElMessage.error("请求失败");
+                    }
+                }
             }
         };
 
@@ -1174,8 +1239,15 @@ const app = createApp({
                     ElMessage.error(res.message || '新增失败')
                 }
             } catch (e) {
-                ElMessage.error('网络请求失败')
-                console.error(e)
+                if (e.response) {
+                    const status = e.response.status;
+                    const msg = e.response.data?.message || '请求失败'
+                    if (status === 403){
+                        ElMessage.warning(msg);
+                    } else {
+                        ElMessage.error("请求失败");
+                    }
+                }
             } finally {
                 addItemLoading.value = false;
             }
@@ -1186,12 +1258,111 @@ const app = createApp({
             return filteredKBs.value.filter(kb => KB_TYPE_SCHEMA[kb.type])
         })
 
+
+        // 打开弹窗：回显当前权限，并确保用户列表已加载
+        const openPermissionDialog = (kb) => {
+          permForm.kb_name = kb.name;
+          permForm.editors = [...(kb.editors || [])].map(String);
+          permForm.viewers = [...(kb.viewers || [])].map(String);
+          permDialogVisible.value = true;
+          loadUserTree();
+          // 等树渲染完后回显勾选状态
+          nextTick(() => {
+            permEditorsTree.value?.setCheckedKeys(permForm.editors);
+            permViewersTree.value?.setCheckedKeys(permForm.viewers);
+          });
+
+        };
+
+        // 保存权限
+        const savePermission = () => {
+          permSaving.value = true;
+          axios.post('/api/kb/update_permission', {
+            name: permForm.kb_name,
+            editors: permForm.editors,
+            viewers: permForm.viewers,
+          }).then(res => {
+            if (res.data.status === 'success') {
+              ElMessage.success('权限更新成功');
+              permDialogVisible.value = false;
+              fetchKBs();   // 换成你实际刷新知识库列表的方法名
+            } else {
+              ElMessage.error(res.data.message || '权限更新失败');
+            }
+          }).catch(err => {
+            ElMessage.error('权限更新失败：' + (err.response?.data?.message || err.message));
+          }).finally(() => {
+            permSaving.value = false;
+          });
+        };
+
+        // 加载用户树（加载过一次就不重复请求）
+        const loadUserTree = () => {
+          if (userTree.value.length > 0) return;
+          axios.get('/api/user_tree').then(res => {
+            if (res.data.status === 'success') {
+              userTree.value = res.data.data;
+            }
+          });
+        };
+
+        // 树节点过滤方法（部门名或用户名匹配都保留）
+        const filterUserNode = (value, data) => {
+          if (!value) return true;
+          return data.label.includes(value);
+        };
+
+        // 搜索框监听（两个树各一个）
+        watch(editorsFilterText, val => permEditorsTree.value?.filter(val));
+        watch(viewersFilterText, val => permViewersTree.value?.filter(val));
+
+        // 勾选变化：只取叶子节点（用户），部门节点的 id 有 dept_ 前缀不会混进来
+        const onPermEditorsCheck = () => {
+          permForm.editors = permEditorsTree.value.getCheckedKeys(true).map(String);
+        };
+        const onPermViewersCheck = () => {
+          permForm.viewers = permViewersTree.value.getCheckedKeys(true).map(String);
+        };
+
+        // 输入框回显：把选中的 user_id 转成姓名显示
+        const userLabelMap = computed(() => {
+          const map = {};
+          userTree.value.forEach(dept => {
+            dept.children.forEach(u => { map[u.id] = u.label; });
+          });
+          return map;
+        });
+        const permEditorsText = computed(() =>
+          permForm.editors.map(id => userLabelMap.value[id] || id).join('、'));
+        const permViewersText = computed(() =>
+          permForm.viewers.map(id => userLabelMap.value[id] || id).join('、'));
+
         // ====== 初始化 ======
         fetchRecentProjects();
         fetchKBs();
 
         // ====== 暴露到模板 ======
         return {
+            // tree
+            userTree,
+            permEditorsTree,
+            permViewersTree,
+            editorsFilterText,
+            viewersFilterText,
+            permEditorsText,
+            permViewersText,
+            loadUserTree,
+            filterUserNode,
+            onPermEditorsCheck,
+            onPermViewersCheck,
+
+            // 知识库权限管理新增
+            permDialogVisible,
+            permSaving,
+            permForm,
+            openPermissionDialog,
+            savePermission,
+
             // 新增要点
             openAddItemDialog,
             showAddItemDialog,

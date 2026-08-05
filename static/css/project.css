@@ -4897,3 +4897,17 @@
     margin-top: 12px;
     justify-content: flex-end;
 }
+
+/* 上传文件进度 */
+.upload-task-status-card {
+  /*position: fixed;*/
+  left: 0px;
+  bottom: 100px;
+  width: 100%;
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  z-index: 3000;
+  font-size: 14px;
+}
