@@ -9,7 +9,11 @@ DATABASE = os.path.join(BASE_DIR, 'doc_code_sql.db')
 def create_app():
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
     app.config['SECRET_KEY'] = '0GWEjZKPQXpu3vaviTpLJ9nTohOYD29299Vg_jD1h73tI4ceyBocFiPnFskVvJdCdh8'
-    app.config['MAX_CONTEBT_LENGTH'] = 1024*1024*1024 # 1GB
+    app.config['MAX_CONTENT_LENGTH'] = 1024*1024*1024  # 1GB
+    #
+    app.config['MAX_FORM_PARTS'] = 2000
+    #
+    app.config['MAX_FORM_MEMORY_SIZE'] = 10 * 1024 * 1024
     
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -34,6 +38,9 @@ def create_app():
 
     from .kbs_view import kbs_bp
     app.register_blueprint(kbs_bp)
+
+    from .feedback import feedback_bp
+    app.register_blueprint(feedback_bp)
 
     @app.teardown_appcontext
     def close_db(exception):

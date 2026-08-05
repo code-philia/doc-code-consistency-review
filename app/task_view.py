@@ -1,6 +1,6 @@
 ﻿from celery.result import AsyncResult
 from flask import Blueprint, jsonify, request
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 from app.db import get_db
 
@@ -93,6 +93,7 @@ def get_task_snapshot(project_id, category):
 
 
 @task_bp.route('/api/task-snapshot/clear', methods=['POST'])
+@login_required
 def clear_task_snapshot():
     user_id = current_user.user_id
     project_id = request.json.get('project_id')

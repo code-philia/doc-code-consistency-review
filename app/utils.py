@@ -13,6 +13,15 @@ import sys
 import zipfile
 import xml.etree.ElementTree as ET
 
+
+_ILLEGAL_XML_CHARS = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe\uffff]')
+
+def sanitize_xml(text):
+    """过滤 XML 非法字符"""
+    if not text:
+        return text
+    return _ILLEGAL_XML_CHARS.sub('', str(text))
+
 def count_lines_of_code(filepath):
     """一个简单的代码行数统计函数，忽略空行"""
     try:
@@ -407,7 +416,7 @@ def replace_text_in_docx(doc, replacements, export_type):
             new_run_text = (run.text[:relative_start] + 
                            new_text + 
                            run.text[relative_end:])
-            run.text = new_run_text
+            run.text = sanitize_xml(new_run_text)
             modified_runs.append(run)
         else:
             # 替换文本跨越多个runs

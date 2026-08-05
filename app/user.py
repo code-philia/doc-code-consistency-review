@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template
-from flask_login import UserMixin, login_user, login_required, logout_user
+from flask_login import UserMixin, login_user, login_required, logout_user, current_user
 
 from .db import get_db
 
@@ -102,6 +102,20 @@ def logout():
     logout_user()
     flash('已退出登录', 'success')
     return redirect(url_for('user.login'))
+
+
+@user_bp.route('/login/current_user', methods=['GET'])
+@login_required
+def get_current_user():
+
+    data = {
+        'user_id': current_user.user_id,
+        'username': current_user.username,
+        'name': current_user.name,
+        'role': current_user.role
+    }
+
+    return jsonify({'code': 200, 'data': data})
 
 
 @user_bp.route('/add/<int:x>/<int:y>')

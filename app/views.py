@@ -4,6 +4,8 @@ import threading
 from celery import chain
 from docx.shared import Pt, RGBColor
 from flask_login import login_manager, login_required, current_user
+
+from utils.word_parser import preprocess_files
 from .db import (
     DB_CONFIG,
     get_db,
@@ -1087,7 +1089,8 @@ def upload_files():
     try:
         project_path = request.form.get('path')
         file_type = request.form.get('fileType')  # 'doc' or 'code'
-        files = request.files.getlist('files')
+        # files = request.files.getlist('files')
+        files = preprocess_files(request.files.getlist('files'))
         parseDocMethod = request.form.get('parseDocMethod')
 
         if not all([project_path, file_type, files]):
@@ -1154,11 +1157,10 @@ def upload_files():
                     new_filename = process_word_file(doc_file_path)
                     if new_filename:
                         filename = new_filename
-                        doc_file_path = os.path.join(doc_repo_path, filename)
-                        file.save(doc_file_path)
-                        #print("新保存的文件名！！！！！！！！！！！")
+						#print("新保存的文件名！！！！！！！！！！！")
                         #print(doc_file_path)
-                    
+                    doc_file_path = os.path.join(doc_repo_path, filename)
+                    file.save(doc_file_path)
                     if filename.endswith('.docx'):
                         convert_docfile_to_markdown(doc_file_path, doc_repo_path, parseDocMethod)
 
@@ -1217,8 +1219,13 @@ def upload_folder():
     try:
         now_str = project_now_str()
         # 获取上传的文件和文件夹名称
-        files = request.files.getlist('files')
+        # files = request.files.getlist('files')
+        files = preprocess_files(request.files.getlist('files'))
         paths = request.form.getlist('paths')
+        paths = [
+            p[:-4] + '.docx' if p.lower().endswith('.doc') else p
+            for p in paths
+        ]
         folder_name = request.form.get('folderName')
         project_secret_level = request.form.get('projectSecretLevel')
         project_name = (request.form.get('projectName') or folder_name or '').strip()
@@ -1242,6 +1249,7 @@ def upload_folder():
         include_files = ['.py', '.c', '.cpp', '.h', '.hpp', '.java', '.html', '.vhd', '.v', '.sv', '.adb', '.ads']
         # 保存所有文件，保持目录结构
         for file, relative_path in zip(files, paths):
+            # print(f'file:{file}, relative_path:{relative_path}')
             if not file.filename:
                 continue
                 
@@ -5111,9 +5119,16 @@ def list_annotation_files():
 # 2. 构建知识库 (调用 rag_chroma)
 @bp.route('/api/rag/build', methods=['POST'])
 def build_rag_db():
-    data = request.json
+
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        data = request.form
+        uploaded_files = request.files.getlist('annotationFiles')
+        uploaded_files = preprocess_files(request.files.getlist('annotationFiles'))
+    else:
+        data = request.json or {}
+        uploaded_files = []
+
     project_path = data.get('projectPath') or PROJECT_ROOT # Default to system root if not provided
-    annotation_file = data.get('annotationFile') # Could be filename in testdata or absolute path
     kb_type = data.get('kbType', 'other')
     source_file_name = data.get('sourceFileName')
 
@@ -5123,55 +5138,38 @@ def build_rag_db():
     if not kb_name or ' ' in kb_name:
         return jsonify({"status": "error", "message": "知识库名称不能为空，且不能包含空格"})
 
-    if not annotation_file:
-        return jsonify({"status": "error", "message": "参数缺失: annotationFile"})
+
+    try:
+        rag_engine.initialize() # Ensure root exists
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"初始化失败: {str(e)}"})
 
     # Resolve source file path robustly:
     # 1) try raw filename/path first (preserve spaces/Chinese),
     # 2) then try secure_filename fallback for local upload temp files.
-    raw_annotation_file = str(annotation_file).strip()
-    safe_annotation_file = secure_filename(raw_annotation_file)
+    annotation_files = []
     temp_dir = os.path.join(PROJECT_ROOT, 'temp_uploads')
 
-    candidates = []
-    if raw_annotation_file:
-        if os.path.isabs(raw_annotation_file):
-            candidates.append(raw_annotation_file)
-        else:
-            candidates.extend([
-                os.path.join(TESTDATA_DIR, raw_annotation_file),
-                os.path.join(temp_dir, raw_annotation_file),
-                os.path.join(PROJECT_ROOT, raw_annotation_file),
-                raw_annotation_file
-            ])
+    if uploaded_files:
+        for f in uploaded_files:
+            if f and f.filename:
+                safe_name = secure_filename(f.filename)
+                target = os.path.join(temp_dir, safe_name)
+                if os.path.exists(target):
+                    name, ext = os.path.splitext(safe_name)
+                    target = os.path.join(temp_dir, f"{name}_{int(time.time()*1000)}{ext}")
+                f.save(target)
+                annotation_files.append(target)
+    else:
+        # 服务器文件模式
+        raw = data.get('annotationFiles')
+        if isinstance(raw, str):
+            annotation_files = [raw]
+        elif isinstance(raw, list):
+            annotation_files = raw
 
-    if safe_annotation_file and safe_annotation_file != raw_annotation_file:
-        candidates.extend([
-            os.path.join(TESTDATA_DIR, safe_annotation_file),
-            os.path.join(temp_dir, safe_annotation_file),
-            os.path.join(PROJECT_ROOT, safe_annotation_file),
-            safe_annotation_file
-        ])
-
-    full_path = ""
-    for candidate in candidates:
-        if candidate and os.path.exists(candidate):
-            full_path = candidate
-            break
-
-    if not full_path:
-        return jsonify({
-            "status": "error",
-            "message": f"找不到文件: {raw_annotation_file}",
-        })
-
-    raw_source_name = str(source_file_name or os.path.basename(full_path)).strip()
-    normalized_source_name = re.sub(r'\s+', '_', raw_source_name)
-
-    if not kb_name:
-        # Generate from filename
-        base = os.path.basename(full_path)
-        kb_name = os.path.splitext(base)[0]
+    if not annotation_files:
+        return jsonify({'status': 'error', 'message': '参数缺失: annotationFile'})
 
     def normalize_kb_type(raw_type):
         mapping = {
@@ -5227,94 +5225,125 @@ def build_rag_db():
         except Exception as e:
             print(f"[KB] 保存元数据失败: {e}")
 
-    try:
-        rag_engine.initialize() # Ensure root exists
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"初始化失败: {str(e)}"})
+    # 循环处理每个文件 累加count
+    total_count = 0
+    results = []
 
-    try:
-        json_data = None
+    for idx, raw_annotation_file in enumerate(annotation_files):
+        # === 找文件路径 (原逻辑) ===
 
-        # Ensure kb_type is standardized for processing
-        processing_type = resolve_processing_type(kb_type)
-
-        # === Word 文档处理逻辑 ===
-        if full_path.lower().endswith('.docx'):
-            print(f"[RAG] 解析文档: {full_path}, 类型: {processing_type}")
-
-            # A. 编程规则
-            if processing_type == 'rule':
-                raw_rules = parse_programming_rules(full_path)
-                if not raw_rules:
-                    doc_text = read_docx_text(full_path)
-                    raw_rules = smart_parse_doc(doc_text, type='rule')
-                if raw_rules:
-                    json_data = format_rules_for_rag(raw_rules)
-
-            # B. 问题单
-            elif processing_type == 'issue':
-                raw_issues = parse_issue_reports(full_path)
-                if not raw_issues:
-                    doc_text = read_docx_text(full_path)
-                    raw_issues = smart_parse_doc(doc_text, type='issue')
-                if raw_issues:
-                    json_data = format_issues_for_rag(raw_issues)
-
-            # C. 其他
-            elif processing_type in ['case', 'other', 'align']:
-                doc_text = read_docx_text(full_path)
-                raw_data = smart_parse_doc(doc_text, type='rule')
-                if raw_data:
-                    json_data = format_rules_for_rag(raw_data)
-
-            if json_data:
-                temp_json = full_path + ".parsed.json"
-                with open(temp_json, 'w', encoding='utf-8') as f:
-                    json.dump(json_data, f, ensure_ascii=False)
-
-                result = rag_engine.build_from_json(
-                    temp_json,
-                    kb_type=processing_type,
-                    kb_name=kb_name,
-                    append=append_mode,
-                    source_file=normalized_source_name
-                )
-                try: os.remove(temp_json)
-                except: pass
-
-                if result.get("status") == "success":
-                    # Parse count from message or result if possible, for now just 0 or parsed from result string
-                    # Or modify rag_engine to return count
-                    match = re.search(r'(\d+)', result.get("message", ""))
-                    count = int(match.group(1)) if match else 0
-                    save_kb_metadata(kb_type, kb_name, count) # Use original type for meta, logic inside handles mapping
-
-                return jsonify(result)
+        candidates = []
+        if raw_annotation_file:
+            if os.path.isabs(raw_annotation_file):
+                candidates.append(raw_annotation_file)
             else:
-                return jsonify({"status": "error", "message": "文档解析失败，未能提取有效数据"})
+                candidates.extend([
+                    os.path.join(TESTDATA_DIR, raw_annotation_file),
+                    os.path.join(temp_dir, raw_annotation_file),
+                    os.path.join(PROJECT_ROOT, raw_annotation_file),
+                    raw_annotation_file
+                ])
 
-        # === JSON 逻辑 ===
-        elif full_path.lower().endswith('.json'):
+        full_path = ""
+        for candidate in candidates:
+            if candidate and os.path.exists(candidate):
+                full_path = candidate
+                break
+
+        if not full_path:
+            results.append({
+                "file": raw_annotation_file,
+                "status": "error",
+                "message": "找不到文件",
+            })
+
+        try:
+            json_data = None
+
+            # Ensure kb_type is standardized for processing
+            processing_type = resolve_processing_type(kb_type)
+
+            # === Word 文档处理逻辑 ===
+            if full_path.lower().endswith('.docx'):
+                print(f"[RAG] 解析文档: {full_path}, 类型: {processing_type}")
+
+                # A. 编程规则
+                if processing_type == 'rule':
+                    raw_rules = parse_programming_rules(full_path)
+                    if not raw_rules:
+                        doc_text = read_docx_text(full_path)
+                        raw_rules = smart_parse_doc(doc_text, type='rule')
+                    if raw_rules:
+                        json_data = format_rules_for_rag(raw_rules)
+
+                # B. 问题单
+                elif processing_type == 'issue':
+                    raw_issues = parse_issue_reports(full_path)
+                    if not raw_issues:
+                        doc_text = read_docx_text(full_path)
+                        raw_issues = smart_parse_doc(doc_text, type='issue')
+                    if raw_issues:
+                        json_data = format_issues_for_rag(raw_issues)
+
+                # C. 其他
+                elif processing_type in ['case', 'other', 'align']:
+                    doc_text = read_docx_text(full_path)
+                    raw_data = smart_parse_doc(doc_text, type='rule')
+                    if raw_data:
+                        json_data = format_rules_for_rag(raw_data)
+
+            # === JSON 逻辑 ===
+            elif full_path.lower().endswith('.json'):
+                with open(full_path, 'r', encoding='utf-8') as f:
+                    json_data = json.load(f)
+
+
+            else:
+                results.append({"file": raw_annotation_file, "status": "error", "message": "不支持的文件格式"})
+                continue
+
+            if not json_data:
+                results.append({"file": raw_annotation_file, "status": "error", "message": "文档解析失败"})
+                continue
+
+            temp_json = full_path + '.parsed.json'
+            with open(temp_json, 'w', encoding='utf-8') as f:
+                json.dump(json_data, f, ensure_ascii=False, indent=2)
+
+            is_append = append_mode or (idx > 0)
+            normalized_source_name = re.sub(r'\s+', '_', source_file_name or os.path.basename(full_path))
+
             result = rag_engine.build_from_json(
-                full_path,
+                temp_json,
                 kb_type=processing_type,
                 kb_name=kb_name,
-                append=append_mode,
+                append=is_append,
                 source_file=normalized_source_name
             )
             if result.get("status") == "success":
                 match = re.search(r'(\d+)', result.get("message", ""))
                 count = int(match.group(1)) if match else 0
-                save_kb_metadata(kb_type, kb_name, count)
-            return jsonify(result)
+                total_count += count
+                results.append({'file': raw_annotation_file, 'status': 'success', 'count': count})
+                try:
+                    os.remove(temp_json)
+                except:
+                    pass
 
-        else:
-            return jsonify({"status": "error", "message": "不支持的文件格式"})
+            else:
+                results.append({'file': raw_annotation_file, 'status': 'error', 'count': result.get('message')})
 
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        except Exception as e:
+            results.append({'file': raw_annotation_file, 'status': 'error', 'count': str(e)})
+
+    if total_count > 0:
+        save_kb_metadata(kb_type, kb_name, total_count)
+
+    return jsonify({
+        'status': 'success',
+        'total_count': total_count,
+        'results': results
+    })
 
 
 @bp.route('/api/rag/add_items', methods=['POST'])
@@ -5338,16 +5367,17 @@ def add_items_to_kb():
             return jsonify({"status": "error", "message": f"知识库 {kb_name} 初始化失败"})
 
         client = col_info['client']
+        collection = col_info['collection']
 
         # 1. 新建模式下，清空原有集合
         if not append_mode:
             try:
-                client.delete_collection(COLLECTION_NAME)
+                client.delete_collection(collection.name)
             except:
                 pass
             try:
                 col_info['collection'] = client.create_collection(
-                    name=COLLECTION_NAME,
+                    name=collection.name,
                     embedding_function=rag_engine.emb_fn,
                     metadata={"hnsw:space": "cosine"}
                 )
@@ -5372,7 +5402,7 @@ def add_items_to_kb():
                 continue
 
             # 元数据处理，确保全为基础类型以适应 ChromaDB 限制
-            meta = {"source_type": "direct_import"}
+            meta = {"source_type": "direct_import", 'source_file': '手动录入'}
             if 'full_data' in item and isinstance(item['full_data'], dict):
                 for k, v in item['full_data'].items():
                     if isinstance(v, (str, int, float, bool)):
@@ -5671,31 +5701,8 @@ def preview_file():
     doc_type = request.form.get('doc_type')
     use_server_file = request.form.get('use_server_file') == 'true'
 
-    target_path = ""
-
-    try:
-        if use_server_file:
-            # 模式 A: 使用服务器上的 testdata 文件
-            filename = request.form.get('filename')
-            if not filename:
-                return jsonify({"status": "error", "message": "未指定文件名"})
-
-            target_path = os.path.join(TESTDATA_DIR, filename)
-            if not os.path.exists(target_path):
-                 return jsonify({"status": "error", "message": "文件不存在"})
-        else:
-            # 模式 B: 上传文件
-            file = request.files.get('file')
-            if not file:
-                return jsonify({"status": "error", "message": "未上传文件"})
-
-            # 保存到临时目录
-            temp_dir = os.path.join(PROJECT_ROOT, 'temp_uploads')
-            os.makedirs(temp_dir, exist_ok=True)
-            filename = secure_filename(file.filename)
-            target_path = os.path.join(temp_dir, filename)
-            file.save(target_path)
-
+    # 解析逻辑抽成函数
+    def do_parse(target_path):
         # 调用解析逻辑
         preview_data = []
 
@@ -5720,15 +5727,62 @@ def preview_file():
                 preview_data = issues
 
         elif doc_type == 'history_align':
-             # 历史对齐通常是 JSON
-             if target_path.endswith('.json'):
-                 with open(target_path, 'r', encoding='utf-8') as f:
-                     data = json.load(f)
-                     # 简单提取一些预览信息
-                     if "annotations" in data:
-                         preview_data = [{"id": a.get("id"), "content": "历史对齐数据"} for a in data["annotations"][:10]]
+            # 历史对齐通常是 JSON
+            if target_path.endswith('.json'):
+                with open(target_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # 简单提取一些预览信息
+                    if "annotations" in data:
+                        preview_data = [{"id": a.get("id"), "content": "历史对齐数据"} for a in data["annotations"][:10]]
 
-        return jsonify({"status": "success", "data": preview_data})
+        return preview_data
+
+    try:
+        if use_server_file:
+            # 模式 A: 使用服务器上的 testdata 文件
+            filename = request.form.get('filename')
+            if not filename:
+                return jsonify({"status": "error", "message": "未指定文件名"})
+
+            target_path = os.path.join(TESTDATA_DIR, filename)
+            if not os.path.exists(target_path):
+                return jsonify({"status": "error", "message": "文件不存在"})
+
+            # 调用解析，单文件直接返回
+            preview_data = do_parse(target_path)
+            return jsonify({"status": "success", "data": preview_data})
+
+        else:
+            # 模式 B: 上传文件
+            # files = request.files.getlist('file')
+            files = preprocess_files(request.files.getlist('file'))
+            if not files or len(files) == 0:
+                return jsonify({"status": "error", "message": "未上传文件"})
+
+            # 保存到临时目录
+            temp_dir = os.path.join(PROJECT_ROOT, 'temp_uploads')
+            os.makedirs(temp_dir, exist_ok=True)
+
+            all_results = []
+            for idx, file in enumerate(files):
+                if not file or file.filename == '':
+                    continue
+
+                filename = secure_filename(file.filename)
+                target_path = os.path.join(temp_dir, filename)
+                file.save(target_path)
+
+                preview_data = do_parse(target_path)
+                all_results.append({
+                    "filename": file.filename,
+                    "preview_data": preview_data
+                })
+
+            return jsonify({
+                "status": "success",
+                "data": all_results,
+                "count": len(all_results)
+            })
 
     except Exception as e:
         import traceback

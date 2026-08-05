@@ -311,7 +311,7 @@ class RAGEngine:
 
                 raw_id = ann.get("id") or ""
                 raw_id = raw_id.strip() if isinstance(raw_id, str) else str(raw_id)
-                base_pair_id = raw_id if raw_id else f"ann_{run_id}_{ann_idx}"
+                base_pair_id = f"{raw_id}_{run_id}_{ann_idx}" if raw_id else f"ann_{run_id}_{ann_idx}"
                 
                 doc_text_parts: List[str] = []
                 for dr in ann.get("docRanges", []) or []:
