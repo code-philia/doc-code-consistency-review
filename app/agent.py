@@ -11,11 +11,21 @@ from .prompt import ALIGN_PROMPT_TEMPLATE, ALIGN_REQ_PROMPT_TEMPLATE, REVIEW_PRO
     REVIEW_PROMPT_TEMPLATE_KBS, GENERATE_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_ICL, \
     RULE_EXTRACTION_PROMPT, ISSUE_EXTRACTION_PROMPT, ABSTRACT_PROMPT_TEMPLATE, TOTAL_ABSTRACT_PROMPT_TEMPLATE, \
     CODEFILE_PROMPT_TEMPLATE, ALIGN_PROMPT_TEMPLATE_KBS, ALIGN_REQ_PROMPT_TEMPLATE_KBS, CODE_THINKING_PROMPT_TEMPLATE, \
-    CODE_THINKING_PROMPT_TEMPLATE_KBS, DEFAULTS, FLOWCHART_MERMAID_PROMPT_TEMPLATE
+    CODE_THINKING_PROMPT_TEMPLATE_KBS, DEFAULTS, FLOWCHART_MERMAID_PROMPT_TEMPLATE, \
+    ALIGN_GRAPH_RERANK_PROMPT_TEMPLATE
 from .prompt import Combine_Req2Code_Align_UserPrompt, Combine_Code2Req_Align_UserPrompt, Combine_Review_UserPrompt
 from openai import OpenAI
 from .utils import chunk_list
 from .db import get_db_celery
+from .alignment_config import (
+    ALIGN_GRAPH_RERANK_MAX_TOKENS,
+    ALIGN_GRAPH_RERANK_MIN_SIMILARITY,
+    ALIGN_GRAPH_RERANK_PRIMARY_LIMIT,
+    ALIGN_GRAPH_RERANK_SUPPORTING_LIMIT,
+    ALIGN_GRAPH_RERANK_TEMPERATURE,
+    ALIGN_GRAPH_RERANK_TOTAL_LIMIT,
+    ALIGN_GRAPH_RERANK_TOP_P,
+)
 import traceback
 
 # 从项目根目录加载 .env
@@ -36,6 +46,56 @@ API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:1025/v1")
 MODEL_NAME = "qwen3.6-27b"
 
 MAX_REQ = 3 # 最大重复次数
+
+def _safe_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _trim_alignment_graph_items(
+    items: Optional[List[Dict[str, Any]]],
+    *,
+    max_primary: int = ALIGN_GRAPH_RERANK_PRIMARY_LIMIT,
+    max_supporting: int = ALIGN_GRAPH_RERANK_SUPPORTING_LIMIT,
+    min_similarity: float = ALIGN_GRAPH_RERANK_MIN_SIMILARITY,
+    max_total: int = ALIGN_GRAPH_RERANK_TOTAL_LIMIT,
+) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        similarity = _safe_float(item.get("similarity"), 0.0)
+        if similarity < min_similarity:
+            continue
+        normalized.append({
+            **item,
+            "similarity": similarity,
+            "role": (item.get("role") or "").strip().lower() or "supporting",
+        })
+
+    normalized.sort(key=lambda item: (_safe_float(item.get("similarity"), 0.0), item.get("role") == "supporting"), reverse=True)
+
+    primaries = [item for item in normalized if item.get("role") == "primary"]
+    supportings = [item for item in normalized if item.get("role") != "primary"]
+    selected = primaries[:max_primary] + supportings[:max_supporting]
+
+    if len(selected) < max_total:
+        seen = {
+            (item.get("file"), tuple(item.get("range") or []))
+            for item in selected
+        }
+        for item in normalized:
+            key = (item.get("file"), tuple(item.get("range") or []))
+            if key in seen:
+                continue
+            selected.append(item)
+            seen.add(key)
+            if len(selected) >= max_total:
+                break
+
+    return selected[:max_total]
 
 
 PROMPT_TYPE_KBS_MAP = {
@@ -109,13 +169,19 @@ def _extract_message_text(message) -> str:
     return ""
 
 
-def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=1024):
+def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=1024, system_prompt=None):
     client = OpenAI(
         api_key=API_KEY,
         base_url=API_BASE_URL,
     )
 
     messages = []
+    if system_prompt:
+        messages.append({
+            "role": "system",
+            "content": str(system_prompt)
+        })
+
     if history:
         for turn in history:
             role = turn.get("role", "user")
@@ -148,6 +214,30 @@ def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=1024
     r.content = (text or "").strip()
 
     return r
+
+
+def _split_prompt_for_chat(prompt: str):
+    prompt = str(prompt)
+    for marker in ("\n# 输入", "\n## 输入"):
+        index = prompt.find(marker)
+        if index >= 0:
+            return prompt[:index].strip(), prompt[index:].strip()
+
+    feedback_marker = "\n---以上是你需要遵循的规则，以下是本次任务---"
+    index = prompt.find(feedback_marker)
+    if index >= 0:
+        return prompt[:index].strip(), prompt[index:].strip()
+
+    return "", prompt
+
+
+def query_alignment_llm(prompt, **kwargs):
+    system_prompt, user_prompt = _split_prompt_for_chat(prompt)
+    return query_llm(
+        user_prompt,
+        system_prompt=system_prompt or None,
+        **kwargs
+    )
 
 
 def _normalize_kb_type_for_use(raw_type: str) -> str:
@@ -425,7 +515,6 @@ def query_codefile_from_abstract(requirement, file_abstract):
         req_content=requirement,
         file_abstract=file_abstract,
     )
-
     # 解析回复
     #response = query_llm(prompt)
     #llm_output = response.content
@@ -439,7 +528,7 @@ def query_codefile_from_abstract(requirement, file_abstract):
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_llm(prompt)
+        response = query_alignment_llm(prompt)
         llm_output = response.content
 
         # print("original llm output: ", llm_output)
@@ -603,12 +692,11 @@ def query_related_code_block(
             code_content=code_blocks,
             reference_alignments=reference_alignments
         )
-
     # 多次解析回复
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_llm(prompt)
+        response = query_alignment_llm(prompt)
         llm_output = response.content
         #print("original llm response: ", response)
         #print("original llm output: ", llm_output)
@@ -681,6 +769,58 @@ def query_related_code(
             project_path=project_path,
             reference_alignments=reference_alignments
         )
+
+
+def _compact_code_blocks_for_rerank(code_blocks, max_code_chars=1200):
+    compacted = []
+    for block in code_blocks or []:
+        file_name = block.get('file') or block.get('filename') or block.get('documentId') or ''
+        line_range = block.get('range') or []
+        if not isinstance(line_range, list) or len(line_range) != 2:
+            start_line = block.get('startLine')
+            end_line = block.get('endLine')
+            line_range = [start_line, end_line]
+        code = block.get('code') or block.get('content') or ''
+        if len(code) > max_code_chars:
+            code = code[:max_code_chars] + '\n...'
+        compacted.append({
+            'file': file_name,
+            'range': line_range,
+            'name': block.get('name') or '',
+            'type': block.get('type') or '',
+            'source': block.get('source') or '',
+            'seed_similarity': block.get('similarity'),
+            'role_hint': block.get('role') or '',
+            'code': code,
+        })
+    return compacted
+
+
+def query_related_code_graph_rerank(requirement, seed_code_blocks, candidate_code_blocks):
+    if not candidate_code_blocks:
+        return []
+
+    prompt = ALIGN_GRAPH_RERANK_PROMPT_TEMPLATE.format(
+        req_content=requirement,
+        seed_code_content=_compact_code_blocks_for_rerank(seed_code_blocks),
+        candidate_code_content=_compact_code_blocks_for_rerank(candidate_code_blocks),
+    )
+    for attempt in range(MAX_REQ):
+        response = query_alignment_llm(
+            prompt,
+            temperature=ALIGN_GRAPH_RERANK_TEMPERATURE,
+            top_p=ALIGN_GRAPH_RERANK_TOP_P,
+            max_tokens=ALIGN_GRAPH_RERANK_MAX_TOKENS,
+        )
+        llm_output = response.content
+        try:
+            parsed_output = _trim_alignment_graph_items(parse_alignment_output(llm_output))
+            return parsed_output
+        except Exception as e:
+            print(f"第{attempt+1}次调用大模型输出解析失败")
+            print(e)
+    print('已尝试多次，无法正确输出和解析结果')
+    return []
     
     
     
@@ -744,13 +884,11 @@ def query_related_code_block_by_feedback(
         user_feedback=user_prompt
     )
     #print(prompt)
-    
-
     # 多次解析回复
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_llm(prompt)
+        response = query_alignment_llm(prompt)
         llm_output = response.content
         #print("original llm output: ", llm_output)
         try:
@@ -890,7 +1028,7 @@ def query_related_requirement_block(
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_llm(prompt)
+        response = query_alignment_llm(prompt)
         llm_output = response.content
 
         # print("original llm output: ", llm_output)
@@ -1034,7 +1172,7 @@ def query_related_requirement_block_by_feedback(
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_llm(prompt)
+        response = query_alignment_llm(prompt)
         llm_output = response.content
         #print("original llm output: ", llm_output)
         try:

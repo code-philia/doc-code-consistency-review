@@ -8,13 +8,14 @@ from typing import Dict, List, Optional, Sequence, Tuple
 from callgraph.build_call_graph import build_call_graph_payload, repo_files, write_call_graph_payload
 from callgraph.query_call_graph import query_function_result
 
+from .alignment_config import CALL_GRAPH_DEFAULT_PREVIEW_DEPTH, CALL_GRAPH_MAX_QUERY_DEPTH
 from .db import get_code_blocks_by_project, get_project_id_by_path
 
 
 CALL_GRAPH_DIR_NAME = "call_graph_repo"
 CALL_GRAPH_JSON_NAME = "call_graph.json"
 CALL_GRAPH_METADATA_NAME = "metadata.json"
-DEFAULT_CALL_GRAPH_DEPTH = 3
+DEFAULT_CALL_GRAPH_DEPTH = CALL_GRAPH_DEFAULT_PREVIEW_DEPTH
 
 
 def _utc_now_iso() -> str:
@@ -711,7 +712,7 @@ def query_function_graph(
     if not payload:
         raise ValueError("调用图不存在，请先构建调用图")
 
-    safe_depth = max(1, min(int(max_depth or DEFAULT_CALL_GRAPH_DEPTH), 8))
+    safe_depth = max(1, min(int(max_depth or DEFAULT_CALL_GRAPH_DEPTH), CALL_GRAPH_MAX_QUERY_DEPTH))
     result = query_function_result(
         payload,
         function_id=function_id,

@@ -84,6 +84,16 @@ TYPE_LIKE_NODE_TYPES = {
     "class_specifier",
     "namespace_identifier",
 }
+CLASS_LIKE_NODE_TYPES = {"class_specifier", "struct_specifier", "union_specifier"}
+ENUM_NODE_TYPES = {"enum_specifier"}
+MACRO_NODE_TYPES = {"preproc_def", "preproc_function_def"}
+GLOBAL_DECLARATION_NODE_TYPES = {
+    "declaration",
+    "type_definition",
+    "alias_declaration",
+    "using_declaration",
+    "namespace_alias_definition",
+}
 EXPRESSION_WRAPPERS_FOR_LVALUE = {
     "subscript_expression",
     "field_expression",
@@ -197,6 +207,10 @@ def node_text(source: bytes, node) -> str:
 def line_col(node) -> Tuple[int, int]:
     row, col = node.start_point
     return row + 1, col + 1
+
+
+def node_range(node) -> Tuple[int, int]:
+    return node.start_point[0] + 1, node.end_point[0] + 1
 
 
 def walk(node) -> Iterator:
@@ -884,6 +898,239 @@ def build_global_index(
     return result
 
 
+def _nearest_template_wrapper(node):
+    parent = node.parent
+    if parent is not None and parent.type == "template_declaration":
+        return parent
+    return node
+
+
+def _declaration_wrapper_for_specifier(node):
+    current = node
+    parent = current.parent
+    while parent is not None and parent.type in {"declaration", "type_definition"}:
+        current = parent
+        parent = current.parent
+    return _nearest_template_wrapper(current)
+
+
+def _macro_name(node, source: bytes) -> str:
+    name_node = child_for_field(node, "name")
+    if name_node is not None:
+        return node_text(source, name_node).strip()
+    text = node_text(source, node).strip()
+    match = re.match(r"#\s*define\s+([A-Za-z_]\w*)", text)
+    return match.group(1) if match else ""
+
+
+def _named_child_text(node, source: bytes) -> str:
+    name_node = child_for_field(node, "name")
+    if name_node is not None:
+        return node_text(source, name_node).strip()
+    for child in walk(node):
+        if child.type in {"type_identifier", "identifier", "field_identifier"}:
+            return node_text(source, child).strip()
+    return ""
+
+
+def _contains_node_type(node, node_types: Set[str]) -> bool:
+    return any(child.type in node_types for child in walk(node))
+
+
+def _build_code_block(
+    *,
+    block_type: str,
+    name: str,
+    rel_path: str,
+    source: bytes,
+    node,
+    language: str,
+    function_id: Optional[str] = None,
+) -> Dict[str, object]:
+    start_line, end_line = node_range(node)
+    code = node_text(source, node).strip()
+    return {
+        "id": 0,
+        "name": name or block_type,
+        "file": rel_path,
+        "filename": rel_path,
+        "range": [start_line, end_line],
+        "startLine": start_line,
+        "endLine": end_line,
+        "type": block_type,
+        "code": code,
+        "content": code,
+        "language": language,
+        "function_id": function_id,
+        "related_id": [],
+        "related_range": {},
+    }
+
+
+def _function_lookup(functions: Dict[str, Dict[str, object]]) -> Dict[Tuple[str, int, str], str]:
+    lookup: Dict[Tuple[str, int, str], str] = {}
+    for function_id, function in functions.items():
+        lookup[
+            (
+                str(function.get("file") or ""),
+                int(function.get("line") or 0),
+                str(function.get("qualified_name") or function.get("name") or ""),
+            )
+        ] = function_id
+    return lookup
+
+
+def build_code_blocks(
+    parsed_files: Sequence[Dict[str, object]],
+    functions: Dict[str, Dict[str, object]],
+    call_graph: Dict[str, List[str]],
+) -> List[Dict[str, object]]:
+    blocks: List[Dict[str, object]] = []
+    seen_ranges: Set[Tuple[str, int, int, str]] = set()
+    function_lookup = _function_lookup(functions)
+
+    def add_block(block: Dict[str, object]) -> None:
+        start_line, end_line = block["range"]
+        if start_line <= 0 or end_line < start_line or not block.get("code"):
+            return
+        key = (block["file"], int(start_line), int(end_line), block["type"])
+        if key in seen_ranges:
+            return
+        seen_ranges.add(key)
+        blocks.append(block)
+
+    for item in parsed_files:
+        source = item["source"]
+        root = item["tree"].root_node
+        rel_path = item["rel_path"]
+        language = item["language"]
+
+        for node in walk(root):
+            if node.type not in MACRO_NODE_TYPES:
+                continue
+            add_block(
+                _build_code_block(
+                    block_type="macro",
+                    name=_macro_name(node, source),
+                    rel_path=rel_path,
+                    source=source,
+                    node=node,
+                    language=language,
+                )
+            )
+
+        for node, namespace_parts in iter_scope_nodes(root, source):
+            if node.type in FUNCTION_DEFINITION_TYPES:
+                name = extract_declarator_name(child_for_field(node, "declarator"), source)
+                if not name:
+                    continue
+                namespace = "::".join(namespace_parts)
+                qualified_name = name if "::" in name or not namespace else f"{namespace}::{name}"
+                line, _ = line_col(node)
+                function_id = function_lookup.get((rel_path, line, qualified_name))
+                add_block(
+                    _build_code_block(
+                        block_type="function",
+                        name=qualified_name,
+                        rel_path=rel_path,
+                        source=source,
+                        node=_nearest_template_wrapper(node),
+                        language=language,
+                        function_id=function_id,
+                    )
+                )
+                continue
+
+            if node.type in GLOBAL_DECLARATION_NODE_TYPES:
+                class_like = next((child for child in walk(node) if child.type in CLASS_LIKE_NODE_TYPES), None)
+                if class_like is not None:
+                    add_block(
+                        _build_code_block(
+                            block_type="class/struct",
+                            name=_named_child_text(class_like, source),
+                            rel_path=rel_path,
+                            source=source,
+                            node=_declaration_wrapper_for_specifier(class_like),
+                            language=language,
+                        )
+                    )
+                    continue
+
+                enum_node = next((child for child in walk(node) if child.type in ENUM_NODE_TYPES), None)
+                if enum_node is not None:
+                    add_block(
+                        _build_code_block(
+                            block_type="enum",
+                            name=_named_child_text(enum_node, source),
+                            rel_path=rel_path,
+                            source=source,
+                            node=_declaration_wrapper_for_specifier(enum_node),
+                            language=language,
+                        )
+                    )
+                    continue
+
+                if _contains_node_type(node, FUNCTION_DEFINITION_TYPES):
+                    continue
+                names = collect_declared_variables(node, source)
+                if names:
+                    add_block(
+                        _build_code_block(
+                            block_type="global_definition",
+                            name=", ".join(names),
+                            rel_path=rel_path,
+                            source=source,
+                            node=_nearest_template_wrapper(node),
+                            language=language,
+                        )
+                    )
+                    continue
+
+                if node.type in {"type_definition", "alias_declaration", "using_declaration", "namespace_alias_definition"}:
+                    add_block(
+                        _build_code_block(
+                            block_type=node.type,
+                            name=_named_child_text(node, source),
+                            rel_path=rel_path,
+                            source=source,
+                            node=_nearest_template_wrapper(node),
+                            language=language,
+                        )
+                    )
+
+    blocks.sort(key=lambda item: (item["file"], item["range"][0], item["range"][1], item["type"]))
+    for index, block in enumerate(blocks, start=1):
+        block["id"] = index
+
+    function_block_ids = {
+        block.get("function_id"): block["id"]
+        for block in blocks
+        if block.get("function_id")
+    }
+    block_by_id = {block["id"]: block for block in blocks}
+    forward = call_graph.get("forward") or {}
+    reverse: Dict[str, Set[str]] = defaultdict(set)
+    for caller_id, callee_ids in forward.items():
+        for callee_id in callee_ids:
+            reverse[callee_id].add(caller_id)
+
+    for function_id, block_id in function_block_ids.items():
+        related_function_ids = set(forward.get(function_id, [])) | reverse.get(function_id, set())
+        related_block_ids = sorted(
+            function_block_ids[related_id]
+            for related_id in related_function_ids
+            if related_id in function_block_ids and function_block_ids[related_id] != block_id
+        )
+        block = block_by_id[block_id]
+        block["related_id"] = related_block_ids
+        block["related_range"] = {
+            str(related_id): block_by_id[related_id]["range"]
+            for related_id in related_block_ids
+        }
+
+    return blocks
+
+
 def build_call_graph_payload(repo_root: Path | str, header_language: str = "auto") -> Dict[str, object]:
     repo_root = Path(repo_root).resolve()
     if not repo_root.exists():
@@ -901,9 +1148,11 @@ def build_call_graph_payload(repo_root: Path | str, header_language: str = "auto
     globals_by_name = build_global_symbols(parsed_files)
     functions, function_index, call_graph = build_functions(parsed_files, globals_by_name)
     global_index = build_global_index(globals_by_name, include_index)
+    code_blocks = build_code_blocks(parsed_files, functions, call_graph)
 
     return {
         "files": include_index["files"],
+        "code_blocks": code_blocks,
         "globals": sorted_globals(globals_by_name),
         "global_index": global_index,
         "functions": {key: functions[key] for key in sorted(functions)},
@@ -936,6 +1185,7 @@ def main() -> int:
     print(f"Wrote call graph JSON to {output_path}")
     print(
         f"Parsed {len(payload.get('files', {}))} files, "
+        f"built {len(payload.get('code_blocks', []))} code blocks, "
         f"found {len(payload.get('functions', {}))} functions and "
         f"{sum(len(values) for values in (payload.get('globals', {}) or {}).values())} global declarations."
     )

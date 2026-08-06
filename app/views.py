@@ -37,9 +37,15 @@ from flask import Flask, json, render_template, request, jsonify, send_file, Blu
 import sqlite3
 import json as pyjson
 import socket
+from .alignment_config import (
+    ALIGN_FILE_ABSTRACT_BATCH_LIMIT,
+    CALL_GRAPH_ALIGN_DEPTH,
+    CALL_GRAPH_MIN_SEED_SIMILARITY,
+    CALL_GRAPH_SEED_LIMIT,
+)
 from .utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension,\
     replace_text_in_docx, generate_issue_content, include_related_blocks
-from .agent import query_generated_requirement, query_related_code, query_review_result, query_flow_chart, query_related_requirement, query_code_abstract, query_codefile_abstract, query_codefile_from_abstract
+from .agent import query_generated_requirement, query_related_code, query_related_code_graph_rerank, query_review_result, query_flow_chart, query_related_requirement, query_code_abstract, query_codefile_abstract, query_codefile_from_abstract
 from .agent import query_related_code_by_feedback, query_review_result_by_feedback, query_related_requirement_by_feedback
 from .rag_chroma import rag_engine
 from .doc_block import chunk_markdown
@@ -55,7 +61,7 @@ import shutil
 import re
 import zipfile
 
-from .code_block import get_all_code_blocks, get_codefile_blocks
+from .code_block import get_codefile_blocks
 from .call_graph import (
     build_selection_code_range,
     build_project_call_graph,
@@ -82,17 +88,6 @@ import pymysql
 from .utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
 from .utils import convert_docfile_to_markdown
 from .agent import smart_parse_doc
-
-from .call_graph import (
-    build_project_call_graph,
-    code_block_to_code_range,
-    ensure_project_call_graph,
-    find_first_intersecting_code_block,
-    get_call_graph_metadata,
-    mark_call_graph_building,
-    query_function_graph,
-    resolve_code_block_to_function,
-)
 
 # 配置日志
 handler = logging.StreamHandler(sys.stdout)
@@ -224,6 +219,194 @@ def _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file):
                     doc_ranges.append(block)
                     seen.add(key)
     return doc_ranges
+
+
+def _code_block_file(block):
+    return block.get('file') or block.get('filename') or block.get('documentId') or ''
+
+
+def _code_block_range(block):
+    line_range = block.get('range')
+    if isinstance(line_range, (list, tuple)) and len(line_range) == 2:
+        return [_safe_int(line_range[0]), _safe_int(line_range[1])]
+    start_line = _safe_int(block.get('startLine') or block.get('start_line'))
+    end_line = _safe_int(block.get('endLine') or block.get('end_line') or start_line)
+    return [start_line, end_line]
+
+
+def _code_block_key(block):
+    start_line, end_line = _code_block_range(block)
+    return (_code_block_file(block), start_line, end_line)
+
+
+def _code_ranges_intersect(start_a, end_a, start_b, end_b):
+    return max(_safe_int(start_a), _safe_int(start_b)) <= min(_safe_int(end_a), _safe_int(end_b))
+
+
+def _safe_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _dedupe_code_blocks(blocks):
+    result = []
+    seen = set()
+    for block in blocks or []:
+        if not isinstance(block, dict):
+            continue
+        key = _code_block_key(block)
+        if not key[0] or key[1] <= 0 or key[2] <= 0 or key in seen:
+            continue
+        seen.add(key)
+        result.append(block)
+    return result
+
+
+def _trim_seed_related_code_items(items, *, max_items=None, min_similarity=None):
+    max_items = CALL_GRAPH_SEED_LIMIT if max_items is None else max(1, int(max_items))
+    min_similarity = CALL_GRAPH_MIN_SEED_SIMILARITY if min_similarity is None else float(min_similarity)
+    scored = []
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        similarity = _safe_float(item.get('similarity'), 0.0)
+        if similarity < min_similarity:
+            continue
+        scored.append((similarity, item))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return [item for _, item in scored[:max_items]]
+
+
+def _match_related_items_to_code_blocks(related_items, all_code_blocks):
+    matched = []
+    for item in related_items or []:
+        if not isinstance(item, dict):
+            continue
+        file_name = _code_block_file(item)
+        start_line, end_line = _code_block_range(item)
+        if not file_name or start_line <= 0 or end_line <= 0:
+            continue
+
+        exact = None
+        containing = None
+        intersecting = None
+        for block in all_code_blocks or []:
+            if _code_block_file(block) != file_name:
+                continue
+            block_start, block_end = _code_block_range(block)
+            if block_start == start_line and block_end == end_line:
+                exact = block
+                break
+            if containing is None and block_start <= start_line and block_end >= end_line:
+                containing = block
+            if intersecting is None and _code_ranges_intersect(block_start, block_end, start_line, end_line):
+                intersecting = block
+
+        selected = exact or containing or intersecting
+        if selected:
+            enriched = dict(selected)
+            for field in ('similarity', 'role', 'reason'):
+                if item.get(field) is not None:
+                    enriched[field] = item.get(field)
+            matched.append(enriched)
+        else:
+            matched.append(dict(item))
+    return _dedupe_code_blocks(matched)
+
+
+def _expand_code_blocks_with_call_graph_for_alignment(project_path, project_id, seed_blocks):
+    if not project_path or not seed_blocks:
+        return []
+
+    try:
+        graph_result = ensure_project_call_graph(project_path)
+        if not graph_result.get('payload'):
+            logger.info(f"调用图不可用，跳过重新对齐扩展: {graph_result.get('message')}")
+            return []
+    except Exception as exc:
+        logger.info(f"调用图检查/构建失败，跳过重新对齐扩展: {exc}")
+        return []
+
+    expanded = []
+    seen_functions = set()
+    for block in seed_blocks:
+        file_name = _code_block_file(block)
+        start_line, end_line = _code_block_range(block)
+        if not file_name or start_line <= 0 or end_line <= 0:
+            continue
+        try:
+            function_id = resolve_code_block_to_function(project_path, project_id, file_name, start_line, end_line)
+            if not function_id or function_id in seen_functions:
+                continue
+            seen_functions.add(function_id)
+            graph = query_function_graph(
+                project_path,
+                function_id,
+                max_depth=CALL_GRAPH_ALIGN_DEPTH,
+                direction="both",
+            )
+            for code_range in graph.get('code_ranges') or []:
+                code_file = code_range.get('filename') or code_range.get('file') or code_range.get('documentId') or file_name
+                expanded.append({
+                    'file': code_file,
+                    'filename': code_file,
+                    'documentId': code_file,
+                    'range': [code_range.get('startLine'), code_range.get('endLine')],
+                    'startLine': code_range.get('startLine'),
+                    'endLine': code_range.get('endLine'),
+                    'start': code_range.get('start'),
+                    'end': code_range.get('end'),
+                    'content': code_range.get('content') or '',
+                    'code': code_range.get('content') or '',
+                    'type': code_range.get('type') or 'function',
+                    'name': code_range.get('name') or '',
+                    'source': 'call_graph',
+                })
+        except Exception as exc:
+            logger.info(f"调用图扩展单个代码块失败 {file_name}:{start_line}-{end_line}: {exc}")
+            continue
+    return _dedupe_code_blocks(expanded)
+
+
+def _code_blocks_to_code_ranges(project_path, blocks):
+    code_repo_path = os.path.join(project_path, 'code_repo')
+    code_ranges = []
+    seen = set()
+    for block in blocks or []:
+        file_name = _code_block_file(block)
+        start_line, end_line = _code_block_range(block)
+        if not file_name or start_line <= 0 or end_line <= 0:
+            continue
+        file_path = os.path.join(code_repo_path, file_name)
+        if not os.path.exists(file_path):
+            continue
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            original_content = f.read()
+        lines = original_content.splitlines(keepends=True)
+        if not lines:
+            continue
+        safe_start = max(1, start_line)
+        safe_end = min(len(lines), max(safe_start, end_line))
+        char_start = sum(len(line) for line in lines[:safe_start - 1])
+        char_end = sum(len(line) for line in lines[:safe_end])
+        key = (file_name, safe_start, safe_end)
+        if key in seen:
+            continue
+        seen.add(key)
+        code_ranges.append({
+            'filename': file_name,
+            'start': char_start,
+            'end': char_end,
+            'content': '\n'.join(line.rstrip('\n\r') for line in lines[safe_start - 1:safe_end]),
+            'documentId': file_name,
+            'startLine': safe_start,
+            'endLine': safe_end,
+            'name': block.get('name') or '',
+            'type': block.get('type') or '',
+        })
+    return code_ranges
 
 
 def _get_or_build_code_blocks_for_file(project_path, file_name, project_id=None):
@@ -2460,6 +2643,7 @@ def align_requirement_to_project_addprompt():
     codeRanges_aligned = data.get('codeRanges', [])
     userPrompt = data.get('userInputPrompt', [])
     project_id = data.get('project_id')
+    user_id = getattr(current_user, 'user_id', None)
     print('/api/align-requirement-to-project-addprompt, project_id', project_id)
     # abstract = get_project_abstract(project_id)
 
@@ -2484,7 +2668,7 @@ def align_requirement_to_project_addprompt():
         
         # 解析异常，返回空列表时
         # 过滤掉含有乱码的代码摘要（作为被定位的代码文件防止遗漏），重新调用大模型定位代码文件
-        FILE_MAX_LIMIT = 40
+        FILE_MAX_LIMIT = ALIGN_FILE_ABSTRACT_BATCH_LIMIT
         if not file_name_list:
             filter_non_file, filter_file_abstract, file_cnt = filter_non_abstract_files(file_abstract)
             
@@ -2540,53 +2724,45 @@ def align_requirement_to_project_addprompt():
             if not all_code_blocks:
                 continue
 
-            # 调用对齐函数获取相关代码
-            related_code = query_related_code_by_feedback(
+            # 调用对齐函数获取种子代码块
+            seed_related_code = query_related_code_by_feedback(
                 requirement_text,
                 all_code_blocks,
                 codeRanges_aligned,
                 userPrompt,
                 block_limit=50,
+                user_id=user_id,
                 project_path=project_path
             )
             
             try:
-                # 检查并添加 related_id 对应的代码块
-                related_code = include_related_blocks(related_code, all_code_blocks)
+                seed_related_code = _trim_seed_related_code_items(seed_related_code)
+                try:
+                    seed_blocks = include_related_blocks(seed_related_code, all_code_blocks)
+                except Exception as exc:
+                    logger.info(f"related_id 扩展失败，使用基础匹配结果: {exc}")
+                    seed_blocks = _match_related_items_to_code_blocks(seed_related_code, all_code_blocks)
 
-                # 转换为codeRanges格式
-                for code_block in related_code:
-                    # 获取原始代码内容（不带行号）
-                    file_path = os.path.join(code_repo_path, code_block['file'])
-                    if os.path.exists(file_path):
-                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                            original_content = f.read()
-                            lines = original_content.splitlines(keepends=True)  # 保留换行符
+                seed_blocks = _dedupe_code_blocks(seed_blocks)
+                graph_blocks = _expand_code_blocks_with_call_graph_for_alignment(project_path, project_id, seed_blocks)
+                candidate_blocks = _dedupe_code_blocks(seed_blocks + graph_blocks)
 
-                            # 提取指定行范围的内容
-                            start_line = max(1, code_block['range'][0])
-                            end_line = min(len(lines), code_block['range'][1])
+                final_blocks = []
+                if graph_blocks:
+                    reranked_code = query_related_code_graph_rerank(
+                        requirement_text,
+                        seed_blocks,
+                        candidate_blocks
+                    )
+                    final_blocks = _match_related_items_to_code_blocks(reranked_code, candidate_blocks)
 
-                            if start_line <= end_line:
-                                # 计算字符偏移量
-                                char_start = sum(len(line) for line in lines[:start_line-1])
-                                char_end = sum(len(line) for line in lines[:end_line])
+                if not final_blocks:
+                    final_blocks = seed_blocks
 
-                                # 提取内容（不保留换行符用于显示）
-                                range_content = '\n'.join([line.rstrip('\n\r') for line in lines[start_line-1:end_line]])
-
-                                code_ranges.append({
-                                    'filename': code_block['file'],
-                                    'start': char_start,  # 字符偏移量
-                                    'end': char_end,      # 字符偏移量
-                                    'content': range_content,
-                                    'documentId': code_block['file'],
-                                    'startLine': start_line,
-                                    'endLine': end_line
-                                })
+                code_ranges.extend(_code_blocks_to_code_ranges(project_path, final_blocks))
                                 
             except Exception as e:
-                print(f"add related_code failed: {e}")
+                logger.error(f"add related_code failed: {e}", exc_info=True)
                 
         #logger.info("对齐结果...................")
         #logger.info(code_ranges)
@@ -3830,7 +4006,7 @@ def update_issue_content():
 
 @bp.route('/api/code-decomposition', methods=['POST'])
 def code_decomposition():
-    """将代码分块为仅包含代码范围的对齐关系并同步到数据库"""
+    """使用调用图 tree-sitter 解析产物同步代码块和调用图。"""
     try:
         data = request.get_json()
         project_path = data.get('projectPath')
@@ -3841,20 +4017,29 @@ def code_decomposition():
         if not os.path.exists(code_repo_path):
             return jsonify({'status': 'error', 'message': '代码目录不存在'})
 
-        all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
-        all_code_blocks = get_all_code_blocks(code_repo_path, all_files)
-        replace_code_blocks(project_path, all_code_blocks)
-
-        processed_count = len(all_code_blocks)
-        
         call_graph_result = build_project_call_graph(project_path)
         call_graph_metadata = call_graph_result.get('metadata') or get_call_graph_metadata(project_path)
+        call_graph_status = call_graph_metadata.get('status')
+        payload = call_graph_result.get('payload') or {}
+        all_code_blocks = payload.get('code_blocks') or []
+
+        if call_graph_status != 'ready':
+            return jsonify({
+                'status': 'error',
+                'message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
+                'processedCount': 0,
+                'call_graph_status': call_graph_status,
+                'call_graph_message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
+            })
+
+        replace_code_blocks(project_path, all_code_blocks)
+        processed_count = len(all_code_blocks)
 
         return jsonify({
             'status': 'success',
-            'message': '代码分解完成，结果已保存',
+            'message': '代码分解和调用图构建完成，结果已保存',
             'processedCount': processed_count,
-            'call_graph_status': call_graph_metadata.get('status'),
+            'call_graph_status': call_graph_status,
             'call_graph_message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
         })
         

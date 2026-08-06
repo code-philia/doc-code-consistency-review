@@ -526,6 +526,18 @@ def include_related_blocks(related_code, all_code_blocks):
     返回:
         包含相关块的完整代码块列表
     """
+    def normalize_related_line_range(value):
+        if isinstance(value, dict):
+            start = value.get('startLine') or value.get('start_line') or value.get('start')
+            end = value.get('endLine') or value.get('end_line') or value.get('end') or start
+            return int(start), int(end)
+        if isinstance(value, (list, tuple)):
+            if len(value) >= 2:
+                return int(value[0]), int(value[1])
+            if len(value) == 1:
+                return int(value[0]), int(value[0])
+        return int(value), int(value)
+
     # 创建一个字典，以便快速查找代码块
     block_dict = {}
     for block in all_code_blocks:
@@ -576,24 +588,33 @@ def include_related_blocks(related_code, all_code_blocks):
             for related_id in matched_block['related_id']:
                 # 在所有代码块中查找对应的 related_id
                 for block in all_code_blocks:
-                    if block.get('id') == related_id:
+                    if str(block.get('id')) == str(related_id):
                         # key = (block['file'], tuple(block['range']))
                         # if key not in added_keys:
                             
                         # 按照related_range添加具体的代码片段
+                        related_range_map = matched_block.get('related_range') or {}
+                        related_value = related_range_map.get(str(block['id']))
+                        if related_value is None:
+                            related_value = block.get('range')
+                        try:
+                            related_start, related_end = normalize_related_line_range(related_value)
+                        except Exception:
+                            related_start, related_end = block['range'][0], block['range'][1]
+
+                        related_start = max(int(block['range'][0]), int(related_start))
+                        related_end = min(int(block['range'][1]), int(related_end))
+                        if related_start > related_end:
+                            related_start, related_end = int(block['range'][0]), int(block['range'][1])
+
                         temp_block = {}
                         temp_block['file'] = block['file']
-                        temp_block['range'] = []
-                        
-                        re_id = [matched_block['related_range'][str(block['id'])]]
-                        if len(re_id) > 1:
-                            temp_block['range'].append(re_id)
-                        else:
-                            temp_block['range'] = [re_id[0], re_id[0]]
-                            
-                        # key = (block['file'], temp_block['range'])
-                        # if key not in added_keys:
-                            # print(temp_block['range'])
+                        temp_block['range'] = [related_start, related_end]
+
+                        key = (temp_block['file'], tuple(temp_block['range']))
+                        if key in added_keys:
+                            break
+
                         temp_block['type'] = block['type']
                         # # 按照\n切分
                         temp_list = block['code'].split('\n')
@@ -601,13 +622,13 @@ def include_related_blocks(related_code, all_code_blocks):
                         pos_start = temp_block['range'][0] - block['range'][0]
                         pos_end = temp_block['range'][1] - block['range'][0]
                         
-                        temp_block['code'] = temp_list[pos_start:pos_end+1][0]
+                        temp_block['code'] = '\n'.join(temp_list[pos_start:pos_end+1])
                         
                         
                         temp_block['id'] = block['id']
                         temp_block['related_id'] = []
                         temp_block['related_id'].append(matched_block['id'])
-                        temp_block['related_range'] = {str(matched_block['id']):block['related_range'][str(matched_block['id'])]}
+                        temp_block['related_range'] = {str(matched_block['id']): matched_block.get('range')}
                         
                         
                         # print(key)

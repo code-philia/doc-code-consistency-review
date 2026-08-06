@@ -13,7 +13,7 @@ from docx.shared import Pt
 
 from app import create_app
 from app.agent import query_review_result, query_review_result_by_feedback, query_codefile_from_abstract, \
-    query_related_code, query_generated_requirement, query_flow_chart, query_related_requirement
+    query_related_code, query_related_code_graph_rerank, query_generated_requirement, query_flow_chart, query_related_requirement
 from app.db import (
     get_db_celery,
     append_missing_doc_blocks,
@@ -22,6 +22,8 @@ from app.db import (
 from app.rag_chroma import rag_engine
 from app.utils import get_all_files_with_relative_paths, include_related_blocks, replace_text_in_docx, \
     generate_issue_content
+from app.call_graph import ensure_project_call_graph, query_function_graph, resolve_code_block_to_function
+from app.alignment_config import ALIGN_FILE_ABSTRACT_BATCH_LIMIT, CALL_GRAPH_ALIGN_DEPTH
 from app.views import (
     logger,
     get_abstracts_from_sqlite,
@@ -76,6 +78,193 @@ def _safe_first_range_field(ranges, field, default=''):
         if isinstance(first, dict):
             return first.get(field, default) or default
     return default	
+
+def _safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _code_block_file(block):
+    return block.get('file') or block.get('filename') or block.get('documentId') or ''
+
+
+def _code_block_range(block):
+    line_range = block.get('range')
+    if isinstance(line_range, (list, tuple)) and len(line_range) == 2:
+        return [_safe_int(line_range[0]), _safe_int(line_range[1])]
+    start_line = _safe_int(block.get('startLine') or block.get('start_line'))
+    end_line = _safe_int(block.get('endLine') or block.get('end_line') or start_line)
+    return [start_line, end_line]
+
+
+def _code_block_key(block):
+    line_range = _code_block_range(block)
+    return (_code_block_file(block), line_range[0], line_range[1])
+
+
+def _ranges_intersect(start_a, end_a, start_b, end_b):
+    return max(_safe_int(start_a), _safe_int(start_b)) <= min(_safe_int(end_a), _safe_int(end_b))
+
+
+def _dedupe_code_blocks(blocks):
+    result = []
+    seen = set()
+    for block in blocks or []:
+        if not isinstance(block, dict):
+            continue
+        key = _code_block_key(block)
+        if not key[0] or key[1] <= 0 or key[2] <= 0 or key in seen:
+            continue
+        seen.add(key)
+        result.append(block)
+    return result
+
+
+def _match_related_items_to_blocks(related_items, all_code_blocks):
+    matched = []
+    for item in related_items or []:
+        if not isinstance(item, dict):
+            continue
+        file_name = _code_block_file(item)
+        start_line, end_line = _code_block_range(item)
+        if not file_name or start_line <= 0 or end_line <= 0:
+            continue
+
+        exact = None
+        containing = None
+        intersecting = None
+        for block in all_code_blocks or []:
+            if _code_block_file(block) != file_name:
+                continue
+            block_start, block_end = _code_block_range(block)
+            if block_start == start_line and block_end == end_line:
+                exact = block
+                break
+            if containing is None and block_start <= start_line and block_end >= end_line:
+                containing = block
+            if intersecting is None and _ranges_intersect(block_start, block_end, start_line, end_line):
+                intersecting = block
+
+        selected = exact or containing or intersecting
+        if selected:
+            enriched = dict(selected)
+            if item.get('similarity') is not None:
+                enriched['similarity'] = item.get('similarity')
+            if item.get('role'):
+                enriched['role'] = item.get('role')
+            if item.get('reason'):
+                enriched['reason'] = item.get('reason')
+            matched.append(enriched)
+        else:
+            matched.append(dict(item))
+    return _dedupe_code_blocks(matched)
+
+
+def _expand_code_blocks_with_call_graph(project_path, project_id, seed_blocks):
+    if not project_path or not seed_blocks:
+        return []
+
+    try:
+        graph_result = ensure_project_call_graph(project_path)
+        if not graph_result.get('payload'):
+            logger.info(f"调用图不可用，跳过对齐扩展: {graph_result.get('message')}")
+            return []
+    except Exception as exc:
+        logger.info(f"调用图检查/构建失败，跳过对齐扩展: {exc}")
+        return []
+
+    expanded = []
+    seen_functions = set()
+    for block in seed_blocks:
+        file_name = _code_block_file(block)
+        start_line, end_line = _code_block_range(block)
+        if not file_name or start_line <= 0 or end_line <= 0:
+            continue
+        try:
+            function_id = resolve_code_block_to_function(project_path, project_id, file_name, start_line, end_line)
+            if not function_id or function_id in seen_functions:
+                continue
+            seen_functions.add(function_id)
+            graph = query_function_graph(
+                project_path,
+                function_id,
+                max_depth=CALL_GRAPH_ALIGN_DEPTH,
+                direction="both",
+            )
+            for code_range in graph.get('code_ranges') or []:
+                candidate = {
+                    'file': code_range.get('filename') or code_range.get('file') or code_range.get('documentId') or file_name,
+                    'filename': code_range.get('filename') or code_range.get('file') or code_range.get('documentId') or file_name,
+                    'documentId': code_range.get('documentId') or code_range.get('filename') or file_name,
+                    'range': [code_range.get('startLine'), code_range.get('endLine')],
+                    'startLine': code_range.get('startLine'),
+                    'endLine': code_range.get('endLine'),
+                    'start': code_range.get('start'),
+                    'end': code_range.get('end'),
+                    'content': code_range.get('content') or '',
+                    'code': code_range.get('content') or '',
+                    'type': code_range.get('type') or 'function',
+                    'name': code_range.get('name') or '',
+                    'source': 'call_graph',
+                }
+                expanded.append(candidate)
+        except Exception as exc:
+            logger.info(f"调用图扩展单个代码块失败 {file_name}:{start_line}-{end_line}: {exc}")
+            continue
+    return _dedupe_code_blocks(expanded)
+
+
+def _read_code_range_from_file(project_path, block):
+    code_repo_path = os.path.join(project_path, 'code_repo')
+    file_name = _code_block_file(block)
+    start_line, end_line = _code_block_range(block)
+    if not file_name or start_line <= 0 or end_line <= 0:
+        return None
+
+    file_path = os.path.join(code_repo_path, file_name)
+    if not os.path.exists(file_path):
+        return None
+
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        original_content = f.read()
+    lines = original_content.splitlines(keepends=True)
+    if not lines:
+        return None
+
+    safe_start = max(1, start_line)
+    safe_end = min(len(lines), max(safe_start, end_line))
+    char_start = sum(len(line) for line in lines[:safe_start - 1])
+    char_end = sum(len(line) for line in lines[:safe_end])
+    range_content = '\n'.join(line.rstrip('\n\r') for line in lines[safe_start - 1:safe_end])
+
+    return {
+        'filename': file_name,
+        'start': char_start,
+        'end': char_end,
+        'content': range_content,
+        'documentId': file_name,
+        'startLine': safe_start,
+        'endLine': safe_end,
+        'name': block.get('name') or '',
+        'type': block.get('type') or '',
+    }
+
+
+def _code_blocks_to_code_ranges(project_path, blocks):
+    code_ranges = []
+    seen = set()
+    for block in blocks or []:
+        code_range = _read_code_range_from_file(project_path, block)
+        if not code_range:
+            continue
+        key = (code_range['filename'], code_range['startLine'], code_range['endLine'])
+        if key in seen:
+            continue
+        seen.add(key)
+        code_ranges.append(code_range)
+    return code_ranges
 	
 @celery.task(name="user_bp.task.add")
 def add(x, y):
@@ -561,7 +750,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                 
                 # 解析异常，返回空列表时
                 # 过滤掉含有乱码的代码摘要（作为被定位的代码文件防止遗漏），重新调用大模型定位代码文件
-                FILE_MAX_LIMIT = 40
+                FILE_MAX_LIMIT = ALIGN_FILE_ABSTRACT_BATCH_LIMIT
                 if not file_name_list:
                     filter_non_file, filter_file_abstract, file_cnt = filter_non_abstract_files(file_abstract)
                     
@@ -620,9 +809,8 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                 if not all_code_blocks:
                     continue
                 
-                # print("调用对齐函数获取相关代码")
-                # 调用对齐函数获取相关代码
-                related_code = query_related_code(
+                # 先用现有语义/LLM链路找种子块，再用调用图扩展候选，最后二次保守筛选。
+                seed_related_code = query_related_code(
                     requirement_text,
                     all_code_blocks,
                     block_limit=50,
@@ -631,40 +819,29 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                 )
                 
                 try:
-                    # 检查并添加 related_id 对应的代码块
-                    related_code = include_related_blocks(related_code, all_code_blocks)
-                    
-                    # 转换为codeRanges格式
-                    for code_block in related_code:
-                        # 获取原始代码内容（不带行号）
-                        file_path = os.path.join(code_repo_path, code_block['file'])
-                        if os.path.exists(file_path):
-                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                                original_content = f.read()
-                                lines = original_content.splitlines(keepends=True)  # 保留换行符
+                    try:
+                        seed_blocks = include_related_blocks(seed_related_code, all_code_blocks)
+                    except Exception as exc:
+                        logger.info(f"related_id 扩展失败，使用基础匹配结果: {exc}")
+                        seed_blocks = _match_related_items_to_blocks(seed_related_code, all_code_blocks)
 
-                                # 提取指定行范围的内容
-                                start_line = max(1, code_block['range'][0])
-                                end_line = min(len(lines), code_block['range'][1])
+                    seed_blocks = _dedupe_code_blocks(seed_blocks)
+                    graph_blocks = _expand_code_blocks_with_call_graph(project_path, project_id, seed_blocks)
+                    candidate_blocks = _dedupe_code_blocks(seed_blocks + graph_blocks)
 
-                                if start_line <= end_line:
-                                    # 计算字符偏移量
-                                    char_start = sum(len(line) for line in lines[:start_line - 1])
-                                    char_end = sum(len(line) for line in lines[:end_line])
+                    final_blocks = []
+                    if graph_blocks:
+                        reranked_code = query_related_code_graph_rerank(
+                            requirement_text,
+                            seed_blocks,
+                            candidate_blocks
+                        )
+                        final_blocks = _match_related_items_to_blocks(reranked_code, candidate_blocks)
 
-                                    # 提取内容（不保留换行符用于显示）
-                                    range_content = '\n'.join(
-                                        [line.rstrip('\n\r') for line in lines[start_line - 1:end_line]])
+                    if not final_blocks:
+                        final_blocks = seed_blocks
 
-                                    code_ranges.append({
-                                        'filename': code_block['file'],
-                                        'start': char_start,  # 字符偏移量
-                                        'end': char_end,  # 字符偏移量
-                                        'content': range_content,
-                                        'documentId': code_block['file'],
-                                        'startLine': start_line,
-                                        'endLine': end_line
-                                    })
+                    code_ranges.extend(_code_blocks_to_code_ranges(project_path, final_blocks))
                                     
                 except Exception as e:
                     print(f"add related_code failed: {e}") 
