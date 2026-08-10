@@ -23,6 +23,7 @@ from app.rag_chroma import rag_engine
 from app.utils import get_all_files_with_relative_paths, include_related_blocks, replace_text_in_docx, \
     generate_issue_content
 from app.call_graph import ensure_project_call_graph, query_function_graph, resolve_code_block_to_function
+from callgraph.text_encoding import read_source_file
 from app.alignment_config import ALIGN_FILE_ABSTRACT_BATCH_LIMIT, CALL_GRAPH_ALIGN_DEPTH
 from app.views import (
     logger,
@@ -227,8 +228,7 @@ def _read_code_range_from_file(project_path, block):
     if not os.path.exists(file_path):
         return None
 
-    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-        original_content = f.read()
+    original_content = read_source_file(file_path)
     lines = original_content.splitlines(keepends=True)
     if not lines:
         return None

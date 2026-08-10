@@ -45,6 +45,7 @@ from .alignment_config import (
 )
 from .utils import get_all_files_with_relative_paths, parse_markdown, split_code, count_lines_of_code, convert_doc_to_markdown, get_filename_without_extension,\
     replace_text_in_docx, generate_issue_content, include_related_blocks
+from callgraph.text_encoding import read_source_file
 from .agent import query_generated_requirement, query_related_code, query_related_code_graph_rerank, query_review_result, query_flow_chart, query_related_requirement, query_code_abstract, query_codefile_abstract, query_codefile_from_abstract
 from .agent import query_related_code_by_feedback, query_review_result_by_feedback, query_related_requirement_by_feedback
 from .rag_chroma import rag_engine
@@ -382,8 +383,7 @@ def _code_blocks_to_code_ranges(project_path, blocks):
         file_path = os.path.join(code_repo_path, file_name)
         if not os.path.exists(file_path):
             continue
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-            original_content = f.read()
+        original_content = read_source_file(file_path)
         lines = original_content.splitlines(keepends=True)
         if not lines:
             continue
@@ -1898,23 +1898,9 @@ def _resolve_project_file_path(project_path, filename, file_type):
 
 
 def _read_text_file_with_fallback(file_path):
-    # encodings = ['utf-8', 'gbk', 'gb2312', 'iso-8859-1']
-    encodings = ['utf-8', 'gbk', 'gb2312']
-    with open(file_path, 'rb') as f:
-        content = f.read()
-    for enc in encodings:
-        try:
-            res = content.decode(enc)
-            # print(f'成功enc:{enc}')
-            return res
-        except UnicodeDecodeError as e:
-            pos = e.start
-            # print(f'{enc}失败位置:{pos}')
-            # print(f'问题字节:{hex(content[pos])}')
-            # print(f'上下文: {repr(content[max(0,pos-3):pos+4])}')
-            # traceback.print_exc()
-            continue
-    return content.decode('gbk', errors='ignore')
+    if not file_path or not os.path.exists(file_path):
+        return None
+    return read_source_file(file_path)
 
 
         
@@ -2358,25 +2344,15 @@ def get_abstracts_from_sqlite(project_id):
 
 def generate_abstract(file_path):
     # 读取文件内容，保留原始行（包括空行）
-    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-        #lines = [line for line in f.readlines()] # 保留原始代码
-        lines = []
-        for line in f:
-            # 必须过滤被注释掉的代码，不然影响大模型理解和分析
-            l_line = line.lstrip()
-            is_code_comment = l_line.startswith('//') and not any (c in l_line[2:] for c in ('，','。','；'))
-            if not is_code_comment:
-                lines.append(l_line)
-    # 调用llm的代码文件摘要函数
-        codefile_abstract = query_codefile_abstract(lines)
-    # code_abstracts = []
-    # # 获取原始块
-    # code_blocks = chunk_cpp_code(file_path, os.path.join(code_file_path, file_path))
-    # for code_block in code_blocks:
-        # # 调用llm的代码块摘要函数
-        # code_abstract = query_code_abstract(code_block["code"])
-        # code_abstracts.append(code_abstract)
-    return codefile_abstract
+    lines = []
+    for line in read_source_file(file_path).splitlines():
+        # 必须过滤被注释掉的代码，不然影响大模型理解和分析
+        l_line = line.lstrip()
+        is_code_comment = l_line.startswith('//') and not any(c in l_line[2:] for c in ('，', '。', '；'))
+        if not is_code_comment:
+            lines.append(l_line)
+    # 调用 LLM 的代码文件摘要函数
+    return query_codefile_abstract(lines)
 
 
 def save_abstract_to_db(project_path, file, codefile_abstract, project_id, user_id):
@@ -4432,8 +4408,7 @@ def _find_first_file_by_basename(base_dir: str, basename: str):
 def _read_text_file(file_path: str):
     if not file_path or not os.path.exists(file_path):
         return None
-    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-        return f.read()
+    return read_source_file(file_path)
 
 
 def _read_doc_raw_content(project_path: str, filename: str):

@@ -1104,6 +1104,34 @@ const app = createApp({
                             });
                         }
 
+                        const isExactCodeRangeMatch = (left, right) => {
+                            if (!left || !right) return false;
+                            const leftFile = left.file || left.filename || left.documentId || '';
+                            const rightFile = right.file || right.filename || right.documentId || '';
+                            if (leftFile !== rightFile) return false;
+
+                            const leftStartLine = Number(left.startLine);
+                            const leftEndLine = Number(left.endLine);
+                            const rightStartLine = Number(right.startLine);
+                            const rightEndLine = Number(right.endLine);
+                            if (
+                                Number.isFinite(leftStartLine) &&
+                                Number.isFinite(leftEndLine) &&
+                                Number.isFinite(rightStartLine) &&
+                                Number.isFinite(rightEndLine)
+                            ) {
+                                return leftStartLine === rightStartLine && leftEndLine === rightEndLine;
+                            }
+
+                            const leftStart = Number(left.start);
+                            const leftEnd = Number(left.end);
+                            const rightStart = Number(right.start);
+                            const rightEnd = Number(right.end);
+                            return Number.isFinite(leftStart) && Number.isFinite(leftEnd) &&
+                                Number.isFinite(rightStart) && Number.isFinite(rightEnd) &&
+                                leftStart === rightStart && leftEnd === rightEnd;
+                        };
+
                         const codeFileContent = await ensureCurrentRawFileContent('code');
                         await nextTick(() => {
                             currentFileBlocks.forEach(block => {
@@ -1116,35 +1144,12 @@ const app = createApp({
                                     start = offsets.start;
                                     end = offsets.end;
                                     
-                                    // Check alignment using line intersection
-                                    isAligned = alignedCodeRanges.some(r => {
-                                        if (r.startLine !== undefined && r.endLine !== undefined) {
-                                            return Math.max(r.startLine, startLine) <= Math.min(r.endLine, endLine);
-                                        }
-                                        return false;
-                                    });
-                                    
-                                    // Fallback to offset check if line check didn't pass (e.g. missing line info)
-                                    if (!isAligned && start !== undefined && end !== undefined) {
-                                         isAligned = alignedCodeRanges.some(r => {
-                                            if (r.start !== undefined && r.end !== undefined) {
-                                                return Math.max(r.start, start) < Math.min(r.end, end);
-                                            }
-                                            return false;
-                                        });
-                                    }
+                                    isAligned = alignedCodeRanges.some(r => isExactCodeRangeMatch(r, block));
 
                                 } else if (block.start !== undefined && block.end !== undefined) {
                                     start = block.start;
                                     end = block.end;
-                                    
-                                    // Offset based check
-                                    isAligned = alignedCodeRanges.some(r => {
-                                        if (r.start !== undefined && r.end !== undefined) {
-                                             return Math.max(r.start, start) < Math.min(r.end, end);
-                                        }
-                                        return false;
-                                    });
+                                    isAligned = alignedCodeRanges.some(r => isExactCodeRangeMatch(r, block));
                                 }
                                 
                                 if (start !== undefined && end !== undefined) {
@@ -1478,6 +1483,10 @@ const app = createApp({
             return formatCodeWithLineNumbers(currentSelection.value?.content || '');
         });
         const manualCodeSelectionCounterStart = computed(() => {
+            const selectionStartLine = Number(currentSelection.value?.startLine);
+            if (Number.isFinite(selectionStartLine) && selectionStartLine > 0) {
+                return Math.max(0, selectionStartLine - 1);
+            }
             const block = currentCodeSelectionBlock.value;
             const startLine = block?.range?.[0] || block?.startLine || 1;
             return Math.max(0, Number(startLine) - 1);
@@ -1757,12 +1766,24 @@ const app = createApp({
             const end = Number(codeRange.end);
             if (!Number.isFinite(start) || !Number.isFinite(end)) return [];
             const codePanel = document.querySelector('.content-text-code');
-            const blockElements = codePanel
+            const allBlockElements = codePanel
                 ? Array.from(codePanel.querySelectorAll('.highlight-block[data-type="code"]'))
-                    .filter(el => parseInt(el.getAttribute('data-range-start')) <= end && parseInt(el.getAttribute('data-range-end')) >= start)
                 : [];
+            const exactBlockElements = allBlockElements.filter(el => {
+                const blockStart = Number(el.getAttribute('data-range-start'));
+                const blockEnd = Number(el.getAttribute('data-range-end'));
+                return blockStart === start && blockEnd === end;
+            });
+            const containingBlockElements = exactBlockElements.length > 0
+                ? exactBlockElements
+                : allBlockElements.filter(el => {
+                    const blockStart = Number(el.getAttribute('data-range-start'));
+                    const blockEnd = Number(el.getAttribute('data-range-end'));
+                    return Number.isFinite(blockStart) && Number.isFinite(blockEnd) &&
+                        blockStart <= start && blockEnd >= end;
+                });
             const highlightElements = findIntersectingCodeHighlightElements(start, end);
-            return [...new Set([...blockElements, ...highlightElements])];
+            return [...new Set([...containingBlockElements, ...highlightElements])];
         };
 
         const getCodePageIndicesForRange = (start, end) => {
@@ -2597,6 +2618,77 @@ const app = createApp({
                 content,
             };
         };
+
+        const buildCodeRangeFromCurrentCodeSelection = async () => {
+            if (!currentSelection.value || currentSelection.value.type !== 'code') {
+                return null;
+            }
+            const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
+            const fileName = currentSelection.value.documentId;
+            let content = currentSelection.value.content || '';
+            if (!content && Number.isFinite(start) && Number.isFinite(end)) {
+                const codeFileContent = await getSelectionRawContent(currentSelection.value);
+                content = codeFileContent.slice(start, end);
+            }
+            return {
+                documentId: fileName,
+                filename: fileName,
+                start,
+                end,
+                startLine,
+                endLine,
+                content,
+            };
+        };
+
+        const getCodeRangeIdentity = (range) => {
+            if (!range) return null;
+            const fileName = range.documentId || range.filename || range.file || '';
+            const start = Number(range.start);
+            const end = Number(range.end);
+            const startLine = Number(range.startLine);
+            const endLine = Number(range.endLine);
+            return { fileName, start, end, startLine, endLine };
+        };
+
+        const isSameCodeRangeByIdentity = (left, right) => {
+            const a = getCodeRangeIdentity(left);
+            const b = getCodeRangeIdentity(right);
+            if (!a || !b || a.fileName !== b.fileName) return false;
+            if (Number.isFinite(a.start) && Number.isFinite(a.end) && Number.isFinite(b.start) && Number.isFinite(b.end)) {
+                return a.start === b.start && a.end === b.end;
+            }
+            return Number.isFinite(a.startLine) && Number.isFinite(a.endLine) &&
+                Number.isFinite(b.startLine) && Number.isFinite(b.endLine) &&
+                a.startLine === b.startLine && a.endLine === b.endLine;
+        };
+
+        const isCodeRangeStrictlyContaining = (containerRange, innerRange) => {
+            const container = getCodeRangeIdentity(containerRange);
+            const inner = getCodeRangeIdentity(innerRange);
+            if (!container || !inner || container.fileName !== inner.fileName) return false;
+            if (
+                Number.isFinite(container.start) &&
+                Number.isFinite(container.end) &&
+                Number.isFinite(inner.start) &&
+                Number.isFinite(inner.end)
+            ) {
+                return container.start <= inner.start &&
+                    container.end >= inner.end &&
+                    (container.start !== inner.start || container.end !== inner.end);
+            }
+            if (
+                Number.isFinite(container.startLine) &&
+                Number.isFinite(container.endLine) &&
+                Number.isFinite(inner.startLine) &&
+                Number.isFinite(inner.endLine)
+            ) {
+                return container.startLine <= inner.startLine &&
+                    container.endLine >= inner.endLine &&
+                    (container.startLine !== inner.startLine || container.endLine !== inner.endLine);
+            }
+            return false;
+        };
  
         const buildCodeBlockDataFromRange = (codeRange) => {
             if (!codeRange) {
@@ -2701,28 +2793,33 @@ const app = createApp({
         };
 
         const resolveCodeRangesForManualAlignment = async () => {
-            if (callGraphEnabled.value && callGraphResolvedCodeRanges.value.length > 0) {
-                return callGraphResolvedCodeRanges.value.slice();
+            if (manualAlignFromBlock.value) {
+                const block = await resolveCurrentCodeSelectionBlock();
+                if (block) {
+                    const codeRange = await buildCodeRangeFromBlock(block);
+                    return codeRange ? [codeRange] : [];
+                }
             }
-            const block = await resolveCurrentCodeSelectionBlock();
-            if (block) {
-                const codeRange = await buildCodeRangeFromBlock(block);
-                return codeRange ? [codeRange] : [];
-            }
- 
-            if (!currentSelection.value) {
+
+            const selectedCodeRange = await buildCodeRangeFromCurrentCodeSelection();
+            if (!selectedCodeRange) {
                 return [];
             }
-            const { start, end, startLine, endLine } = await resolveCodeSelectionRange(currentSelection.value);
-            return [{
-                documentId: currentSelection.value.documentId,
-                filename: currentSelection.value.documentId,
-                start,
-                end,
-                startLine,
-                endLine,
-                content: currentSelection.value.content
-            }];
+
+            if (callGraphEnabled.value && callGraphResolvedCodeRanges.value.length > 0) {
+                const ranges = [selectedCodeRange];
+                for (const codeRange of callGraphResolvedCodeRanges.value) {
+                    if (!codeRange) continue;
+                    if (isSameCodeRangeByIdentity(codeRange, selectedCodeRange)) continue;
+                    // 选中函数内部几行时，调用图预览通常会返回中心整函数；手动对齐应保留用户真实选区。
+                    if (isCodeRangeStrictlyContaining(codeRange, selectedCodeRange)) continue;
+                    if (ranges.some(existing => isSameCodeRangeByIdentity(existing, codeRange))) continue;
+                    ranges.push(codeRange);
+                }
+                return ranges;
+            }
+
+            return [selectedCodeRange];
         };
  
         const getSuggestedBlockName = (type) => {
@@ -4221,17 +4318,7 @@ const app = createApp({
             if (!currentSelection.value || manualAlignFromBlock.value) {
                 return true;
             }
-            if (
-                currentSelection.value.type === 'code' &&
-                callGraphEnabled.value &&
-                Array.isArray(callGraphResolvedCodeRanges.value) &&
-                callGraphResolvedCodeRanges.value.length > 0
-            ) {
-                return true;
-            }
- 
-            const shouldPersistSelectionBlock = currentSelection.value.type !== 'code' || !(await resolveCurrentCodeSelectionBlock());
-            const blockPayload = shouldPersistSelectionBlock ? await buildBlockDataFromCurrentSelection() : null;
+            const blockPayload = await buildBlockDataFromCurrentSelection();
             if (!blockPayload) {
                 return true;
             }
@@ -5683,7 +5770,15 @@ const app = createApp({
         const prepareCodeSelectionDialog = async (selection, sourceBlock = null) => {
             currentSelection.value = selection;
             resetManualAlignFromBlock();
+            manualAlignFromBlock.value = !!sourceBlock;
             currentCodeSelectionBlock.value = sourceBlock;
+            if (currentSelection.value?.type === 'code') {
+                const resolvedRange = await resolveCodeSelectionRange(currentSelection.value);
+                currentSelection.value = {
+                    ...currentSelection.value,
+                    ...resolvedRange,
+                };
+            }
             await ensureProjectAlignmentsLoaded();
             if (!sourceBlock) {
                 await resolveCurrentCodeSelectionBlock();
@@ -5705,11 +5800,14 @@ const app = createApp({
                 const [start, end] = getSourceDocumentRange(editorDiv, range);
                 if (end - start > 0) {
                     const codeContent = await ensureCurrentRawFileContent('code');
+                    const { startLine, endLine } = convertOffsetToLineNumbers(codeContent, start, end);
                     const selectionPayload = {
                         type: 'code',
                         documentId: selectedCodeFile.value,
                         start,
                         end,
+                        startLine,
+                        endLine,
                         content: codeContent.slice(start, end)
                     };
                     //await ensureProjectAlignmentsLoaded();

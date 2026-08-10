@@ -10,6 +10,7 @@ from callgraph.query_call_graph import query_function_result
 
 from .alignment_config import CALL_GRAPH_DEFAULT_PREVIEW_DEPTH, CALL_GRAPH_MAX_QUERY_DEPTH
 from .db import get_code_blocks_by_project, get_project_id_by_path
+from callgraph.text_encoding import read_source_file
 
 
 CALL_GRAPH_DIR_NAME = "call_graph_repo"
@@ -334,7 +335,7 @@ def resolve_code_block_to_function(
 
 def _read_code_file(project_path: str, file: str) -> str:
     path = Path(project_path).resolve() / "code_repo" / file
-    return path.read_text(encoding="utf-8", errors="ignore")
+    return read_source_file(path)
 
 
 def _offsets_from_line_range(content: str, start_line: int, end_line: int) -> Tuple[int, int]:

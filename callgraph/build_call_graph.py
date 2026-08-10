@@ -32,6 +32,11 @@ from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple
 
 try:
+    from .text_encoding import decode_source_bytes
+except ImportError:  # Supports direct execution: python callgraph/build_call_graph.py
+    from text_encoding import decode_source_bytes
+
+try:
     from tree_sitter import Language, Parser
 except ImportError as exc:  # pragma: no cover - import failure is runtime guidance
     raise SystemExit(
@@ -201,7 +206,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def node_text(source: bytes, node) -> str:
-    return source[node.start_byte : node.end_byte].decode("utf-8", errors="ignore")
+    return decode_source_bytes(source[node.start_byte : node.end_byte])
 
 
 def line_col(node) -> Tuple[int, int]:
@@ -311,7 +316,7 @@ def classify_file_language(path: Path, header_language: str, default_header_lang
 
 def extract_includes(source: bytes) -> List[Dict[str, str]]:
     includes: List[Dict[str, str]] = []
-    for raw_line in source.decode("utf-8", errors="ignore").splitlines():
+    for raw_line in decode_source_bytes(source).splitlines():
         match = INCLUDE_RE.match(raw_line)
         if not match:
             continue
@@ -468,7 +473,7 @@ def function_signature(function_node, source: bytes) -> str:
     body = child_for_field(function_node, "body")
     if body is None:
         return node_text(source, function_node).strip()
-    return source[function_node.start_byte : body.start_byte].decode("utf-8", errors="ignore").strip()
+    return decode_source_bytes(source[function_node.start_byte : body.start_byte]).strip()
 
 
 def collect_parameter_names(function_node, source: bytes) -> Set[str]:
@@ -534,7 +539,7 @@ def assignment_operator(node, source: bytes) -> str:
     if left is None or right is None:
         text = node_text(source, node)
         return "+=" if "+=" in text else "="
-    operator_text = source[left.end_byte : right.start_byte].decode("utf-8", errors="ignore").strip()
+    operator_text = decode_source_bytes(source[left.end_byte : right.start_byte]).strip()
     return operator_text or "="
 
 

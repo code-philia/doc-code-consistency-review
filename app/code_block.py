@@ -4,6 +4,7 @@ import os
 import sys
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, Set
+from callgraph.text_encoding import read_source_file
 # from utils import get_filename_without_extension
 
 index = 0 # 代码块编号，待作为全局变量使用
@@ -44,8 +45,7 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
     if os.path.isdir(file_path):
         return []
     # 读取文件内容，保留原始行（不包括空行）
-    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-        lines = [line.rstrip('\n') for line in f.readlines()]
+    lines = [line.rstrip('\n') for line in read_source_file(file_path).splitlines()]
 
     ext = os.path.splitext(file_path)[1].lower()
     start = 0

@@ -7,6 +7,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 from app.docx_utils import freeze_numbering
+from callgraph.text_encoding import read_source_file
 from doc2md import docToMd
 import random
 import sys
@@ -25,9 +26,8 @@ def sanitize_xml(text):
 def count_lines_of_code(filepath):
     """一个简单的代码行数统计函数，忽略空行"""
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            return len([line for line in f if line.strip()])
-    except (IOError, UnicodeDecodeError):
+        return len([line for line in read_source_file(filepath).splitlines() if line.strip()])
+    except OSError:
         # 如果文件无法读取或解码，则计为0
         return 0
 
