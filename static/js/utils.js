@@ -642,23 +642,37 @@ function calculateHighlightBlockPosition(start, end, type) {
     if (!editorDiv) return null;
 
     const elements = editorDiv.querySelectorAll('[parse-start][parse-end]');
-    let firstElement = null;
-    let lastElement = null;
+    const candidates = [];
 
-    // 找到范围内的第一个和最后一个元素
+    // 找到范围内的候选元素。只使用严格相交，避免相邻块边界被误判为命中。
     for (let i = 0; i < elements.length; i++) {
         const el = elements[i];
-        const elemStart = parseInt(el.getAttribute('parse-start'));
-        const elemEnd = parseInt(el.getAttribute('parse-end'));
+        const elemStart = Number.parseInt(el.getAttribute('parse-start'), 10);
+        const elemEnd = Number.parseInt(el.getAttribute('parse-end'), 10);
 
-        // 检查元素是否与目标范围有重叠
-        if (elemEnd > start && elemStart < end) {
-            if (!firstElement) {
-                firstElement = el;
-            }
-            lastElement = el;
+        if (
+            Number.isFinite(elemStart) &&
+            Number.isFinite(elemEnd) &&
+            elemEnd > elemStart &&
+            elemEnd > start &&
+            elemStart < end
+        ) {
+            candidates.push({ el, start: elemStart, end: elemEnd, index: i });
         }
     }
+
+    const minimalCandidates = candidates.filter(candidate => {
+        return !candidates.some(other => {
+            if (other === candidate) return false;
+            return other.start >= candidate.start &&
+                other.end <= candidate.end &&
+                (other.start > candidate.start || other.end < candidate.end);
+        });
+    });
+
+    const positionedCandidates = minimalCandidates.length ? minimalCandidates : candidates;
+    const firstElement = positionedCandidates[0]?.el || null;
+    const lastElement = positionedCandidates[positionedCandidates.length - 1]?.el || null;
 
     if (!firstElement || !lastElement) return null;
 

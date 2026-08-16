@@ -2034,11 +2034,17 @@ def requirement_decomposition():
                 next_block_id += 1
 
         replace_doc_blocks(project_path, req_blocks)
+        alignment_count = _sync_requirement_block_alignments(
+            project_path,
+            req_blocks,
+            data.get('project_id') or data.get('projectId')
+        )
 
         return jsonify({
             'status': 'success',
             'message': '需求分解完成，结果已保存',
-            'processedCount': processed_count
+            'processedCount': processed_count,
+            'alignmentCount': alignment_count
         })
 
     except Exception as e:
@@ -2054,6 +2060,8 @@ def auto_markdown_split():
 
         if not project_path:
             return jsonify({'status':'error', 'message': '缺少项目路径'})
+        processed_count = 0
+        alignment_count = 0
 
         # 获取项目中的文档文件
         doc_repo_path = os.path.join(project_path, 'doc_repo')
@@ -2110,6 +2118,11 @@ def auto_markdown_split():
                         next_block_id += 1
 
                 replace_doc_blocks(project_path, req_blocks)
+                alignment_count = _sync_requirement_block_alignments(
+                    project_path,
+                    req_blocks,
+                    data.get('project_id') or data.get('projectId')
+                )
         
         else:
         
@@ -2177,11 +2190,17 @@ def auto_markdown_split():
                     next_block_id += 1
 
             replace_doc_blocks(project_path, req_blocks)
+            alignment_count = _sync_requirement_block_alignments(
+                project_path,
+                req_blocks,
+                data.get('project_id') or data.get('projectId')
+            )
 
         return jsonify({
             'status': 'success',
             'message': '自动分解完成，结果已保存',
-            'processedCount': processed_count
+            'processedCount': processed_count,
+            'alignmentCount': alignment_count
         })
 
     except Exception as e:
@@ -3338,6 +3357,12 @@ def _alignment_status(alignment):
     return 'unreviewed'
 
 
+def _is_real_req_code_alignment(alignment):
+    if not alignment or alignment.get('isCodeReview'):
+        return False
+    return bool(alignment.get('is_alignment')) and bool(alignment.get('docRanges')) and bool(alignment.get('codeRanges'))
+
+
 def _sort_alignments(items):
     def _sort_key(item):
         item_id = item.get('id') or ''
@@ -3355,6 +3380,124 @@ def _sort_alignments(items):
         return (0, 1, name, item_id)
 
     return sorted(items, key=_sort_key)
+
+
+def _dedupe_alignment_ranges(ranges, kind):
+    if not isinstance(ranges, list):
+        return []
+
+    deduped = []
+    seen = set()
+    for item in ranges:
+        if not isinstance(item, dict):
+            continue
+        if kind == 'code':
+            file_name = item.get('documentId') or item.get('filename') or item.get('file') or ''
+            line_range = item.get('range') if isinstance(item.get('range'), list) else []
+            start = _safe_int(item.get('startLine'), None)
+            end = _safe_int(item.get('endLine'), None)
+            if start is None and len(line_range) == 2:
+                start = _safe_int(line_range[0], None)
+            if end is None and len(line_range) == 2:
+                end = _safe_int(line_range[1], None)
+            if start is None or end is None:
+                start = _safe_int(item.get('start'), None)
+                end = _safe_int(item.get('end'), None)
+        else:
+            file_name = item.get('documentId') or item.get('filename') or ''
+            start = _safe_int(item.get('start'), None)
+            end = _safe_int(item.get('end'), None)
+
+        key = (file_name, start, end)
+        if not file_name or start is None or end is None or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
+
+
+AUTO_REQ_ALIGNMENT_ID_PREFIX = 'auto_req_align_'
+
+
+def _auto_req_alignment_id(project_id, req_block):
+    filename = req_block.get('filename') or req_block.get('documentId') or ''
+    raw_key = f"{project_id}:{filename}:{req_block.get('start')}:{req_block.get('end')}"
+    return AUTO_REQ_ALIGNMENT_ID_PREFIX + uuid.uuid5(uuid.NAMESPACE_URL, raw_key).hex[:24]
+
+
+def _sync_requirement_block_alignments(project_path, req_blocks, project_id=None):
+    resolved_project_id = resolve_project_id(project_path, project_id)
+    if not resolved_project_id:
+        return 0
+
+    db = get_db()
+    cur = db.cursor()
+    cur.execute(
+        "DELETE FROM alignments WHERE project_id=%s AND align_type='req2code' AND id LIKE %s",
+        (resolved_project_id, AUTO_REQ_ALIGNMENT_ID_PREFIX + '%')
+    )
+
+    values = []
+    for req_block in req_blocks or []:
+        if not isinstance(req_block, dict):
+            continue
+        filename = req_block.get('filename') or req_block.get('documentId')
+        start = req_block.get('start')
+        end = req_block.get('end')
+        if not filename or start is None or end is None:
+            continue
+
+        name = req_block.get('name') or req_block.get('type') or _default_doc_block_name(req_block.get('content') or '')
+        doc_range = {
+            'id': req_block.get('id'),
+            'name': name,
+            'type': req_block.get('type') or name,
+            'filename': filename,
+            'documentId': req_block.get('documentId') or filename,
+            'content': req_block.get('content') or '',
+            'start': start,
+            'end': end
+        }
+        values.append((
+            _auto_req_alignment_id(resolved_project_id, req_block),
+            current_user.user_id,
+            resolved_project_id,
+            name,
+            0,
+            '',
+            json.dumps([doc_range], ensure_ascii=False),
+            json.dumps([], ensure_ascii=False),
+            '',
+            '',
+            0,
+            0,
+            'req2code'
+        ))
+
+    if not values:
+        return 0
+
+    cur.executemany(
+        """
+        INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts, docRanges, codeRanges,
+                               GenReq, GenMermaid, createdAt, updatedAt, is_code_review, is_alignment, align_type)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE
+            name = VALUES(name),
+            isReviewed = VALUES(isReviewed),
+            reviewThoughts = VALUES(reviewThoughts),
+            docRanges = VALUES(docRanges),
+            codeRanges = VALUES(codeRanges),
+            GenReq = VALUES(GenReq),
+            GenMermaid = VALUES(GenMermaid),
+            updatedAt = CURRENT_TIMESTAMP,
+            is_code_review = VALUES(is_code_review),
+            is_alignment = VALUES(is_alignment),
+            align_type = VALUES(align_type)
+        """,
+        values
+    )
+    return len(values)
 
 
 def _paginate_items(items, page, page_size):
@@ -3507,18 +3650,21 @@ def add_alignment():
     is_alignment = 0
     if new_alignment.get('is_alignment'):
         is_alignment = new_alignment.get('is_alignment')
-    if new_alignment.get('docRanges') and new_alignment.get('codeRanges'):
+    doc_ranges = _dedupe_alignment_ranges(new_alignment.get('docRanges', []), 'doc')
+    code_ranges = _dedupe_alignment_ranges(new_alignment.get('codeRanges', []), 'code')
+    new_alignment['docRanges'] = doc_ranges
+    new_alignment['codeRanges'] = code_ranges
+
+    if doc_ranges and code_ranges:
         is_alignment = 1
 
     # --- 自动创建块的逻辑 ---
     try:
         # 1. 处理需求块
-        doc_ranges = new_alignment.get('docRanges', [])
         if doc_ranges:
             append_missing_doc_blocks(project_path, doc_ranges)
 
         # 2. 处理代码块
-        code_ranges = new_alignment.get('codeRanges', [])
         if code_ranges:
             append_missing_code_blocks(project_path, code_ranges)
 
@@ -4238,12 +4384,20 @@ def call_graph_preview():
 def get_alignment_by_id():
     project_path = request.args.get('path')
     alignment_id = request.args.get('id')
+    project_id = request.args.get('project_id')
     if not project_path or not alignment_id:
         return jsonify({'status': 'error', 'message': '缺少项目路径或对齐ID'}), 400
     try:
+        resolved_project_id = resolve_project_id(project_path, project_id)
+        if not resolved_project_id:
+            return jsonify({'status': 'error', 'message': '未找到项目ID'}), 400
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review,is_alignment,align_type FROM alignments WHERE id=%s', (alignment_id,))
+        cur.execute(
+            'SELECT id,name,isReviewed,reviewThoughts,docRanges,codeRanges,is_code_review,is_alignment,align_type '
+            'FROM alignments WHERE id=%s AND project_id=%s',
+            (alignment_id, resolved_project_id)
+        )
         r = cur.fetchone()
         if not r:
             return jsonify({'status': 'error', 'message': '未找到对齐关系'}), 404
@@ -4288,6 +4442,7 @@ def get_doc_blocks():
                 block_end = block.get('end')
                 matched_alignment = next((
                     alignment for alignment in alignments
+                    if _is_real_req_code_alignment(alignment)
                     if any(
                         (doc_range.get('documentId') == block_file or doc_range.get('filename') == block_file) and
                         _ranges_overlap(doc_range.get('start'), doc_range.get('end'), block_start, block_end)
@@ -4372,7 +4527,7 @@ def get_code_blocks():
                     )
                     if not has_overlap:
                         continue
-                    if not alignment.get('isCodeReview') and matched_alignment is None:
+                    if _is_real_req_code_alignment(alignment) and matched_alignment is None:
                         matched_alignment = alignment
                     if alignment.get('isCodeReview') and matched_code_review_alignment is None:
                         matched_code_review_alignment = alignment

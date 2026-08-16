@@ -1399,7 +1399,42 @@
                                                 :key="alignment.id"
                                                 :label="alignment.name"
                                                 :value="alignment.id"
-                                            />
+                                            >
+                                                <el-popover
+                                                    placement="right-start"
+                                                    trigger="hover"
+                                                    popper-class="alignment-option-preview-popper"
+                                                    :width="460"
+                                                    :show-after="220"
+                                                    :hide-after="0"
+                                                >
+                                                    <template #reference>
+                                                        <div class="alignment-option-row">
+                                                            <span class="alignment-option-row__name">${ alignment.name }</span>
+                                                            <span class="alignment-option-row__meta">${ getAlignmentDocPreviewCount(alignment) } 段需求</span>
+                                                        </div>
+                                                    </template>
+                                                    <div class="alignment-option-preview-card">
+                                                        <div class="alignment-option-preview-card__header">
+                                                            <div class="alignment-option-preview-card__title">${ alignment.name }</div>
+                                                            <div class="alignment-option-preview-card__meta">${ alignment.align_type === 'code2req' ? '代码→需求' : '需求→代码' }</div>
+                                                        </div>
+                                                        <div v-if="getAlignmentDocPreviewRanges(alignment).length" class="alignment-option-preview-card__body">
+                                                            <div
+                                                                v-for="range in getAlignmentDocPreviewRanges(alignment)"
+                                                                :key="`${range.documentId || range.filename}-${range.start}-${range.end}`"
+                                                                class="alignment-option-preview-range"
+                                                            >
+                                                                <div class="alignment-option-preview-range__meta">
+                                                                    ${ range.filename || range.documentId || '需求文档' } · ${ range.start }-${ range.end }
+                                                                </div>
+                                                                <div class="doc-content-rendered alignment-option-preview-doc" v-html="renderMarkdownWithLatex(range.content)"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div v-else class="alignment-option-preview-empty">该对齐关系暂无需求内容</div>
+                                                    </div>
+                                                </el-popover>
+                                            </el-option>
                                         </el-select>
                                     </div>
                                     <el-button type="primary" @click="submitManualAction" :disabled="!selectedExistingAlignmentId">添加</el-button>
@@ -2068,8 +2103,8 @@
                                 <div class="call-graph-control-row call-graph-control-row--stacked">
                                     <span class="call-graph-depth-label">查询起点</span>
                                     <el-radio-group v-model="callGraphStartMode" size="small">
-                                        <el-radio-button label="function">当前函数</el-radio-button>
-                                        <el-radio-button label="line">当前行</el-radio-button>
+                                        <el-radio-button label="function">当前行所在函数</el-radio-button>
+                                        <el-radio-button label="line">当前选中行的函数</el-radio-button>
                                     </el-radio-group>
                                 </div>
                                 <div class="call-graph-control-row">
@@ -2127,7 +2162,42 @@
                                                 :key="alignment.id"
                                                 :label="alignment.name"
                                                 :value="alignment.id"
-                                            />
+                                            >
+                                                <el-popover
+                                                    placement="right-start"
+                                                    trigger="hover"
+                                                    popper-class="alignment-option-preview-popper"
+                                                    :width="460"
+                                                    :show-after="220"
+                                                    :hide-after="0"
+                                                >
+                                                    <template #reference>
+                                                        <div class="alignment-option-row">
+                                                            <span class="alignment-option-row__name">${ alignment.name }</span>
+                                                            <span class="alignment-option-row__meta">${ getAlignmentDocPreviewCount(alignment) } 段需求</span>
+                                                        </div>
+                                                    </template>
+                                                    <div class="alignment-option-preview-card">
+                                                        <div class="alignment-option-preview-card__header">
+                                                            <div class="alignment-option-preview-card__title">${ alignment.name }</div>
+                                                            <div class="alignment-option-preview-card__meta">${ alignment.align_type === 'code2req' ? '代码→需求' : '需求→代码' }</div>
+                                                        </div>
+                                                        <div v-if="getAlignmentDocPreviewRanges(alignment).length" class="alignment-option-preview-card__body">
+                                                            <div
+                                                                v-for="range in getAlignmentDocPreviewRanges(alignment)"
+                                                                :key="`${range.documentId || range.filename}-${range.start}-${range.end}`"
+                                                                class="alignment-option-preview-range"
+                                                            >
+                                                                <div class="alignment-option-preview-range__meta">
+                                                                    ${ range.filename || range.documentId || '需求文档' } · ${ range.start }-${ range.end }
+                                                                </div>
+                                                                <div class="doc-content-rendered alignment-option-preview-doc" v-html="renderMarkdownWithLatex(range.content)"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div v-else class="alignment-option-preview-empty">该对齐关系暂无需求内容</div>
+                                                    </div>
+                                                </el-popover>
+                                            </el-option>
                                         </el-select>
                                     </div>
                                     <el-button type="primary" @click="submitManualAction" :disabled="!selectedExistingAlignmentId">添加</el-button>
@@ -2175,8 +2245,8 @@
                             </div>
                             <div v-else-if="!callGraphEnabled" class="call-graph-preview-message">
                                 ${ callGraphStartMode === 'line'
-                                    ? (callGraphBidirectional ? '开启 Call Graph 后展示当前选中行内各函数调用对应的多张双向调用图' : '开启 Call Graph 后展示当前选中行内各函数调用对应的多张调用图')
-                                    : (callGraphBidirectional ? '开启 Call Graph 后展示当前函数双向展开的调用关系' : '开启 Call Graph 后展示当前函数向外展开的调用关系') }
+                                    ? (callGraphBidirectional ? '开启 Call Graph 后展示当前选中行的函数对应的多张双向调用图' : '开启 Call Graph 后展示当前选中行的函数对应的多张调用图')
+                                    : (callGraphBidirectional ? '开启 Call Graph 后展示当前行所在函数双向展开的调用关系' : '开启 Call Graph 后展示当前行所在函数向外展开的调用关系') }
                             </div>
                             <div v-else-if="callGraphLoading" class="call-graph-preview-message">
                                 正在生成调用图预览...

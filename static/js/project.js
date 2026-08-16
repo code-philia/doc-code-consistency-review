@@ -191,8 +191,8 @@ const app = createApp({
         const manualAlignFromBlock = ref(false);
         const currentCodeSelectionBlock = ref(null);
         const projectCallGraphMetadata = ref({ status: 'unavailable', error_message: '', source_file_count: 0 });
-        const callGraphEnabled = ref(false);
-        const callGraphStartMode = ref('function');
+        const callGraphEnabled = ref(true);
+        const callGraphStartMode = ref('line');
         const callGraphBidirectional = ref(false);
         const callGraphDepth = ref(3);
         const callGraphLoading = ref(false);
@@ -328,6 +328,17 @@ const app = createApp({
                 ? existingAlignmentsCode2Req.value
                 : existingAlignmentsReq2Code.value;
         });
+        const getAlignmentDocPreviewRanges = (alignment) => {
+            if (!alignment || !Array.isArray(alignment.docRanges)) {
+                return [];
+            }
+            return alignment.docRanges
+                .filter(range => range && (range.content || range.filename || range.documentId))
+                .slice(0, 3);
+        };
+        const getAlignmentDocPreviewCount = (alignment) => {
+            return Array.isArray(alignment?.docRanges) ? alignment.docRanges.length : 0;
+        };
         const hasExistingManualAlignments = computed(() => {
             return existingAlignmentsReq2Code.value.length > 0 || existingAlignmentsCode2Req.value.length > 0;
         });
@@ -450,22 +461,22 @@ const app = createApp({
             if (status === 'ready') {
                 return callGraphStartMode.value === 'line'
                     ? (callGraphBidirectional.value
-                        ? '将基于当前选中行内出现的函数调用，分别双向展开调用关系'
-                        : '将基于当前选中行内出现的函数调用，分别向外展开调用关系')
+                        ? '将基于当前选中行的函数，分别双向展开调用关系'
+                        : '将基于当前选中行的函数，分别向外展开调用关系')
                     : (callGraphBidirectional.value
-                        ? '将按当前选区定位所属函数，并双向展开调用关系'
-                        : '将按当前选区定位所属函数，并向外展开被调用关系');
+                        ? '将按当前行所在函数双向展开调用关系'
+                        : '将按当前行所在函数向外展开被调用关系');
             }
             if (status === 'building') {
                 return '调用图正在后台重建；开启后会优先检查现有图文件，缺失时自动构建';
             }
             return callGraphStartMode.value === 'line'
                 ? (callGraphBidirectional.value
-                    ? '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选中行内的函数调用分别双向查询'
-                    : '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选中行内的函数调用分别查询')
+                    ? '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选中行的函数分别双向查询'
+                    : '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选中行的函数分别查询')
                 : (callGraphBidirectional.value
-                    ? '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选区定位函数并双向查询调用关系'
-                    : '开启后会先检查调用图文件；若不存在，将自动构建，再按当前选区定位函数并向外查询调用关系');
+                    ? '开启后会先检查调用图文件；若不存在，将自动构建，再按当前行所在函数双向查询调用关系'
+                    : '开启后会先检查调用图文件；若不存在，将自动构建，再按当前行所在函数向外查询调用关系');
         });
         
         // KB Application State
@@ -516,7 +527,12 @@ const app = createApp({
 
         const shouldRenderAlignmentAsAlignedBlock = (alignment) => {
             if (!alignment) return false;
-            return Number(alignment.isCodeReview || 0) !== 1 || !!alignment.isReviewed;
+            if (Number(alignment.isCodeReview || 0) === 1) {
+                return !!alignment.isReviewed;
+            }
+            return Number(alignment.is_alignment || 0) === 1 &&
+                Array.isArray(alignment.docRanges) && alignment.docRanges.length > 0 &&
+                Array.isArray(alignment.codeRanges) && alignment.codeRanges.length > 0;
         };
 
         const getKbSelectionKey = (kb) => {
@@ -1244,7 +1260,8 @@ const app = createApp({
                 const response = await axios.get('/project/alignment-by-id', {
                     params: {
                         path: projectPath.value,
-                        id: alignmentId
+                        id: alignmentId,
+                        project_id: new URLSearchParams(window.location.search).get('project_id')
                     }
                 });
 
@@ -1686,6 +1703,61 @@ const app = createApp({
             return codeRange?.documentId || codeRange?.filename || '';
         };
 
+        const getElementNumericRange = (element) => {
+            if (!element) return null;
+            const start = Number.parseInt(
+                element.getAttribute('data-range-start') || element.getAttribute('parse-start'),
+                10
+            );
+            const end = Number.parseInt(
+                element.getAttribute('data-range-end') || element.getAttribute('parse-end'),
+                10
+            );
+            if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+                return null;
+            }
+            return { start, end };
+        };
+
+        const hasStrictRangeOverlap = (leftStart, leftEnd, rightStart, rightEnd) => {
+            return Math.max(leftStart, rightStart) < Math.min(leftEnd, rightEnd);
+        };
+
+        const pickBestElementForRange = (elements, targetStart, targetEnd, preferredClass = '') => {
+            const uniqueElements = [...new Set(elements || [])];
+            const scored = uniqueElements
+                .map((element, index) => {
+                    const range = getElementNumericRange(element);
+                    if (!range || !hasStrictRangeOverlap(range.start, range.end, targetStart, targetEnd)) {
+                        return null;
+                    }
+                    const overlap = Math.min(range.end, targetEnd) - Math.max(range.start, targetStart);
+                    const exact = range.start === targetStart && range.end === targetEnd;
+                    const preferred = preferredClass && element.classList.contains(preferredClass);
+                    return {
+                        element,
+                        index,
+                        exact,
+                        preferred,
+                        overlap,
+                        length: range.end - range.start,
+                        distance: Math.abs(range.start - targetStart) + Math.abs(range.end - targetEnd)
+                    };
+                })
+                .filter(Boolean);
+
+            scored.sort((a, b) => {
+                if (a.exact !== b.exact) return a.exact ? -1 : 1;
+                if (a.preferred !== b.preferred) return a.preferred ? -1 : 1;
+                if (a.overlap !== b.overlap) return b.overlap - a.overlap;
+                if (a.length !== b.length) return a.length - b.length;
+                if (a.distance !== b.distance) return a.distance - b.distance;
+                return a.index - b.index;
+            });
+
+            return scored[0]?.element || null;
+        };
+
         const getDocPageIndicesForRange = (start, end) => {
             const pages = docPageRanges.value || [];
             if (!pages.length) return [0];
@@ -1720,7 +1792,10 @@ const app = createApp({
             const docPanel = document.querySelector('.content-text-doc');
             const blockElements = docPanel
                 ? Array.from(docPanel.querySelectorAll('.highlight-block[data-type="doc"]'))
-                    .filter(el => parseInt(el.getAttribute('data-range-start')) <= end && parseInt(el.getAttribute('data-range-end')) >= start)
+                    .filter(el => {
+                        const range = getElementNumericRange(el);
+                        return range && hasStrictRangeOverlap(range.start, range.end, start, end);
+                    })
                 : [];
             const highlightElements = findIntersectingHighlightElements(start, end);
             const parseElements = findIntersectingParseElements(start, end);
@@ -2494,8 +2569,8 @@ const app = createApp({
             selectedExistingAlignmentId.value = '';
             newBlockName.value = '';
             currentCodeSelectionBlock.value = null;
-            callGraphEnabled.value = false;
-            callGraphStartMode.value = 'function';
+            callGraphEnabled.value = true;
+            callGraphStartMode.value = 'line';
             callGraphBidirectional.value = false;
             callGraphDepth.value = 3;
             clearCallGraphPreviewState();
@@ -3345,10 +3420,10 @@ const app = createApp({
             // 显示确认对话框
             try {
                 await ElMessageBox.confirm(
-                    '需求分解将清空当前数据库中的所有对齐关系和问题单。是否确认继续？',
+                    '需求分解将替换当前需求块，并重建需求块对应的初始化对齐关系；不会清空代码块或其他对齐关系。是否继续？',
                     '确认需求分解',
                     {
-                        confirmButtonText: '确定清空并分解',
+                        confirmButtonText: '确定分解',
                         cancelButtonText: '取消',
                         type: 'warning',
                         confirmButtonClass: 'el-button--danger'
@@ -3361,24 +3436,16 @@ const app = createApp({
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
-                // 先清空所有结果
-                await axios.post('/api/clear-project-results', {
+                ElMessage.info('开始需求分解...');
+                const response = await axios.post('api/requirement-decomposition',{
                     projectPath: projectPath.value,
                     project_id: projectId
-                });
-                
-                // 刷新界面状态
-                // await fetchAllAlignments(); // 移除 fetchAllAlignments 调用
-                await fetchAlignments();
-                await fetchIssues();
-                
-                ElMessage.info('已清空旧数据，开始需求分解...');
-                const response = await axios.post('api/requirement-decomposition',{
-                    projectPath: projectPath.value
                 });
                 if(response.data.status==='success'){
                     ElMessage.success('需求分解完成！');
                     await loadAndRenderDocBlocks();
+                    await fetchAlignments();
+                    await fetchAllAlignments();
                 }
                 else{
                     ElMessage.error(`需求分解失败: ${response.data.message}`);
@@ -3399,10 +3466,10 @@ const app = createApp({
             // 显示确认对话框
             try {
                 await ElMessageBox.confirm(
-                    '自动分解将清空当前数据库中的所有对齐关系和问题单。是否确认继续？',
+                    '自动分解将替换当前需求块，并重建需求块对应的初始化对齐关系；不会清空代码块或其他对齐关系。是否继续？',
                     '确认自动分解',
                     {
-                        confirmButtonText: '确定清空并分解',
+                        confirmButtonText: '确定分解',
                         cancelButtonText: '取消',
                         type: 'warning',
                         confirmButtonClass: 'el-button--danger'
@@ -3415,21 +3482,15 @@ const app = createApp({
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get('project_id');
-                // 先清空所有结果
-                await axios.post('/api/clear-project-results', {
+                const response = await axios.post('api/auto-markdown-split',{
                     projectPath: projectPath.value,
                     project_id: projectId
-                });
-                
-                await fetchAlignments();
-                await fetchIssues();
-                
-                const response = await axios.post('api/auto-markdown-split',{
-                    projectPath: projectPath.value
                 });
                 if(response.data.status==='success'){
                     ElMessage.success('自动分解完成！');
                     await loadAndRenderDocBlocks();
+                    await fetchAlignments();
+                    await fetchAllAlignments();
                 }
                 else{
                     ElMessage.error(`自动分解失败: ${response.data.message}`);
@@ -3494,10 +3555,10 @@ const app = createApp({
             }
             try {
                 await ElMessageBox.confirm(
-                    '代码分解将清空当前数据库中的所有对齐关系和问题单。是否确认继续？',
+                    '代码分解将替换当前代码块并重建调用图；不会清空需求块或已有对齐关系。是否继续？',
                     '确认代码分解',
                     {
-                        confirmButtonText: '确定清空并分解',
+                        confirmButtonText: '确定分解',
                         cancelButtonText: '取消',
                         type: 'warning',
                         confirmButtonClass: 'el-button--danger'
@@ -3507,17 +3568,6 @@ const app = createApp({
                 return;
             }
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const projectId = urlParams.get('project_id');
-                // 先清空所有结果
-                await axios.post('/api/clear-project-results', {
-                    projectPath: projectPath.value,
-                    project_id: projectId
-                });
-                
-                await fetchAlignments();
-                await fetchIssues();
-                
                 const response = await axios.post('/api/code-decomposition', {
                     projectPath: projectPath.value
                 });
@@ -3528,6 +3578,8 @@ const app = createApp({
                     });
                     ElMessage.success('代码分解完成！');
                     await loadAndRenderCodeBlocks();
+                    await fetchAlignments();
+                    await fetchAllAlignments();
                 } else {
                     ElMessage.error(`代码分解失败: ${response.data.message}`);
                 }
@@ -3588,9 +3640,11 @@ const app = createApp({
             ElMessage.info('未找到需求分解结果，正在进行需求分解...');
 
             let success = false;
+            const projectId = getProjectId();
             try {
                 const respAnno = await axios.post('api/requirement-decomposition', {
-                    projectPath: projectPath.value
+                    projectPath: projectPath.value,
+                    project_id: projectId
                 });
                 if (respAnno.data && respAnno.data.status === 'success') {
                     success = true;
@@ -3602,7 +3656,8 @@ const app = createApp({
             if (!success) {
                 try {
                     const respAuto = await axios.post('api/auto-markdown-split', {
-                        projectPath: projectPath.value
+                        projectPath: projectPath.value,
+                        project_id: projectId
                     });
                     if (respAuto.data && respAuto.data.status === 'success') {
                         success = true;
@@ -3618,6 +3673,8 @@ const app = createApp({
             }
 
             await loadAndRenderDocBlocks();
+            await fetchAlignments();
+            await fetchAllAlignments();
 
             try {
                 const chunksResponse = await axios.get('/api/get-requirement-chunks', {
@@ -5161,7 +5218,11 @@ const app = createApp({
             if (!docRange) return;
             clearDocYellow();
             const candidates = await ensureDocFileAndPageForRange(docRange);
-            const target = candidates.find(el => el.classList.contains('highlight-block')) || candidates[0] || null;
+            const targetStart = Number(docRange.start);
+            const targetEnd = Number(docRange.end);
+            const target = Number.isFinite(targetStart) && Number.isFinite(targetEnd)
+                ? pickBestElementForRange(candidates, targetStart, targetEnd, 'highlight-block')
+                : candidates[0] || null;
             if (target) {
 
                 target.classList.add('linked-yellow');
@@ -5244,6 +5305,9 @@ const app = createApp({
         // 根据文档范围查找对应的对齐关系
         const findAlignmentByDocRange = (rangeStart, rangeEnd) => {
             return alignmentResults.value.find(alignment => {
+                if (!shouldRenderAlignmentAsAlignedBlock(alignment)) {
+                    return false;
+                }
                 return alignment.docRanges && alignment.docRanges.some(docRange =>
                     docRange.documentId === selectedDocFile.value &&
                     // 检查范围是否有交集
@@ -5324,6 +5388,9 @@ const app = createApp({
             const { startLine, endLine } = convertOffsetToLineNumbers(codeFileContent, rangeStart, rangeEnd);
 
             return alignmentResults.value.find(alignment => {
+                if (!shouldRenderAlignmentAsAlignedBlock(alignment)) {
+                    return false;
+                }
                 return alignment.codeRanges && alignment.codeRanges.some(codeRange => {
                     if (codeRange.documentId !== selectedCodeFile.value) return false;
 
@@ -5352,7 +5419,7 @@ const app = createApp({
                 const highlightEnd = parseInt(highlight.getAttribute('data-range-end'));
                 
                 // 检查范围是否有交集：两个范围有交集的条件是 max(start1, start2) < min(end1, end2)
-                if (Math.max(highlightStart, start) < Math.min(highlightEnd, end)) {
+                if (hasStrictRangeOverlap(highlightStart, highlightEnd, start, end)) {
                     intersectingElements.push(highlight);
                 }
             }
@@ -5396,7 +5463,7 @@ const app = createApp({
                 const parseEnd = parseInt(element.getAttribute('parse-end'));
                 
                 // 检查范围是否有交集
-                if (Math.max(parseStart, start) < Math.min(parseEnd, end)) {
+                if (hasStrictRangeOverlap(parseStart, parseEnd, start, end)) {
                     intersectingElements.push(element);
                 }
             }
@@ -5785,6 +5852,10 @@ const app = createApp({
             }
             initializeManualActionState();
             showCodeSelectionDialog.value = true;
+            await nextTick();
+            if (callGraphEnabled.value && currentCodeSelectionSupportsCallGraph.value) {
+                await refreshCallGraphPreview();
+            }
         };
         
         // 处理代码选择
@@ -5822,8 +5893,8 @@ const app = createApp({
         
         const isSameRangeEntry = (existingRange, nextRange) => {
             if (!existingRange || !nextRange) return false;
-            const existingFile = existingRange.documentId || existingRange.filename || '';
-            const nextFile = nextRange.documentId || nextRange.filename || '';
+            const existingFile = existingRange.documentId || existingRange.filename || existingRange.file || '';
+            const nextFile = nextRange.documentId || nextRange.filename || nextRange.file || '';
             if (existingFile !== nextFile) return false;
 
             const existingStart = Number(existingRange.start);
@@ -5835,13 +5906,33 @@ const app = createApp({
                 return existingStart === nextStart && existingEnd === nextEnd;
             }
 
-            const existingStartLine = Number(existingRange.startLine);
-            const existingEndLine = Number(existingRange.endLine);
-            const nextStartLine = Number(nextRange.startLine);
-            const nextEndLine = Number(nextRange.endLine);
+            const existingLineRange = Array.isArray(existingRange.range) ? existingRange.range : [];
+            const nextLineRange = Array.isArray(nextRange.range) ? nextRange.range : [];
+            const existingStartLine = Number.isFinite(Number(existingRange.startLine))
+                ? Number(existingRange.startLine)
+                : Number(existingLineRange[0]);
+            const existingEndLine = Number.isFinite(Number(existingRange.endLine))
+                ? Number(existingRange.endLine)
+                : Number(existingLineRange[1]);
+            const nextStartLine = Number.isFinite(Number(nextRange.startLine))
+                ? Number(nextRange.startLine)
+                : Number(nextLineRange[0]);
+            const nextEndLine = Number.isFinite(Number(nextRange.endLine))
+                ? Number(nextRange.endLine)
+                : Number(nextLineRange[1]);
             return Number.isFinite(existingStartLine) && Number.isFinite(existingEndLine) &&
                 Number.isFinite(nextStartLine) && Number.isFinite(nextEndLine) &&
                 existingStartLine === nextStartLine && existingEndLine === nextEndLine;
+        };
+
+        const dedupeRangeEntries = (ranges = []) => {
+            const result = [];
+            ranges.forEach(range => {
+                if (!range) return;
+                if (result.some(existing => isSameRangeEntry(existing, range))) return;
+                result.push(range);
+            });
+            return result;
         };
         
         // 添加到现有对齐关系
@@ -5864,7 +5955,7 @@ const app = createApp({
                     return;
                 }
 
-                alignment.codeRanges.push(...newRanges);
+                alignment.codeRanges = dedupeRangeEntries([...(alignment.codeRanges || []), ...newRanges]);
             }
 
             showCodeSelectionDialog.value = false;
@@ -5920,7 +6011,7 @@ const app = createApp({
                 return;
             }
 
-            alignment.docRanges.push(docRange);
+            alignment.docRanges = dedupeRangeEntries([...(alignment.docRanges || []), docRange]);
             
             showAlignmentDialog.value = false;
             resetManualAlignFromBlock();
@@ -5957,14 +6048,24 @@ const app = createApp({
                 return;
             }
 
-            const alignment = currentExistingAlignments.value.find(
+            const selectedAlignment = currentExistingAlignments.value.find(
                 item => item.id === selectedExistingAlignmentId.value
             );
-            if (!alignment) {
+            if (!selectedAlignment) {
                 ElMessage.warning('所选对齐关系不存在，请重新选择');
                 return;
             }
-            
+
+            const alignment = await fetchAlignmentById(selectedExistingAlignmentId.value);
+            if (!alignment) {
+                selectedExistingAlignmentId.value = '';
+                await fetchAllAlignments();
+                ElMessage.warning('所选对齐关系已不存在，请重新选择');
+                return;
+            }
+            alignment.docRanges = dedupeRangeEntries(alignment.docRanges || []);
+            alignment.codeRanges = dedupeRangeEntries(alignment.codeRanges || []);
+
             try {
                 await persistCurrentSelectionBlockIfNeeded();
                 await persistCallGraphResolvedBlocksIfNeeded();
@@ -7764,6 +7865,7 @@ const app = createApp({
                         await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&id=${alignment.id}&project_id=${projectId}`);
                         alignmentResults.value.splice(idx, 1);
                         await fetchAlignments(); // Fetch alignments again to sync state
+                        await fetchAllAlignments();
                     } catch (err) {
                         console.error("Error deleting alignment:", err);
                         ElMessage.error(`删除失败: ${err.message}`);
@@ -7779,6 +7881,7 @@ const app = createApp({
                     );
                     // 重新获取对齐关系以更新状态
                     await fetchAlignments();
+                    await fetchAllAlignments();
                 } catch (err) {
                     console.error("Error updating alignment:", err);
                     ElMessage.error(`更新失败: ${err.message}`);
@@ -9817,6 +9920,8 @@ const app = createApp({
             currentCodeSelectionBlock,
             manualActionTab,
             currentExistingAlignments,
+            getAlignmentDocPreviewRanges,
+            getAlignmentDocPreviewCount,
             hasExistingManualAlignments,
             newBlockName,
             manualDocSelectionContent,
