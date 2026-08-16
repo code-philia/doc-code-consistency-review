@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import shutil
 from collections import defaultdict
 from datetime import datetime
 
@@ -10,6 +11,7 @@ from docx import Document
 from docx.oxml import parse_xml, OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt
+from werkzeug.datastructures import FileStorage
 
 from app import create_app
 from app.agent import query_review_result, query_review_result_by_feedback, query_codefile_from_abstract, \
@@ -33,8 +35,9 @@ from app.views import (
     filter_non_abstract_files,
     _get_doc_blocks_for_matching,
     _match_doc_ranges_from_related_reqs,
-    _get_or_build_code_blocks_for_file, SECRET_LEVEL_MAP,
+    _get_or_build_code_blocks_for_file, SECRET_LEVEL_MAP, do_upload_files_logic,
 )
+
 
 celery = Celery(
     'app',
@@ -1339,3 +1342,45 @@ def set_run_font(run, font_name='SimSun', font_size=Pt(10), color=None):
 
     east_asia = east_asia_map.get(font_name, font_name)
     run._element.rPr.rFonts.set(qn('w:eastAsia'), east_asia)
+
+def _update_snapshot(task_id, **fields):
+    """更新 user_task_snapshot，fields 支持 state / title / current_progress / is_running"""
+    if not fields:
+        return
+    sets = ', '.join(f'{k}=%s' for k in fields)
+    db = get_db_celery()
+    cursor = db.cursor()
+    cursor.execute(
+        f"UPDATE user_task_snapshot SET {sets} WHERE task_id=%s",
+        (*fields.values(), task_id)
+    )
+    db.commit()    
+
+@celery.task(bind=True)
+def upload_files_task(self, project_path, file_type, parseDocMethod, temp_files):
+    task_id = self.request.id
+    handles = []
+    try:
+        # ===== 临时文件转回 FileStorage，和 request.files 拿到的对象一样 =====
+        files = []
+        for item in temp_files:
+            fh = open(item['temp_path'], 'rb')
+            handles.append(fh)
+            files.append(FileStorage(stream=fh, filename=item['origin_name']))
+
+        # ===== 跑原处理逻辑 =====
+        do_upload_files_logic(project_path, file_type, files, parseDocMethod, task=self)
+
+        _update_snapshot(task_id, state='SUCCESS', title='处理完成', is_running=0)
+        return {'message': '处理完成'}
+
+    except Exception as e:
+        _update_snapshot(task_id, state='FAILURE', title=str(e), is_running=0)
+        raise
+
+    finally:
+        for fh in handles:
+            fh.close()
+        if temp_files:
+            shutil.rmtree(os.path.dirname(temp_files[0]['temp_path']), ignore_errors=True)
+

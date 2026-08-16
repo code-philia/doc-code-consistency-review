@@ -487,6 +487,16 @@
                         </div>
                     </div>
                 </div>
+                <!-- 文件上传/处理状态提示卡片 -->
+                <div v-if="uploadTaskState.show" class="upload-task-status-card">
+                  <span>${ uploadTaskState.text }</span>
+                  <el-progress
+                    v-if="uploadTaskState.percent !== null"
+                    :percentage="uploadTaskState.percent"
+                    :stroke-width="6"
+                    style="margin-top: 8px;"
+                  ></el-progress>
+                </div>
             </el-splitter-panel>
 
             <el-splitter-panel class="main-content">

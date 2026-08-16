@@ -1,8 +1,8 @@
 import pandas as pd
-import sqlite3
+from sqlalchemy import create_engine
 
 
-def import_user(user_pwd_file, ip_file, db_file):
+def import_user(user_pwd_file, ip_file):
     user_columns = ['id', 'name', 'username', 'password']
     ip_columns = ['id', 'name', 'ip']
 
@@ -12,15 +12,14 @@ def import_user(user_pwd_file, ip_file, db_file):
     df_merged['role'] = ''
     df_merged = df_merged.rename(columns={'id': 'user_id'})
     df_final = df_merged[['user_id', 'name', 'username', 'password', 'ip', 'role']]
-
-    conn = sqlite3.connect(db_file)
+    # print(df_final.head())
+    conn = create_engine('mysql+pymysql://root:123456@localhost:3306/doc_code?charset=utf8mb4')
     df_final.to_sql('user', conn, if_exists='replace', index=False)
-    conn.close()
 
 
-# TODO 运行之后会覆盖原来的数据!!!
+# 运行之后会覆盖原来的数据!!!
 if __name__ == '__main__':
     user_pwd_file = './templates/用户密码表.xlsx'
     ip_file = './templates/IP对应表.xlsx'
-    db_file = 'doc_code_sql.db'
-    import_user(user_pwd_file, ip_file, db_file)
+    # db_file = 'doc_code_sql.db'
+    import_user(user_pwd_file, ip_file)

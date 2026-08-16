@@ -200,6 +200,7 @@ def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=1024
         temperature=temperature,
         top_p=top_p,
         max_tokens=max_tokens,
+        extra_body={"chat_template_kwargs":{"enable_thinking": False,"add_generation_prompt":True}},
     )
     #req = RequestLLM('')
     #res = req.request_qwen_14b_llm_output(message)
@@ -544,30 +545,34 @@ def query_codefile_from_abstract(requirement, file_abstract):
     
     file_list = []
     similarity_results = []
-    if (len(parsed_output) == 1):
-        similarity_results = parsed_output
-        file_list.append(parsed_output[0]['file'])
-    elif (len(parsed_output) > 1):
-        max_sim_results = []
-        max_sim = -1.0
-        for item in parsed_output:
-            if not isinstance(item, dict):
-                continue    
-            if item['similarity'] >= max_sim:
-                max_sim = item['similarity']
-                if item['similarity'] == max_sim:
-                    max_sim_results.append(item)
-                elif item['similarity'] > max_sim:
-                    max_sim_results = []
-                    max_sim_results = [item]
-            if item['similarity'] >= 0.85:
-                similarity_results.append(item)
-                file_list.append(item['file'])
-        if len(similarity_results) == 0:
-           similarity_results = max_sim_results
-           if max_sim_results:
-               file_list.append(max_sim_results[0]['file'])
     
+    try:
+        if (len(parsed_output) == 1):
+            similarity_results = parsed_output
+            file_list.append(parsed_output[0]['file'])
+        elif (len(parsed_output) > 1):
+            max_sim_results = []
+            max_sim = -1.0
+            for item in parsed_output:
+                if not isinstance(item, dict):
+                    continue    
+                if item['similarity'] >= max_sim:
+                    max_sim = item['similarity']
+                    if item['similarity'] == max_sim:
+                        max_sim_results.append(item)
+                    elif item['similarity'] > max_sim:
+                        max_sim_results = []
+                        max_sim_results = [item]
+                if item['similarity'] >= 0.85:
+                    similarity_results.append(item)
+                    file_list.append(item['file'])
+            if len(similarity_results) == 0:
+               similarity_results = max_sim_results
+               if max_sim_results:
+                   file_list.append(max_sim_results[0]['file'])
+    except Exception as e:
+        print(e)
+        return file_list
     
     #print("************")   
     #print(similarity_results)   
@@ -736,27 +741,31 @@ def query_related_code(
         
         #print(related_code_blocks)
         similarity_results = []
-        if (len(related_code_blocks) == 1):
-            similarity_results = related_code_blocks
-        elif (len(related_code_blocks) > 1):
-            max_sim_results = []
-            max_sim = -1.0
-            for item in related_code_blocks:
-                if not isinstance(item, dict):
-                    continue
-                if item['similarity'] >= max_sim:
-                    max_sim = item['similarity']
-                    if item['similarity'] == max_sim:
-                        max_sim_results.append(item)
-                    elif item['similarity'] > max_sim:
-                        max_sim_results = []
-                        max_sim_results = [item]
-                if item['similarity'] >= 0.9:
-                    similarity_results.append(item)
-            if len(similarity_results) == 0:
-               similarity_results = max_sim_results  
         
-        
+        try:
+            if (len(related_code_blocks) == 1):
+                similarity_results = related_code_blocks
+            elif (len(related_code_blocks) > 1):
+                max_sim_results = []
+                max_sim = -1.0
+                for item in related_code_blocks:
+                    if not isinstance(item, dict):
+                        continue
+                    if item['similarity'] >= max_sim:
+                        max_sim = item['similarity']
+                        if item['similarity'] == max_sim:
+                            max_sim_results.append(item)
+                        elif item['similarity'] > max_sim:
+                            max_sim_results = []
+                            max_sim_results = [item]
+                    if item['similarity'] >= 0.9:
+                        similarity_results.append(item)
+                if len(similarity_results) == 0:
+                   similarity_results = max_sim_results  
+        except Exception as e:
+            print(e)
+            return similarity_results
+            
         #print("************")   
         #print(similarity_results)   
         return similarity_results
@@ -932,26 +941,30 @@ def query_related_code_by_feedback(
         
         #print(related_code_blocks)
         similarity_results = []
-        if (len(related_code_blocks) == 1):
-            similarity_results = related_code_blocks
-        elif (len(related_code_blocks) > 1):
-            max_sim_results = []
-            max_sim = -1.0
-            for item in related_code_blocks:
-                if not isinstance(item, dict):
-                    continue
-                if item['similarity'] >= max_sim:
-                    max_sim = item['similarity']
-                    if item['similarity'] == max_sim:
-                        max_sim_results.append(item)
-                    elif item['similarity'] > max_sim:
-                        max_sim_results = []
-                        max_sim_results = [item]
-                if item['similarity'] >= 0.9:
-                    similarity_results.append(item)
-            if len(similarity_results) == 0:
-               similarity_results = max_sim_results  
         
+        try:
+            if (len(related_code_blocks) == 1):
+                similarity_results = related_code_blocks
+            elif (len(related_code_blocks) > 1):
+                max_sim_results = []
+                max_sim = -1.0
+                for item in related_code_blocks:
+                    if not isinstance(item, dict):
+                        continue
+                    if item['similarity'] >= max_sim:
+                        max_sim = item['similarity']
+                        if item['similarity'] == max_sim:
+                            max_sim_results.append(item)
+                        elif item['similarity'] > max_sim:
+                            max_sim_results = []
+                            max_sim_results = [item]
+                    if item['similarity'] >= 0.9:
+                        similarity_results.append(item)
+                if len(similarity_results) == 0:
+                   similarity_results = max_sim_results  
+        except Exception as e:
+            print(e)
+            return similarity_results
         
         #print("************")   
         #print(similarity_results)   
@@ -1459,7 +1472,7 @@ def query_review_result_by_feedback(
     except Exception as e:
         traceback.print_exc()
         print(f"审查过程中出错: {str(e)}")
-        return f"审查过程中发生错误，请在右键菜单选择“审查”，将执行重新审查。", None        
+        return f"审查过程中发生错误（token超限），请在右键菜单选择“审查”，将执行重新审查。", None        
  
  
  
@@ -1607,8 +1620,8 @@ def query_review_result(
         
     except Exception as e:
         print(f"审查过程中出错: {str(e)}")
-        #return f"审查过程中发生错误: {e}", None
-        return f"审查过程中发生错误，请在右键菜单选择“审查”，将执行重新审查。", None 
+        #return f"审查过程中发生错误（token超限）: {e}", None
+        return f"审查过程中发生错误（token超限），请在右键菜单选择“审查”，将执行重新审查。", None 
 
 
 def get_prompt(prompt_type, user_id):

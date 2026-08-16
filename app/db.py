@@ -1,6 +1,6 @@
 import json as pyjson
 import re
-
+import sys
 import pymysql
 from flask import g
 from pymysql.cursors import DictCursor
@@ -395,6 +395,7 @@ def replace_code_blocks(project_path, code_blocks):
 
     values = []
     for block in code_blocks:
+        
         line_range = block.get('range') if isinstance(block.get('range'), list) else []
         start_line = line_range[0] if len(line_range) == 2 else block.get('startLine')
         end_line = line_range[1] if len(line_range) == 2 else block.get('endLine')
