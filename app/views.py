@@ -4,7 +4,9 @@ import threading
 from celery import chain
 from docx.shared import Pt, RGBColor
 from flask_login import login_manager, login_required, current_user
-
+from pathlib import Path
+from typing import Optional
+from .code_block import get_all_code_blocks, get_codefile_blocks
 from utils.kb_permission import kb_perm_required
 from utils.word_parser import preprocess_files
 from .db import (
@@ -86,7 +88,7 @@ from collections import defaultdict
 from sqlalchemy import create_engine
 import pymysql
 
-from .utils import parse_programming_rules, parse_issue_reports, format_rules_for_rag, format_issues_for_rag, read_docx_text
+from .utils import parse_programming_rules, parse_issue_reports, parse_typical_cases, parse_check_lists, format_rules_for_rag, format_issues_for_rag, format_cases_for_rag, read_docx_text
 from .utils import convert_docfile_to_markdown
 from .agent import smart_parse_doc
 
@@ -1158,10 +1160,14 @@ def get_project_metadata():
             kb_type = (raw_type or "other").strip()
             if kb_type in ["rule", "coding_rule", "checklist"]:
                 return "rule"
-            if kb_type in ["issue", "history_issue"]:
+            elif kb_type in ["checklist"]:
+                return "checklist"
+            elif kb_type in ["issue", "history_issue"]:
                 return "issue"
-            if kb_type in ["align", "history_align"]:
+            elif kb_type in ["align", "history_align"]:
                 return "align"
+            elif kb_type in ["typical_case"]:
+                return "typical_case"
             return "other"
 
         def kb_exists(kb_root, kb_name, kb_type):
@@ -1235,12 +1241,16 @@ def save_project_kbs():
     try:
         def normalize_kb_type_for_storage(raw_type):
             kb_type = (raw_type or "other").strip()
-            if kb_type in ["rule", "coding_rule", "checklist"]:
+            if kb_type in ["rule", "coding_rule"]:
                 return "rule"
-            if kb_type in ["issue", "history_issue"]:
+            elif kb_type in ["issue", "history_issue"]:
                 return "issue"
-            if kb_type in ["align", "history_align"]:
+            elif kb_type in ["align", "history_align"]:
                 return "align"
+            elif kb_type in ["checklist"]:
+                return "checklist"
+            elif kb_type in ["typical_case"]:
+                return "typical_case"
             return "other"
 
         normalized_selected_kbs = []
@@ -4126,9 +4136,83 @@ def update_issue_content():
     except Exception as e:
         return jsonify({"status": "error", "message": f"更新问题单失败: {str(e)}"}), 500
 
+
+def detect_repo_language(repo_path: str) -> str:
+    """
+    扫描代码仓库，根据文件后缀判断语言类型。
+    逻辑：
+    1. 遇到 Python/C/C++/Java 等强特征后缀，直接返回。
+    2. 如果遇到 Ada (.adb/.ads) 或 FPGA (.v/.vhd/.sv)，先记录，继续扫描。
+    3. 如果扫描完发现既有 Ada 后缀又有 FPGA 后缀，返回 'FPGA'。
+    4. 如果只有 Ada 后缀，返回 'Ada'。
+    5. 如果只有 FPGA 后缀，返回 'FPGA'。
+    """
+    
+    # 定义文件后缀分类
+    # 1. 强特征语言（一旦遇到直接返回）
+    STRICT_LANG_MAP = {
+        '.py': 'Python',
+        '.c': 'C/C++',
+        '.cpp': 'C/C++',
+        '.cc': 'C/C++',
+        '.h': 'C/C++', 
+        '.hpp': 'C/C++',
+        '.java': 'Java',
+    }
+
+    # 2. 需要特殊逻辑判断的组
+    FPGA_SUFFIXES = {'.v', '.vhd', '.sv', '.vhdl', '.vlog', '.svh'}
+    ADA_SUFFIXES = {'.adb', '.ads'}
+
+    repo_path = Path(repo_path)
+    if not repo_path.exists() or not repo_path.is_dir():
+        raise FileNotFoundError(f"路径不存在或不是目录：{repo_path}")
+
+    # 标记变量
+    has_ada = False
+    has_fpga = False
+    
+    # 用于记录找到的第一个强特征语言，一旦找到直接返回
+    found_strict_lang = None
+
+    # 遍历所有文件 (递归)
+    # 为了效率，我们可以设置一个最大扫描文件数或者一旦找到强特征语言就 break
+    # 但为了逻辑严密（特别是 Ada/FPGA 的判断），我们需要遍历完或者直到找到强特征
+    
+    for file_path in repo_path.rglob('*'):
+        if not file_path.is_file():
+            continue
+            
+        suffix = file_path.suffix.lower()
+        
+        # 1. 检查强特征语言 (Python, C, C++, Java)
+        if suffix in STRICT_LANG_MAP:
+            return STRICT_LANG_MAP[suffix]
+        
+        # 2. 检查 Ada 和 FPGA 特征
+        if suffix in ADA_SUFFIXES:
+            has_ada = True
+        elif suffix in FPGA_SUFFIXES:
+            has_fpga = True
+            
+        # 优化：如果已经找到了强特征语言（虽然上面的 if 已经 return 了，这里是为了逻辑完整性）
+        # 如果既没有强特征，也没有找到 Ada 或 FPGA，继续
+        
+    # 3. 处理 Ada 和 FPGA 的冲突逻辑
+    if has_fpga:
+        # 只要存在 FPGA 后缀 (无论有没有 Ada)，都判定为 FPGA
+        # 根据你的需求：如果存在 .vhd/.v/.sv，就是 FPGA
+        return 'FPGA'
+    elif has_ada:
+        # 只有 Ada 后缀，没有 FPGA 后缀
+        return 'Ada'
+    else:
+        return 'Unknown'        
+        
+        
 @bp.route('/api/code-decomposition', methods=['POST'])
 def code_decomposition():
-    """使用调用图 tree-sitter 解析产物同步代码块和调用图。"""
+    """针对不同类型的代码，使用不同的方法解析和分解。"""
     try:
         data = request.get_json()
         project_path = data.get('projectPath')
@@ -4138,32 +4222,69 @@ def code_decomposition():
         code_repo_path = os.path.join(project_path, 'code_repo')
         if not os.path.exists(code_repo_path):
             return jsonify({'status': 'error', 'message': '代码目录不存在'})
+        
+        # 先判断代码类型
+        lang = detect_repo_language(code_repo_path)
+        print(f"检测到的语言: {lang}")
+        
+        if(lang == 'C/C++'):
+        
+            """针对C/C++代码，使用调用图 tree-sitter 解析产物同步代码块和调用图。"""
+            call_graph_result = build_project_call_graph(project_path)
+            call_graph_metadata = call_graph_result.get('metadata') or get_call_graph_metadata(project_path)
+            call_graph_status = call_graph_metadata.get('status')
+            payload = call_graph_result.get('payload') or {}
+            all_code_blocks = payload.get('code_blocks') or []
 
-        call_graph_result = build_project_call_graph(project_path)
-        call_graph_metadata = call_graph_result.get('metadata') or get_call_graph_metadata(project_path)
-        call_graph_status = call_graph_metadata.get('status')
-        payload = call_graph_result.get('payload') or {}
-        all_code_blocks = payload.get('code_blocks') or []
+            if call_graph_status != 'ready':
+                return jsonify({
+                    'status': 'error',
+                    'message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
+                    'processedCount': 0,
+                    'call_graph_status': call_graph_status,
+                    'call_graph_message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
+                })
 
-        if call_graph_status != 'ready':
+            replace_code_blocks(project_path, all_code_blocks)
+            processed_count = len(all_code_blocks)
+
             return jsonify({
-                'status': 'error',
-                'message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
-                'processedCount': 0,
+                'status': 'success',
+                'message': '代码分解和调用图构建完成，结果已保存',
+                'processedCount': processed_count,
                 'call_graph_status': call_graph_status,
                 'call_graph_message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
             })
+        
+        
+        elif(lang == 'Unknown'):
+            return jsonify({
+                'status': 'failed',
+                'message': '不支持的代码类型',
+                'processedCount': 0,
+                'call_graph_status': 'failed',
+                'call_graph_message': '不支持的代码类型',
+            })
+            
+        
+        else:
+            """针对其他类型代码，使用正则表达式解析。"""
+            all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
+            all_code_blocks = get_all_code_blocks(code_repo_path, all_files)
+            replace_code_blocks(project_path, all_code_blocks)
 
-        replace_code_blocks(project_path, all_code_blocks)
-        processed_count = len(all_code_blocks)
+            processed_count = len(all_code_blocks)
+            
+            #call_graph_result = build_project_call_graph(project_path)
+            #call_graph_metadata = call_graph_result.get('metadata') or get_call_graph_metadata(project_path)
 
-        return jsonify({
-            'status': 'success',
-            'message': '代码分解和调用图构建完成，结果已保存',
-            'processedCount': processed_count,
-            'call_graph_status': call_graph_status,
-            'call_graph_message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
-        })
+            return jsonify({
+                'status': 'success',
+                'message': '代码分解完成，结果已保存',
+                'processedCount': processed_count,
+                'call_graph_status': 'failed',
+                'call_graph_message': '不支持的代码类型',
+            })
         
     except Exception as e:
         traceback.print_exc()
@@ -5621,7 +5742,8 @@ def build_rag_db():
     if uploaded_files:
         for f in uploaded_files:
             if f and f.filename:
-                safe_name = secure_filename(f.filename)
+                #safe_name = secure_filename(f.filename)
+                safe_name = f.filename
                 target = os.path.join(temp_dir, safe_name)
                 if os.path.exists(target):
                     name, ext = os.path.splitext(safe_name)
@@ -5656,11 +5778,15 @@ def build_rag_db():
 
     def resolve_processing_type(raw_type):
         normalized = normalize_kb_type(raw_type)
-        if normalized in ["coding_rule", "checklist"]:
+        if normalized in ["coding_rule", "rule"]:
             return "rule"
-        if normalized == "history_issue":
+        elif normalized in ["checklist"]:
+            return "checklist"
+        elif normalized == "history_issue":
             return "issue"
-        if normalized == "align":
+        elif normalized == "typical_case":
+            return "typical_case"
+        elif normalized == "align":
             return "align"
         return "other"
 
@@ -5724,7 +5850,7 @@ def build_rag_db():
                 "status": "error",
                 "message": "找不到文件",
             })
-
+        
         try:
             json_data = None
 
@@ -5735,7 +5861,7 @@ def build_rag_db():
             if full_path.lower().endswith('.docx'):
                 print(f"[RAG] 解析文档: {full_path}, 类型: {processing_type}")
 
-                # A. 编程规则
+                # 1. 编程规则
                 if processing_type == 'rule':
                     raw_rules = parse_programming_rules(full_path)
                     if not raw_rules:
@@ -5744,7 +5870,7 @@ def build_rag_db():
                     if raw_rules:
                         json_data = format_rules_for_rag(raw_rules)
 
-                # B. 问题单
+                # 2. 问题单
                 elif processing_type == 'issue':
                     raw_issues = parse_issue_reports(full_path)
                     if not raw_issues:
@@ -5753,13 +5879,32 @@ def build_rag_db():
                     if raw_issues:
                         json_data = format_issues_for_rag(raw_issues)
 
-                # C. 其他
-                elif processing_type in ['case', 'other', 'align']:
+                # 3. 对齐知识/其他
+                elif processing_type in ['other', 'align']:
                     doc_text = read_docx_text(full_path)
                     raw_data = smart_parse_doc(doc_text, type='rule')
                     if raw_data:
                         json_data = format_rules_for_rag(raw_data)
-
+                        
+                # 4. 典型案例
+                elif processing_type == 'typical_case':
+                    raw_cases = parse_typical_cases(full_path)
+                    if not raw_cases:
+                        doc_text = read_docx_text(full_path)
+                        raw_cases = smart_parse_doc(doc_text, type='issue')
+                    if raw_cases:
+                        json_data = format_issues_for_rag(raw_cases)
+                
+                # 5. 必查清单
+                elif processing_type == 'checklist':
+                    raw_keys = parse_check_lists(full_path)
+                    if not raw_keys:
+                        doc_text = read_docx_text(full_path)
+                        raw_keys = smart_parse_doc(doc_text, type='issue')
+                    if raw_keys:
+                        json_data = format_cases_for_rag(raw_keys)
+                
+                
             # === JSON 逻辑 ===
             elif full_path.lower().endswith('.json'):
                 with open(full_path, 'r', encoding='utf-8') as f:
@@ -6224,14 +6369,15 @@ def delete_kb_item():
 @kb_perm_required(need="edit")
 def preview_file():
     doc_type = request.form.get('doc_type')
+    #parseMethod = request.form.get('parseMethod')
     use_server_file = request.form.get('use_server_file') == 'true'
-
+    
     # 解析逻辑抽成函数
     def do_parse(target_path):
         # 调用解析逻辑
         preview_data = []
-
-        if doc_type == 'rule':
+        
+        if doc_type == 'rule': # 编码规则解析
             if target_path.endswith('.docx'):
                 # 尝试规则解析
                 rules = parse_programming_rules(target_path)
@@ -6243,7 +6389,7 @@ def preview_file():
                 # 格式化为前端预览
                 preview_data = rules
 
-        elif doc_type == 'issue':
+        elif doc_type == 'issue': # 问题优先解析
             if target_path.endswith('.docx'):
                 issues = parse_issue_reports(target_path)
                 if not issues:
@@ -6251,7 +6397,7 @@ def preview_file():
                     issues = smart_parse_doc(text, type='issue')
                 preview_data = issues
 
-        elif doc_type == 'history_align':
+        elif doc_type == 'align': # 对齐知识解析
             # 历史对齐通常是 JSON
             if target_path.endswith('.json'):
                 with open(target_path, 'r', encoding='utf-8') as f:
@@ -6260,6 +6406,23 @@ def preview_file():
                     if "annotations" in data:
                         preview_data = [{"id": a.get("id"), "content": "历史对齐数据"} for a in data["annotations"][:10]]
 
+        elif doc_type == 'typical_case': # 典型案例解析
+            if target_path.endswith('.docx'):
+                cases = parse_typical_cases(target_path)
+                if not cases:
+                    text = read_docx_text(target_path)
+                    cases = smart_parse_doc(text, type='issue')
+                preview_data = cases
+                
+        elif doc_type == 'checklist': # 必查清单解析
+            if target_path.endswith('.docx'):
+                keys = parse_check_lists(target_path)
+                if not keys:
+                    text = read_docx_text(target_path)
+                    keys = smart_parse_doc(text, type='issue')
+                preview_data = keys
+        
+        
         return preview_data
 
     try:
@@ -6279,8 +6442,7 @@ def preview_file():
 
         else:
             # 模式 B: 上传文件
-            # files = request.files.getlist('file')
-            files = preprocess_files(request.files.getlist('file'))
+            files = request.files.getlist('file')
             if not files or len(files) == 0:
                 return jsonify({"status": "error", "message": "未上传文件"})
 
@@ -6293,8 +6455,10 @@ def preview_file():
                 if not file or file.filename == '':
                     continue
 
-                filename = secure_filename(file.filename)
+                #filename = secure_filename(file.filename)
+                filename = file.filename
                 target_path = os.path.join(temp_dir, filename)
+                files = preprocess_files(request.files.getlist('file'))
                 file.save(target_path)
 
                 preview_data = do_parse(target_path)

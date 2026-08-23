@@ -27,6 +27,7 @@ from .alignment_config import (
     ALIGN_GRAPH_RERANK_TOP_P,
 )
 import traceback
+from transformers import AutoTokenizer
 
 # 从项目根目录加载 .env
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -42,8 +43,15 @@ API_KEY = os.environ.get("API_KEY", "0")
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://192.168.0.68:8000/v1")
 # MODEL_NAME = "/llm"
 
+# API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:6025/v1/")
+# MODEL_NAME = "Qwen3.5-35B"
+
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:1025/v1")
 MODEL_NAME = "qwen3.6-27b"
+
+MAX_TOKENS = 262144
+EXTRA = 500
+MODEL_PATH = '/data02/models/Qwen3.6-27B'
 
 MAX_REQ = 3 # 最大重复次数
 
@@ -169,7 +177,24 @@ def _extract_message_text(message) -> str:
     return ""
 
 
-def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=1024, system_prompt=None):
+   
+
+def count_local_model_tokens(messages, model_path=MODEL_PATH):
+    # 直接加载模型所在的本地路径
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_path, 
+        trust_remote_code=True
+    )
+    
+    encoded = tokenizer.apply_chat_template(
+        messages, 
+        tokenize=True, 
+        add_generation_prompt=False
+    )
+    return len(encoded)
+        
+    
+def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=MAX_TOKENS, system_prompt=None):
     client = OpenAI(
         api_key=API_KEY,
         base_url=API_BASE_URL,
@@ -193,7 +218,15 @@ def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=1024
             })
 
     messages.append({"role": "user", "content": str(message)})
-
+    
+    try:
+        token_num = count_local_model_tokens(messages)
+        #print(f"检测到的token数: {token_num}")
+        max_tokens =  MAX_TOKENS - token_num - EXTRA
+    except Exception:
+        #print(f"无法计算token数，直接估算")
+        max_tokens =  MAX_TOKENS - 5000 - EXTRA
+    
     resp = client.chat.completions.create(
         model=MODEL_NAME,
         messages=messages,

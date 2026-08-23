@@ -14,6 +14,8 @@ import sys
 import zipfile
 import xml.etree.ElementTree as ET
 
+from docx import Document
+from typing import List, Dict, Optional, Tuple
 
 _ILLEGAL_XML_CHARS = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe\uffff]')
 
@@ -816,7 +818,7 @@ def read_docx_text(path):
 
 
 # ==========================================
-# 1. 编程规则解析 (参考你提供的版本逻辑)
+# 1. 编程规则解析 (GJB8114逻辑)
 # ==========================================
 def parse_programming_rules(docx_path, debug=True):
     print("="*60)
@@ -998,6 +1000,256 @@ def parse_issue_reports(docx_path, debug=True):
 
     return all_issues
 
+# ==========================================
+# 3. 典型案例解析
+# ==========================================    
+def parse_typical_cases(docx_path):
+    return 
+
+# ==========================================
+# 4. 必查清单解析
+# ==========================================    
+def parse_check_lists(docx_path: str) -> List[Dict]:
+    """
+    通用代码审查清单解析器
+    自动识别文档中的表格结构和ID前缀，无需硬编码关键词。
+    """
+    try:
+        doc = Document(docx_path)
+    except Exception as e:
+        return [{"error": f"无法读取文件: {str(e)}"}]
+
+    results = []
+    
+     # 1. 动态定位目标表格 (终极版：定位最后一行表头)
+    checklist_data = []
+    target_table = None
+    id_prefix = ""
+    header_row_idx = -1
+
+    # 遍历所有表格
+    for table in doc.tables:
+        if not table.rows:
+            continue
+        
+        # 扫描整个表格，寻找包含“标识”和“审查项”的行
+        # 寻找的是“最后一行”包含关键词的行，以防上面有干扰行
+        last_valid_header_row = -1
+        temp_clean_headers = []
+        temp_idx_id = -1
+        temp_idx_item = -1
+        temp_idx_type = -1
+
+        for r_idx in range(len(table.rows)):
+            row = table.rows[r_idx]
+            # 提取该行所有单元格文本
+            raw_cells = [cell.text.strip() for cell in row.cells]
+            
+            # 清洗：去除空格，转为小写
+            clean_row = [c.replace(' ', '').lower() for c in raw_cells]
+            
+            # 检查是否包含关键列 (兼容“测试项”)
+            has_id = "标识" in clean_row
+            has_item = "审查项" in clean_row or "测试项" in clean_row
+            
+            if has_id and has_item:
+                # 记录这一行作为候选表头
+                last_valid_header_row = r_idx
+                temp_clean_headers = clean_row
+                try:
+                    temp_idx_id = clean_row.index("标识")
+                    if "审查项" in clean_row:
+                        temp_idx_item = clean_row.index("审查项")
+                    else:
+                        temp_idx_item = clean_row.index("测试项")
+                    temp_idx_type = clean_row.index("类型") if "类型" in clean_row else -1
+                except ValueError:
+                    continue
+
+        # 如果找到了表头行
+        if last_valid_header_row != -1:
+            header_row_idx = last_valid_header_row
+            clean_headers = temp_clean_headers
+            idx_id = temp_idx_id
+            idx_item = temp_idx_item
+            idx_type = temp_idx_type
+            target_table = table
+            
+            # 提取 ID 前缀 (从表头行的下一行开始找，跳过可能的空行)
+            # 我们需要找到第一个非空的数据行
+            data_start_found = False
+            for r_idx in range(header_row_idx + 1, len(table.rows)):
+                row = table.rows[r_idx]
+                cells = [cell.text.strip() for cell in row.cells]
+                # 检查是否有有效数据 (ID列非空)
+                if len(cells) > idx_id and cells[idx_id]:
+                    sample_id = cells[idx_id]
+                    match = re.match(r'^([A-Za-z]+\d*)', sample_id)
+                    if match:
+                        id_prefix = match.group(1)
+                    data_start_found = True
+                    break
+            
+            if not id_prefix:
+                # 如果第一行数据也没提取到，尝试在后续所有数据行中找
+                for r_idx in range(header_row_idx + 1, len(table.rows)):
+                    row = table.rows[r_idx]
+                    cells = [cell.text.strip() for cell in row.cells]
+                    if len(cells) > idx_id and cells[idx_id]:
+                        sample_id = cells[idx_id]
+                        match = re.match(r'^([A-Za-z]+\d*)', sample_id)
+                        if match:
+                            id_prefix = match.group(1)
+                            break
+
+            # 提取表格数据 (从表头行的下一行开始)
+            for r_idx in range(header_row_idx + 1, len(table.rows)):
+                row = table.rows[r_idx]
+                cells = [cell.text.strip() for cell in row.cells]
+                
+                # 跳过空行
+                if not any(cells):
+                    continue
+                
+                # 确保行长度足够
+                if len(cells) > max(idx_id, idx_item):
+                    id_val = cells[idx_id]
+                    item_val = cells[idx_item]
+                    
+                    # 过滤空行和备注行
+                    if id_val and not id_val.startswith("注："):
+                        type_val = ""
+                        if idx_type != -1 and len(cells) > idx_type:
+                            type_val = cells[idx_type]
+                        
+                        checklist_data.append({
+                            "category": type_val, # 类型
+                            "id": id_val, # 标识
+                            "content": item_val, # 审查项
+                            "desc": "" # 具体内容
+                        })
+            
+            # 如果在这个表格里找到了数据，就停止遍历其他表格
+            if checklist_data:
+                break 
+
+    if not target_table:
+        print(f"文件 {file_path.name} 中未找到包含“标识”和“审查项”的表格。")
+        return None
+    
+    if not id_prefix:
+        print(f"文件 {file_path.name} 中无法识别出 ID 前缀。")
+
+    # 2. 动态定位“规则简要说明”章节
+    section_start_index = -1
+    for i, para in enumerate(doc.paragraphs):
+        text = para.text.strip()
+        if "规则简要说明" in text or "简要说明" in text:
+            section_start_index = i
+            break
+            
+    if section_start_index == -1:
+        return [{"error": f"未在文档中找到“规则简要说明”章节，请检查文档结构"}]
+
+    # 3. 动态解析说明内容 (严格边界模式 - 修复版)
+    # 【步骤 1：准备 ID 查找表】
+    target_ids = {}
+    for item in checklist_data:
+        raw_id = item["id"]
+        norm_id = raw_id.replace(' ', '').upper()
+        target_ids[norm_id] = raw_id
+
+    if not target_ids:
+        return results
+
+    # 【步骤 2：定义查找函数】
+    def find_id_in_text(text, id_mapping):
+        clean_text = text.replace(' ', '').upper()
+        for norm_id in id_mapping:
+            if norm_id in clean_text:
+                return id_mapping[norm_id], norm_id
+        return None, None
+
+    id_to_content = {}
+    current_id = None
+    current_content_lines = []
+    
+    # 遍历段落
+    for i in range(section_start_index + 1, len(doc.paragraphs)):
+        para = doc.paragraphs[i]
+        text = para.text.strip()
+        
+        if not text:
+            continue
+            
+        # 查找是否包含任何目标 ID
+        matched_original_id, matched_norm_id = find_id_in_text(text, target_ids)
+        
+        if matched_original_id:
+            # 只要发现新 ID，无论它是什么（父级、子级、新系列）
+            # 1. 立即保存上一个 ID 的内容（如果存在）
+            if current_id and current_content_lines:
+                id_to_content[current_id] = "\n".join(current_content_lines)
+                # 清空列表，准备新内容
+                current_content_lines = []
+            
+            # 2. 更新当前 ID
+            current_id = matched_original_id
+            
+            # 3. 提取当前行中 ID 之后的内容作为新 ID 的起始内容
+            # 如果 ID 后面没有内容，current_content_lines 保持为空
+            try:
+                escaped_id = re.escape(matched_original_id)
+                match_obj = re.search(escaped_id, text, re.IGNORECASE)
+                if match_obj:
+                    content_after = text[match_obj.end():].strip()
+                    if content_after:
+                        current_content_lines.append(content_after)
+                    # 如果 content_after 为空，说明这一行只是标题，不添加任何内容到列表中
+                else:
+                    pass
+            except Exception:
+                pass
+
+            continue
+        
+        # 如果当前正在收集内容 (且当前段落不包含任何 ID)
+        if current_id:
+            # 过滤干扰行
+            if "问题单" in text or "XXX检查" in text or "注：" in text:
+                continue
+            
+            # 将当前段落作为内容追加
+            current_content_lines.append(text)
+
+    # 保存最后一个 ID 的内容
+    if current_id and current_content_lines:
+        id_to_content[current_id] = "\n".join(current_content_lines)
+
+    # 4. 关联数据
+    for item in checklist_data:
+        item_id = item["id"]
+        normalized_table_id = item_id.replace(' ', '').upper()
+        
+        content = id_to_content.get(item_id, "")
+        
+        # 兜底逻辑：如果表格里有子项 (FXKZCC1_1)，但说明里只写了父项 (FXKZCC1)
+        if not content:
+            # 提取基础 ID (去掉 _数字)
+            base = item_id
+            if '_' in item_id and item_id.split('_')[-1].isdigit():
+                base = '_'.join(item_id.split('_')[:-1])
+            
+            if base in id_to_content:
+                content = id_to_content[base]
+        
+        if '【' in content:
+            content = '\n'.join(content.splitlines()[1:])
+        item["desc"] = content
+        results.append(item)
+
+    return results
+    
 # 格式化函数 (保持不变)
 def format_rules_for_rag(rules):
     formatted = []
@@ -1030,5 +1282,17 @@ def format_issues_for_rag(issues):
             "category": "问题单",
             "docRanges": [{"content": search_text, "documentId": "issue_doc"}],
             "codeRanges": [{"content": code_text, "documentId": func_name}]
+        })
+    return {"annotations": formatted}
+    
+def format_cases_for_rag(cases):
+    formatted = []
+    for idx, i in enumerate(cases):
+        search_text = f"【问题描述】\n{i.get('content', '')}\n【简要说明】\n{i.get('desc', '')}"
+        formatted.append({
+            "id": i.get('id'),
+            "category": "必查清单",
+            "docRanges": [{"content": search_text, "documentId": "case_doc"}],
+            "codeRanges": [{"content": "", "documentId": ""}]
         })
     return {"annotations": formatted}

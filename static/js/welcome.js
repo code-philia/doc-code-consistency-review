@@ -79,15 +79,15 @@ const app = createApp({
 
         // 知识库类型字段配置 (可扩展)
         const KB_TYPE_SCHEMA = {
-            checklist: {
-                label: '必查清单',
-                contentField: 'detail', // 哪个字段作为检索内容
-                fields: [
-                    { key: 'mark', label: '标识', required: true, type: 'input'},
-                    { key: 'review_item', label: '审查项', required: true, type: 'input'},
-                    { key: 'detail', label: '详情', required: true, type: 'textarea'}
-                ]
-            }
+            // checklist: {
+                // label: '必查清单',
+                // contentField: 'detail', // 哪个字段作为检索内容
+                // fields: [
+                    // { key: 'mark', label: '标识', required: true, type: 'input'},
+                    // { key: 'review_item', label: '审查项', required: true, type: 'input'},
+                    // { key: 'detail', label: '详情', required: true, type: 'textarea'}
+                // ]
+            // }
             // 后续扩展在这里加:
             // coding_rule: {}
         }
@@ -178,7 +178,7 @@ const app = createApp({
             }
             await fetchServerFiles();
         };
-
+        
         const openImportReviewDialog = (lockedKbName = '') => {
             importLockedKbName.value = lockedKbName;
             showImportReviewDialog.value = true;
@@ -197,6 +197,7 @@ const app = createApp({
             return kbList.value.find(kb => kb.name === targetName) || null;
         };
 
+        
         // 开始解析
         const startPreview = async () => {
             const targetKb = resolveTargetKb();
@@ -204,12 +205,47 @@ const app = createApp({
                 ElMessage.warning('请先选择目标知识库');
                 return;
             }
-            importDocType.value = mapKbTypeToPreviewDocType(targetKb.type);
+
+            // 1. 获取解析方法 (从 createKbForm 中读取，如果为空则使用默认值或根据类型推断)
+            // 注意：这里我们优先使用用户在界面上选择的 parse_method
+            let parseMethod = createKbForm.parse_method;
+            
+            // 根据知识库类型自动补全，并确定后端文件解析方式
+
+            const type = targetKb.type;
+            if (['coding_rule', 'rule'].includes(type)) {
+                parseMethod = '编码规则解析'; 
+                importDocType.value = 'rule';
+            }
+            else if (['history_issue', 'issue'].includes(type)) {
+                parseMethod = '问题优先解析'; 
+                importDocType.value = 'issue';
+            }
+            else if (['history_align', 'align'].includes(type)) {
+                parseMethod = '对齐知识解析'; 
+                importDocType.value = 'align';
+            }
+            else if (type === 'typical_case') {
+                parseMethod = '典型案例解析'; 
+                importDocType.value = 'typical_case';
+            }
+            else if (type === 'checklist') {
+                parseMethod = '必查清单解析'; 
+                importDocType.value = 'checklist';
+            }
+            else parseMethod = '默认解析'; // 或者 '通用解析'
+            
+            //根据知识库类型，确定后端文件解析方式
+            //importDocType.value = mapKbTypeToPreviewDocType(targetKb.type);
 
             const formData = new FormData();
             formData.append('doc_type', importDocType.value);
             formData.append('kbName', targetKb.name);
-
+            
+            // 将解析方法添加到 FormData 中发送给后端
+            formData.append('parse_method', parseMethod); 
+            //ElMessage.warning(parseMethod);
+            
             if (fileSourceMode.value === 'server') {
                 if (!selectedServerFile.value) {
                     ElMessage.warning('请选择一个服务器文件');
@@ -227,7 +263,6 @@ const app = createApp({
                 importFileList.value.forEach((item) => {
                     formData.append('file', item.raw);
                 })
-                // formData.append('file', importFileList.value[0].raw);
             }
             
             isUploading.value = true;
@@ -314,12 +349,20 @@ const app = createApp({
             displayItem = {};
             const kbType = row.type || row.kbType || currentKb.value?.type || ''
             const schema = KB_TYPE_SCHEMA[kbType];
+            console.log('schema')
             console.log(schema)
+            console.log('row')
+            console.log(row.meta)
+            
 
             if (schema) {
                 // 有配置的类型, 只显示 schema 里定义的字段
                 if (row.meta && typeof row.meta === 'object') {
+                    console.log('YES')
                     schema.fields.forEach(f => {
+                        console.log(f)
+                        console.log(f.key)
+                        console.log(row.meta[f.key])
                         if (row.meta[f.key] !== undefined && row.meta[f.key] !== ''){
                             displayItem[f.label] = row.meta[f.key]
                         }
@@ -344,8 +387,9 @@ const app = createApp({
                 }
             }
 
-
-
+            
+            console.log('displayItem')
+            console.log(displayItem)
             currentDetailItem.value = displayItem;
             showDetailDialog.value = true;
         };
@@ -773,13 +817,109 @@ const app = createApp({
             security_level: '内部',
             type: 'coding_rule',
             language: '中文',
-            parse_method: '通用解析方法'
+            //parse_method: '通用解析方法'
         });
+        
+        const parseMethodMap = {
+            'coding_rule': '编码规则解析',
+            'history_issue': '问题优先解析',
+            'align': '对齐知识解析',
+            'typical_case': '典型案例解析',
+            'checklist': '必查清单解析',
+            'other': '通用解析方法'
+        };
+        
+        
+        const handleTypeChange = (val) => {
+            createKbForm.parse_method = parseMethodMap[val] || '通用解析方法';
+        };
+        
+        // 初始化时设置一次
+        handleTypeChange(createKbForm.type);    
+        
         const currentKb = ref(null);
         const kbItems = ref([]);
         const currentKbDocument = ref(null);
         const importLockedKbName = ref('');
+        
+        // 监听所在知识库，自动填充解析方法
+        const fillParseMethodByKbName = (kbName) => {
+            if (!kbName) {
+                createKbForm.parse_method = '';
+                return;
+            }
 
+            // 优先从 existingKbsForAppend 查找，找不到再从 kbList 兜底
+            let targetKb = existingKbsForAppend.value.find(kb => kb.name === kbName);
+            if (!targetKb) {
+                targetKb = kbList.value.find(kb => kb.name === kbName);
+            }
+
+            if (targetKb) {
+                const type = targetKb.type;
+                let method = '';
+
+                // 根据类型映射解析方法
+                if (['coding_rule', 'rule'].includes(type)) {
+                    method = '编码规则解析';
+                } else if (['history_issue', 'issue'].includes(type)) {
+                    method = '问题优先解析';
+                } else if (['history_align', 'align'].includes(type)) {
+                    method = '对齐知识解析';
+                } else if (type === 'typical_case') {
+                    method = '典型案例解析';
+                } else if (type === 'checklist') {
+                    method = '必查清单解析';
+                } else {
+                    method = '编码规则解析'; // 默认值
+                }
+
+                createKbForm.parse_method = method;
+            } else {
+                createKbForm.parse_method = '';
+            }
+        };
+        
+         // 使用 watch 监听 importLockedKbName 的变化
+        watch(importLockedKbName, (newVal) => {
+            fillParseMethodByKbName(newVal);
+        }, { immediate: true }); // immediate: true 会在初始化时立即执行一次
+        
+        // 监听知识库选择，自动填充解析方法
+        const onKbSelectChange = (kbName) => {
+            if (!kbName) {
+                createKbForm.parse_method = '';
+                return;
+            }
+
+            // 从 kbList 中查找选中的知识库
+            const targetKb = kbList.value.find(kb => kb.name === kbName);
+            
+            if (targetKb) {
+                const type = targetKb.type;
+                let method = '';
+
+                // 根据类型映射解析方法
+                if (['coding_rule', 'rule'].includes(type)) {
+                    method = '编码规则解析';
+                } else if (['history_issue', 'issue'].includes(type)) {
+                    method = '问题优先解析';
+                } else if (['history_align', 'align'].includes(type)) {
+                    method = '对齐知识解析';
+                } else if (type === 'typical_case') {
+                    method = '典型案例解析';
+                } else if (type === 'checklist') {
+                    method = '必查清单解析';
+                } else {
+                    // 默认值，或者根据需求处理未知类型
+                    method = '编码规则解析'; 
+                }
+
+                createKbForm.parse_method = method;
+            }
+        };
+        
+        
         const fetchKBs = async () => {
             try {
                 const res = await axios.get('/api/list-kbs');
@@ -815,10 +955,17 @@ const app = createApp({
 
         const mapKbTypeToPreviewDocType = (kbType) => {
             const type = (kbType || '').trim();
-            if (['coding_rule', 'checklist', 'rule'].includes(type)) return 'rule';
-            if (['history_issue', 'issue'].includes(type)) return 'issue';
-            if (['history_align', 'align'].includes(type)) return 'history_align';
-            return 'rule';
+            const map = {
+                'checklist': 'checklist',
+                'coding_rule': 'rule',
+                'rule': 'rule',
+                'history_issue': 'issue',
+                'issue': 'issue',
+                'history_align': 'history_align',
+                'align': 'history_align',
+                'typical_case': 'typical_case'
+            };
+            return map[type] || 'rule';
         };
 
         const parseUserList = (value) => {
@@ -835,7 +982,7 @@ const app = createApp({
             createKbForm.security_level = '内部';
             createKbForm.type = 'coding_rule';
             createKbForm.language = '中文';
-            createKbForm.parse_method = '通用解析方法';
+            //createKbForm.parse_method = '通用解析方法';
             permForm.editors = [];
             permForm.viewers = [];
             showCreateKbDialog.value = true;
@@ -1461,6 +1608,9 @@ const app = createApp({
             selectedExistingKb,
             existingKbsForAppend,
             importLockedKbName,
+            onKbSelectChange,
+            fillParseMethodByKbName,
+            handleTypeChange,
             
             // Formatters
             formatDetailValue: (val) => {

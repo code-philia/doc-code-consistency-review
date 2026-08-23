@@ -3093,14 +3093,143 @@
     overscroll-behavior: contain;
 }
 
-.review-right-panel {
+/* .review-right-panel {
     display: flex;
     flex-direction: column;
     padding: 0;
     overflow: hidden;
     border-left: 1px solid #cfd6df;
 }
+ */
+ 
 
+/* 关键修复：强制右栏高度计算和滚动 */
+.review-right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0; /* 保持无 padding，让内容紧贴边框 */
+    overflow: hidden; /* 父级隐藏溢出，让内部滚动 */
+    border-left: 1px solid #cfd6df;
+    min-height: 0; /* 【关键】防止 Flex 子项撑破父级 */
+    height: 100%; /* 强制占满父容器高度 */
+}
+
+/* 强制 Tabs 组件填满右栏 */
+.review-right-panel .review-tabs {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* 强制 Tabs Header 不收缩 */
+.review-right-panel .review-tabs > .el-tabs__header {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 6px 8px 0;
+    background: #eef2f6;
+    border-bottom: 1px solid #cfd6df;
+}
+
+/* 强制 Tabs Content 占据剩余空间 */
+.review-right-panel .review-tabs .el-tabs__content {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden; /* 关键：隐藏溢出 */
+    padding: 8px;
+}
+
+/* 强制 Tab Pane 填满 Content */
+.review-right-panel .el-tab-pane {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* 最终滚动面板 */
+.review-tab-panel {
+    flex: 1;
+    height: 100%;
+    overflow-y: auto !important; /* 强制开启滚动 */
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+    /* 保持其他样式 */
+    padding: 0; 
+}
+
+/* =========================================
+   问题单区域：固定高度 + 自动滚动 (Fixed Height + Scroll)
+   ========================================= */
+
+/* 1. 设置固定高度，但允许内容少时收缩 */
+.review-tab-panel.issues-container {
+    /* 核心：设置最大高度，内容少时不会撑满全屏 */
+    max-height: 600px;  /* 根据你的需求调整这个数值，例如 400px, 500px 等 */
+    
+    /* 如果内容少于 max-height，容器高度会自动适应内容 */
+    height: auto;       
+    min-height: 100px;  /* 设置一个最小高度，避免完全消失 */
+    
+    overflow-y: auto;   /* 内容超过 max-height 时自动滚动 */
+    overflow-x: hidden;
+    
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;      /* 保持 Flex 布局的稳定性 */
+    scrollbar-gutter: stable;
+    
+    /* 确保背景色或边框存在，方便观察边界（可选） */
+    /* background: #fafafa; */
+}
+
+/* 2. 列表容器：保持 Flex 布局，确保子项正常排列 */
+.review-tab-panel.issues-container > div {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 8px; /* 列表整体内边距 */
+    box-sizing: border-box;
+}
+
+/* 3. 问题单卡片：禁止收缩，内容完整显示 */
+.review-tab-panel.issues-container .issue-info {
+    flex-shrink: 0 !important;    /* 禁止压缩 */
+    width: 100%;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+    max-height: none !important;  /* 移除高度限制 */
+    overflow: visible !important; /* 内容可见 */
+}
+
+/* 4. 描述内容：正常换行，不截断 */
+.review-tab-panel.issues-container .issue-summary {
+    max-height: none !important;
+    overflow: visible !important;
+    word-wrap: break-word;
+    word-break: break-all;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+/* 5. 空状态：居中显示 */
+.review-tab-panel.issues-container .empty-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%; /* 在容器高度内居中 */
+    color: #999;
+    font-size: 14px;
+    padding: 20px;
+}
+ 
 .review-left-section {
     flex: none;
     display: flex;

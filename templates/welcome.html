@@ -428,7 +428,7 @@
                                 </el-select>
                             </el-form-item>
                             <el-form-item label="知识库类型" required>
-                                <el-select v-model="createKbForm.type" style="width: 100%;">
+                                <el-select v-model="createKbForm.type" style="width: 100%;" @change="handleTypeChange">
                                     <el-option label="编码规则" value="coding_rule"></el-option>
                                     <el-option label="历史问题" value="history_issue"></el-option>
                                     <el-option label="对齐知识库" value="align"></el-option>
@@ -437,6 +437,15 @@
                                     <el-option label="其他" value="other"></el-option>
                                 </el-select>
                             </el-form-item>
+                            <el-form-item label="解析方法">
+                                <el-select v-model="createKbForm.parse_method" style="width: 100%;">
+                                    <el-option label="编码规则解析" value="编码规则解析"></el-option>
+                                    <el-option label="问题优先解析" value="问题优先解析"></el-option>
+                                    <el-option label="对齐知识解析" value="对齐知识解析"></el-option>
+                                    <el-option label="典型案例解析" value="典型案例解析"></el-option>
+                                    <el-option label="必查清单解析" value="必查清单解析"></el-option>
+                                </el-select>
+                            </el-form-item> 
                             <el-form-item label="编辑权限">
                               <el-popover placement="bottom-start" :width="340" trigger="click">
                                 <template #reference>
@@ -481,13 +490,6 @@
                                 <el-select v-model="createKbForm.language" style="width: 100%;">
                                     <el-option label="中文" value="中文"></el-option>
                                     <el-option label="English" value="English"></el-option>
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item label="解析方法">
-                                <el-select v-model="createKbForm.parse_method" style="width: 100%;">
-                                    <el-option label="通用解析方法" value="通用解析方法"></el-option>
-                                    <el-option label="规则优先解析" value="规则优先解析"></el-option>
-                                    <el-option label="问题优先解析" value="问题优先解析"></el-option>
                                 </el-select>
                             </el-form-item>
                         </el-form>
@@ -590,6 +592,7 @@
                             v-model="selectedExistingKb"
                             placeholder="请选择目标知识库"
                             style="width: 100%;"
+                            @change="onKbSelectChange" 
                         >
                             <el-option
                                 v-for="kb in existingKbsForAppend"
@@ -635,6 +638,15 @@
                             </template>
                         </el-upload>
                     </el-form-item>
+                    <el-form-item label="解析方法">
+                        <el-select v-model="createKbForm.parse_method" style="width: 100%;">
+                            <el-option label="编码规则解析" value="编码规则解析"></el-option>
+                            <el-option label="问题优先解析" value="问题优先解析"></el-option>
+                            <el-option label="对齐知识解析" value="对齐知识解析"></el-option>
+                            <el-option label="典型案例解析" value="典型案例解析"></el-option>
+                            <el-option label="必查清单解析" value="必查清单解析"></el-option>
+                        </el-select>
+                    </el-form-item> 
                 </el-form>
 
                 <div style="margin-top: 20px; text-align: center;">
