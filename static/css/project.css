@@ -340,6 +340,8 @@
 
 .main-content {
     flex: 1;
+    min-width: 0;
+    position: relative;
     display: flex;
     flex-direction: column;
     background-color: white;
@@ -2976,29 +2978,6 @@
     opacity: 0;
 }
 
-/* 审查详情弹窗：商用软件风格重构 */
-.review-detail-dialog.el-dialog,
-.review-detail-dialog .el-dialog {
-    width: min(92vw, 1500px) !important;
-    max-width: 1500px;
-    border-radius: 2px;
-    border: 1px solid #b9c2cc;
-    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
-    overflow: hidden;
-}
-
-.review-detail-dialog .el-dialog__header {
-    padding: 10px 14px;
-    background: #eef2f6;
-    border-bottom: 1px solid #c7d0da;
-}
-
-.review-detail-dialog .el-dialog__body {
-    padding: 10px;
-    background: #f3f5f7;
-    overflow: hidden;
-}
-
 .review-dialog-header {
     display: flex;
     justify-content: space-between;
@@ -3030,40 +3009,6 @@
     margin: 0 2px;
     height: 22px;
     border-color: #c7d0da;
-}
-
-.review-detail-dialog .el-button,
-.review-detail-dialog .action-btn {
-    border-radius: 2px;
-    background: transparent;
-    color: #6b7280;
-    padding: 2px 6px;
-    font-size: 12px;
-    min-height: auto;
-}
-
-.review-detail-dialog .action-btn:hover {
-    background: rgba(0, 0, 0, 0.06);
-    color: #111827;
-}
-
-.review-detail-dialog .el-button {
-    min-height: 28px;
-    padding: 6px 12px;
-    font-weight: 500;
-}
-
-.review-detail-dialog .el-dialog__headerbtn {
-    top: 10px;
-    right: 12px;
-}
-
-.review-detail-dialog .el-dialog__headerbtn .el-dialog__close {
-    color: #4b5563;
-}
-
-.review-detail-dialog .el-dialog__headerbtn .el-dialog__close:hover {
-    color: #111827;
 }
 
 .review-detail-container {
@@ -3293,25 +3238,6 @@
     background: #eef2f6;
     border-bottom: 1px solid #d6dde6;
     font-size: 11px;
-}
-
-.review-detail-dialog .doc-file-info .file-name,
-.review-detail-dialog .code-file-info .file-name {
-    color: #1f2937;
-    font-weight: 600;
-}
-
-.review-detail-dialog .line-range {
-    color: #6b7280;
-}
-
-.review-detail-dialog .doc-content-rendered,
-.review-detail-dialog .review-thoughts-rendered,
-.review-detail-dialog .markdown-content-rendered {
-    padding: 10px;
-    border-radius: 0;
-    font-size: 12px;
-    line-height: 1.6;
 }
 
 .code-toc {
@@ -5140,4 +5066,366 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
   z-index: 3000;
   font-size: 14px;
+}
+
+/* =========================================================
+   对齐关系详情页：工作区级布局
+   ========================================================= */
+.detail-view {
+    display: none;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f3f5f7;
+}
+
+.detail-view-header {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    background: #eef2f6;
+    border-bottom: 1px solid #c7d0da;
+}
+
+.detail-view .review-dialog-header {
+    width: 100%;
+    margin: 0;
+}
+
+.detail-view-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.detail-view-subtitle,
+.detail-panel-meta {
+    color: #6b7280;
+    font-size: 11px;
+}
+
+.detail-view .review-dialog-toolbar {
+    justify-content: flex-end;
+}
+
+.detail-view .el-button,
+.detail-view .action-btn {
+    border-radius: 3px;
+}
+
+.detail-view .review-detail-container {
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    padding: 12px 16px 16px;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.detail-quadrant-splitter,
+.detail-vertical-splitter {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.detail-quadrant-column,
+.detail-quadrant-panel {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.detail-quadrant-column {
+    flex-direction: column;
+}
+
+.detail-quadrant-panel {
+    padding: 8px;
+}
+
+.detail-quadrant-card {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.detail-view .review-left-panel {
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 8px;
+    border: 1px solid #cfd6df;
+    border-radius: 4px;
+    background: #ffffff;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.detail-quadrant-card.review-left-section {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.detail-quadrant-card .doc-ranges-container,
+.detail-quadrant-card .code-ranges-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.detail-view .review-left-section {
+    min-width: 0;
+    border: 1px solid #d6dde6;
+    border-radius: 3px;
+    background: #ffffff;
+}
+
+.detail-view .review-left-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-entry-note {
+    margin-left: auto;
+    color: #7c8794;
+    font-size: 10px;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.code-entry-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+    padding: 2px 6px;
+    border: 1px solid #b9d2ee;
+    border-radius: 3px;
+    background: #edf5ff;
+    color: #2866a3;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.detail-right-panel {
+    display: grid;
+    grid-template-rows: minmax(230px, 0.9fr) minmax(0, 1.1fr);
+    gap: 12px;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.detail-callgraph-panel,
+.detail-review-panel {
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid #cfd6df;
+    border-radius: 4px;
+    background: #ffffff;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.detail-callgraph-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 0 10px;
+    border-bottom: 1px solid #d6dde6;
+    background: #eef2f6;
+}
+
+.detail-panel-heading > div {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.detail-panel-title {
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.detail-panel-title i {
+    margin-right: 5px;
+    color: #2866a3;
+}
+
+.detail-panel-status {
+    flex: 0 0 auto;
+    color: #6b7280;
+    font-size: 10px;
+}
+
+.detail-panel-status--ready {
+    color: #2f855a;
+}
+
+.detail-callgraph-canvas {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #fbfcfe;
+}
+
+.detail-callgraph-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 12px;
+    cursor: grab;
+    touch-action: none;
+    contain: layout paint size;
+    background: radial-gradient(circle at 1px 1px, rgba(219, 228, 241, 0.75) 1px, transparent 0) 0 0 / 24px 24px, #fbfcff;
+}
+
+.detail-callgraph-viewport.is-dragging {
+    cursor: grabbing;
+}
+
+.detail-callgraph-wrapper {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: max-content;
+    height: max-content;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.detail-callgraph-wrapper svg {
+    display: block;
+    width: auto;
+    min-width: 420px;
+    max-width: none;
+    height: auto;
+}
+
+.detail-callgraph-message,
+.detail-view-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: 16px;
+    color: #6b7280;
+    font-size: 12px;
+    text-align: center;
+}
+
+.detail-callgraph-message {
+    flex: 1 1 auto;
+}
+
+.detail-callgraph-message--error {
+    color: #b42318;
+    background: #fff8f7;
+}
+
+.detail-review-panel {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #cfd6df;
+}
+
+.detail-review-panel .review-tabs {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+}
+
+.detail-view .review-detail-container > .detail-right-panel {
+    min-height: 0;
+}
+
+.detail-view .doc-file-info .file-name,
+.detail-view .code-file-info .file-name {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.detail-view .line-range {
+    color: #6b7280;
+}
+
+.detail-view .doc-content-rendered,
+.detail-view .review-thoughts-rendered,
+.detail-view .markdown-content-rendered {
+    padding: 10px;
+    border-radius: 0;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.detail-view-empty {
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 8px;
+    color: #6b7280;
+}
+
+.detail-view-empty i {
+    color: #8ea2b7;
+    font-size: 24px;
+}
+
+@media (max-width: 1100px) {
+    .detail-view .review-detail-container {
+        overflow-y: auto;
+    }
+
+    .detail-view .detail-quadrant-splitter {
+        flex-direction: column;
+    }
+
+    .detail-view .review-left-panel,
+    .detail-right-panel {
+        height: auto;
+        min-height: 420px;
+    }
+
+    .detail-view .review-dialog-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .detail-view .review-dialog-toolbar {
+        justify-content: flex-start;
+        width: 100%;
+    }
 }

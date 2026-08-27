@@ -24,22 +24,28 @@ mermaid.initialize({
  ****************************/
 /**
  * 切换视图
- * @param {string} viewName - 'stats' 或 'alignment'
+ * @param {string} viewName - 'stats'、'alignment' 或 'detail'
  */
 function switchView(viewName) {
     // 隐藏所有视图
-    document.getElementById('statsView').style.display = 'none';
-    document.getElementById('alignmentView').style.display = 'none';
+    ['statsView', 'alignmentView', 'detailView'].forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) element.style.display = 'none';
+    });
 
     // 显示当前视图
     const viewElement = document.getElementById(viewName + 'View');
+    if (!viewElement) return;
     viewElement.style.display = (viewName === 'stats') ? 'block' : 'flex';
     activeView = viewName + 'View';
 
     // 更新按钮状态
-    document.getElementById('statsButton').classList.remove('active');
-    document.getElementById('alignmentButton').classList.remove('active');
-    document.getElementById(viewName + 'Button').classList.add('active');
+    ['statsButton', 'alignmentButton', 'detailButton'].forEach((id) => {
+        const button = document.getElementById(id);
+        if (button) button.classList.remove('active');
+    });
+    const activeButton = document.getElementById(viewName + 'Button');
+    if (activeButton) activeButton.classList.add('active');
 }
 window.switchView = switchView;
 
@@ -207,6 +213,17 @@ const app = createApp({
         const callGraphPanY = ref(0);
         const newAlignmentName = ref('');
         const showReviewDialog = ref(false);
+        const detailCallGraphLoading = ref(false);
+        const detailCallGraphError = ref('');
+        const detailCallGraphMermaid = ref('');
+        const detailCallGraphFunction = ref(null);
+        const detailCallGraphCanvas = ref(null);
+        const detailCallGraphViewport = ref(null);
+        const detailCallGraphWrapper = ref(null);
+        const detailCallGraphZoom = ref(1);
+        const detailCallGraphPanX = ref(0);
+        const detailCallGraphPanY = ref(0);
+        let detailCallGraphRequestSeq = 0;
         const showAlignmentDirectionDialog = ref(false);
         const alignmentDirectionMode = ref('auto');
         const selectedReviewAlignment = ref(null);
@@ -2507,7 +2524,7 @@ const app = createApp({
             }
             try {
                 // 确保对齐视图被激活
-                if (activeView !== 'alignmentView') {
+                if (activeView !== 'alignmentView' && activeView !== 'detailView') {
                     switchView('alignment');
                 }
 
@@ -4643,6 +4660,23 @@ const app = createApp({
             if (source === 'issue' && issue) {
                 selectedIssue.value = issue;
             }
+        };
+
+        const openReviewDetail = async (alignment, context = {}) => {
+            if (!alignment) return;
+            syncReviewDialogContext(context);
+            selectedReviewAlignment.value = alignment;
+            showReviewDialog.value = true;
+            switchView('detail');
+            await nextTick();
+            await loadDetailCallGraph(alignment);
+        };
+
+        const returnToAlignmentView = () => {
+            showReviewDialog.value = false;
+            detailCallGraphRequestSeq += 1;
+            clearDetailCallGraphState();
+            switchView('alignment');
         };
 
         const scrollToIssueInList = (issueId) => {
@@ -8171,17 +8205,18 @@ const app = createApp({
             currentSelectedBlockIndex.value = displayedBlocks.value.findIndex(
                 item => getBlockKey(item, contextMenu.value.selectedBlockType) === getBlockKey(block, contextMenu.value.selectedBlockType)
             );
-            selectedReviewAlignment.value = alignment;
-            showReviewDialog.value = true;
             hideContextMenu();
+            await openReviewDetail(alignment, {
+                source: 'block',
+                block,
+                blockType: contextMenu.value.selectedBlockType
+            });
         };
 
         
         
         const showReviewResult = () => {
-            syncReviewDialogContext({ source: 'alignment' });
-            selectedReviewAlignment.value = contextMenu.value.selectedAlignment;
-            showReviewDialog.value = true;
+            openReviewDetail(contextMenu.value.selectedAlignment, { source: 'alignment' });
             hideContextMenu();
         };
 
@@ -8311,9 +8346,7 @@ const app = createApp({
             try {
                 const targetAlignment = await fetchAlignmentById(issue.alignmentId);
                 if (targetAlignment) {
-                    syncReviewDialogContext({ source: 'issue', issue });
-                    selectedReviewAlignment.value = targetAlignment;
-                    showReviewDialog.value = true;
+                    await openReviewDetail(targetAlignment, { source: 'issue', issue });
                     scrollToIssueInList(issue.id);
                 } else {
                     ElMessage.warning(`未找到ID为 ${issue.alignmentId} 的对齐关系`);
@@ -8610,6 +8643,180 @@ const app = createApp({
             element.innerHTML = '';
             const { svg } = await mermaid.render(`${idPrefix}-${Date.now()}`, mermaidCode);
             element.innerHTML = svg;
+        };
+
+        const clearDetailCallGraphState = () => {
+            detailCallGraphLoading.value = false;
+            detailCallGraphError.value = '';
+            detailCallGraphMermaid.value = '';
+            detailCallGraphFunction.value = null;
+            detailCallGraphZoom.value = 1;
+            detailCallGraphPanX.value = 0;
+            detailCallGraphPanY.value = 0;
+            if (detailCallGraphWrapper.value) {
+                detailCallGraphWrapper.value.innerHTML = '';
+            }
+        };
+
+        const applyDetailCallGraphTransform = () => {
+            if (!detailCallGraphWrapper.value) return;
+            detailCallGraphWrapper.value.style.transform =
+                `translate(${detailCallGraphPanX.value}px, ${detailCallGraphPanY.value}px) scale(${detailCallGraphZoom.value})`;
+        };
+
+        const fitDetailCallGraphToViewport = () => {
+            const viewport = detailCallGraphViewport.value;
+            const wrapper = detailCallGraphWrapper.value;
+            const svg = wrapper?.querySelector('svg');
+            if (!viewport || !wrapper || !svg) return;
+
+            wrapper.style.transform = 'translate(0px, 0px) scale(1)';
+            const svgRect = svg.getBoundingClientRect();
+            const availableWidth = Math.max(viewport.clientWidth - 24, 120);
+            const availableHeight = Math.max(viewport.clientHeight - 24, 120);
+            const scaleX = availableWidth / Math.max(svgRect.width, 1);
+            const scaleY = availableHeight / Math.max(svgRect.height, 1);
+            const nextZoom = Math.max(0.1, Math.min(1, scaleX, scaleY));
+            detailCallGraphZoom.value = nextZoom;
+            detailCallGraphPanX.value = (viewport.clientWidth - svgRect.width * nextZoom) / 2;
+            detailCallGraphPanY.value = (viewport.clientHeight - svgRect.height * nextZoom) / 2;
+            applyDetailCallGraphTransform();
+        };
+
+        const initializeDetailCallGraphViewport = () => {
+            const viewport = detailCallGraphViewport.value;
+            const wrapper = detailCallGraphWrapper.value;
+            const svg = wrapper?.querySelector('svg');
+            if (!viewport || !wrapper || !svg) return;
+
+            svg.removeAttribute('width');
+            svg.style.width = 'auto';
+            svg.style.height = 'auto';
+            svg.style.maxWidth = 'none';
+            svg.style.display = 'block';
+
+            if (!viewport.dataset.bound) {
+                let dragging = false;
+                let startX = 0;
+                let startY = 0;
+                let originX = 0;
+                let originY = 0;
+
+                viewport.addEventListener('wheel', (event) => {
+                    event.preventDefault();
+                    const rect = viewport.getBoundingClientRect();
+                    const mouseX = event.clientX - rect.left;
+                    const mouseY = event.clientY - rect.top;
+                    const oldZoom = detailCallGraphZoom.value;
+                    const nextZoom = Math.max(
+                        0.1,
+                        Math.min(6, oldZoom * (event.deltaY > 0 ? 0.9 : 1.1))
+                    );
+                    const zoomRatio = nextZoom / oldZoom;
+                    detailCallGraphPanX.value = mouseX - (mouseX - detailCallGraphPanX.value) * zoomRatio;
+                    detailCallGraphPanY.value = mouseY - (mouseY - detailCallGraphPanY.value) * zoomRatio;
+                    detailCallGraphZoom.value = nextZoom;
+                    applyDetailCallGraphTransform();
+                }, { passive: false });
+
+                viewport.addEventListener('mousedown', (event) => {
+                    if (event.button !== 0) return;
+                    dragging = true;
+                    startX = event.clientX;
+                    startY = event.clientY;
+                    originX = detailCallGraphPanX.value;
+                    originY = detailCallGraphPanY.value;
+                    viewport.classList.add('is-dragging');
+                });
+
+                window.addEventListener('mousemove', (event) => {
+                    if (!dragging) return;
+                    detailCallGraphPanX.value = originX + event.clientX - startX;
+                    detailCallGraphPanY.value = originY + event.clientY - startY;
+                    applyDetailCallGraphTransform();
+                });
+
+                window.addEventListener('mouseup', () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    viewport.classList.remove('is-dragging');
+                });
+
+                viewport.dataset.bound = 'true';
+            }
+
+            requestAnimationFrame(() => fitDetailCallGraphToViewport());
+        };
+
+        const loadDetailCallGraph = async (alignment = selectedReviewAlignment.value) => {
+            const requestSeq = ++detailCallGraphRequestSeq;
+            clearDetailCallGraphState();
+
+            const codeRange = alignment?.codeRanges?.[0];
+            if (!codeRange) {
+                return;
+            }
+
+            const file = codeRange.filename || codeRange.file || codeRange.documentId || '';
+            const range = Array.isArray(codeRange.range) ? codeRange.range : [];
+            const startLine = Number(codeRange.startLine ?? range[0]);
+            const endLine = Number(codeRange.endLine ?? range[1] ?? startLine);
+            if (!file || !Number.isFinite(startLine) || !Number.isFinite(endLine)) {
+                detailCallGraphError.value = '代码入口缺少有效文件或行号，无法生成调用图。';
+                return;
+            }
+
+            detailCallGraphLoading.value = true;
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const projectId = urlParams.get('project_id');
+                const response = await axios.post('/api/call-graph/preview', {
+                    projectPath: projectPath.value,
+                    project_id: projectId,
+                    file,
+                    startLine,
+                    endLine,
+                    maxDepth: 3,
+                    startMode: 'function',
+                    bidirectional: true,
+                });
+
+                if (requestSeq !== detailCallGraphRequestSeq || selectedReviewAlignment.value?.id !== alignment?.id) {
+                    return;
+                }
+                if (response.data?.status !== 'success') {
+                    detailCallGraphError.value = response.data?.message || '调用图查询失败。';
+                    return;
+                }
+
+                const previews = Array.isArray(response.data.previews) ? response.data.previews : [];
+                const mermaidCode = previews[0]?.mermaid_code || response.data.mermaid_code || '';
+                detailCallGraphFunction.value = response.data.center_function || null;
+                detailCallGraphMermaid.value = mermaidCode;
+                if (!mermaidCode) {
+                    detailCallGraphError.value = '当前代码入口没有可展示的调用关系。';
+                    return;
+                }
+
+                // 结束加载状态后让 Vue 挂载 SVG 容器，再执行 Mermaid 渲染。
+                detailCallGraphLoading.value = false;
+                await nextTick();
+                if (requestSeq !== detailCallGraphRequestSeq) return;
+                await renderMermaidIntoElement(
+                    detailCallGraphWrapper.value,
+                    mermaidCode,
+                    'detail-call-graph'
+                );
+                initializeDetailCallGraphViewport();
+            } catch (error) {
+                if (requestSeq !== detailCallGraphRequestSeq) return;
+                console.error('详情页调用图加载失败:', error);
+                detailCallGraphError.value = error.response?.data?.message || error.message || '调用图加载失败。';
+            } finally {
+                if (requestSeq === detailCallGraphRequestSeq) {
+                    detailCallGraphLoading.value = false;
+                }
+            }
         };
 
         const renderFlowchart = async (flowchartCode) => {
@@ -9048,6 +9255,7 @@ const app = createApp({
             clearReverseRequirementState();
             // 同步更新外部选中状态
             await handleAlignmentItemClick(nextAlignment);
+            await loadDetailCallGraph(nextAlignment);
             if (activeReviewTab.value === 'requirement-reverse') {
                 loadReverseRequirementCache(nextAlignment);
             }
@@ -9086,6 +9294,7 @@ const app = createApp({
                 currentSelectedBlockIndex.value = newIndex;
                 scrollToBlockInSidebar(newIndex);
                 await handleAlignmentItemClick(nextAlignment);
+                await loadDetailCallGraph(nextAlignment);
                 if (activeReviewTab.value === 'requirement-reverse') {
                     loadReverseRequirementCache(nextAlignment);
                 }
@@ -9124,6 +9333,7 @@ const app = createApp({
             clearReverseRequirementState();
             scrollToIssueInList(nextIssue.id);
             await handleAlignmentItemClick(nextAlignment);
+            await loadDetailCallGraph(nextAlignment);
             if (activeReviewTab.value === 'requirement-reverse') {
                 loadReverseRequirementCache(nextAlignment);
             }
@@ -10051,6 +10261,15 @@ const app = createApp({
             selectedReviewAlignment,
             currentReviewIssueId,
             showReviewResult,
+            openReviewDetail,
+            returnToAlignmentView,
+            detailCallGraphLoading,
+            detailCallGraphError,
+            detailCallGraphMermaid,
+            detailCallGraphFunction,
+            detailCallGraphCanvas,
+            detailCallGraphViewport,
+            detailCallGraphWrapper,
             navigateReviewDetail,
             getIssueById,
             getIssuesByAlignmentId,

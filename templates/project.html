@@ -131,6 +131,7 @@
         <div class="view-switcher">
             <button id="alignmentButton" class="view-btn active" onclick="switchView('alignment')">功能视图</button>
             <button id="statsButton" class="view-btn" onclick="switchView('stats')">统计视图</button>
+            <button id="detailButton" class="view-btn" onclick="switchView('detail')">详情视图</button>
         </div>
     </div>
 
@@ -1343,8 +1344,6 @@
                         </template>
                     </div>
                 </div>
-            </el-splitter-panel>
-        </el-splitter>
 
         <el-dialog
             v-model="showAlignmentDialog"
@@ -1762,31 +1761,22 @@
 
         </el-dialog>
 
-        <!-- 审查结果详情弹窗 -->
-        <el-dialog
-            v-model="showReviewDialog"
-            width="1200px"
-            top="2vh"
-            :close-on-click-modal="false"
-            class="review-detail-dialog"
-        >
-            <template #header>
+        <!-- 审查结果详情页，与功能视图、统计视图同级 -->
+        <div id="detailView" class="detail-view">
+            <div class="detail-view-header">
                 <div class="review-dialog-header">
-                    <span class="el-dialog__title review-dialog-title">
-                        <i class="fas fa-search"></i> 需求点：${ selectedReviewAlignment?.name || '未知' }
-                    </span>
+                    <div class="detail-view-heading">
+                        <span class="review-dialog-title">
+                            <i class="fas fa-search"></i> 需求点：${ selectedReviewAlignment?.name || '未选择对齐关系' }
+                        </span>
+                        <span class="detail-view-subtitle">对齐关系详情与调用链路</span>
+                    </div>
 
                     <div class="review-dialog-toolbar">
-
                         <el-button type="success" size="small" @click="addAlignmentToKB">
                             <i class="fas fa-link"></i> 入库(对齐)
                         </el-button>
-
-                        <el-button
-                            type="danger"
-                            size="small"
-                            @click="addIssueToKB"
-                        >
+                        <el-button type="danger" size="small" @click="addIssueToKB">
                             <i class="fas fa-bug"></i> 入库(问题单)
                         </el-button>
                         <el-button
@@ -1794,9 +1784,7 @@
                             type="danger" size="small" @click="deleteDetailAndJumpNext">
                             删除
                         </el-button>
-
                         <el-divider direction="vertical"></el-divider>
-
                         <el-button-group class="review-dialog-nav">
                             <el-button size="small" @click="navigateReviewDetail(-1)">
                                 <i class="fas fa-chevron-left"></i> 上一个
@@ -1805,14 +1793,19 @@
                                 下一个 <i class="fas fa-chevron-right"></i>
                             </el-button>
                         </el-button-group>
+                        <el-button size="small" plain @click="returnToAlignmentView">
+                            <i class="fas fa-arrow-left"></i> 返回功能视图
+                        </el-button>
                     </div>
                 </div>
-            </template>
+            </div>
             <div v-if="selectedReviewAlignment" class="review-detail-container">
-                <!-- 左栏：需求和代码 -->
-                <div class="review-left-panel">
-                    <!-- 需求内容 -->
-                    <div class="review-left-section">
+                <el-splitter class="detail-quadrant-splitter">
+                    <!-- 左列：需求内容 / 关联代码 -->
+                    <el-splitter-panel class="detail-quadrant-column" :min="320" size="50%">
+                        <el-splitter layout="vertical" class="detail-vertical-splitter">
+                            <el-splitter-panel class="detail-quadrant-panel" :min="180" size="50%">
+                                <div class="review-left-section detail-quadrant-card">
                         <h4><i class="fas fa-file-alt"></i> 需求内容</h4>
                         <div
                             v-if="selectedReviewAlignment.docRanges && selectedReviewAlignment.docRanges.length > 1"
@@ -1853,11 +1846,16 @@
                                 <div class="doc-content-rendered" v-html="renderMarkdownWithLatex(range.content)"></div>
                             </div>
                         </div>
-                    </div>
+                                </div>
+                            </el-splitter-panel>
 
+                            <el-splitter-panel class="detail-quadrant-panel" :min="180" size="50%">
                     <!-- 代码信息 -->
-                    <div class="review-left-section" ref="sectionRef">
-                        <h4><i class="fas fa-code"></i> 关联代码</h4>
+                    <div class="review-left-section detail-quadrant-card" ref="sectionRef">
+                        <h4>
+                            <span><i class="fas fa-code"></i> 关联代码</span>
+                            <span class="detail-entry-note">代码入口是调用图查询的起点</span>
+                        </h4>
                         <!-- ============================= 目录导航(2个以上才显示) ============================== -->
                         <div v-if="selectedReviewAlignment.codeRanges?.length > 1"
                              class="code-toc"
@@ -1898,6 +1896,9 @@
                                         <i class="fas fa-file-code"></i>
                                         <span class="file-name">${ range.filename }</span>
                                         <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                                        <span v-if="index === 0" class="code-entry-badge">
+                                            <i class="fas fa-sign-in-alt"></i> 代码入口
+                                        </span>
                                     </div>
 <!--                                    <button class="btn-back" @click="scrollToToc" title="返回目录">-->
 <!--                                        <i class="fas fa-arrow-up"></i> 返回目录-->
@@ -1928,10 +1929,44 @@
 <!--                        </transition>-->
 
                     </div>
-                </div>
+                            </el-splitter-panel>
+                        </el-splitter>
+                    </el-splitter-panel>
 
-                <!-- 右栏：审查过程和问题单 -->
-                <div class="review-right-panel">
+                    <!-- 右列：调用图 / 审查详情 -->
+                    <el-splitter-panel class="detail-quadrant-column" :min="360" size="50%">
+                        <el-splitter layout="vertical" class="detail-vertical-splitter">
+                            <el-splitter-panel class="detail-quadrant-panel" :min="220" size="50%">
+                    <section class="detail-callgraph-panel detail-quadrant-card">
+                        <div class="detail-panel-heading">
+                            <div>
+                                <span class="detail-panel-title"><i class="fas fa-project-diagram"></i> 调用图</span>
+                                <span v-if="detailCallGraphFunction" class="detail-panel-meta">
+                                    当前入口：${ detailCallGraphFunction.name || detailCallGraphFunction.function_name || '当前代码入口' }
+                                </span>
+                            </div>
+                            <span v-if="detailCallGraphLoading" class="detail-panel-status">加载中...</span>
+                            <span v-else-if="!detailCallGraphError && detailCallGraphMermaid" class="detail-panel-status detail-panel-status--ready">已加载</span>
+                        </div>
+                        <div v-if="detailCallGraphError" class="detail-callgraph-message detail-callgraph-message--error">
+                            ${ detailCallGraphError }
+                        </div>
+                        <div v-else-if="detailCallGraphLoading" class="detail-callgraph-message">
+                            正在生成并渲染调用图...
+                        </div>
+                        <div v-else-if="!selectedReviewAlignment.codeRanges?.length" class="detail-callgraph-message">
+                            当前对齐关系没有关联代码，无法生成调用图。
+                        </div>
+                        <div v-else ref="detailCallGraphCanvas" class="detail-callgraph-canvas">
+                            <div ref="detailCallGraphViewport" class="detail-callgraph-viewport">
+                                <div ref="detailCallGraphWrapper" class="detail-callgraph-wrapper"></div>
+                            </div>
+                        </div>
+                    </section>
+                            </el-splitter-panel>
+
+                            <el-splitter-panel class="detail-quadrant-panel" :min="220" size="50%">
+                    <section class="detail-review-panel review-right-panel detail-quadrant-card">
                     <el-tabs v-model="activeReviewTab" type="card" class="review-tabs">
                         <el-tab-pane label="问题单" name="issues">
                             <div v-if="getIssuesByAlignmentId(selectedReviewAlignment.id).length > 0" class="issues-container review-tab-panel">
@@ -2054,9 +2089,20 @@
                             </div>
                         </el-tab-pane>
                     </el-tabs>
-                </div>
+                    </section>
+                            </el-splitter-panel>
+                        </el-splitter>
+                    </el-splitter-panel>
+                </el-splitter>
             </div>
-        </el-dialog>
+            <div v-else class="detail-view-empty">
+                <i class="fas fa-layer-group"></i>
+                <span>请从功能视图选择一个对齐关系查看详情。</span>
+            </div>
+        </div>
+
+            </el-splitter-panel>
+        </el-splitter>
 
         <!-- 代码选择对话框 -->
         <el-dialog
