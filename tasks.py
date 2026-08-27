@@ -2,6 +2,7 @@ import json
 import os
 import time
 import shutil
+import redis
 from collections import defaultdict
 from datetime import datetime
 
@@ -1356,23 +1357,44 @@ def _update_snapshot(task_id, **fields):
     )
     db.commit()    
 
+
+# db2 专门用来放锁，和你的 broker(db0)、结果(db1) 分开
+redis_client = redis.Redis(host='127.0.0.1', port=6379, db=2, decode_responses=True)
+
+
 @celery.task(bind=True)
 def upload_files_task(self, project_path, file_type, parseDocMethod, temp_files):
     task_id = self.request.id
     handles = []
+    # 锁的 key 按项目区分：同项目的任务互相排队，不同项目互不干扰
+    lock_key = f'upload_lock:{project_path}'
+
     try:
-        # ===== 临时文件转回 FileStorage，和 request.files 拿到的对象一样 =====
+        # ===== 包装 FileStorage（不用锁，各任务各转各的） =====
         files = []
         for item in temp_files:
             fh = open(item['temp_path'], 'rb')
             handles.append(fh)
             files.append(FileStorage(stream=fh, filename=item['origin_name']))
 
-        # ===== 跑原处理逻辑 =====
-        do_upload_files_logic(project_path, file_type, files, parseDocMethod, task=self)
+        # 排队时给用户个提示，不然卡片一直显示"排队等待中"也不知道在等啥
+        _update_snapshot(task_id, state='PROCESSING', title='同项目有任务在处理，等待中...')
+
+        # ===== 加锁：同一项目同一时刻只有一个任务在处理 =====
+        # timeout：锁最长持有时间，防任务崩溃锁永远不释放（按你最坏的处理时长估，宁大勿小）
+        # blocking_timeout：排队最长等待时间，超时就抛异常放弃
+        with redis_client.lock(lock_key, timeout=7200, blocking_timeout=7200):
+            # ===== 真正动共享资源（metadata.json、项目目录）的部分才放锁里 =====
+            do_upload_files_logic(project_path, file_type, files, parseDocMethod, task=self)
+        # with 结束自动释放锁
 
         _update_snapshot(task_id, state='SUCCESS', title='处理完成', is_running=0)
         return {'message': '处理完成'}
+
+    except redis.exceptions.LockError:
+        # 排队超时（前面任务跑了 2 小时还没完，基本就是出问题了）
+        _update_snapshot(task_id, state='FAILURE', title='排队超时，请重试', is_running=0)
+        raise
 
     except Exception as e:
         _update_snapshot(task_id, state='FAILURE', title=str(e), is_running=0)

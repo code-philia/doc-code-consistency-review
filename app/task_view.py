@@ -53,23 +53,15 @@ def stop_task(task_id):
 
 @task_bp.route('/api/task-snapshot/<project_id>/<category>', methods=['GET'])
 def get_task_snapshot(project_id, category):
-    user_id = current_user.user_id
-    is_admin = True if current_user.role == 'admin' else False
 
     db = get_db()
     cursor = db.cursor()
-    if is_admin:
-        cursor.execute("""SELECT task_id, next_task_id, task_type, task1_total, task2_total, current_total, 
-                       current_progress, state, title, is_running
-                       FROM user_task_snapshot
-                       WHERE project_id = %s AND task_category = %s
-                       LIMIT 1""", (int(project_id), category))
-    else:
-        cursor.execute("""SELECT task_id, next_task_id, task_type, task1_total, task2_total, current_total, 
-                        current_progress, state, title, is_running
-                        FROM user_task_snapshot
-                        WHERE project_id = %s AND task_category = %s
-                        LIMIT 1""", (int(project_id), category))
+
+    cursor.execute("""SELECT task_id, next_task_id, task_type, task1_total, task2_total, current_total, 
+                    current_progress, state, title, is_running
+                    FROM user_task_snapshot
+                    WHERE project_id = %s AND task_category = %s
+                    ORDER BY id DESC LIMIT 1""", (int(project_id), category))
 
     row = cursor.fetchone()
     if not row:
@@ -115,3 +107,40 @@ def clear_task_snapshot():
         """, (user_id, project_id, category))
 
     return jsonify({'status': 'success'})
+
+
+@task_bp.route('/api/upload-task-running/<int:project_id>', methods=['GET'])
+@login_required
+def upload_task_running(project_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("""
+        SELECT task_id, title FROM user_task_snapshot
+        WHERE project_id = %s AND task_category = 'upload' AND is_running = 1
+        ORDER BY id DESC
+    """, (project_id,))
+    rows = cursor.fetchall()
+    return jsonify({'status': 'success', 'data': [
+        {'taskId': r['task_id'], 'title': r['title']} for r in rows
+    ]})
+
+
+@task_bp.route('/api/upload-task-status/<task_id>', methods=['GET'])
+@login_required
+def upload_task_status(task_id):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("""
+        SELECT state, title, current_progress, is_running
+        FROM user_task_snapshot
+        WHERE task_id = %s LIMIT 1
+    """, (task_id,))
+    row = cursor.fetchone()
+    if not row:
+        return jsonify({'status': 'success', 'data': None})
+    return jsonify({'status': 'success', 'data': {
+        'state': row['state'],
+        'title': row['title'],
+        'currentProgress': row['current_progress'],
+        'isRunning': bool(row['is_running'])
+    }})

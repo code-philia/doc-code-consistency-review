@@ -3,7 +3,7 @@
  ****************************/
 let activeView = 'alignmentView'; // 当前活动视图
 
-const { createApp, ref, onMounted, onUnmounted, onBeforeUnmount, computed, nextTick, watch } = Vue;
+const { createApp, ref, onMounted, onUnmounted, onBeforeUnmount, computed, nextTick, watch, reactive } = Vue;
 const { ElMessage, ElMessageBox, ElLoading } = ElementPlus;
 import {
     regularizeFileContent, renderMarkdown, formatCodeWithLineNumbers, getSourceDocumentRange, convertOffsetToLineNumbers,  generateUUIDLike, updateHighlightPositions, extractPlainTextFromMarkdown, removeAllHighlights,
@@ -59,6 +59,9 @@ const app = createApp({
         /***********************
          * 基础状态
          ***********************/
+        // ================== 文件上传任务状态（多卡片版） ==================
+        const uploadTasks = ref([])   // [{id, taskId, text, percent, timer}]
+        let uploadTaskSeq = 0         // 卡片自增 id
         // 文件上传
         const uploadTaskState = ref({ show: false, text: '', percent: null })
         let uploadPollTimer = null
@@ -3037,6 +3040,7 @@ const app = createApp({
           dialogParseDocMethodVisible.value = false;
         };
 
+        // ================== startUpload：改成功分支和进度回调 ==================
         const startUpload = (fileType, selectionMode, parseDocMethod) => {
           const input = document.createElement('input');
           input.type = 'file';
@@ -3057,41 +3061,46 @@ const app = createApp({
             formData.append('path', projectPath.value);
             formData.append('fileType', fileType);
             formData.append('parseDocMethod', parseDocMethod);
-            formData.append('project_id', getProjectId());          // 【新增】projectId
+            formData.append('project_id', getProjectId());
             for (let i = 0; i < files.length; i++) {
               const path = files[i].webkitRelativePath || files[i].name;
               formData.append('files', files[i], path);
             }
 
-            // 【改】原来的 ElMessage.info('文件正在上传，请稍候...') 换成状态卡片
-            uploadTaskState.value = { show: true, text: '文件上传中...', percent: 0 };
+            // 【改】每次上传创建一张独立卡片
+            const card = reactive({
+              id: ++uploadTaskSeq,
+              taskId: null,
+              text: '文件上传中...',
+              percent: 0,
+              timer: null
+            })
+            uploadTasks.value.push(card)
 
             try {
-              const response = await axios.post('/project/upload-files-async', formData, {   // 【改】异步接口
+              const response = await axios.post('/project/upload-files-async', formData, {
                 headers: {
                   'Content-Type': 'multipart/form-data'
                 },
-                // 【新增】上传进度
                 onUploadProgress: (ev) => {
                   if (ev.total) {
-                    uploadTaskState.value.percent = Math.round(ev.loaded * 100 / ev.total);
+                    card.percent = Math.round(ev.loaded * 100 / ev.total)   // 【改】更新自己的卡片
                   }
                 }
               });
 
-              // 【改】成功只代表"任务已提交"，改为启动轮询
               if (response.data.status === 'success') {
-                console.log('[upload] 任务已提交, task_id = ', response.data.task_id)
-                startUploadPolling();
+                card.taskId = response.data.task_id     // 【改】记录到卡片上
+                startUploadPolling(card)                // 【改】卡片自己轮询
               } else {
-                uploadTaskState.value.show = false;
+                removeUploadTask(card)
                 ElMessageBox.alert(`上传失败: ${response.data.message}`, '提示', {
                   confirmButtonText: '知道了',
                   type: 'error'
                 });
               }
             } catch (err) {
-              uploadTaskState.value.show = false;                     // 【新增】关掉状态卡片
+              removeUploadTask(card)                    // 【改】只移除自己的卡片
               console.error("Error uploading files:", err);
               ElMessageBox.alert(`上传文件时发生网络错误: ${err.message}`, '提示', {
                 confirmButtonText: '知道了',
@@ -3102,71 +3111,66 @@ const app = createApp({
           input.click();
         };
          
-        // ================== 新增：轮询上传任务状态 ==================
-        const startUploadPolling = () => {
-          console.log('[upload] 开始轮询')
-          uploadTaskState.value = { show: true, text: '文档处理中，请稍候...', percent: null }
+        // ================== 轮询：每张卡片一个定时器 ==================
+        const startUploadPolling = (card) => {
+          card.text = '文档处理中，请稍候...'
+          card.percent = null
 
-          clearInterval(uploadPollTimer)
-          uploadPollTimer = setInterval(async () => {
+          card.timer = setInterval(async () => {
             try {
-              const res = await axios.get(`/api/task-snapshot/${getProjectId()}/upload`)
-              console.log('[upload] 轮询返回:', res.data)
+              const res = await axios.get(`/api/upload-task-status/${card.taskId}`)
               const data = res.data.data
-              if (!data) {
-
-                console.log('[upload] 没查到任务记录, 继续等')
-                return
-              }
-              console.log('[upload] state =', data.state, 'isRunning =', data.isRunning)
+              if (!data) return
 
               if (data.state === 'PENDING') {
-                uploadTaskState.value.text = '排队等待中...'
-                uploadTaskState.value.percent = null
+                card.text = '排队等待中...'
+                card.percent = null
               } else if (data.state === 'PROCESSING') {
-                uploadTaskState.value.text = data.title || '文档处理中...'
-                uploadTaskState.value.percent = data.currentProgress ?? null
+                card.text = data.title || '文档处理中...'
+                card.percent = data.currentProgress ?? null
               } else if (data.state === 'SUCCESS') {
-                clearInterval(uploadPollTimer)
-                uploadTaskState.value.show = false
+                removeUploadTask(card)
                 ElMessageBox.alert('文件上传成功！', '提示', {
                   confirmButtonText: '知道了',
                   type: 'success'
                 })
-                // clearUploadSnapshot()
-                await fetchProjectMetadata()          // 原来成功后的刷新挪到这里
+                await fetchProjectMetadata()
               } else if (data.state === 'FAILURE') {
-                clearInterval(uploadPollTimer)
-                uploadTaskState.value.show = false
+                removeUploadTask(card)
                 ElMessageBox.alert(`上传失败: ${data.title || '处理失败'}`, '提示', {
                   confirmButtonText: '知道了',
                   type: 'error'
                 })
-                // clearUploadSnapshot()
               }
             } catch (e) {
-              // 单次轮询失败不清定时器，下一轮再试
               console.error('[upload] 轮询出错:', e)
             }
           }, 2000)
         }
 
-        // ================== 新增：清除上传任务标记 ==================
-        const clearUploadSnapshot = () => {
-          axios.post('/api/task-snapshot/clear', {
-            project_id: getProjectId(),
-            category: 'upload'
-          }).catch(() => {})
+        // ================== 移除卡片（同时清掉它的定时器） ==================
+        const removeUploadTask = (card) => {
+          if (card.timer) {
+            clearInterval(card.timer)
+          }
+          uploadTasks.value = uploadTasks.value.filter(t => t.id !== card.id)
         }
 
-        // ================== 新增：页面加载时恢复上传任务轮询 ==================
+        // ================== 页面加载时恢复所有进行中的上传任务 ==================
         const resumeUploadTaskIfRunning = async () => {
           try {
-            const res = await axios.get(`/api/task-snapshot/${getProjectId()}/upload`)
-            const data = res.data.data
-            if (data && data.isRunning) {
-              startUploadPolling()
-              if (data.title) uploadTaskState.value.text = data.title
+            const res = await axios.get(`/api/upload-task-running/${getProjectId()}`)
+            const list = res.data.data || []
+            for (const item of list) {
+              const card = reactive({
+                id: ++uploadTaskSeq,
+                taskId: item.taskId,
+                text: item.title || '文档处理中...',
+                percent: null,
+                timer: null
+              })
+              uploadTasks.value.push(card)
+              startUploadPolling(card)
             }
           } catch (e) { /* 查询失败不影响页面正常使用 */ }
         }
@@ -7366,7 +7370,7 @@ const app = createApp({
              clearInterval(pollingTimerReverse.value)
              pollingTimerReverse.value = null
          }
-         clearInterval(uploadPollTimer)
+         uploadTasks.value.forEach(t => t.timer && clearInterval(t.timer))
         })
 
         // 从后端加载
@@ -9956,6 +9960,7 @@ const app = createApp({
          ***********************/
         return {
             // 上传文件
+            uploadTasks,
             uploadTaskState,
             // 问题反馈
             isAdmin,

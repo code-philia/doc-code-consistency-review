@@ -5055,7 +5055,7 @@
 }
 
 /* 上传文件进度 */
-.upload-task-status-card {
+.upload-task-status {
   /*position: fixed;*/
   left: 0px;
   bottom: 100px;
