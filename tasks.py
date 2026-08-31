@@ -16,7 +16,8 @@ from werkzeug.datastructures import FileStorage
 
 from app import create_app
 from app.agent import query_review_result, query_review_result_by_feedback, query_codefile_from_abstract, \
-    query_related_code, query_related_code_graph_rerank, query_generated_requirement, query_flow_chart, query_related_requirement
+    query_related_code, query_related_code_graph_rerank, query_generated_requirement, query_flow_chart, \
+    query_related_requirement
 from app.db import (
     get_db_celery,
     append_missing_doc_blocks,
@@ -39,6 +40,10 @@ from app.views import (
     _get_or_build_code_blocks_for_file, SECRET_LEVEL_MAP, do_upload_files_logic,
 )
 
+from celery import group
+
+# db15 专门用来存储group任务状态 存储计数
+r15 = redis.Redis(host='127.0.0.1', port=6379, db=15, decode_responses=True)
 
 celery = Celery(
     'app',
@@ -67,6 +72,28 @@ class ContextTask(celery.Task):
 
 celery.Task = ContextTask
 
+
+def set_redis_count_for_parent(parent_id, total):
+    r15.set(f'parent:{parent_id}:total', total)
+    r15.set(f'parent:{parent_id}:done', 0)
+    r15.set(f'parent:{parent_id}:name', '')
+    r15.set(f'parent:{parent_id}:error', 0)
+    r15.expire(f'parent:{parent_id}:total', 7200)
+    r15.expire(f'parent:{parent_id}:done', 7200)
+    r15.expire(f'parent:{parent_id}:name', 7200)
+    r15.expire(f'parent:{parent_id}:error', 7200)
+
+def set_redis_count_for_child_name(parent_id, item):
+    r15.set(f'parent:{parent_id}:name', item.get('name', 'None'))
+
+def set_redis_count_for_child(parent_id):
+    r15.incr(f'parent:{parent_id}:done')
+
+
+def set_redis_count_for_child_error(parent_id):
+    r15.set(f'parent:{parent_id}:error', 1)
+
+
 def _normalize_kb_type_for_use(raw_type):
     kb_type = (raw_type or "other").strip()
     if kb_type in ("rule", "coding_rule", "checklist"):
@@ -77,12 +104,14 @@ def _normalize_kb_type_for_use(raw_type):
         return "align"
     return "other"
 
+
 def _safe_first_range_field(ranges, field, default=''):
     if isinstance(ranges, list) and ranges:
         first = ranges[0] or {}
         if isinstance(first, dict):
             return first.get(field, default) or default
-    return default	
+    return default
+
 
 def _safe_int(value, default=0):
     try:
@@ -200,8 +229,10 @@ def _expand_code_blocks_with_call_graph(project_path, project_id, seed_blocks):
             )
             for code_range in graph.get('code_ranges') or []:
                 candidate = {
-                    'file': code_range.get('filename') or code_range.get('file') or code_range.get('documentId') or file_name,
-                    'filename': code_range.get('filename') or code_range.get('file') or code_range.get('documentId') or file_name,
+                    'file': code_range.get('filename') or code_range.get('file') or code_range.get(
+                        'documentId') or file_name,
+                    'filename': code_range.get('filename') or code_range.get('file') or code_range.get(
+                        'documentId') or file_name,
                     'documentId': code_range.get('documentId') or code_range.get('filename') or file_name,
                     'range': [code_range.get('startLine'), code_range.get('endLine')],
                     'startLine': code_range.get('startLine'),
@@ -269,7 +300,8 @@ def _code_blocks_to_code_ranges(project_path, blocks):
         seen.add(key)
         code_ranges.append(code_range)
     return code_ranges
-	
+
+
 @celery.task(name="user_bp.task.add")
 def add(x, y):
     time.sleep(10)
@@ -278,7 +310,6 @@ def add(x, y):
 
 @celery.task(bind=True)
 def abstract_code_from_project_task(self, params, code_file_path, user_id):
-    #print('*********1111111*******')
     try:
         project_id = params.get('project_id')
         project_path = params.get('projectPath', '')
@@ -359,6 +390,183 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
         return {'status': False, 'message': str(e)}
 
 
+# 自动审查下 纯代码审查
+@celery.task(bind=True)
+def review_alignment_single_task(self, project_path, project_id, user_id, prompt_type, item, parent_id):
+    try:
+        set_redis_count_for_child_name(parent_id, item)
+        alignment = item['alignment']
+
+        # 获取选定的 knowledge base
+        selected_rule_kbs = []
+        selected_issue_kbs = []
+
+        try:
+            metadata_file = os.path.join(project_path, 'metadata.json')
+            if os.path.exists(metadata_file):
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+                    selected_kbs = metadata.get('selected_kbs', [])
+                    selected_rule_kbs = [kb['name'] for kb in selected_kbs if
+                                         _normalize_kb_type_for_use(kb.get('type')) == 'rule']
+                    selected_issue_kbs = [kb['name'] for kb in selected_kbs if
+                                          _normalize_kb_type_for_use(kb.get('type')) == 'issue']
+        except Exception as e:
+            logger.error(str(e), exc_info=True)
+        # 检索上下文
+        retrieved_rules = []
+        retrieved_issues = []
+
+        doc_ranges = alignment.get('docRanges', [])
+        code_ranges = alignment.get('codeRanges', [])
+
+        # 构造查询文本
+        query_text = ""
+        if doc_ranges:
+            query_text += doc_ranges[0].get('content', '') + "\n"
+        if code_ranges:
+            query_text += code_ranges[0].get('content', '')
+
+        # 检索规则
+        for kb_name in selected_rule_kbs:
+            collection = rag_engine.get_collection('rule', kb_name)
+            if collection:
+                results = collection.query(query_texts=[query_text], n_results=3)
+                if results and results['documents']:
+                    for doc in results['documents'][0]:
+                        retrieved_rules.append(doc)
+
+        # 检索问题单
+        for kb_name in selected_issue_kbs:
+            collection = rag_engine.get_collection('issue', kb_name)
+            if collection:
+                results = collection.query(query_texts=[query_text], n_results=3)
+                if results and results['documents']:
+                    for doc in results['documents'][0]:
+                        retrieved_issues.append(doc)
+
+        # 1. 调用 agent 获取审查结果
+        review_process, issue = query_review_result(
+            doc_ranges,
+            code_ranges,
+            rules=retrieved_rules,
+            issues=retrieved_issues,
+            user_id=user_id,
+            project_path=project_path,
+            prompt_type=prompt_type
+        )
+
+        # 2. 更新对齐关系
+        alignment['isReviewed'] = True
+        alignment['reviewThoughts'] = review_process
+
+        if isinstance(issue, list):
+            issues_list = [x for x in issue if isinstance(x, dict)]
+        elif isinstance(issue, dict):
+            issues_list = [issue]
+        else:
+            issues_list = []
+
+        # 需求反生成
+        # generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+        generated_requirement, mermaid_code = '', ''
+
+        conn = get_db_celery()
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                'INSERT INTO alignments(id,user_id,project_id,name,isReviewed,reviewThoughts,docRanges,codeRanges,'
+                'createdAt,updatedAt,GenReq,GenMermaid,is_code_review) '
+                'VALUES(%s,%s,%s,%s,1,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,%s,%s,%s) '
+                'ON DUPLICATE KEY UPDATE '
+                'isReviewed=1,'
+                'reviewThoughts=VALUES(reviewThoughts),'
+                'GenReq=VALUES(GenReq),'
+                'GenMermaid=VALUES(GenMermaid),'
+                'updatedAt=CURRENT_TIMESTAMP',
+                (
+                    alignment.get('id'),
+                    user_id,
+                    project_id,
+                    alignment.get('name') or '',
+                    alignment.get('reviewThoughts') or '',
+                    json.dumps(doc_ranges or []),
+                    json.dumps(code_ranges or []),
+                    generated_requirement or '',
+                    mermaid_code or '',
+                    0 if not prompt_type else 1
+                )
+            )
+
+            if issues_list:
+                cur.execute(
+                    f"SELECT displayId FROM issues WHERE displayId LIKE 'ISSUE-%' and project_id={project_id}")
+                used = set()
+                for r in cur.fetchall():
+                    disp = r['displayId']
+                    if disp and disp.startswith('ISSUE-'):
+                        try:
+                            used.add(int(disp.split('-')[1]))
+                        except Exception as e:
+                            logger.error(str(e), exc_info=True)
+
+                next_number = (max(used) + 1) if used else 1
+
+                doc_ranges = alignment.get('docRanges', [])
+                if doc_ranges:
+                    content = doc_ranges[0].get('content', '')
+                else:
+                    content = ''
+                brief_req = content or ''
+                brief_code = _safe_first_range_field(alignment.get('codeRanges', []), 'content')
+                related_doc_file = (
+                        item.get('doc_file')
+                        or _safe_first_range_field(alignment.get('docRanges', []), 'filename')
+                        or _safe_first_range_field(alignment.get('codeRanges', []), 'filename')
+                )
+                for one in issues_list:
+                    display_id = f"ISSUE-{next_number:03d}"
+                    next_number += 1
+
+                    severity = one.get('level') or one.get('severity')
+                    title = one.get('summary') or one.get('title') or ''
+                    content = one.get('description') or one.get('content') or ''
+                    status = one.get('status') or 'unconfirmed'
+
+                    cur.execute(
+                        'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
+                        'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,category,createdAt,updatedAt) '
+                        'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
+                        (
+                            user_id,
+                            project_id,
+                            display_id,
+                            alignment.get('id'),
+                            severity,
+                            title,
+                            content,
+                            status,
+                            item['doc_file'],
+                            alignment.get('id'),
+                            brief_req,
+                            brief_code,
+                            alignment.get('align_type') if alignment.get('align_type') else 'codeReview'
+                        )
+                    )
+
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"写入数据库失败: {str(e)}", exc_info=True)
+            set_redis_count_for_child_error(parent_id)
+            return {"status": "error", "message": f"写入数据库失败: {str(e)}"}
+        finally:
+            conn.close()
+        set_redis_count_for_child(parent_id)
+    except BaseException as e:
+        set_redis_count_for_child_error(parent_id)
+
+
 @celery.task(bind=True)
 def review_alignment_task(self, project_path, project_id, user_id, files, prompt_type=None, reviewed_count=None):
     try:
@@ -378,180 +586,16 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
         # print('reviewed_count===============',reviewed_count)
         if not reviewed_count or not isinstance(reviewed_count, int):
             reviewed_count = 0
+
+        task_list = []
+        parent_id = self.request.id
+        set_redis_count_for_parent(parent_id, total)
+
         for i, item in enumerate(result, reviewed_count):
-            alignment = item['alignment']
-            self.update_state(
-                state="PROGRESS",
-                meta={
-                    'current': i,
-                    'total': total,
-                    'name': alignment['name'],
-                    'status': f'任务进行中{i}/{total}...'
-                }
-            )
-            # 获取选定的 knowledge base
-            selected_rule_kbs = []
-            selected_issue_kbs = []
+            sig = review_alignment_single_task.si(project_path, project_id, user_id, prompt_type, item, parent_id)
+            task_list.append(sig)
 
-            try:
-                metadata_file = os.path.join(project_path, 'metadata.json')
-                if os.path.exists(metadata_file):
-                    with open(metadata_file, 'r', encoding='utf-8') as f:
-                        metadata = json.load(f)
-                        selected_kbs = metadata.get('selected_kbs', [])
-                        selected_rule_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'rule']
-                        selected_issue_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'issue']
-            except Exception as e:
-                logger.error(str(e), exc_info=True)
-            # 检索上下文
-            retrieved_rules = []
-            retrieved_issues = []
-
-            doc_ranges = alignment.get('docRanges', [])
-            code_ranges = alignment.get('codeRanges', [])
-
-            # 构造查询文本
-            query_text = ""
-            if doc_ranges:
-                query_text += doc_ranges[0].get('content', '') + "\n"
-            if code_ranges:
-                query_text += code_ranges[0].get('content', '')
-
-            # 检索规则
-            for kb_name in selected_rule_kbs:
-                collection = rag_engine.get_collection('rule', kb_name)
-                if collection:
-                    results = collection.query(query_texts=[query_text], n_results=3)
-                    if results and results['documents']:
-                        for doc in results['documents'][0]:
-                            retrieved_rules.append(doc)
-
-            # 检索问题单
-            for kb_name in selected_issue_kbs:
-                collection = rag_engine.get_collection('issue', kb_name)
-                if collection:
-                    results = collection.query(query_texts=[query_text], n_results=3)
-                    if results and results['documents']:
-                        for doc in results['documents'][0]:
-                            retrieved_issues.append(doc)
-
-            # 1. 调用 agent 获取审查结果
-            review_process, issue = query_review_result(
-                doc_ranges,
-                code_ranges,
-                rules=retrieved_rules,
-                issues=retrieved_issues,
-                user_id=user_id,
-                project_path=project_path,
-                prompt_type=prompt_type
-            )
-
-            # 2. 更新对齐关系
-            alignment['isReviewed'] = True
-            alignment['reviewThoughts'] = review_process
-
-            if isinstance(issue, list):
-                issues_list = [x for x in issue if isinstance(x, dict)]
-            elif isinstance(issue, dict):
-                issues_list = [issue]
-            else:
-                issues_list = []
-            
-            # 需求反生成
-            # generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
-            generated_requirement, mermaid_code = '', ''
-
-            conn = get_db_celery()
-            cur = conn.cursor()
-            try:
-
-                cur.execute(
-                    'INSERT INTO alignments(id,user_id,project_id,name,isReviewed,reviewThoughts,docRanges,codeRanges,'
-                    'createdAt,updatedAt,GenReq,GenMermaid,is_code_review) '
-                    'VALUES(%s,%s,%s,%s,1,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,%s,%s,%s) '
-                    'ON DUPLICATE KEY UPDATE '
-                    'isReviewed=1,'
-                    'reviewThoughts=VALUES(reviewThoughts),'
-                    'GenReq=VALUES(GenReq),'
-                    'GenMermaid=VALUES(GenMermaid),'
-                    'updatedAt=CURRENT_TIMESTAMP',
-                    (
-                        alignment.get('id'),
-                        user_id,
-                        project_id,
-                        alignment.get('name') or '',
-                        alignment.get('reviewThoughts') or '',
-                        json.dumps(doc_ranges or []),
-                        json.dumps(code_ranges or []),
-                        generated_requirement or '',
-                        mermaid_code or '',
-                        0 if not prompt_type else 1
-                    )
-                )
-
-                if issues_list:
-                    cur.execute(
-                        f"SELECT displayId FROM issues WHERE displayId LIKE 'ISSUE-%' and project_id={project_id}")
-                    used = set()
-                    for r in cur.fetchall():
-                        disp = r['displayId']
-                        if disp and disp.startswith('ISSUE-'):
-                            try:
-                                used.add(int(disp.split('-')[1]))
-                            except Exception as e:
-                                logger.error(str(e), exc_info=True)
-
-                    next_number = (max(used) + 1) if used else 1
-
-                    doc_ranges = alignment.get('docRanges', [])
-                    if doc_ranges:
-                        content = doc_ranges[0].get('content', '')
-                    else:
-                        content = ''
-                    brief_req = content or ''
-                    brief_code = _safe_first_range_field(alignment.get('codeRanges', []), 'content')
-                    related_doc_file = (
-                        item.get('doc_file')
-                        or _safe_first_range_field(alignment.get('docRanges', []), 'filename')
-                        or _safe_first_range_field(alignment.get('codeRanges', []), 'filename')
-                    )
-                    for one in issues_list:
-                        display_id = f"ISSUE-{next_number:03d}"
-                        next_number += 1
-
-                        severity = one.get('level') or one.get('severity')
-                        title = one.get('summary') or one.get('title') or ''
-                        content = one.get('description') or one.get('content') or ''
-                        status = one.get('status') or 'unconfirmed'
-
-                        cur.execute(
-                            'INSERT INTO issues(user_id,project_id,displayId,alignmentId,severity,title,content,status,'
-                            'relatedDocFile,relatedRequirementId,briefRequirement,briefCode,category,createdAt,updatedAt) '
-                            'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)',
-                            (
-                                user_id,
-                                project_id,
-                                display_id,
-                                alignment.get('id'),
-                                severity,
-                                title,
-                                content,
-                                status,
-                                item['doc_file'],
-                                alignment.get('id'),
-                                brief_req,
-                                brief_code,
-                                alignment.get('align_type') if alignment.get('align_type') else 'codeReview'
-                            )
-                        )
-
-                conn.commit()
-            except Exception as e:
-                conn.rollback()
-                logger.error(f"写入数据库失败: {str(e)}", exc_info=True)
-                return {"status": "error", "message": f"写入数据库失败: {str(e)}"}
-            finally:
-                conn.close()
+        group(*task_list).apply_async()
     except Exception as e:
         self.update_state(
             state="FAILURE",
@@ -714,7 +758,6 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
 
 @celery.task(bind=True)
 def align_requirement_to_project_task(self, abstract, params, user_id):
-
     project_path = params.get('projectPath', '')
     project_id = params.get('project_id')
     chunks = params.get('requirements')
@@ -751,19 +794,19 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                 # 基于需求，利用大模型检索代码摘要，先定位代码文件
                 # 调用llm
                 file_name_list = query_codefile_from_abstract(requirement_text, file_abstract)
-                
+
                 # 解析异常，返回空列表时
                 # 过滤掉含有乱码的代码摘要（作为被定位的代码文件防止遗漏），重新调用大模型定位代码文件
                 FILE_MAX_LIMIT = ALIGN_FILE_ABSTRACT_BATCH_LIMIT
                 if not file_name_list:
                     filter_non_file, filter_file_abstract, file_cnt = filter_non_abstract_files(file_abstract)
-                    
+
                     # 代码摘要数量小于阈值时，可以直接调用
-                    if file_cnt <=FILE_MAX_LIMIT:
+                    if file_cnt <= FILE_MAX_LIMIT:
                         # 调用llm
                         file_name_list = query_codefile_from_abstract(requirement_text, filter_file_abstract)
-                        #print(file_name_list)
-                    
+                        # print(file_name_list)
+
                     # 可能由于代码摘要过多，影响大模型分析理解而报错
                     else:
                         # 对代码摘要分批次处理
@@ -775,14 +818,15 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                             batch_file_abstract[key] = value
                             if file_cnt >= FILE_MAX_LIMIT:
                                 file_cnt = 0
-                                batch_file_name_list = query_codefile_from_abstract(requirement_text, batch_file_abstract)
+                                batch_file_name_list = query_codefile_from_abstract(requirement_text,
+                                                                                    batch_file_abstract)
                                 file_name_list += batch_file_name_list
-                    
+
                     # 谨防遗漏，将有摘要是乱码的代码文件全部放入候选区
-                    if not file_name_list:                    
+                    if not file_name_list:
                         file_name_list += filter_non_file
-                    #print(file_name_list)
-                    
+                    # print(file_name_list)
+
             # 如果只有一个代码文件，就不检索代码摘要
             else:
                 file_name_list = all_files
@@ -806,13 +850,12 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                 # print('file_name, (str, bytes, os.PathLike):', file_name, type(file_name))
                 if not isinstance(file_name, (str, bytes, os.PathLike)):
                     continue
-            
-            
+
                 all_code_blocks = _get_or_build_code_blocks_for_file(project_path, file_name, project_id)
                 # print('all_code_blocks:', all_code_blocks)
                 if not all_code_blocks:
                     continue
-                
+
                 # 先用现有语义/LLM链路找种子块，再用调用图扩展候选，最后二次保守筛选。
                 seed_related_code = query_related_code(
                     requirement_text,
@@ -821,7 +864,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                     user_id=user_id,
                     project_path=project_path
                 )
-                
+
                 try:
                     try:
                         seed_blocks = include_related_blocks(seed_related_code, all_code_blocks)
@@ -846,10 +889,10 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                         final_blocks = seed_blocks
 
                     code_ranges.extend(_code_blocks_to_code_ranges(project_path, final_blocks))
-                                    
+
                 except Exception as e:
-                    print(f"add related_code failed: {e}") 
-                    
+                    print(f"add related_code failed: {e}")
+
             if code_ranges:
                 chunk['codeRanges'] = code_ranges
                 add_alignment_data(project_path, chunk, project_id, user_id)
@@ -868,122 +911,44 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
         raise RuntimeError(f'对齐过程中出错:{str(e)}') from e
 
 
+# 自动对齐下面的 代码 → 需求
 @celery.task(bind=True)
-def align_code_to_requirements_task(self, project_path, code_blocks, project_id, user_id, y_align):
-    total = len(code_blocks)
+def align_code_to_requirements_single_task(self, project_path, code_block, project_id, user_id, all_doc_blocks,
+                                           blocks_by_file, parent_id):
     try:
-        all_doc_blocks, _, blocks_by_file = _get_doc_blocks_for_matching(project_path, project_id)
-        for i, code_block in enumerate(code_blocks, y_align):
-            self.update_state(
-                state="PROGRESS",
-                meta={
-                    'current': i,
-                    'total': total,
-                    'name': code_block['name'],
-                    'status': f'任务进行中{i}/{total}...'
-                }
-            )
-            print(f"正在执行==文件名{code_block['name']} {i}/{total}")
-            code_ranges = code_block['codeRanges']
-            # 获取选定的 align 类型知识库
-            selected_align_kbs = []
-            try:
-                metadata_file = os.path.join(project_path, 'metadata.json')
-                if os.path.exists(metadata_file):
-                    with open(metadata_file, 'r', encoding='utf-8') as f:
-                        metadata = json.load(f)
-                        selected_kbs = metadata.get('selected_kbs', [])
-                        selected_align_kbs = [kb['name'] for kb in selected_kbs if _normalize_kb_type_for_use(kb.get('type')) == 'align']
-            except Exception:
-                pass
+        set_redis_count_for_child_name(parent_id, code_block)
+        code_ranges = code_block['codeRanges']
+        # 获取选定的 align 类型知识库
+        selected_align_kbs = []
+        try:
+            metadata_file = os.path.join(project_path, 'metadata.json')
+            if os.path.exists(metadata_file):
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+                    selected_kbs = metadata.get('selected_kbs', [])
+                    selected_align_kbs = [kb['name'] for kb in selected_kbs if
+                                          _normalize_kb_type_for_use(kb.get('type')) == 'align']
+        except Exception:
+            pass
 
-            if not all_doc_blocks:
-                code_block['docRanges'] = []
-                add_alignment_data(project_path, code_block, project_id, user_id)
-                continue
+        if not all_doc_blocks:
+            code_block['docRanges'] = []
+            add_alignment_data(project_path, code_block, project_id, user_id)
 
-            # 如果没有选择任何 align 知识库，使用原来的 LLM 逻辑
-            if not selected_align_kbs:
+            set_redis_count_for_child(parent_id)
+            return
 
-                code_content = '\n\n'.join(
-                    [code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
-
-                # 调用LLM
-                related_reqs = query_related_requirement(
-                    code_content,
-                    all_doc_blocks,
-                    block_limit=50,
-                    user_id=user_id,
-                    project_path=project_path
-                )
-
-                doc_ranges = _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file)
-
-                code_block['docRanges'] = doc_ranges
-                add_alignment_data(project_path, code_block, project_id, user_id)
-                continue
-
-            # 如果选择了 align 知识库，使用 RAG 进行检索
-            try:
-                rag_engine.initialize()  # 确保初始化
-            except Exception as e:
-                print(f"[Align] RAG initialize failed: {e}")
-
+        # 如果没有选择任何 align 知识库，使用原来的 LLM 逻辑
+        if not selected_align_kbs:
             code_content = '\n\n'.join(
                 [code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
 
-            all_retrieved_items = []
-            for kb_name in selected_align_kbs:
-                # 检索 'align' 类型的知识库
-                # 注意：align 知识库里存储的是历史对齐数据
-                # 这里的检索策略可以是：用代码去搜相关的历史对齐，然后把历史对齐中的文档部分作为推荐
-
-                # 暂时假设 rag_chroma 提供了 query 接口，如果没有需要添加
-                # 这里先模拟直接调用 collection.query
-                collection = rag_engine.get_collection('align', kb_name)
-                if collection:
-                    results = collection.query(
-                        query_texts=[code_content],
-                        n_results=5  # Top 5 per KB
-                    )
-
-                    if results and results['documents']:
-                        for i, doc in enumerate(results['documents'][0]):
-                            meta = results['metadatas'][0][i]
-                            # 历史对齐数据通常包含 code_text 和 doc_text (query_text)
-                            # 我们需要提取其中的 doc 部分
-                            # 在 build_from_json 中，document 是 doc_text, meta 中有 code_text
-                            # 但我们现在是用 code 去搜 doc，所以 doc 正好是 document
-                            all_retrieved_items.append({
-                                'content': doc,
-                                'score': results['distances'][0][i] if results['distances'] else 0,
-                                'meta': meta
-                            })
-
-            # 对所有结果排序
-            all_retrieved_items.sort(key=lambda x: x['score'])  # distance 越小越好
-            top_items = all_retrieved_items[:5]
-
-            # 构造返回结果
-            # 注意：这里返回的是参考的历史对齐文档内容，而不是当前项目中的具体需求块
-            # 前端可能需要展示这些参考内容供用户选择，或者作为提示
-            # 但目前的接口契约是返回 docRanges (当前项目的需求块)
-            # 这是一个逻辑断层：历史对齐是"参考"，而不是"直接结果"
-            # 如果要用历史对齐来辅助定位当前项目的需求，需要两步：
-            # 1. 检索历史对齐 -> 得到相关的历史需求描述
-            # 2. 用历史需求描述去匹配当前项目的需求块 (类似 query_related_requirement)
-
-            history_doc_contents = [item['content'] for item in top_items]
-            combined_history_content = "\n".join(history_doc_contents)
-
-            # 使用历史需求内容 + 代码内容 共同作为 Query 去查询当前项目需求
-            enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
-
-            # 调用LLM (使用增强后的 Query)
+            # 调用LLM
             related_reqs = query_related_requirement(
-                enhanced_query,
+                code_content,
                 all_doc_blocks,
                 block_limit=50,
+                user_id=user_id,
                 project_path=project_path
             )
 
@@ -992,11 +957,108 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
             code_block['docRanges'] = doc_ranges
             add_alignment_data(project_path, code_block, project_id, user_id)
 
-        self.update_state(
-            state="SUCCESS",
-            meta={}
+            set_redis_count_for_child(parent_id)
+            return
+
+        # 如果选择了 align 知识库，使用 RAG 进行检索
+        try:
+            rag_engine.initialize()  # 确保初始化
+        except Exception as e:
+            print(f"[Align] RAG initialize failed: {e}")
+
+        code_content = '\n\n'.join(
+            [code_range.get('content', '') for code_range in code_ranges if code_range.get('content')])
+
+        all_retrieved_items = []
+        for kb_name in selected_align_kbs:
+            # 检索 'align' 类型的知识库
+            # 注意：align 知识库里存储的是历史对齐数据
+            # 这里的检索策略可以是：用代码去搜相关的历史对齐，然后把历史对齐中的文档部分作为推荐
+
+            # 暂时假设 rag_chroma 提供了 query 接口，如果没有需要添加
+            # 这里先模拟直接调用 collection.query
+            collection = rag_engine.get_collection('align', kb_name)
+            if collection:
+                results = collection.query(
+                    query_texts=[code_content],
+                    n_results=5  # Top 5 per KB
+                )
+
+                if results and results['documents']:
+                    for i, doc in enumerate(results['documents'][0]):
+                        meta = results['metadatas'][0][i]
+                        # 历史对齐数据通常包含 code_text 和 doc_text (query_text)
+                        # 我们需要提取其中的 doc 部分
+                        # 在 build_from_json 中，document 是 doc_text, meta 中有 code_text
+                        # 但我们现在是用 code 去搜 doc，所以 doc 正好是 document
+                        all_retrieved_items.append({
+                            'content': doc,
+                            'score': results['distances'][0][i] if results['distances'] else 0,
+                            'meta': meta
+                        })
+
+        # 对所有结果排序
+        all_retrieved_items.sort(key=lambda x: x['score'])  # distance 越小越好
+        top_items = all_retrieved_items[:5]
+
+        # 构造返回结果
+        # 注意：这里返回的是参考的历史对齐文档内容，而不是当前项目中的具体需求块
+        # 前端可能需要展示这些参考内容供用户选择，或者作为提示
+        # 但目前的接口契约是返回 docRanges (当前项目的需求块)
+        # 这是一个逻辑断层：历史对齐是"参考"，而不是"直接结果"
+        # 如果要用历史对齐来辅助定位当前项目的需求，需要两步：
+        # 1. 检索历史对齐 -> 得到相关的历史需求描述
+        # 2. 用历史需求描述去匹配当前项目的需求块 (类似 query_related_requirement)
+
+        history_doc_contents = [item['content'] for item in top_items]
+        combined_history_content = "\n".join(history_doc_contents)
+
+        # 使用历史需求内容 + 代码内容 共同作为 Query 去查询当前项目需求
+        enhanced_query = f"Code:\n{code_content}\n\nRelated History Requirements:\n{combined_history_content}"
+
+        # 调用LLM (使用增强后的 Query)
+        related_reqs = query_related_requirement(
+            enhanced_query,
+            all_doc_blocks,
+            block_limit=50,
+            project_path=project_path
         )
 
+        doc_ranges = _match_doc_ranges_from_related_reqs(related_reqs, blocks_by_file)
+
+        code_block['docRanges'] = doc_ranges
+        add_alignment_data(project_path, code_block, project_id, user_id)
+
+        set_redis_count_for_child(parent_id)
+    except BaseException as e:
+        print(f'对齐 代码=>需求 过程中出错:{str(e)}')
+        set_redis_count_for_child_error(parent_id)
+
+
+@celery.task(bind=True)
+def align_code_to_requirements_task(self, project_path, code_blocks, project_id, user_id, y_align):
+    total = len(code_blocks)
+    try:
+        task_list = []
+        all_doc_blocks, _, blocks_by_file = _get_doc_blocks_for_matching(project_path, project_id)
+
+        parent_id = self.request.id
+        set_redis_count_for_parent(parent_id, total)
+
+        for i, code_block in enumerate(code_blocks, y_align):
+            sig = align_code_to_requirements_single_task.si(project_path, code_block, project_id, user_id,
+                                                            all_doc_blocks, blocks_by_file, parent_id)
+            task_list.append(sig)
+            self.update_state(
+                state="PROGRESS",
+                meta={
+                    'current': 0,
+                    'total': total,
+                    'name': '对齐中...',
+                    'status': f'任务进行中{0}/{total}...'
+                }
+            )
+        group(*task_list).apply_async()
     except Exception as e:
         self.update_state(
             state="FAILURE",
@@ -1024,7 +1086,6 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
         # print(f"Error auto-creating blocks: {e}")
         # 即使块创建失败，也不应该阻止对齐关系的保存，但最好记录日志
         logger.error(f"Error auto-creating blocks: {str(e)}", exc_info=True)
-
 
     conn = get_db_celery()
     cur = conn.cursor()
@@ -1110,52 +1171,65 @@ def gen_requirement(doc_ranges, code_ranges):
         # print(f"Error generating reverse requirement: {str(e)}")
         logger.error(f"Error generating reverse requirement: {str(e)}", exc_info=True)
         # return jsonify({"status": "error", "message": f"Failed to generate reverse requirement: {str(e)}"}), 500
-    
+
     return generated_requirement, flowchart_code
+
+
+# 需求反生成
+@celery.task(bind=True)
+def gen_requirement_for_single_task(self, alignment, doc_ranges, code_ranges, parent_id):
+    db = get_db_celery()
+    cursor = db.cursor()
+    try:
+        set_redis_count_for_child_name(parent_id, alignment)
+        generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+        cursor.execute("""
+                        UPDATE alignments
+                        SET GenReq = %s,
+                            GenMermaid = %s
+                        WHERE id = %s
+                    """, (generated_requirement, mermaid_code, alignment['id']))
+        db.commit()
+
+        set_redis_count_for_child(parent_id)
+    except BaseException as e:
+        set_redis_count_for_child_error(parent_id)
+        db.rollback()
+        logger.error(f"需求反生成失败:{str(e)}", exc_info=True)
+    finally:
+        db.close()
 
 
 @celery.task(bind=True)
 def gen_requirement_task(self, alignments, total, generated):
-    db = get_db_celery()
-    cursor = db.cursor()
+    parent_id = self.request.id
     try:
+
+        set_redis_count_for_parent(parent_id, total)
+
+        task_list = []
         for i, alignment in enumerate(alignments, generated):
-            # if alignment['GenReq']:
-            #     continue
-            self.update_state(
-                state="PROGRESS",
-                meta={
-                    'current': i,
-                    'total': total,
-                    'name': alignment['name'],
-                    'status': f'任务进行中{i}/{total}...'
-                }
-            )
             code_ranges = json.loads(alignment['codeRanges'])
             doc_ranges = json.loads(alignment['docRanges'])
-            # 需求反生成
-            generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+            sig = gen_requirement_for_single_task.si(alignment, doc_ranges, code_ranges, parent_id)
+            task_list.append(sig)
 
-            cursor.execute("""
-                UPDATE alignments
-                SET GenReq = %s,
-                    GenMermaid = %s
-                WHERE id = %s
-            """, (generated_requirement, mermaid_code, alignment['id']))
-            db.commit()
+        group(*task_list).apply_async()
         self.update_state(
-            state="SUCCESS",
-            meta={}
+            state="PROGRESS",
+            meta={
+                'current': 0,
+                'total': total,
+                'name': '需求生成中...',
+                'status': f'任务进行中{0}/{total}...'
+            }
         )
     except Exception as e:
         self.update_state(
             state="FAILURE",
             message=f"需求反生成失败:{e}"
         )
-        db.rollback()
         logger.error(f"需求反生成失败:{str(e)}", exc_info=True)
-    finally:
-        db.close()
 
 
 @celery.task(bind=True)
@@ -1205,9 +1279,9 @@ def export_issues_task(self, data, docx_path):
             replacements["BBBBB"] = f"{form_data.get('issueId', '')}_1"
             replacements["CCCCC"] = form_data.get('productId', '')
             replacements["DDDDD"] = form_data.get('discoveryMethod', '')
-            #replacements["EEEEE"] = form_data.get('issueTracking', '')
+            # replacements["EEEEE"] = form_data.get('issueTracking', '')
             replacements["EEEEE"] = f"{form_data.get('issueTracking', '')}_1"
-            
+
             replacements["GGGGG"] = current_date
 
             # 处理问题类别
@@ -1227,11 +1301,11 @@ def export_issues_task(self, data, docx_path):
 
             # 替换第一个文档的占位符
             replace_text_in_docx(merged_doc, replacements, 'issue')
-            
+
             # 【新增代码开始】
             from docx.oxml.ns import qn
             from docx.oxml import OxmlElement
-            
+
             # 创建分页符元素 <w:br w:type="page"/>
             page_break = OxmlElement('w:br')
             page_break.set(qn('w:type'), 'page')
@@ -1242,12 +1316,11 @@ def export_issues_task(self, data, docx_path):
                         WHERE task_id = %s
                     """, (self.request.id,))
             db.commit()
-            
-            
+
             # 处理剩余的问题单
             for i, issue in enumerate(issues[1:], 2):
                 # 添加分页符
-                #merged_doc.add_page_break()
+                # merged_doc.add_page_break()
 
                 # 为每个问题单加载新的模板并填充
                 temp_doc = Document(template_path)
@@ -1261,8 +1334,9 @@ def export_issues_task(self, data, docx_path):
                 replacements["BBBBB"] = f"{form_data.get('issueId', '')}_{i}"
                 replacements["CCCCC"] = form_data.get('productId', '')
                 replacements["DDDDD"] = form_data.get('discoveryMethod', '')
-                replacements["EEEEE"] = f"{form_data.get('issueTracking', '')}_{i}"#form_data.get('issueTracking', '')
-                
+                replacements[
+                    "EEEEE"] = f"{form_data.get('issueTracking', '')}_{i}"  # form_data.get('issueTracking', '')
+
                 replacements["GGGGG"] = current_date
 
                 # 处理问题类别
@@ -1286,12 +1360,12 @@ def export_issues_task(self, data, docx_path):
                 # 直接拼接填充好的页面内容到合并文档
                 for element in temp_doc.element.body:
                     merged_doc.element.body.append(element)
-                    
+
                 # 添加分页符
                 page_break = OxmlElement('w:br')
                 page_break.set(qn('w:type'), 'page')
                 merged_doc.element.body.append(page_break)
-                
+
             # 保存合并后的文档
             merged_doc.save(docx_path)
         else:
@@ -1310,7 +1384,7 @@ def export_issues_task(self, data, docx_path):
         cursor.execute("""
             UPDATE export_tasks SET status = 'success', completed_at = NOW()
             WHERE task_id = %s
-        """, (self.request.id, ))
+        """, (self.request.id,))
         db.commit()
     except Exception as e:
         cursor.execute("""
@@ -1344,6 +1418,7 @@ def set_run_font(run, font_name='SimSun', font_size=Pt(10), color=None):
     east_asia = east_asia_map.get(font_name, font_name)
     run._element.rPr.rFonts.set(qn('w:eastAsia'), east_asia)
 
+
 def _update_snapshot(task_id, **fields):
     """更新 user_task_snapshot，fields 支持 state / title / current_progress / is_running"""
     if not fields:
@@ -1355,7 +1430,7 @@ def _update_snapshot(task_id, **fields):
         f"UPDATE user_task_snapshot SET {sets} WHERE task_id=%s",
         (*fields.values(), task_id)
     )
-    db.commit()    
+    db.commit()
 
 
 # db2 专门用来放锁，和你的 broker(db0)、结果(db1) 分开
@@ -1405,4 +1480,3 @@ def upload_files_task(self, project_path, file_type, parseDocMethod, temp_files)
             fh.close()
         if temp_files:
             shutil.rmtree(os.path.dirname(temp_files[0]['temp_path']), ignore_errors=True)
-

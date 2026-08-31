@@ -10,22 +10,52 @@ task_bp = Blueprint('task', __name__)
 @task_bp.route('/get-progress/<task_id>', methods=['GET'])
 def get_progress(task_id):
     from tasks import celery
-    task_result = celery.AsyncResult(task_id)
-    # print(f'task_result======================={task_result}')
-    meta = task_result.info
-    if isinstance(meta, BaseException):
+    from tasks import r15
+    total_key = f'parent:{task_id}:total'
+    done_key = f'parent:{task_id}:done'
+    name_key = f'parent:{task_id}:name'
+    error_key = f'parent:{task_id}:error'
+    total = r15.get(total_key)
+    child_name = r15.get(name_key)
+    is_error = r15.get(error_key)
+    if total is not None:
+        # group父任务
+        done = int(r15.get(done_key) or 0)
+        total = int(total)
+        state = 'SUCCESS' if done >= total else 'PROGRESS'
+        if int(is_error):
+            state = 'FAILURE'
         meta = {
-            "error_type": type(meta).__name__,
-            "message": str(meta)
+            'current': done,
+            'total': total,
+            'name': child_name,
+            'status': f'任务进行中{done}/{total}...',
         }
-
-    response = {
-        "code": 0,
-        "task_id": task_id,
-        "state": task_result.state,
-        # "meta": task_result.info
-        "meta": meta
-    }
+        response = {
+            "code": 0,
+            "task_id": task_id,
+            "state": state,
+            # "meta": task_result.info
+            "meta": meta,
+            'message': '出错了' if state == 'FAILURE' else ''
+        }
+    else:
+        task_result = celery.AsyncResult(task_id)
+        # print(f'task_result======================={task_result}')
+        meta = task_result.info
+        if isinstance(meta, BaseException):
+            meta = {
+                "error_type": type(meta).__name__,
+                "message": str(meta)
+            }
+        state = task_result.state
+        response = {
+            "code": 0,
+            "task_id": task_id,
+            "state": state,
+            # "meta": task_result.info
+            "meta": meta
+        }
     # print(f'response============================{response}')
     return jsonify(response)
 

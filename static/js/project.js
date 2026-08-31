@@ -777,7 +777,7 @@ const app = createApp({
                 ElMessage.error("删除确认失败: " + error.message);
                 return;
             }
-
+            const tmpSelectedDocFile = selectedDocFile.value
             try {
                 const response = await axios.get(`/project/file-remove?path=${encodeURIComponent(projectPath.value)}&filename=${encodeURIComponent(path)}&type=${fileType}&node_type=${nodeType}`);
                 if (response.data.status !== 'success') {
@@ -813,6 +813,7 @@ const app = createApp({
                 } else {
                     await loadAndRenderCodeBlocks(true);
                 }
+                removealldocRange(tmpSelectedDocFile)
 
                 ElMessage.success(`${isDirectory ? '目录' : '文件'} "${fileName}" 删除成功`);
             } catch (error) {
@@ -2100,6 +2101,10 @@ const app = createApp({
                         stopProgress();
                         await clearReviewTaskState()
                         await fetchIssues()
+
+                        switchToCodeBlockMode()
+                        await forceRefresh()
+
                         ElMessageBox.alert('审查完成!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'success'
@@ -2115,6 +2120,10 @@ const app = createApp({
                         stopProgress();
                         await clearReviewTaskState()
                         await fetchIssues()
+
+                        switchToCodeBlockMode()
+                        await forceRefresh()
+
                         ElMessageBox.alert('审查失败!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'error'
@@ -2130,7 +2139,7 @@ const app = createApp({
                 stopProgress();
                 await clearReviewTaskState()
 //                    ElMessage.warning(`查询进度失败: ${error.message}`);
-                ElMessageBox.alert('网络发生波动，请从新发起任务!', '提示', {
+                ElMessageBox.alert('网络发生波动，请重新发起任务!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'error'
                 });
@@ -2142,6 +2151,24 @@ const app = createApp({
 //                pollCountReview.value++
             }
         }
+
+        const switchToCodeBlockMode = () => {
+            blockType.value = 'code';
+            rightSidebarMode.value = 'block';
+        }
+        const forceRefresh = async () => {
+            blockType.value = 'doc';
+            await nextTick()
+            blockType.value = 'code';
+        }
+        const refreshAlignmentReq2code = async () => {
+            rightSidebarMode.value = 'code';
+            await nextTick()
+            rightSidebarMode.value = 'alignment';
+            viewMode.value = 'all';
+            alignType.value = 'req2code'
+        }
+
 
         const startAutoReview = async (reviewType) => {
             if (isAutoReviewing.value) {
@@ -2271,6 +2298,8 @@ const app = createApp({
                 console.error('自动审查过程中出现错误:', error);
                 ElMessage.error(`自动审查失败: ${error.message}`);
             } finally {
+                switchToCodeBlockMode()
+                await forceRefresh()
 //                isAutoReviewing.value = false;
 //                reviewProgress.value = { current: 0, total: 0 };
                 // 停止进度显示
@@ -4023,7 +4052,7 @@ const app = createApp({
                 isAutoAligning.value = false;
                 stopProgress();
                 await clearTaskState()
-                ElMessageBox.alert('网络发生波动，请从新发起任务!', '提示', {
+                ElMessageBox.alert('网络发生波动，请重新发起任务!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'error'
                 });
@@ -6826,7 +6855,7 @@ const app = createApp({
                 reverseProgress.value = { current: 0, total: 0 };
                 stopProgress();
                 await clearReverseTaskState()
-                ElMessageBox.alert('网络发生波动，请从新发起任务!', '提示', {
+                ElMessageBox.alert('网络发生波动，请重新发起任务!', '提示', {
                         confirmButtonText: '知道了',
                         type: 'error'
                 });
@@ -7855,11 +7884,15 @@ const app = createApp({
                 await fetchIssues();
                 
                 //ElMessage.success(`"${alignment.name}" 审查完成！`);
+                switchToCodeBlockMode()
+                await forceRefresh()
                 ElMessageBox.alert(`"${alignment.name}" 审查完成！`, '提示', {
                         confirmButtonText: '知道了',
                         type: 'success'
                     });
             } catch (error) {
+                switchToCodeBlockMode()
+                await forceRefresh()
                 console.error('单独审查失败:', error);
 //                ElMessage.error(`审查失败: ${error.message}`);
                 ElMessageBox.alert(`审查失败: ${error.message}`, '提示', {
@@ -7868,6 +7901,18 @@ const app = createApp({
                     });
             }
         };
+
+        const removealldocRange = async (docFileName) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            try {
+                await axios.delete(`/project/alignment?path=${encodeURIComponent(projectPath.value)}&selected_doc_file=${docFileName}&all=all&project_id=${projectId}`);
+            } catch (err) {
+                console.error("Error deleting alignment:", err);
+                ElMessage.error(`删除失败: ${err.message}`);
+            }
+            await refreshAlignmentReq2code()
+        }
 
         // 删除对齐关系中的范围
         const removeRange = async (alignment, type, index) => {
@@ -9783,7 +9828,7 @@ const app = createApp({
                     }
 
                 } catch (error) {
-                    ElMessageBox.alert('网络发生波动，请从新发起任务!', '提示', {
+                    ElMessageBox.alert('网络发生波动，请重新发起任务!', '提示', {
                             confirmButtonText: '知道了',
                             type: 'error'
                     });

@@ -1344,7 +1344,7 @@ def do_upload_files_logic(project_path, file_type, files, parseDocMethod, task=N
                     _update_snapshot(task.request.id, state='PROCESSING',
                                      title=f'正在处理 {file.filename} ({i}/{len(files)})',
                                      current_progress=int(i / len(files) * 100))
-                    # time.sleep(10)
+                    time.sleep(20)
                 # 保留包含中文的原始相对路径
                 relative_path = file.filename.replace('\\', '/')
 
@@ -1397,7 +1397,7 @@ def do_upload_files_logic(project_path, file_type, files, parseDocMethod, task=N
                     _update_snapshot(task.request.id, state='PROCESSING',
                                      title=f'正在处理 {filename} ({i}/{len(files)})',
                                      current_progress=int(i / len(files) * 100))
-                # time.sleep(10)
+                    time.sleep(20)
                 if filename.endswith(('.md', '.docx')):
                     doc_file_path = os.path.join(doc_repo_path, filename)
                     # print(doc_file_path)
@@ -3777,18 +3777,33 @@ def delete_alignment():
     project_path = request.args.get('path')
     alignment_id = request.args.get('id')
     project_id = request.args.get('project_id')
-    if not all([project_path, alignment_id]):
-        return jsonify({"status": "error", "message": "缺少项目路径或对齐ID参数。"}), 400
-    try:
-        # conn = get_db_conn(project_path)
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute('DELETE FROM alignments WHERE id=%s and project_id=%s', (alignment_id, project_id))
-        # conn.commit()
-        # conn.close()
-        return jsonify({"status": "success"}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"删除对齐项时出错: {e}"}), 500
+
+    all_delete = request.args.get('all')
+    selected_doc_file = request.args.get('selected_doc_file')
+    if all_delete:
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            sql = "DELETE FROM alignments WHERE project_id=%s AND docRanges LIKE %s"
+            params = (project_id, f"%{selected_doc_file}%")
+            cur.execute(sql, params)
+            return jsonify({"status": "success"}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"删除文件的对应对齐项时出错: {e}"}), 500
+    else:
+        if not all([project_path, alignment_id]):
+            return jsonify({"status": "error", "message": "缺少项目路径或对齐ID参数。"}), 400
+        try:
+            # conn = get_db_conn(project_path)
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute('DELETE FROM alignments WHERE id=%s and project_id=%s', (alignment_id, project_id))
+            # conn.commit()
+            # conn.close()
+            return jsonify({"status": "success"}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"删除对齐项时出错: {e}"}), 500
+
 
 
 @bp.route('/project/issues', methods=['GET'])
