@@ -191,6 +191,12 @@ const app = createApp({
             
         };
         
+        // 处理文件删除
+        const handleRemoveFile = (file, fileList) => {
+            // 确保 importFileList 更新为新的 fileList 引用
+            importFileList.value = [...fileList]; 
+        };
+        
         const resolveTargetKb = () => {
             const targetName = importLockedKbName.value || selectedExistingKb.value;
             if (!targetName) return null;
@@ -1575,6 +1581,7 @@ const app = createApp({
             loadInitData,
             fetchServerFiles,
             handleImportFileChange,
+            handleRemoveFile,
             startPreview,
             viewDetail,
             handleReviewSelectionChange,

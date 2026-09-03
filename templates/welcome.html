@@ -420,7 +420,7 @@
                             <el-form-item label="描述">
                                 <el-input v-model="createKbForm.description" type="textarea" :rows="3" placeholder="请输入描述"></el-input>
                             </el-form-item>
-                            <el-form-item label="涉密等级">
+                            <el-form-item label="涉密等级" required>
                                 <el-select v-model="createKbForm.security_level" style="width: 100%;">
                                     <el-option label="内部" value="内部"></el-option>
                                     <el-option label="秘密" value="秘密"></el-option>
@@ -628,6 +628,7 @@
                             action=""
                             :auto-upload="false"
                             :on-change="handleImportFileChange"
+                            :on-remove="handleRemoveFile"
                             :file-list="importFileList"
                             accept=".docx,.json,.doc"
                             multiple

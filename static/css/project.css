@@ -3217,6 +3217,84 @@
     gap: 8px;
 }
 
+/* =========================================
+   修复：需求内容区域滚动条缺失问题
+   ========================================= */
+
+/* 1. 左侧面板容器：固定高度逻辑，隐藏溢出 */
+.review-left-section.detail-quadrant-card {
+    flex: 1; /* 占据父级剩余空间 */
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid #d6dde6;
+    border-radius: 0;
+    background: #fff;
+    overflow: hidden; /* 关键：隐藏溢出，防止内容撑破 */
+    min-height: 0;    /* 关键：Flex 布局下防止子项撑破父级 */
+    height: 100%;     /* 强制占满父容器高度 */
+}
+
+/* 2. 需求内容滚动区域：占据剩余高度并开启滚动 */
+.doc-ranges-container {
+    flex: 1; /* 自动占据剩余空间 */
+    overflow-y: auto; /* 关键：开启垂直滚动 */
+    overflow-x: hidden;
+    padding: 8px;
+    min-height: 0;    /* 关键：防止 Flex 子项撑破 */
+    scrollbar-gutter: stable; /* 保持滚动条占位，防止布局抖动 */
+    
+    /* 可选：美化滚动条 */
+    scrollbar-width: thin;
+    scrollbar-color: #cfd6df #f1f3f4;
+}
+
+/* 3. 针对代码片段区域（如果有）做同样处理 */
+.code-ranges-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 8px;
+    min-height: 0;
+    scrollbar-gutter: stable;
+}
+
+/* 4. 确保内部卡片不会撑开容器 */
+.doc-range,
+.code-range,
+.reverse-requirement-section,
+.flowchart-section,
+.issue-info {
+    margin-bottom: 8px;
+    /* 移除可能存在的 max-height 限制，让内容自然流动，由父容器控制滚动 */
+    max-height: none !important; 
+    overflow: visible !important;
+}
+
+/* 5. 修复目录 (TOC) 样式，确保它不会无限撑开 */
+.code-toc.doc-toc {
+    flex-shrink: 0; /* 禁止压缩，保持固定高度 */
+    margin-bottom: 8px;
+    max-height: 220px; /* 限制目录最大高度 */
+    overflow-y: auto;
+}
+
+/* 6. 确保 h4 标题固定在顶部 */
+.review-left-section h4 {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #eef2f6;
+    border-bottom: 1px solid #d6dde6;
+    margin: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+
+
 .doc-range,
 .code-range,
 .reverse-requirement-section,
