@@ -20,7 +20,7 @@ class DocConverter:
         remote_api: 远程转换接口地址
         """
         self.system = os.name  # 'nt'=Windows 'posix'=Linux
-        self.remote_api = remote_api or os.getenv("WORD_CONVERT_API", "")
+        self.remote_api = remote_api or os.getenv("WORD_CONVERT_API", "") or "http://10.123.0.230:5009/convert"
 
     def convert(self, doc_path, output_dir=None):
         """
