@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
 from typing import List, Dict, Any
 from chromadb.config import Settings
+from datetime import datetime
 
 # === 配置部分 ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -187,6 +188,90 @@ class RAGEngine:
 
     def add_issues(self, issues: List[Any], kb_type: str, kb_name: str):
         return self.add_rules(issues, kb_type, kb_name)
+        
+    def add_cases(self, cases: List[Any], kb_type: str, kb_name: str, mode: str = 'append', source_file: str = ''):
+        """
+        把 docx 解析出的案例数据写入知识库
+        mode: 'append'    追加（不动已有数据）
+              'overwrite' 覆盖（清空重建，同 add_rules）
+        """
+        if mode not in ('append', 'overwrite'):
+            return {"status": "error", "message": f"不支持的模式: {mode}，只能是 append 或 overwrite"}
+
+        col_info = self._get_or_create_collection(kb_type, kb_name)
+        if not col_info:
+            return {"status": "error", "message": f"知识库 {kb_name} 初始化失败"}
+        client = col_info['client']
+
+        # 覆盖模式：清空重建（沿用 add_rules 的逻辑）
+        if mode == 'overwrite':
+            try:
+                client.delete_collection(COLLECTION_NAME)
+                col_info['collection'] = client.create_collection(
+                    name=COLLECTION_NAME,
+                    embedding_function=self.emb_fn,
+                    metadata={"hnsw:space": "cosine"}
+                )
+            except Exception as e:
+                return {"status": "error", "message": f"重置知识库失败: {e}"}
+        collection = col_info['collection']
+
+        if not cases:
+            if mode == 'overwrite':
+                return {"status": "success", "message": "案例列表为空，已清空知识库"}
+            return {"status": "success", "message": "案例列表为空，无数据导入"}
+
+        ids = []
+        documents = []
+        metadatas = []
+        # 追加模式下 id 加时间戳，防止和已有数据 id 冲突（upsert 同 id 会覆盖旧数据）
+        ts = datetime.now().strftime('%Y%m%d%H%M%S')
+
+        print(f"[RAG] 正在以 {mode} 模式导入 {len(cases)} 条案例到 {kb_name}...")
+        for idx, item in enumerate(cases):
+            if isinstance(item, str):
+                title = ""
+                doc_content = item
+                meta = {"source_type": "imported_case"}
+            elif isinstance(item, dict):
+                title = item.get("title", "")
+                content = item.get("content", "")
+                # title 拼进正文头部：embedding 检索时标题是关键语义，召回更准
+                doc_content = f"{title}\n{content}" if title else content
+                meta = {
+                    "source_type": "imported_case",
+                    "source_file": source_file,  # ← 新增：来源文件名，delete_file 靠它删
+                    "title": title,
+                }
+                # visio_files 是 list，Chroma metadata 只收标量，转逗号字符串
+                visio_files = item.get("visio_files", [])
+                if visio_files:
+                    meta["visio_files"] = ",".join(visio_files)
+            else:
+                continue
+
+            if not doc_content.strip():
+                continue
+
+            # 确保 metadata 值都是标量（同 add_rules）
+            for k, v in meta.items():
+                if not isinstance(v, (str, int, float, bool)):
+                    meta[k] = str(v)
+
+            doc_id = f"case_{idx}" if mode == 'overwrite' else f"case_{ts}_{idx}"
+            ids.append(doc_id)
+            documents.append(doc_content)
+            metadatas.append(meta)
+
+        if ids:
+            try:
+                collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
+                count = len(ids)
+                return {"status": "success", "message": f"成功导入 {count} 条案例", 'count': count}
+            except Exception as e:
+                print(f"[RAG] 写入失败: {e}")
+                return {"status": "error", "message": str(e)}
+        return {"status": "success", "message": "无有效案例导入"}
 
     def _doc_id_to_content(self, doc_files: List[Dict[str, Any]]) -> Dict[str, str]:
         m: Dict[str, str] = {}
@@ -423,6 +508,7 @@ class RAGEngine:
         
         batch_size = 500
         total = len(ids)
+
         for i in range(0, total, batch_size):
             end = min(i + batch_size, total)
             collection.upsert(

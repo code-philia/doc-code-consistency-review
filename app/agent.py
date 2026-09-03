@@ -27,6 +27,7 @@ from .alignment_config import (
     ALIGN_GRAPH_RERANK_TOP_P,
 )
 import traceback
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from transformers import AutoTokenizer
 
 # 从项目根目录加载 .env
@@ -44,7 +45,7 @@ API_KEY = os.environ.get("API_KEY", "0")
 # MODEL_NAME = "/llm"
 
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:6025/v1/")
-# MODEL_NAME = "Qwen3.5-35B"
+# MODEL_NAME = "qwen3.8-27b"
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:1025/v1")
 MODEL_NAME = "qwen3.6-27b"

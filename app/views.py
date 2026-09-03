@@ -88,7 +88,7 @@ from collections import defaultdict
 from sqlalchemy import create_engine
 import pymysql
 
-from .utils import parse_programming_rules, parse_issue_reports, parse_typical_cases, parse_check_lists, format_rules_for_rag, format_issues_for_rag, format_cases_for_rag, read_docx_text
+from .utils import parse_programming_rules, parse_issue_reports, parse_typical_cases, parse_typical_cases_new, detect_document_structure, parse_check_lists, format_rules_for_rag, format_issues_for_rag, format_cases_for_rag, read_docx_text
 from .utils import convert_docfile_to_markdown
 from .agent import smart_parse_doc
 
@@ -4229,7 +4229,7 @@ def detect_repo_language(repo_path: str) -> str:
         # 只有 Ada 后缀，没有 FPGA 后缀
         return 'Ada'
     else:
-        return found_strict_lang or 'Unknown'
+        return found_strict_lang or 'Unknown'      
         
         
 @bp.route('/api/code-decomposition', methods=['POST'])
@@ -5914,12 +5914,17 @@ def build_rag_db():
                         
                 # 4. 典型案例
                 elif processing_type == 'typical_case':
-                    raw_cases = parse_typical_cases(full_path)
-                    if not raw_cases:
-                        doc_text = read_docx_text(full_path)
-                        raw_cases = smart_parse_doc(doc_text, type='issue')
-                    if raw_cases:
-                        json_data = format_issues_for_rag(raw_cases)
+                    doc = Document(full_path)
+                    mode = detect_document_structure(doc)
+                    print(f"=== 检测到文档结构模式: {mode} ===")
+                    if  mode== 'standard':
+                        cases = parse_typical_cases(full_path, visio_dir='visio_files')
+                    else:
+                        cases = parse_typical_cases_new(full_path, visio_dir='visio_files')
+                    normalized_source_name = re.sub(r'\s+', '_', source_file_name or os.path.basename(full_path))
+                    res = rag_engine.add_cases(cases, kb_type, kb_name, source_file=normalized_source_name)
+                    results.append({'file': raw_annotation_file, 'status': 'success', 'count': res.get('count')})
+                    continue
                 
                 # 5. 必查清单
                 elif processing_type == 'checklist':
@@ -6434,10 +6439,13 @@ def preview_file():
 
         elif doc_type == 'typical_case': # 典型案例解析
             if target_path.endswith('.docx'):
-                cases = parse_typical_cases(target_path)
-                if not cases:
-                    text = read_docx_text(target_path)
-                    cases = smart_parse_doc(text, type='issue')
+                doc = Document(target_path)
+                mode = detect_document_structure(doc)
+                print(f"=== 检测到文档结构模式: {mode} ===")
+                if  mode== 'standard':
+                    cases = parse_typical_cases(target_path, visio_dir='visio_files')
+                else:
+                    cases = parse_typical_cases_new(target_path, visio_dir='visio_files')
                 preview_data = cases
                 
         elif doc_type == 'checklist': # 必查清单解析
@@ -6475,7 +6483,7 @@ def preview_file():
             # 保存到临时目录
             temp_dir = os.path.join(PROJECT_ROOT, 'temp_uploads')
             os.makedirs(temp_dir, exist_ok=True)
-
+            files = preprocess_files(request.files.getlist('file'))
             all_results = []
             for idx, file in enumerate(files):
                 if not file or file.filename == '':
@@ -6484,7 +6492,7 @@ def preview_file():
                 #filename = secure_filename(file.filename)
                 filename = file.filename
                 target_path = os.path.join(temp_dir, filename)
-                files = preprocess_files(request.files.getlist('file'))
+                
                 file.save(target_path)
 
                 preview_data = do_parse(target_path)

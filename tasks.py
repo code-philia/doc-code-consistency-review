@@ -394,9 +394,8 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
 @celery.task(bind=True)
 def review_alignment_single_task(self, project_path, project_id, user_id, prompt_type, item, parent_id):
     try:
-        set_redis_count_for_child_name(parent_id, item)
         alignment = item['alignment']
-
+        set_redis_count_for_child_name(parent_id, alignment)
         # 获取选定的 knowledge base
         selected_rule_kbs = []
         selected_issue_kbs = []
