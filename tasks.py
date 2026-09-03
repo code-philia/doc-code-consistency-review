@@ -428,12 +428,14 @@ def review_alignment_single_task(self, project_path, project_id, user_id, prompt
 
         # 检索规则
         for kb_name in selected_rule_kbs:
-            collection = rag_engine.get_collection('rule', kb_name)
-            if collection:
-                results = collection.query(query_texts=[query_text], n_results=3)
-                if results and results['documents']:
-                    for doc in results['documents'][0]:
-                        retrieved_rules.append(doc)
+            for item_data in rag_engine.get_all_rule_items('rule', kb_name, limit=None):
+                content = item_data.get('content', '')
+                if content:
+                    retrieved_rules.append({
+                        'kb_name': kb_name,
+                        'content': content,
+                        'meta': item_data.get('meta', {})
+                    })
 
         # 检索问题单
         for kb_name in selected_issue_kbs:

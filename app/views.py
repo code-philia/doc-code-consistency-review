@@ -3164,12 +3164,14 @@ def review_alignment_addprompt():
 
     # 检索规则
     for kb_name in selected_rule_kbs:
-        collection = rag_engine.get_collection('rule', kb_name)
-        if collection:
-            results = collection.query(query_texts=[query_text], n_results=3)
-            if results and results['documents']:
-                for doc in results['documents'][0]:
-                    retrieved_rules.append(doc)
+        for item_data in rag_engine.get_all_rule_items('rule', kb_name, limit=None):
+            content = item_data.get('content', '')
+            if content:
+                retrieved_rules.append({
+                    'kb_name': kb_name,
+                    'content': content,
+                    'meta': item_data.get('meta', {})
+                })
 
     # 检索问题单
     for kb_name in selected_issue_kbs:
@@ -5894,7 +5896,8 @@ def build_rag_db():
                         doc_text = read_docx_text(full_path)
                         raw_rules = smart_parse_doc(doc_text, type='rule')
                     if raw_rules:
-                        json_data = format_rules_for_rag(raw_rules)
+                        # 编码规则使用 Markdown 保存，避免拆成向量条目后只能按相似度取样。
+                        json_data = raw_rules
 
                 # 2. 问题单
                 elif processing_type == 'issue':
@@ -5950,12 +5953,36 @@ def build_rag_db():
                 results.append({"file": raw_annotation_file, "status": "error", "message": "文档解析失败"})
                 continue
 
+            normalized_source_name = re.sub(r'\s+', '_', source_file_name or os.path.basename(full_path))
+            is_append = append_mode or (idx > 0)
+
+            if processing_type in ('rule', 'checklist'):
+                result = rag_engine.add_rules_markdown(
+                    json_data,
+                    kb_type=processing_type,
+                    kb_name=kb_name,
+                    append=is_append,
+                    source_file=normalized_source_name
+                )
+                if result.get("status") == "success":
+                    count = result.get("count", 0)
+                    total_count = result.get("total_count", total_count + count)
+                    results.append({
+                        'file': raw_annotation_file,
+                        'status': 'success',
+                        'count': count
+                    })
+                else:
+                    results.append({
+                        'file': raw_annotation_file,
+                        'status': 'error',
+                        'message': result.get('message')
+                    })
+                continue
+
             temp_json = full_path + '.parsed.json'
             with open(temp_json, 'w', encoding='utf-8') as f:
                 json.dump(json_data, f, ensure_ascii=False, indent=2)
-
-            is_append = append_mode or (idx > 0)
-            normalized_source_name = re.sub(r'\s+', '_', source_file_name or os.path.basename(full_path))
 
             result = rag_engine.build_from_json(
                 temp_json,
@@ -6007,6 +6034,43 @@ def add_items_to_kb():
 
     try:
         rag_engine.initialize()
+
+        if rag_engine.is_rule_kb(kb_type):
+            result = rag_engine.add_rules_markdown(
+                items,
+                kb_type=kb_type,
+                kb_name=kb_name,
+                append=bool(append_mode),
+                source_file="手动录入"
+            )
+            if result.get("status") != "success":
+                return jsonify(result)
+
+            kb_root = os.path.join(PROJECT_ROOT, "../rag_database", kb_name)
+            os.makedirs(kb_root, exist_ok=True)
+            meta_file = os.path.join(kb_root, "metadata.json")
+            if os.path.exists(meta_file):
+                with open(meta_file, 'r', encoding='utf-8') as f:
+                    meta = pyjson.load(f)
+            else:
+                meta = {
+                    "name": kb_name,
+                    "type": "coding_rule",
+                    "create_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    "source_file": "手动录入"
+                }
+            meta["type"] = "coding_rule" if kb_type in ("rule", "coding_rule") else kb_type
+            meta["doc_count"] = result.get("total_count", 0)
+            meta["update_time"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            with open(meta_file, 'w', encoding='utf-8') as f:
+                pyjson.dump(meta, f, ensure_ascii=False, indent=2)
+
+            return jsonify({
+                "status": "success",
+                "message": f"入库完成！本次新增 {result.get('count', 0)} 条规则，当前库内总数: {result.get('total_count', 0)}",
+                "total_count": result.get("total_count", 0)
+            })
+
         col_info = rag_engine._get_or_create_collection(kb_type, kb_name)
         if not col_info:
             return jsonify({"status": "error", "message": f"知识库 {kb_name} 初始化失败"})

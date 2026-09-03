@@ -843,9 +843,11 @@ def parse_programming_rules(docx_path, debug=True):
     # 使用你提供的正则：匹配 R-1-1-1
     rule_id_pattern = re.compile(r'(R-\d+-\d+-\d+([A-Z]?))') 
     
-    # 关键词
-    violation_keys = ["违背示例", "错误示例", "违背", "不符合", "违背 1", "违背 2", "提示 1", "提示 2"]
-    compliance_keys = ["遵循示例", "正确示例", "遵循", "符合"]
+    # 示例关键词只用于跳过示例段落，不保存任何示例代码。
+    example_keys = [
+        "违背示例", "错误示例", "违背", "不符合", "违背 1", "违背 2",
+        "提示 1", "提示 2", "遵循示例", "正确示例", "遵循", "符合"
+    ]
 
     for i, el in enumerate(parser.elements):
         # 按照你的要求，规则解析只看段落
@@ -870,7 +872,11 @@ def parse_programming_rules(docx_path, debug=True):
             description = description.splitlines()
             description = description[-1]
             # 过滤掉异常字符
-            description = description.replace("违背示例：","") 
+            description = re.sub(
+                r"(?:。)?(?:违背与遵循示例|违背示例|遵循示例|正确示例)[:：]\s*$",
+                "",
+                description,
+            ).strip()
             #print(description)
             
             #if debug: print(f"🟢 [发现新规则] ID: {rule_id} | 描述: {description[:20]}...")
@@ -887,45 +893,20 @@ def parse_programming_rules(docx_path, debug=True):
             
         if not current_rule: continue
 
-        # 2. 识别示例标记
-        # 注意：Parser 可能会把代码提取在“违背示例”同一行的后面
-        # 所以我们得检查这一行除去关键词后，是否还有残留内容（代码）
+        # 2. 规则只保存说明，所有示例段落全部跳过。
         
         is_mode_switch = False
         
-        # 检查违背
-        for k in violation_keys:
+        for k in example_keys:
             if k in text:
-                capturing_code = 'violation'
-                if debug: print(f"   ⚠️  [进入模式] 违背示例")
-                # 【重要修改】检查同行的残留代码
-                code_part = text.replace(k, "", 1).replace(":", "").replace("：", "").strip()
-                if len(code_part) > 1: # 如果剩下的内容够长，说明代码跟在后面了
-                    current_rule['violation_code'] += code_part + "\n"
+                capturing_code = None
+                if debug: print(f"   [跳过] 示例内容")
                 is_mode_switch = True
                 break
         
         if is_mode_switch: continue
 
-        # 检查遵循
-        for k in compliance_keys:
-            if k in text:
-                capturing_code = 'compliance'
-                if debug: print(f"   ✅ [进入模式] 遵循示例")
-                # 【重要修改】检查同行的残留代码
-                code_part = text.replace(k, "", 1).replace(":", "").replace("：", "").strip()
-                if len(code_part) > 1:
-                    current_rule['compliance_code'] += code_part + "\n"
-                is_mode_switch = True
-                break
-        
-        if is_mode_switch: continue
-            
-        # 3. 提取代码 (只有处于模式中才提取)
-        if capturing_code == 'violation':
-            current_rule['violation_code'] += text + "\n"
-        elif capturing_code == 'compliance':
-            current_rule['compliance_code'] += text + "\n"
+        # 3. 不提取任何示例代码。
             
     if current_rule:
         rules.append(current_rule)
@@ -1736,19 +1717,11 @@ def parse_check_lists(docx_path: str) -> List[Dict]:
 def format_rules_for_rag(rules):
     formatted = []
     for idx, r in enumerate(rules):
-        combined_code = ""
-        if r['violation_code'].strip():
-            combined_code += f"// [违背示例]\n{r['violation_code']}\n"
-        if r['compliance_code'].strip():
-            combined_code += f"// [遵循示例]\n{r['compliance_code']}"
-        if not combined_code.strip():
-            combined_code = "// 文档中未提取到明确示例代码"
-
         formatted.append({
             "id": r.get('id', f"rule_{idx}"),
             "category": "编程规则",
             "docRanges": [{"content": r['description'], "documentId": "rules_doc"}],
-            "codeRanges": [{"content": combined_code, "documentId": "rules_code"}]
+            "codeRanges": []
         })
     return {"annotations": formatted}
 

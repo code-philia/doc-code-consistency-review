@@ -587,13 +587,11 @@ RULE_EXTRACTION_PROMPT = """
 请提取：
 1. "id": 规则编号（如 R-1-10-3）。
 2. "description": 规则的文字描述。
-3. "violation_code": "违背示例"下的代码片段。
-4. "compliance_code": "遵循示例"下的代码片段。
 
 文档内容：
 {text}
 
-请返回一个 JSON 列表，每个元素包含上述字段。
+请返回一个 JSON 列表，每个元素只包含 "id" 和 "description"，不要提取或返回任何示例。
 """
 
 ISSUE_EXTRACTION_PROMPT = """

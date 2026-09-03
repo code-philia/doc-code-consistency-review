@@ -1,6 +1,7 @@
 
 import os
 import json
+import re
 import chromadb
 import torch
 import torch.nn.functional as F
@@ -63,6 +64,9 @@ class LocalM3EFunction(chromadb.EmbeddingFunction):
 
 class RAGEngine:
     _instance = None
+    RULE_KB_TYPES = {"rule", "coding_rule", "checklist"}
+    RULE_MARKDOWN_FILE = "rules.md"
+    RULE_METADATA_FILE = "rules.meta.json"
     
     def __new__(cls):
         if cls._instance is None:
@@ -85,6 +89,299 @@ class RAGEngine:
     def _get_kb_path(self, kb_type: str, kb_name: str):
         # 展平结构：直接存放在 rag_database 下的同名目录
         return os.path.join(self.project_kb_root, kb_name)
+
+    def is_rule_kb(self, kb_type: str) -> bool:
+        return (kb_type or "").strip() in self.RULE_KB_TYPES
+
+    def _get_rules_markdown_path(self, kb_name: str) -> str:
+        return os.path.join(self._get_kb_path("rule", kb_name), self.RULE_MARKDOWN_FILE)
+
+    def _get_rules_metadata_path(self, kb_name: str) -> str:
+        return os.path.join(self._get_kb_path("rule", kb_name), self.RULE_METADATA_FILE)
+
+    @staticmethod
+    def _normalize_rule_source(source_file: str) -> str:
+        source = str(source_file or "").strip().replace("\\", "/")
+        return source.split("/")[-1].strip() if source else ""
+
+    @staticmethod
+    def _rule_text(value: Any) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, str):
+            return value.strip()
+        return json.dumps(value, ensure_ascii=False)
+
+    @staticmethod
+    def _description_only_text(value: Any) -> str:
+        """从旧规则数据中仅保留规则说明，过滤所有示例。"""
+        text = RAGEngine._rule_text(value)
+        if not text:
+            return ""
+        marker = re.search(r"(?://\s*)?\[?(?:违背|遵循)示例\]?\s*:?", text)
+        return text[:marker.start()].strip() if marker else text
+
+    def _rule_record_from_item(self, item: Any, source_file: str = "", index: int = 0) -> Dict[str, Any]:
+        """将解析结果、标注 JSON 或手工条目统一为 Markdown 记录。"""
+        meta: Dict[str, Any] = {}
+        description = ""
+        rule_id = ""
+
+        if isinstance(item, str):
+            description = item
+        elif isinstance(item, dict):
+            full_data = item.get("full_data")
+            if isinstance(full_data, dict):
+                meta.update(full_data)
+
+            rule_id = str(item.get("id") or meta.get("id") or "").strip()
+            rule_id = rule_id or str(meta.get("rule_id") or "").strip()
+
+            if item.get("description") is not None:
+                description = self._rule_text(item.get("description"))
+            elif item.get("docRanges") is not None:
+                doc_ranges = item.get("docRanges") or []
+                description = "\n".join(
+                    self._rule_text(r.get("content"))
+                    for r in doc_ranges
+                    if isinstance(r, dict) and self._rule_text(r.get("content"))
+                ).strip()
+            else:
+                description = self._rule_text(
+                    item.get("content")
+                    or item.get("rule")
+                    or item.get("detail")
+                    or meta.get("description")
+                )
+
+            if not rule_id:
+                rule_id = str(meta.get("rule_id") or "").strip()
+
+        if not rule_id:
+            rule_id = f"rule_{index + 1}"
+
+        source = self._normalize_rule_source(
+            source_file or (meta.get("source_file") if isinstance(meta, dict) else "")
+        )
+        record_meta = {
+            "id": rule_id,
+            "category": str(meta.get("category") or "编程规则"),
+            "source_file": source,
+        }
+        return {
+            "id": rule_id,
+            "description": description.strip(),
+            "meta": record_meta,
+        }
+
+    def _serialize_rules_markdown(self, records: List[Dict[str, Any]]) -> str:
+        parts = ["# 编码规则"]
+        for record in records:
+            rule_id = str(record.get("id") or "rule").strip().replace("\n", " ")
+            description = str(record.get("description") or "").strip()
+            if not description:
+                continue
+            parts.append(f"## {rule_id}\n{description}")
+
+            meta = record.get("meta") or {}
+            compact_meta = {
+                "id": rule_id,
+                "category": str(meta.get("category") or "编程规则"),
+                "source_file": str(meta.get("source_file") or ""),
+            }
+            parts.append(f"<!-- rule-meta:{json.dumps(compact_meta, ensure_ascii=False, separators=(',', ':'))} -->")
+        return "\n\n".join(parts).rstrip() + "\n"
+
+    def _parse_rules_markdown(self, text: str) -> List[Dict[str, Any]]:
+        matches = list(re.finditer(r"(?m)^##[ \t]+(.+?)\s*$", text or ""))
+        records: List[Dict[str, Any]] = []
+        for idx, match in enumerate(matches):
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
+            block = text[match.end():end].strip()
+            heading_id = match.group(1).strip()
+
+            meta_match = re.search(r"<!--\s*rule-meta:(.*?)\s*-->", block, re.DOTALL)
+            meta: Dict[str, Any] = {}
+            if meta_match:
+                try:
+                    parsed_meta = json.loads(meta_match.group(1))
+                    if isinstance(parsed_meta, dict):
+                        meta = parsed_meta
+                except (TypeError, json.JSONDecodeError):
+                    pass
+                block = block[:meta_match.start()].rstrip()
+
+            description_end = len(block)
+            for marker in ("违背示例:", "遵循示例:"):
+                marker_pos = block.find(marker)
+                if marker_pos >= 0:
+                    description_end = min(description_end, marker_pos)
+            description = block[:description_end].strip()
+
+            record_id = str(meta.get("id") or heading_id).strip()
+            records.append({
+                "id": record_id,
+                "description": description,
+                "meta": {
+                    "id": record_id,
+                    "category": str(meta.get("category") or "编程规则"),
+                    "source_file": self._normalize_rule_source(meta.get("source_file", "")),
+                },
+            })
+        return records
+
+    def _read_rules_markdown(self, kb_name: str) -> List[Dict[str, Any]]:
+        path = self._get_rules_markdown_path(kb_name)
+        if not os.path.isfile(path):
+            return []
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                records = self._parse_rules_markdown(f.read())
+
+            metadata_path = self._get_rules_metadata_path(kb_name)
+            metadata = {}
+            if os.path.isfile(metadata_path):
+                with open(metadata_path, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                    metadata = loaded if isinstance(loaded, dict) else {}
+            default_meta = metadata.get("__default__", {})
+            for record in records:
+                extra_meta = metadata.get(str(record.get("id")), {})
+                if not isinstance(extra_meta, dict):
+                    extra_meta = {}
+                if not isinstance(default_meta, dict):
+                    default_meta = {}
+                record["meta"] = {
+                    **default_meta,
+                    **(record.get("meta") or {}),
+                    **extra_meta,
+                }
+            return records
+        except (OSError, UnicodeError) as e:
+            print(f"[RAG] 读取规则 Markdown 失败: {e}")
+            return []
+        except (TypeError, json.JSONDecodeError) as e:
+            print(f"[RAG] 读取规则元数据失败: {e}")
+            return []
+
+    def _write_rules_markdown(self, kb_name: str, records: List[Dict[str, Any]]) -> None:
+        path = self._get_rules_markdown_path(kb_name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        temp_path = f"{path}.tmp"
+        with open(temp_path, "w", encoding="utf-8") as f:
+            f.write(self._serialize_rules_markdown(records))
+        os.replace(temp_path, path)
+
+        metadata = {}
+        for record in records:
+            record_id = str(record.get("id") or "").strip()
+            if not record_id:
+                continue
+            meta = record.get("meta") or {}
+            metadata[record_id] = {
+                "category": str(meta.get("category") or "编程规则"),
+                "source_file": self._normalize_rule_source(meta.get("source_file", "")),
+            }
+        metadata_path = self._get_rules_metadata_path(kb_name)
+        metadata_temp_path = f"{metadata_path}.tmp"
+        with open(metadata_temp_path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False, separators=(",", ":"))
+        os.replace(metadata_temp_path, metadata_path)
+
+    def add_rules_markdown(
+        self,
+        rules: Any,
+        kb_type: str,
+        kb_name: str,
+        append: bool = False,
+        source_file: str = "",
+    ) -> Dict[str, Any]:
+        """将编码规则保存为 Markdown，不创建或修改 Chroma 向量集合。"""
+        if isinstance(rules, dict):
+            raw_items = rules.get("annotations", rules.get("rules", []))
+            if not isinstance(raw_items, list):
+                raw_items = [rules]
+        elif isinstance(rules, list):
+            raw_items = rules
+        else:
+            raw_items = []
+
+        existing = self._read_rules_markdown(kb_name) if append else []
+        records = list(existing)
+        existing_ids = {str(item.get("id")) for item in records}
+        added = 0
+
+        for idx, item in enumerate(raw_items):
+            record = self._rule_record_from_item(item, source_file=source_file, index=idx)
+            if not record["description"]:
+                continue
+
+            base_id = record["id"]
+            candidate_id = base_id
+            suffix = 2
+            while candidate_id in existing_ids:
+                candidate_id = f"{base_id}_{suffix}"
+                suffix += 1
+            record["id"] = candidate_id
+            record["meta"]["id"] = candidate_id
+            records.append(record)
+            existing_ids.add(candidate_id)
+            added += 1
+
+        self._write_rules_markdown(kb_name, records)
+        return {
+            "status": "success",
+            "message": f"成功保存 {added} 条规则到 Markdown",
+            "count": added,
+            "total_count": len(records),
+        }
+
+    def _get_rule_items_from_markdown(self, kb_name: str, limit: int = None) -> List[Dict[str, Any]]:
+        records = self._read_rules_markdown(kb_name)
+        if limit is not None:
+            records = records[:max(limit, 0)]
+        items = []
+        for record in records:
+            meta = dict(record.get("meta") or {})
+            meta.update({
+                "source_type": "markdown_rule",
+                "source_file": meta.get("source_file", ""),
+                "category": meta.get("category", "编程规则"),
+            })
+            items.append({
+                "id": record.get("id"),
+                "content": record.get("description", "").strip(),
+                "meta": meta,
+            })
+        return items
+
+    def get_all_rule_items(self, kb_type: str, kb_name: str, limit: int = None) -> List[Dict[str, Any]]:
+        """读取全部规则；新库读 Markdown，旧库无 rules.md 时回退 Chroma。"""
+        if os.path.isfile(self._get_rules_markdown_path(kb_name)):
+            return self._get_rule_items_from_markdown(kb_name, limit)
+
+        col_info = self._get_or_create_collection(kb_type, kb_name)
+        if not col_info:
+            return []
+        collection = col_info["collection"]
+        try:
+            kwargs = {"include": ["metadatas", "documents"]}
+            if limit is not None:
+                kwargs["limit"] = limit
+            results = collection.get(**kwargs)
+            items = []
+            for i in range(len(results.get("ids") or [])):
+                meta = results["metadatas"][i] if results.get("metadatas") else {}
+                content = self._description_only_text(results["documents"][i])
+                items.append({
+                    "id": results["ids"][i],
+                    "content": content,
+                    "meta": meta,
+                })
+            return items
+        except Exception as e:
+            print(f"[RAG] 读取规则回退数据失败: {e}")
+            return []
 
     def _get_or_create_collection(self, kb_type: str, kb_name: str):
         cache_key = f"{kb_type}|{kb_name}"
@@ -121,6 +418,9 @@ class RAGEngine:
         """
         清空并重建指定知识库
         """
+        if self.is_rule_kb(kb_type):
+            return self.add_rules_markdown(rules, kb_type, kb_name, append=False)
+
         col_info = self._get_or_create_collection(kb_type, kb_name)
         if not col_info:
              return {"status": "error", "message": f"知识库 {kb_name} 初始化失败"}
@@ -286,6 +586,10 @@ class RAGEngine:
         return m
 
     def get_all_items(self, kb_type: str, kb_name: str, limit: int = 100):
+        if self.is_rule_kb(kb_type) and os.path.isfile(self._get_rules_markdown_path(kb_name)):
+            items = self._get_rule_items_from_markdown(kb_name, limit)
+            return {"status": "success", "items": items, "total": len(self._read_rules_markdown(kb_name))}
+
         col_info = self._get_or_create_collection(kb_type, kb_name)
         if not col_info:
             return {"status": "error", "message": "知识库不存在"}
@@ -308,6 +612,18 @@ class RAGEngine:
             return {"status": "error", "message": str(e)}
 
     def delete_item(self, kb_type: str, kb_name: str, item_id: str):
+        if self.is_rule_kb(kb_type) and os.path.isfile(self._get_rules_markdown_path(kb_name)):
+            records = self._read_rules_markdown(kb_name)
+            remaining_records = [record for record in records if str(record.get("id")) != str(item_id)]
+            if len(remaining_records) == len(records):
+                return {"status": "error", "message": "条目不存在"}
+            self._write_rules_markdown(kb_name, remaining_records)
+            return {
+                "status": "success",
+                "message": "删除成功",
+                "remaining": len(remaining_records),
+            }
+
         col_info = self._get_or_create_collection(kb_type, kb_name)
         if not col_info:
             return {"status": "error", "message": "知识库不存在"}
@@ -320,6 +636,25 @@ class RAGEngine:
             return {"status": "error", "message": str(e)}
 
     def delete_file(self, kb_type: str, kb_name: str, source_file: str):
+        if self.is_rule_kb(kb_type) and os.path.isfile(self._get_rules_markdown_path(kb_name)):
+            records = self._read_rules_markdown(kb_name)
+            normalized_source = self._normalize_rule_source(source_file)
+            remaining_records = [
+                record for record in records
+                if self._normalize_rule_source(
+                    (record.get("meta") or {}).get("source_file", "")
+                ) != normalized_source
+            ]
+            deleted = len(records) - len(remaining_records)
+            if deleted:
+                self._write_rules_markdown(kb_name, remaining_records)
+            return {
+                "status": "success",
+                "message": "删除成功",
+                "remaining": len(remaining_records),
+                "deleted": deleted,
+            }
+
         col_info = self._get_or_create_collection(kb_type, kb_name)
         if not col_info:
             return {"status": "error", "message": "知识库不存在"}
@@ -337,6 +672,15 @@ class RAGEngine:
                 js = json.load(f)
         except Exception as e:
             return {"status": "error", "message": f"读取标注文件失败: {str(e)}"}
+
+        if self.is_rule_kb(kb_type):
+            return self.add_rules_markdown(
+                js,
+                kb_type=kb_type,
+                kb_name=kb_name,
+                append=append,
+                source_file=source_file
+            )
         
         col_info = self._get_or_create_collection(kb_type, kb_name)
         if not col_info:
