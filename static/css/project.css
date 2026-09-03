@@ -5224,6 +5224,65 @@
     white-space: nowrap;
 }
 
+.detail-view .code-toc {
+    position: relative;
+    top: auto;
+    z-index: 1;
+    flex: 0 0 auto;
+    max-height: 176px;
+    margin: 0;
+    border-color: #d6dde6;
+    border-radius: 0;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.detail-view .code-toc.collapsed {
+    max-height: 36px;
+    margin: 0;
+}
+
+.detail-view .code-toc .toc-header {
+    min-height: 36px;
+    padding: 8px 10px;
+    background: #eef2f6;
+    border-bottom: 1px solid #d6dde6;
+}
+
+.detail-view .code-toc.collapsed .toc-header {
+    border-bottom: 0;
+}
+
+.detail-view .code-toc .toc-body {
+    display: block;
+    max-height: 140px;
+    padding: 4px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.detail-view .code-toc.collapsed .toc-body {
+    display: none;
+}
+
+.detail-view .code-toc .toc-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.detail-view .code-toc .toc-name {
+    min-width: 0;
+}
+
+.code-entry-badge--toc {
+    margin-left: 0;
+    padding: 1px 5px;
+    font-size: 10px;
+}
+
 .detail-right-panel {
     display: grid;
     grid-template-rows: minmax(230px, 0.9fr) minmax(0, 1.1fr);

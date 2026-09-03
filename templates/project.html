@@ -400,7 +400,7 @@
                                 :data="docFileTree"
                                 :props="{ label: 'label', children: 'children' }"
                                 @node-click="handleNodeClick"
-                                :expand-on-click-node="false"
+                                :expand-on-click-node="true"
                                 node-key="path"
                                 empty-text="">
                                 <!-- <template #default="{ node, data }">
@@ -444,7 +444,7 @@
                                 :data="codeFileTree"
                                 :props="{ label: 'label', children: 'children' }"
                                 @node-click="handleNodeClick"
-                                :expand-on-click-node="false"
+                                :expand-on-click-node="true"
                                 node-key="path"
                                 empty-text="">
                                 <template #default="{ node, data }">
@@ -1878,6 +1878,9 @@
                                     <span class="toc-num">${ index + 1 }</span>
                                     <span class="toc-name" :title="range.filename">${ range.filename }</span>
                                     <span class="toc-lines">第${ range.startLine }-${ range.endLine }行</span>
+                                    <span v-if="index === 0" class="code-entry-badge code-entry-badge--toc">
+                                        <i class="fas fa-sign-in-alt"></i> 代码入口
+                                    </span>
                                 </div>
                             </div>
                         </div>

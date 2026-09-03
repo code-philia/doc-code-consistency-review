@@ -445,6 +445,14 @@ const app = createApp({
             const base = labelMap[status] || '调用图状态未知';
             return metadata.error_message ? `${base}: ${metadata.error_message}` : base;
         });
+        const isCallGraphBlockType = (block) => {
+            const type = (block?.type || '').toString().toLowerCase();
+            return new Set([
+                'function', 'task', 'procedure',
+                'module', 'interface', 'program', 'entity', 'architecture',
+                'package', 'package_body', 'process', 'always', 'initial'
+            ]).has(type);
+        };
         const currentCodeSelectionSupportsCallGraph = computed(() => {
             if (!currentSelection.value || currentSelection.value.type !== 'code') {
                 return false;
@@ -456,7 +464,7 @@ const app = createApp({
                 return true;
             }
             const block = currentCodeSelectionBlock.value;
-            return !!(block && ((block.type || '').toLowerCase() === 'function'));
+            return isCallGraphBlockType(block);
         });
         const callGraphSupportsViewportControls = computed(() => {
             return (
@@ -473,9 +481,9 @@ const app = createApp({
             if (
                 callGraphStartMode.value === 'function' &&
                 manualAlignFromBlock.value &&
-                ((currentCodeSelectionBlock.value?.type || '').toLowerCase()) !== 'function'
+                !isCallGraphBlockType(currentCodeSelectionBlock.value)
             ) {
-                return '仅函数块支持调用图';
+                return '仅函数或 HDL 结构块支持调用图';
             }
             const status = projectCallGraphMetadata.value?.status || 'unavailable';
             if (status === 'ready') {

@@ -24,3 +24,5 @@ transformers
 tree-sitter
 tree-sitter-c
 tree-sitter-cpp
+tree-sitter-verilog
+tree-sitter-vhdl

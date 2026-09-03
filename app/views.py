@@ -4157,7 +4157,7 @@ def detect_repo_language(repo_path: str) -> str:
     扫描代码仓库，根据文件后缀判断语言类型。
     逻辑：
     1. 遇到 Python/C/C++/Java 等强特征后缀，直接返回。
-    2. 如果遇到 Ada (.adb/.ads) 或 FPGA (.v/.vhd/.sv)，先记录，继续扫描。
+    2. 如果遇到 Ada (.adb/.ads) 或 FPGA/HDL (.v/.vhd/.sv)，先记录，继续扫描。
     3. 如果扫描完发现既有 Ada 后缀又有 FPGA 后缀，返回 'FPGA'。
     4. 如果只有 Ada 后缀，返回 'Ada'。
     5. 如果只有 FPGA 后缀，返回 'FPGA'。
@@ -4176,18 +4176,17 @@ def detect_repo_language(repo_path: str) -> str:
     }
 
     # 2. 需要特殊逻辑判断的组
-    FPGA_SUFFIXES = {'.v', '.vhd', '.sv', '.vhdl', '.vlog', '.svh'}
+    FPGA_SUFFIXES = {'.v', '.vh', '.vhd', '.sv', '.vhdl', '.vlog', '.svh'}
     ADA_SUFFIXES = {'.adb', '.ads'}
 
     repo_path = Path(repo_path)
     if not repo_path.exists() or not repo_path.is_dir():
         raise FileNotFoundError(f"路径不存在或不是目录：{repo_path}")
 
-    # 标记变量
+    # 先完整扫描，避免 HDL 工程中附带的 Python/Tcl 辅助脚本抢先决定语言。
     has_ada = False
     has_fpga = False
-    
-    # 用于记录找到的第一个强特征语言，一旦找到直接返回
+    has_c_cpp = False
     found_strict_lang = None
 
     # 遍历所有文件 (递归)
@@ -4200,11 +4199,17 @@ def detect_repo_language(repo_path: str) -> str:
             
         suffix = file_path.suffix.lower()
         
-        # 1. 检查强特征语言 (Python, C, C++, Java)
+        # 1. 记录 C/C++，最终优先于辅助脚本语言。
+        if suffix in {'.c', '.cpp', '.cc', '.cxx', '.h', '.hpp', '.hh', '.hxx'}:
+            has_c_cpp = True
+            continue
+
+        # 2. 记录其他强特征语言，但不立即返回。
         if suffix in STRICT_LANG_MAP:
-            return STRICT_LANG_MAP[suffix]
+            found_strict_lang = found_strict_lang or STRICT_LANG_MAP[suffix]
+            continue
         
-        # 2. 检查 Ada 和 FPGA 特征
+        # 3. 检查 Ada 和 FPGA 特征
         if suffix in ADA_SUFFIXES:
             has_ada = True
         elif suffix in FPGA_SUFFIXES:
@@ -4213,7 +4218,9 @@ def detect_repo_language(repo_path: str) -> str:
         # 优化：如果已经找到了强特征语言（虽然上面的 if 已经 return 了，这里是为了逻辑完整性）
         # 如果既没有强特征，也没有找到 Ada 或 FPGA，继续
         
-    # 3. 处理 Ada 和 FPGA 的冲突逻辑
+    # 4. C/C++ 和 HDL 是当前 tree-sitter 调用图支持的主体语言。
+    if has_c_cpp:
+        return 'C/C++'
     if has_fpga:
         # 只要存在 FPGA 后缀 (无论有没有 Ada)，都判定为 FPGA
         # 根据你的需求：如果存在 .vhd/.v/.sv，就是 FPGA
@@ -4222,7 +4229,7 @@ def detect_repo_language(repo_path: str) -> str:
         # 只有 Ada 后缀，没有 FPGA 后缀
         return 'Ada'
     else:
-        return 'Unknown'        
+        return found_strict_lang or 'Unknown'
         
         
 @bp.route('/api/code-decomposition', methods=['POST'])
@@ -4242,9 +4249,9 @@ def code_decomposition():
         lang = detect_repo_language(code_repo_path)
         print(f"检测到的语言: {lang}")
         
-        if(lang == 'C/C++'):
+        if lang in {'C/C++', 'FPGA'}:
         
-            """针对C/C++代码，使用调用图 tree-sitter 解析产物同步代码块和调用图。"""
+            """针对 C/C++ 和 HDL，使用 tree-sitter 解析产物同步代码块和调用图。"""
             call_graph_result = build_project_call_graph(project_path)
             call_graph_metadata = call_graph_result.get('metadata') or get_call_graph_metadata(project_path)
             call_graph_status = call_graph_metadata.get('status')
@@ -4252,10 +4259,14 @@ def code_decomposition():
             all_code_blocks = payload.get('code_blocks') or []
 
             if call_graph_status != 'ready':
+                # 调用图是增强能力，构建失败时仍保留旧分块流程，避免阻断代码分解。
+                all_files = get_all_files_with_relative_paths(code_repo_path, 'code')
+                fallback_blocks = get_all_code_blocks(code_repo_path, all_files)
+                replace_code_blocks(project_path, fallback_blocks)
                 return jsonify({
-                    'status': 'error',
-                    'message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
-                    'processedCount': 0,
+                    'status': 'success',
+                    'message': '代码分解完成，但调用图不可用，已使用兼容分块逻辑',
+                    'processedCount': len(fallback_blocks),
                     'call_graph_status': call_graph_status,
                     'call_graph_message': call_graph_result.get('message') or _call_graph_status_message(call_graph_metadata),
                 })

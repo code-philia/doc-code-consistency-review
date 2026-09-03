@@ -49,7 +49,7 @@ def chunk_cpp_code(filename: str, file_path: str, output_json: str = None) -> Li
 
     ext = os.path.splitext(file_path)[1].lower()
     start = 0
-    if ext in ('.v', '.sv', '.vhd'):
+    if ext in ('.v', '.vh', '.vlog', '.sv', '.svh', '.vhd', '.vhdl'):
         # print(f'正在处理fpga:{filename}')
         # 过滤 fpga文件开头注释
         i, total = 0, len(lines)

@@ -142,7 +142,7 @@ def build_project_call_graph(project_path: str) -> Dict[str, object]:
             project_path,
             status="unavailable",
             updated_at=_utc_now_iso(),
-            error_message="未发现可解析的 C/C++ 源文件",
+            error_message="未发现可解析的 C/C++/Verilog/VHDL 源文件",
             source_file_count=0,
         )
         return {
@@ -225,7 +225,21 @@ def ensure_project_call_graph(project_path: str) -> Dict[str, object]:
 def _is_function_block(block: Optional[Dict[str, object]]) -> bool:
     if not isinstance(block, dict):
         return False
-    return (block.get("type") or "").strip().lower() == "function"
+    return (block.get("type") or "").strip().lower() in {
+        "function",
+        "task",
+        "procedure",
+        "module",
+        "interface",
+        "program",
+        "entity",
+        "architecture",
+        "package",
+        "package_body",
+        "process",
+        "always",
+        "initial",
+    }
 
 
 def _ranges_intersect(start_a: int, end_a: int, start_b: int, end_b: int) -> bool:
@@ -368,11 +382,15 @@ def _normalize_code_block_range(project_path: str, block: Dict[str, object]) -> 
     content = block.get("content") or block.get("code") or ""
     start = block.get("start")
     end = block.get("end")
-    if start is None or end is None:
+    if file and start_line > 0 and end_line > 0:
         file_content = _read_code_file(project_path, file)
-        start, end = _offsets_from_line_range(file_content, start_line, end_line)
-        if not content:
-            content = file_content[start:end]
+        range_start, range_end = _offsets_from_line_range(file_content, start_line, end_line)
+        if start is None or end is None:
+            start, end = range_start, range_end
+        # Call graph ranges may be backed by existing DB blocks whose content was
+        # created before source encoding fallback existed. Re-slice source text so
+        # preview-added functions do not persist mojibake Chinese comments.
+        content = file_content[range_start:range_end]
     return {
         "name": block.get("name") or "",
         "type": block.get("type") or "",
@@ -573,7 +591,7 @@ def _function_to_block_like(project_path: str, function_info: Dict[str, object])
     return {
         "id": None,
         "name": function_info.get("qualified_name") or function_info.get("name") or "",
-        "type": "function",
+        "type": function_info.get("kind") or function_info.get("type") or "function",
         "file": file,
         "filename": file,
         "range": [start_line, end_line],

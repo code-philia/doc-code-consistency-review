@@ -37,6 +37,25 @@ except ImportError:  # Supports direct execution: python callgraph/build_call_gr
     from text_encoding import decode_source_bytes
 
 try:
+    from .hdl_adapter import (
+        HDL_EXTENSIONS,
+        HDL_LANGUAGES,
+        build_hdl_model,
+        is_hdl_language,
+        language_for_path,
+        load_languages as load_hdl_languages,
+    )
+except ImportError:  # Supports direct execution from the callgraph directory.
+    from hdl_adapter import (
+        HDL_EXTENSIONS,
+        HDL_LANGUAGES,
+        build_hdl_model,
+        is_hdl_language,
+        language_for_path,
+        load_languages as load_hdl_languages,
+    )
+
+try:
     from tree_sitter import Language, Parser
 except ImportError as exc:  # pragma: no cover - import failure is runtime guidance
     raise SystemExit(
@@ -49,7 +68,7 @@ except ImportError as exc:  # pragma: no cover - import failure is runtime guida
 C_EXTENSIONS = {".c"}
 CPP_EXTENSIONS = {".cc", ".cp", ".cpp", ".cxx", ".c++", ".C"}
 HEADER_EXTENSIONS = {".h", ".hh", ".hpp", ".hxx", ".ipp", ".inl", ".tpp"}
-SOURCE_EXTENSIONS = C_EXTENSIONS | CPP_EXTENSIONS | HEADER_EXTENSIONS
+SOURCE_EXTENSIONS = C_EXTENSIONS | CPP_EXTENSIONS | HEADER_EXTENSIONS | HDL_EXTENSIONS
 
 FUNCTION_DEFINITION_TYPES = {"function_definition"}
 DECLARATOR_TYPES = {
@@ -254,42 +273,57 @@ def language_from_package(language_pointer: object, name: str) -> Language:
         return Language(language_pointer, name)
 
 
-def load_languages() -> Dict[str, Language]:
+def load_languages(required_languages: Optional[Set[str]] = None) -> Dict[str, Language]:
     languages: Dict[str, Language] = {}
     missing: List[str] = []
+    required = required_languages or {"c", "cpp"}
 
-    try:
-        import tree_sitter_c as tsc
+    if "c" in required:
+        try:
+            import tree_sitter_c as tsc
 
-        languages["c"] = language_from_package(tsc.language(), "c")
-    except ImportError:
-        missing.append("tree-sitter-c")
+            languages["c"] = language_from_package(tsc.language(), "c")
+        except ImportError:
+            missing.append("tree-sitter-c")
 
-    try:
-        import tree_sitter_cpp as tscpp
+    if "cpp" in required:
+        try:
+            import tree_sitter_cpp as tscpp
 
-        languages["cpp"] = language_from_package(tscpp.language(), "cpp")
-    except ImportError:
-        missing.append("tree-sitter-cpp")
+            languages["cpp"] = language_from_package(tscpp.language(), "cpp")
+        except ImportError:
+            missing.append("tree-sitter-cpp")
+
+    if required & HDL_LANGUAGES:
+        try:
+            languages.update(
+                {
+                    name: language_from_package(language, name)
+                    for name, language in load_hdl_languages(required & HDL_LANGUAGES).items()
+                }
+            )
+        except SystemExit as exc:
+            missing.append(str(exc))
 
     if missing:
         raise SystemExit(
-            "Missing tree-sitter language packages: "
+            "Missing required tree-sitter language packages: "
             + ", ".join(missing)
             + "\nInstall them in your conda env with:\n"
-            + "  pip install tree-sitter tree-sitter-c tree-sitter-cpp"
+            + "  pip install tree-sitter tree-sitter-c tree-sitter-cpp tree-sitter-verilog tree-sitter-vhdl"
         )
     return languages
 
 
 def repo_files(repo_root: Path) -> List[Path]:
     files: List[Path] = []
+    supported_extensions = {extension.lower() for extension in SOURCE_EXTENSIONS}
     for path in repo_root.rglob("*"):
         if not path.is_file():
             continue
         if any(part in SKIP_DIR_NAMES for part in path.parts):
             continue
-        if path.suffix in SOURCE_EXTENSIONS:
+        if path.suffix.lower() in supported_extensions:
             files.append(path)
     return sorted(files)
 
@@ -303,14 +337,18 @@ def normalize_include_name(include_name: str) -> str:
 
 
 def classify_file_language(path: Path, header_language: str, default_header_language: str) -> Optional[str]:
-    if path.suffix in C_EXTENSIONS:
+    suffix = path.suffix.lower()
+    if suffix in {extension.lower() for extension in C_EXTENSIONS}:
         return "c"
-    if path.suffix in CPP_EXTENSIONS:
+    if suffix in {extension.lower() for extension in CPP_EXTENSIONS}:
         return "cpp"
-    if path.suffix in HEADER_EXTENSIONS:
+    if suffix in {extension.lower() for extension in HEADER_EXTENSIONS}:
         if header_language == "auto":
             return default_header_language
         return header_language
+    hdl_language = language_for_path(path)
+    if hdl_language:
+        return hdl_language
     return None
 
 
@@ -818,7 +856,10 @@ def build_parsed_files(
         if language is None:
             continue
         source = path.read_bytes()
-        tree = parsers[language].parse(source)
+        parser_language = language
+        if language == "systemverilog":
+            parser_language = "systemverilog"
+        tree = parsers[parser_language].parse(source)
         parsed.append(
             {
                 "path": path,
@@ -1103,6 +1144,15 @@ def build_code_blocks(
                         )
                     )
 
+    return finalize_code_blocks(blocks, functions, call_graph)
+
+
+def finalize_code_blocks(
+    blocks: List[Dict[str, object]],
+    functions: Dict[str, Dict[str, object]],
+    call_graph: Dict[str, List[str]],
+) -> List[Dict[str, object]]:
+    """Assign stable block ids and attach related blocks from the graph."""
     blocks.sort(key=lambda item: (item["file"], item["range"][0], item["range"][1], item["type"]))
     for index, block in enumerate(blocks, start=1):
         block["id"] = index
@@ -1143,17 +1193,36 @@ def build_call_graph_payload(repo_root: Path | str, header_language: str = "auto
     if not repo_root.is_dir():
         raise SystemExit(f"Repository root is not a directory: {repo_root}")
 
-    languages = load_languages()
     files = repo_files(repo_root)
     if not files:
-        raise SystemExit(f"No C/C++ source files found under: {repo_root}")
+        raise SystemExit(f"No supported C/C++/Verilog/VHDL source files found under: {repo_root}")
+
+    required_languages: Set[str] = set()
+    for path in files:
+        language = classify_file_language(path, header_language, "cpp" if repo_has_cpp_sources(files) else "c")
+        if language:
+            required_languages.add(language)
+    # C/C++ headers need their selected parser, while .v/.sv share the
+    # Verilog grammar package under separate language labels.
+    if "systemverilog" in required_languages:
+        required_languages.add("verilog")
+    languages = load_languages(required_languages)
 
     parsed_files = build_parsed_files(repo_root, files, header_language, languages)
     include_index = build_include_index(parsed_files)
     globals_by_name = build_global_symbols(parsed_files)
-    functions, function_index, call_graph = build_functions(parsed_files, globals_by_name)
+    c_parsed_files = [item for item in parsed_files if not is_hdl_language(item["language"])]
+    functions, function_index, call_graph = build_functions(c_parsed_files, globals_by_name)
+    hdl_model = build_hdl_model(parsed_files)
+    functions.update(hdl_model["functions"])
+    for name, function_ids in hdl_model["function_index"].items():
+        function_index.setdefault(name, []).extend(function_ids)
+    for direction in ("forward", "reverse"):
+        call_graph[direction].update(hdl_model["call_graph"][direction])
     global_index = build_global_index(globals_by_name, include_index)
-    code_blocks = build_code_blocks(parsed_files, functions, call_graph)
+    code_blocks = build_code_blocks(c_parsed_files, functions, call_graph)
+    code_blocks.extend(hdl_model["code_blocks"])
+    code_blocks = finalize_code_blocks(code_blocks, functions, call_graph)
 
     return {
         "files": include_index["files"],
@@ -1161,7 +1230,7 @@ def build_call_graph_payload(repo_root: Path | str, header_language: str = "auto
         "globals": sorted_globals(globals_by_name),
         "global_index": global_index,
         "functions": {key: functions[key] for key in sorted(functions)},
-        "function_index": {key: sorted(value) for key, value in sorted(function_index.items())},
+        "function_index": {key: sorted(set(value)) for key, value in sorted(function_index.items())},
         "call_graph": call_graph,
     }
 
