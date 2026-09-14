@@ -309,7 +309,7 @@ def add(x, y):
 
 
 @celery.task(bind=True)
-def abstract_code_from_project_task(self, params, code_file_path, user_id):
+def abstract_code_from_project_task(self, params, code_file_path, user_id, model_type):
     try:
         project_id = params.get('project_id')
         project_path = params.get('projectPath', '')
@@ -357,7 +357,7 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
                         else:
                             logger.info('数据库没有该代码文件的摘要')
                             file_path = os.path.join(root, file)
-                            codefile_abstract = generate_abstract(file_path)
+                            codefile_abstract = generate_abstract(file_path, model_type)
                             file_abstract[rel_path] = codefile_abstract
 
                             # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
@@ -367,7 +367,7 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
                     else:
                         logger.info('数据库里代码摘要这张表是空的')
                         file_path = os.path.join(root, file)
-                        codefile_abstract = generate_abstract(file_path)
+                        codefile_abstract = generate_abstract(file_path, model_type)
                         file_abstract[rel_path] = codefile_abstract
                         # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
                         save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id, user_id)
@@ -392,7 +392,7 @@ def abstract_code_from_project_task(self, params, code_file_path, user_id):
 
 # 自动审查下 纯代码审查
 @celery.task(bind=True)
-def review_alignment_single_task(self, project_path, project_id, user_id, prompt_type, item, parent_id):
+def review_alignment_single_task(self, project_path, project_id, user_id, prompt_type, item, parent_id, model_type):
     try:
         alignment = item['alignment']
         set_redis_count_for_child_name(parent_id, alignment)
@@ -450,6 +450,7 @@ def review_alignment_single_task(self, project_path, project_id, user_id, prompt
         review_process, issue = query_review_result(
             doc_ranges,
             code_ranges,
+            model_type,
             rules=retrieved_rules,
             issues=retrieved_issues,
             user_id=user_id,
@@ -569,7 +570,7 @@ def review_alignment_single_task(self, project_path, project_id, user_id, prompt
 
 
 @celery.task(bind=True)
-def review_alignment_task(self, project_path, project_id, user_id, files, prompt_type=None, reviewed_count=None):
+def review_alignment_task(self, project_path, project_id, user_id, files, model_type, prompt_type=None, reviewed_count=None):
     try:
         result = []
         if isinstance(files, dict):
@@ -593,7 +594,7 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
         set_redis_count_for_parent(parent_id, total)
 
         for i, item in enumerate(result, reviewed_count):
-            sig = review_alignment_single_task.si(project_path, project_id, user_id, prompt_type, item, parent_id)
+            sig = review_alignment_single_task.si(project_path, project_id, user_id, prompt_type, item, parent_id, model_type)
             task_list.append(sig)
 
         group(*task_list).apply_async()
@@ -758,7 +759,7 @@ def review_alignment_task(self, project_path, project_id, user_id, files, prompt
 
 
 @celery.task(bind=True)
-def align_requirement_to_project_task(self, abstract, params, user_id):
+def align_requirement_to_project_task(self, abstract, params, user_id, model_type):
     project_path = params.get('projectPath', '')
     project_id = params.get('project_id')
     chunks = params.get('requirements')
@@ -794,7 +795,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
             if len(all_files) > 1:
                 # 基于需求，利用大模型检索代码摘要，先定位代码文件
                 # 调用llm
-                file_name_list = query_codefile_from_abstract(requirement_text, file_abstract)
+                file_name_list = query_codefile_from_abstract(requirement_text, file_abstract, model_type)
 
                 # 解析异常，返回空列表时
                 # 过滤掉含有乱码的代码摘要（作为被定位的代码文件防止遗漏），重新调用大模型定位代码文件
@@ -805,7 +806,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                     # 代码摘要数量小于阈值时，可以直接调用
                     if file_cnt <= FILE_MAX_LIMIT:
                         # 调用llm
-                        file_name_list = query_codefile_from_abstract(requirement_text, filter_file_abstract)
+                        file_name_list = query_codefile_from_abstract(requirement_text, filter_file_abstract, model_type)
                         # print(file_name_list)
 
                     # 可能由于代码摘要过多，影响大模型分析理解而报错
@@ -819,8 +820,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                             batch_file_abstract[key] = value
                             if file_cnt >= FILE_MAX_LIMIT:
                                 file_cnt = 0
-                                batch_file_name_list = query_codefile_from_abstract(requirement_text,
-                                                                                    batch_file_abstract)
+                                batch_file_name_list = query_codefile_from_abstract(requirement_text, batch_file_abstract, model_type)
                                 file_name_list += batch_file_name_list
 
                     # 谨防遗漏，将有摘要是乱码的代码文件全部放入候选区
@@ -882,7 +882,8 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
                         reranked_code = query_related_code_graph_rerank(
                             requirement_text,
                             seed_blocks,
-                            candidate_blocks
+                            candidate_blocks,
+                            model_type
                         )
                         final_blocks = _match_related_items_to_blocks(reranked_code, candidate_blocks)
 
@@ -915,7 +916,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id):
 # 自动对齐下面的 代码 → 需求
 @celery.task(bind=True)
 def align_code_to_requirements_single_task(self, project_path, code_block, project_id, user_id, all_doc_blocks,
-                                           blocks_by_file, parent_id):
+                                           blocks_by_file, parent_id, model_type):
     try:
         set_redis_count_for_child_name(parent_id, code_block)
         code_ranges = code_block['codeRanges']
@@ -948,6 +949,7 @@ def align_code_to_requirements_single_task(self, project_path, code_block, proje
             related_reqs = query_related_requirement(
                 code_content,
                 all_doc_blocks,
+                model_type,
                 block_limit=50,
                 user_id=user_id,
                 project_path=project_path
@@ -1021,6 +1023,7 @@ def align_code_to_requirements_single_task(self, project_path, code_block, proje
         related_reqs = query_related_requirement(
             enhanced_query,
             all_doc_blocks,
+            model_type,
             block_limit=50,
             project_path=project_path
         )
@@ -1037,7 +1040,7 @@ def align_code_to_requirements_single_task(self, project_path, code_block, proje
 
 
 @celery.task(bind=True)
-def align_code_to_requirements_task(self, project_path, code_blocks, project_id, user_id, y_align):
+def align_code_to_requirements_task(self, project_path, code_blocks, project_id, user_id, y_align, model_type):
     total = len(code_blocks)
     try:
         task_list = []
@@ -1048,7 +1051,7 @@ def align_code_to_requirements_task(self, project_path, code_blocks, project_id,
 
         for i, code_block in enumerate(code_blocks, y_align):
             sig = align_code_to_requirements_single_task.si(project_path, code_block, project_id, user_id,
-                                                            all_doc_blocks, blocks_by_file, parent_id)
+                                                            all_doc_blocks, blocks_by_file, parent_id, model_type)
             task_list.append(sig)
             self.update_state(
                 state="PROGRESS",
@@ -1130,7 +1133,7 @@ def add_alignment_data(project_path, new_alignment, project_id, user_id):
         conn.close()
 
 
-def gen_requirement(doc_ranges, code_ranges):
+def gen_requirement(doc_ranges, code_ranges, model_type):
     generated_requirement = ''
     flowchart_code = ''
 
@@ -1158,12 +1161,12 @@ def gen_requirement(doc_ranges, code_ranges):
             })
 
         # 调用LLM生成需求，传入参考需求内容
-        generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
+        generated_requirement = query_generated_requirement(code_blocks, model_type, requirement_content or "")
 
         # 调用LLM生成流程图
         try:
             flowchart_code = query_flow_chart(code_content if isinstance(code_content, str) else
-                                              '\n\n'.join([block.get('content', '') for block in code_content]))
+                                              '\n\n'.join([block.get('content', '') for block in code_content]), model_type)
         except Exception as flowchart_error:
             logger.error(f"Error generating flowchart: {str(flowchart_error)}", exc_info=True)
             flowchart_code = ''
@@ -1178,12 +1181,12 @@ def gen_requirement(doc_ranges, code_ranges):
 
 # 需求反生成
 @celery.task(bind=True)
-def gen_requirement_for_single_task(self, alignment, doc_ranges, code_ranges, parent_id):
+def gen_requirement_for_single_task(self, alignment, doc_ranges, code_ranges, parent_id, model_type):
     db = get_db_celery()
     cursor = db.cursor()
     try:
         set_redis_count_for_child_name(parent_id, alignment)
-        generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges)
+        generated_requirement, mermaid_code = gen_requirement(doc_ranges, code_ranges, model_type)
         cursor.execute("""
                         UPDATE alignments
                         SET GenReq = %s,
@@ -1202,7 +1205,7 @@ def gen_requirement_for_single_task(self, alignment, doc_ranges, code_ranges, pa
 
 
 @celery.task(bind=True)
-def gen_requirement_task(self, alignments, total, generated):
+def gen_requirement_task(self, alignments, total, generated, model_type):
     parent_id = self.request.id
     try:
 
@@ -1212,7 +1215,7 @@ def gen_requirement_task(self, alignments, total, generated):
         for i, alignment in enumerate(alignments, generated):
             code_ranges = json.loads(alignment['codeRanges'])
             doc_ranges = json.loads(alignment['docRanges'])
-            sig = gen_requirement_for_single_task.si(alignment, doc_ranges, code_ranges, parent_id)
+            sig = gen_requirement_for_single_task.si(alignment, doc_ranges, code_ranges, parent_id, model_type)
             task_list.append(sig)
 
         group(*task_list).apply_async()
