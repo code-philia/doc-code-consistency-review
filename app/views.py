@@ -79,6 +79,13 @@ from .call_graph import (
     resolve_called_functions_in_line_range,
     resolve_code_block_to_function,
 )
+from .manual_alignment import (
+    as_code_range,
+    as_doc_range,
+    find_best_requirement_block,
+    match_code_blocks,
+    parse_manual_alignment_docx,
+)
 
 import logging
 import chromadb
@@ -1159,7 +1166,7 @@ def get_project_metadata():
         def normalize_kb_type_for_storage(raw_type):
             """统一 selected_kbs 中的类型到系统内部类型。"""
             kb_type = (raw_type or "other").strip()
-            if kb_type in ["rule", "coding_rule", "checklist"]:
+            if kb_type in ["rule", "coding_rule"]:
                 return "rule"
             elif kb_type in ["checklist"]:
                 return "checklist"
@@ -3605,6 +3612,178 @@ def _line_ranges_overlap(a_start, a_end, b_start, b_end):
     except Exception:
         return False
 
+
+@bp.route('/api/manual-alignments/import', methods=['POST'])
+@login_required
+def import_manual_alignments():
+    """解析人工标注 DOCX，并用静态算法匹配现有需求块和代码块后生成对齐关系。"""
+    project_path = (request.form.get('projectPath') or '').strip()
+    project_id = request.form.get('project_id')
+    uploaded_file = request.files.get('file')
+
+    if not project_path or not os.path.isdir(project_path):
+        return jsonify({'status': 'error', 'message': '项目路径无效'}), 400
+    if not uploaded_file or not uploaded_file.filename:
+        return jsonify({'status': 'error', 'message': '请选择要上传的 DOCX 文件'}), 400
+    if not uploaded_file.filename.lower().endswith('.docx'):
+        return jsonify({'status': 'error', 'message': '仅支持 .docx 文件'}), 400
+
+    resolved_project_id = get_project_id_by_path(project_path)
+    if not resolved_project_id:
+        return jsonify({'status': 'error', 'message': '找不到对应的项目'}), 404
+    if project_id and _safe_int(project_id, None) != int(resolved_project_id):
+        return jsonify({'status': 'error', 'message': '项目路径与项目 ID 不匹配'}), 400
+
+    source_name = os.path.basename(uploaded_file.filename.replace('\\', '/')) or 'manual-alignment.docx'
+    source_name = source_name[-255:]
+    try:
+        # 部分 WSGI 服务器暴露的 SpooledTemporaryFile 包装器没有 seekable()，
+        # python-docx/zipfile 需要标准的可随机访问二进制流。
+        uploaded_file.stream.seek(0)
+        parsed_records = parse_manual_alignment_docx(BytesIO(uploaded_file.stream.read()))
+    except (ValueError, OSError) as exc:
+        return jsonify({'status': 'error', 'message': f'解析对齐文件失败：{exc}'}), 400
+    except Exception as exc:
+        logger.exception('解析手动对齐 DOCX 失败')
+        return jsonify({'status': 'error', 'message': f'无法读取 DOCX 文件：{exc}'}), 400
+
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        doc_blocks = get_doc_blocks_by_project(project_path, resolved_project_id)
+        code_blocks = get_code_blocks_by_project(project_path, resolved_project_id)
+        cursor.execute(
+            'SELECT id FROM doc_blocks WHERE project_id=%s FOR UPDATE',
+            (resolved_project_id,)
+        )
+        next_doc_id = max((_safe_int(row.get('id')) for row in cursor.fetchall()), default=0) + 1
+
+        alignment_rows = []
+        details = []
+        created_doc_blocks = 0
+        matched_doc_blocks = 0
+        matched_code_functions = 0
+        unmatched_code_functions = []
+        code_source_cache = {}
+
+        for record in parsed_records:
+            block_title = record['title'][:255]
+            matched_doc, doc_score = find_best_requirement_block(
+                record['title'], record['content'], doc_blocks
+            )
+            doc_match_type = 'existing'
+            if matched_doc is None:
+                matched_doc = {
+                    'id': next_doc_id,
+                    'name': block_title,
+                    'type': block_title,
+                    'filename': source_name,
+                    'documentId': source_name,
+                    'content': record['content'],
+                    'start': record['start'],
+                    'end': record['end'],
+                }
+                cursor.execute(
+                    'INSERT INTO doc_blocks(project_id, id, name, filename, type, content, start, end, createdAt, updatedAt) '
+                    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+                    (
+                        resolved_project_id,
+                        next_doc_id,
+                        block_title,
+                        source_name,
+                        block_title,
+                        record['content'],
+                        record['start'],
+                        record['end'],
+                    )
+                )
+                next_doc_id += 1
+                created_doc_blocks += 1
+                doc_match_type = 'created'
+            else:
+                matched_doc_blocks += 1
+
+            selected_code_blocks, function_matches, unmatched_functions = match_code_blocks(
+                record['function_names'], code_blocks
+            )
+            matched_code_functions += len(function_matches)
+            unmatched_code_functions.extend(unmatched_functions)
+            doc_ranges = [as_doc_range(matched_doc)]
+            # 跳转和高亮使用字符偏移；代码块表只保存行号，因此导入时一并补齐。
+            code_ranges = []
+            for block in selected_code_blocks:
+                code_filename = block.get('file') or block.get('filename') or block.get('documentId') or ''
+                if code_filename not in code_source_cache:
+                    code_file_path = _resolve_project_file_path(project_path, code_filename, 'code')
+                    raw_content = _read_text_file_with_fallback(code_file_path)
+                    code_source_cache[code_filename] = _regularize_file_content(raw_content or '', 'code')
+                code_ranges.append(as_code_range(block, code_source_cache[code_filename]))
+            alignment_id_seed = (
+                f"{resolved_project_id}:{source_name}:{record['index']}:"
+                f"{record['content']}:{','.join(record['function_names'])}"
+            )
+            alignment_id = 'manual_upload_' + uuid.uuid5(uuid.NAMESPACE_URL, alignment_id_seed).hex[:24]
+            alignment_rows.append((
+                alignment_id,
+                current_user.user_id,
+                resolved_project_id,
+                record['title'],
+                0,
+                '',
+                pyjson.dumps(doc_ranges, ensure_ascii=False),
+                pyjson.dumps(code_ranges, ensure_ascii=False),
+                '',
+                '',
+                0,
+                1 if code_ranges else 0,
+                'req2code',
+            ))
+            details.append({
+                'alignment_id': alignment_id,
+                'title': record['title'],
+                'requirement_block_id': matched_doc.get('id'),
+                'requirement_match': doc_match_type,
+                'requirement_similarity': round(doc_score, 4),
+                'requested_functions': record['function_names'],
+                'matched_functions': function_matches,
+                'unmatched_functions': unmatched_functions,
+                'code_block_count': len(code_ranges),
+            })
+
+        cursor.executemany(
+            '''
+            INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts,
+                                   docRanges, codeRanges, GenReq, GenMermaid, createdAt, updatedAt,
+                                   is_code_review, is_alignment, align_type)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                name=VALUES(name), docRanges=VALUES(docRanges), codeRanges=VALUES(codeRanges),
+                updatedAt=CURRENT_TIMESTAMP, is_code_review=VALUES(is_code_review),
+                is_alignment=VALUES(is_alignment), align_type=VALUES(align_type)
+            ''',
+            alignment_rows,
+        )
+        db.commit()
+        unmatched_code_functions = list(dict.fromkeys(unmatched_code_functions))
+        return jsonify({
+            'status': 'success',
+            'message': f'成功生成 {len(alignment_rows)} 条对齐关系',
+            'summary': {
+                'parsed_alignments': len(parsed_records),
+                'generated_alignments': len(alignment_rows),
+                'matched_requirement_blocks': matched_doc_blocks,
+                'created_requirement_blocks': created_doc_blocks,
+                'matched_code_functions': matched_code_functions,
+                'unmatched_code_functions': unmatched_code_functions,
+            },
+            'details': details,
+        }), 200
+    except Exception as exc:
+        db.rollback()
+        logger.exception('导入手动对齐关系失败')
+        return jsonify({'status': 'error', 'message': f'生成对齐关系失败：{exc}'}), 500
+
 @bp.route('/project/alignments', methods=['GET'])
 def get_alignments():
     #print("request.args:", request.args)
@@ -5261,6 +5440,177 @@ def delete_block():
     except Exception as e:
         print(f"Error deleting block: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
+
+
+@bp.route('/api/batch-delete-alignments', methods=['POST'])
+@login_required
+def batch_delete_alignments():
+    """批量删除当前项目中的对齐关系及其问题单。"""
+    data = request.get_json(silent=True) or {}
+    project_path = data.get('projectPath')
+    project_id = get_project_id_by_path(project_path)
+    requested_project_id = _safe_int(data.get('project_id') or data.get('projectId'), None)
+    alignment_ids = list(dict.fromkeys(
+        str(value).strip() for value in (data.get('alignmentIds') or []) if str(value).strip()
+    ))
+    if not project_id or not alignment_ids:
+        return jsonify({'status': 'error', 'message': '缺少项目或对齐关系参数'}), 400
+    if requested_project_id and requested_project_id != int(project_id):
+        return jsonify({'status': 'error', 'message': '项目路径与项目 ID 不匹配'}), 400
+    if len(alignment_ids) > 1000:
+        return jsonify({'status': 'error', 'message': '单次最多删除 1000 条对齐关系'}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        placeholders = ','.join(['%s'] * len(alignment_ids))
+        params = tuple([project_id] + alignment_ids)
+        cur.execute(
+            f'DELETE FROM issues WHERE project_id=%s AND alignmentId IN ({placeholders})',
+            params,
+        )
+        deleted_issues = cur.rowcount
+        cur.execute(
+            f'DELETE FROM alignments WHERE project_id=%s AND id IN ({placeholders})',
+            params,
+        )
+        deleted_alignments = cur.rowcount
+        return jsonify({
+            'status': 'success',
+            'message': f'已删除 {deleted_alignments} 条对齐关系',
+            'deleted_alignments': deleted_alignments,
+            'deleted_issues': deleted_issues,
+        })
+    except Exception as exc:
+        conn.rollback()
+        logger.exception('批量删除对齐关系失败')
+        return jsonify({'status': 'error', 'message': f'批量删除失败：{exc}'}), 500
+
+
+@bp.route('/api/batch-delete-blocks', methods=['POST'])
+@login_required
+def batch_delete_blocks():
+    """批量删除需求块或代码块，并一次性清理关联关系。"""
+    data = request.get_json(silent=True) or {}
+    project_path = data.get('projectPath')
+    project_id = get_project_id_by_path(project_path)
+    requested_project_id = _safe_int(data.get('project_id') or data.get('projectId'), None)
+    block_type = data.get('blockType')
+    blocks = [block for block in (data.get('blocks') or []) if isinstance(block, dict)]
+    if not project_id or block_type not in ('doc', 'code') or not blocks:
+        return jsonify({'status': 'error', 'message': '缺少项目或块参数'}), 400
+    if requested_project_id and requested_project_id != int(project_id):
+        return jsonify({'status': 'error', 'message': '项目路径与项目 ID 不匹配'}), 400
+    if len(blocks) > 1000:
+        return jsonify({'status': 'error', 'message': '单次最多删除 1000 个块'}), 400
+
+    doc_targets = set()
+    code_ids = set()
+    code_targets = set()
+    code_fallback_targets = set()
+    for block in blocks:
+        if block_type == 'doc':
+            filename = block.get('filename') or block.get('documentId') or ''
+            doc_targets.add((filename, _safe_int(block.get('start')), _safe_int(block.get('end'))))
+        else:
+            filename = block.get('file') or block.get('filename') or block.get('documentId') or ''
+            line_range = block.get('range') or []
+            start_line = _safe_int(line_range[0] if isinstance(line_range, list) and len(line_range) == 2 else block.get('startLine'))
+            end_line = _safe_int(line_range[1] if isinstance(line_range, list) and len(line_range) == 2 else block.get('endLine'))
+            code_targets.add((filename, start_line, end_line))
+            if block.get('id') not in (None, ''):
+                code_ids.add(_safe_int(block.get('id')))
+            else:
+                code_fallback_targets.add((filename, start_line, end_line))
+
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        deleted_blocks = 0
+        if block_type == 'doc':
+            for filename, start, end in doc_targets:
+                cur.execute(
+                    'DELETE FROM doc_blocks WHERE project_id=%s AND filename=%s AND start=%s AND end=%s',
+                    (project_id, filename, start, end),
+                )
+                deleted_blocks += cur.rowcount
+        else:
+            for block_id in code_ids:
+                cur.execute('DELETE FROM code_blocks WHERE project_id=%s AND id=%s', (project_id, block_id))
+                deleted_blocks += cur.rowcount
+            # 无 ID 的兼容数据使用文件和行号删除。
+            for filename, start_line, end_line in code_fallback_targets:
+                cur.execute(
+                    'DELETE FROM code_blocks WHERE project_id=%s AND file=%s AND start_line=%s AND end_line=%s',
+                    (project_id, filename, start_line, end_line),
+                )
+                deleted_blocks += cur.rowcount
+
+        cur.execute(
+            'SELECT id, docRanges, codeRanges, is_code_review FROM alignments WHERE project_id=%s',
+            (project_id,),
+        )
+        updated_alignments = 0
+        deleted_alignment_ids = []
+        for row in cur.fetchall():
+            doc_ranges = pyjson.loads(row['docRanges']) if isinstance(row.get('docRanges'), str) else (row.get('docRanges') or [])
+            code_ranges = pyjson.loads(row['codeRanges']) if isinstance(row.get('codeRanges'), str) else (row.get('codeRanges') or [])
+            if block_type == 'doc':
+                filtered_doc_ranges = [
+                    item for item in doc_ranges
+                    if (
+                        item.get('filename') or item.get('documentId') or '',
+                        _safe_int(item.get('start')),
+                        _safe_int(item.get('end')),
+                    ) not in doc_targets
+                ]
+                modified = len(filtered_doc_ranges) != len(doc_ranges)
+                doc_ranges = filtered_doc_ranges
+            else:
+                filtered_code_ranges = []
+                for item in code_ranges:
+                    item_id = _safe_int(item.get('id'), None)
+                    item_target = (
+                        item.get('file') or item.get('filename') or item.get('documentId') or '',
+                        _safe_int(item.get('startLine') or (item.get('range') or [0, 0])[0]),
+                        _safe_int(item.get('endLine') or (item.get('range') or [0, 0])[-1]),
+                    )
+                    if (item_id is not None and item_id in code_ids) or item_target in code_targets:
+                        continue
+                    filtered_code_ranges.append(item)
+                modified = len(filtered_code_ranges) != len(code_ranges)
+                code_ranges = filtered_code_ranges
+
+            if not modified:
+                continue
+            is_empty_alignment = not code_ranges if bool(row.get('is_code_review')) else (not doc_ranges or not code_ranges)
+            if is_empty_alignment:
+                deleted_alignment_ids.append(row['id'])
+            else:
+                cur.execute(
+                    'UPDATE alignments SET docRanges=%s, codeRanges=%s, updatedAt=CURRENT_TIMESTAMP '
+                    'WHERE project_id=%s AND id=%s',
+                    (pyjson.dumps(doc_ranges, ensure_ascii=False), pyjson.dumps(code_ranges, ensure_ascii=False), project_id, row['id']),
+                )
+                updated_alignments += cur.rowcount
+
+        if deleted_alignment_ids:
+            placeholders = ','.join(['%s'] * len(deleted_alignment_ids))
+            params = tuple([project_id] + deleted_alignment_ids)
+            cur.execute(f'DELETE FROM issues WHERE project_id=%s AND alignmentId IN ({placeholders})', params)
+            cur.execute(f'DELETE FROM alignments WHERE project_id=%s AND id IN ({placeholders})', params)
+
+        return jsonify({
+            'status': 'success',
+            'message': f'已删除 {deleted_blocks} 个块，更新 {updated_alignments} 条对齐关系，删除 {len(deleted_alignment_ids)} 条空对齐关系',
+            'deleted_blocks': deleted_blocks,
+            'updated_alignments': updated_alignments,
+            'deleted_alignments': len(deleted_alignment_ids),
+        })
+    except Exception as exc:
+        conn.rollback()
+        logger.exception('批量删除块失败')
+        return jsonify({'status': 'error', 'message': f'批量删除失败：{exc}'}), 500
 
 
 @bp.route('/api/clear-alignment-target', methods=['POST'])
