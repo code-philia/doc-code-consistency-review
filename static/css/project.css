@@ -5566,3 +5566,25 @@
         width: 100%;
     }
 }
+
+/* 代码文件右键菜单 */
+.file-context-menu {
+  position: fixed;
+  z-index: 3000;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+  min-width: 140px;
+}
+.file-context-menu-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  user-select: none;
+}
+.file-context-menu-item:hover {
+  background: #f5f7fa;
+  color: #409eff;
+}

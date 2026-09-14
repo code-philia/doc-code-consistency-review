@@ -45,9 +45,9 @@
                 文件
                 <div class="dropdown">
                     <div class="dropdown-item" @click="addFile('doc', 'file')"><i class="fas fa-file-alt"></i> 添加需求文档 (单个文件)</div>
-                    <div class="dropdown-item" @click="addFile('doc', 'folder')"><i class="fas fa-folder"></i> 添加需求文档 (多个文件)</div>
+                    <div class="dropdown-item" @click="addFile('doc', 'folder')"><i class="fas fa-folder"></i> 添加需求文档 (文件夹)</div>
                     <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (单个文件)</div>
-                    <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (多个文件)</div>
+                    <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (文件夹)</div>
                 </div>
 
                 <!-- 选择解析方式弹窗 -->
@@ -127,6 +127,30 @@
                   </div>
                 </el-badge>
             </div>
+            <div class="menu-item">
+                <el-select
+                    v-model="selectModel"
+                    placeholder="大模型"
+                    size="small"
+                    @change="onModelChange"
+                    style="width:150px"
+                    :popper-width="150"
+
+                >
+                    <el-option
+                        v-for="item in modelList"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        >
+                    </el-option>
+                </el-select>
+            </div>
+            <div class="menu-item">
+                <div @click="openLogDialog">
+                    操作日志
+                </div>
+            </div>
         </div>
         <div class="view-switcher">
             <button id="alignmentButton" class="view-btn active" onclick="switchView('alignment')">功能视图</button>
@@ -134,6 +158,64 @@
             <button id="detailButton" class="view-btn" onclick="switchView('detail')">详情视图</button>
         </div>
     </div>
+    <!-- 操作日志弹窗 -->
+    <el-dialog
+        v-model="logDialogVisible"
+        title="用户操作日志"
+        width="1200px"
+        :close-on-click-modal="false"
+        destroy-on-close
+        @closed="handleLogDialogClosed"
+    >
+        <div class="filter-bar">
+            <el-select v-model="logOperationType" placeholder="操作类型" clearable style="width: 180px;">
+                <el-option label="需求反生成" :value="1"></el-option>
+                <el-option label="自动审查" :value="2"></el-option>
+                <el-option label="自动对齐 代码=>需求" :value="3"></el-option>
+                <el-option label="自动对齐 需求=>代码" :value="4"></el-option>
+                <el-option label="模型切换" :value="5"></el-option>
+            </el-select>
+            <el-select v-model="logModelKey" placeholder="模型" clearable style="width: 200px;">
+                <el-option
+                        v-for="item in modelList"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
+                        >
+                </el-option>
+            </el-select>
+            <el-button type="primary" @click="fetchLogList">查询</el-button>
+        </div>
+
+        <el-table
+            :data="logList"
+            v-loading="logLoading"
+            @sort-change="handleLogSortChange"
+            border
+            style="width: 100%; margin-top: 12px;"
+            :default-sort="{ prop: 'created_at', order: 'descending' }"
+            :height="440"
+        >
+            <el-table-column type="index" label="序号" width="70" align="center" :index="(index) => (logPage - 1) * logPageSize + index + 1"></el-table-column>
+            <el-table-column prop="username" label="用户名称" min-width="100"></el-table-column>
+            <el-table-column prop="operation_type" label="操作类型" width="250"></el-table-column>
+            <el-table-column prop="model_key" label="大模型" min-width="100"></el-table-column>
+            <el-table-column prop="created_at" label="操作时间" width="200"></el-table-column>
+        </el-table>
+        <el-config-provider :locale="zhCnLocale">
+            <el-pagination
+                v-model:current-page="logPage"
+                v-model:page-size="logPageSize"
+                :total="logTotal"
+                :page-sizes="[10, 20, 50]"
+                layout="total, sizes, prev, pager, next"
+                class="pagination-bar"
+                @change="fetchLogList"
+            >
+            </el-pagination>
+        </el-config-provider>
+    </el-dialog>
+
 
     <!-- ==================== 反馈提交弹窗 ==================== -->
     <el-dialog
@@ -444,6 +526,7 @@
                                 :data="codeFileTree"
                                 :props="{ label: 'label', children: 'children' }"
                                 @node-click="handleNodeClick"
+                                @node-contextmenu="handleNodeContextmenu"
                                 :expand-on-click-node="true"
                                 node-key="path"
                                 empty-text="">
@@ -464,6 +547,13 @@
                                     </div>
                                 </template>
                             </el-tree>
+                            <!-- 文件右键菜单 -->
+                            <div v-if="contextMenuVisible"
+                                 class="file-context-menu"
+                                 :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }"
+                                 @click.stop>
+                              <div class="file-context-menu-item" @click="selectWholeFile">手动对齐</div>
+                            </div>
                         </div>
                     </div>
 
@@ -2205,6 +2295,7 @@
                                             class="manual-align-select"
                                             filterable
                                             clearable
+                                            fit-input-width="false"
                                         >
                                             <el-option
                                                 v-for="alignment in currentExistingAlignments"

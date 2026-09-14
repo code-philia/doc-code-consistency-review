@@ -2110,8 +2110,7 @@ const app = createApp({
                         await clearReviewTaskState()
                         await fetchIssues()
 
-                        switchToCodeBlockMode()
-                        await forceRefresh()
+                        await refreshAlignmentReq2code()
 
                         ElMessageBox.alert('审查完成!', '提示', {
                         confirmButtonText: '知道了',
@@ -2129,8 +2128,7 @@ const app = createApp({
                         await clearReviewTaskState()
                         await fetchIssues()
 
-                        switchToCodeBlockMode()
-                        await forceRefresh()
+                        await refreshAlignmentReq2code()
 
                         ElMessageBox.alert('审查失败!', '提示', {
                         confirmButtonText: '知道了',
@@ -2160,15 +2158,15 @@ const app = createApp({
             }
         }
 
-        const switchToCodeBlockMode = () => {
-            blockType.value = 'code';
-            rightSidebarMode.value = 'block';
-        }
-        const forceRefresh = async () => {
-            blockType.value = 'doc';
-            await nextTick()
-            blockType.value = 'code';
-        }
+        // const switchToCodeBlockMode = () => {
+        //     blockType.value = 'doc';
+        //     rightSidebarMode.value = 'alignment';
+        // }
+        // const forceRefresh = async () => {
+        //     blockType.value = 'code';
+        //     await nextTick()
+        //     blockType.value = 'doc';
+        // }
         const refreshAlignmentReq2code = async () => {
             rightSidebarMode.value = 'code';
             await nextTick()
@@ -2306,8 +2304,7 @@ const app = createApp({
                 console.error('自动审查过程中出现错误:', error);
                 ElMessage.error(`自动审查失败: ${error.message}`);
             } finally {
-                switchToCodeBlockMode()
-                await forceRefresh()
+                await refreshAlignmentReq2code()
 //                isAutoReviewing.value = false;
 //                reviewProgress.value = { current: 0, total: 0 };
                 // 停止进度显示
@@ -3060,12 +3057,98 @@ const app = createApp({
             }
         };
 
+        // ===== 文件右键菜单：选中整个文件 =====
+        const contextMenuVisible = Vue.ref(false)
+        const contextMenuX = Vue.ref(0)
+        const contextMenuY = Vue.ref(0)
+        const contextMenuNode = Vue.ref(null)
+
+        // 右键文件节点：记录位置和节点数据（文件夹不弹菜单）
+        const handleNodeContextmenu = (event, data) => {
+          if (data.type !== 'file') return
+          event.preventDefault()
+          contextMenuNode.value = data
+          contextMenuX.value = event.clientX
+          contextMenuY.value = event.clientY
+          contextMenuVisible.value = true
+        }
+
+        // 点击页面其他地方时关闭菜单
+        document.addEventListener('click', () => { contextMenuVisible.value = false })
+
+        // 循环分页，取回代码文件的完整纯文本（各页是完整内容的连续切片，直接拼接）
+        const fetchWholeCodeContent = async (fileName) => {
+          let page = 1
+          let totalPages = 1
+          const parts = []
+          do {
+            const response = await axios.get('/project/file-content', {
+              params: { path: projectPath.value, filename: fileName, type: 'code', page }
+            })
+            if (response.data.status !== 'success') {
+              throw new Error(response.data.message || '读取文件内容失败')
+            }
+            parts.push(response.data.content || '')
+            totalPages = response.data.pagination?.total_pages || 1
+            page++
+          } while (page <= totalPages)
+          return parts.join('')
+        }
+
+        // 右键菜单点击：全选文件并弹出对齐弹窗（复用 prepareCodeSelectionDialog）
+        const selectWholeFile = async () => {
+          const data = contextMenuNode.value
+          contextMenuVisible.value = false
+          if (!data) return
+
+          // 只允许代码文件
+          if (data.fileType && data.fileType !== 'code') {
+            ElMessage.warning('只有代码文件支持此操作')
+            return
+          }
+
+          try {
+            // 1. 先走现有的文件加载流程，保证 selectedCodeFile / 视图状态一致
+            await fetchFileContent(data.path, data.fileType)
+
+            // 2. 取完整文件内容（所有分页拼接）
+            const content = await fetchWholeCodeContent(data.path)
+            if (!content.trim()) {
+              ElMessage.warning('文件内容为空')
+              return
+            }
+
+            // 行数：末尾有换行时去掉最后一段空串
+            const lineCount = content.endsWith('\n')
+              ? content.split('\n').length - 1
+              : content.split('\n').length
+
+            // 3. 构造与鼠标选中完全一致的 payload，复用现有弹窗
+            await prepareCodeSelectionDialog({
+              type: 'code',
+              documentId: selectedCodeFile.value,
+              start: 0,
+              end: content.length,
+              startLine: 1,
+              endLine: lineCount,
+              content
+            })
+          } catch (e) {
+            console.error(e)
+            ElMessage.error('选中整个文件失败：' + e.message)
+          }
+        }
+
         /***********************
          * 文件上传
          ***********************/
+        // 记录文件操作的类型
+        const selectionModeTmp = ref('')
+
         const addFile = (fileType, selectionMode) => {
           if (fileType === 'doc') {
             dialogParseDocMethodVisible.value = true;
+            selectionModeTmp.value = selectionMode;
             return;
           }
           // 其他类型直接上传
@@ -3073,7 +3156,11 @@ const app = createApp({
         };
 
         const handleConfirmParseDocMethod = () => {
-          startUpload('doc', 'file', parseDocMethod.value);
+          if (selectionModeTmp.value === 'folder') {
+              startUpload('doc', 'folder', parseDocMethod.value);
+          } else {
+              startUpload('doc', 'file', parseDocMethod.value);
+          }
           dialogParseDocMethodVisible.value = false;
         };
 
@@ -3081,9 +3168,10 @@ const app = createApp({
         const startUpload = (fileType, selectionMode, parseDocMethod) => {
           const input = document.createElement('input');
           input.type = 'file';
-          input.multiple = selectionMode === 'file';
           if (selectionMode === 'folder') {
+            input.multiple = true;
             input.webkitdirectory = true;
+            selectionModeTmp.value = '';
           }
           if (fileType === 'doc') {
             input.accept = '.md,.docx,.doc';
@@ -7038,6 +7126,8 @@ const app = createApp({
                     console.error('重新审查失败:', error);
                     ElMessage.error(`重新审查失败: ${error.message}`);
                 }
+            }finally {
+                await refreshAlignmentReq2code()
             }
         };
 
@@ -7800,6 +7890,8 @@ const app = createApp({
 
           // 3. 关闭弹窗
           showSingleReview.value = false
+
+          await refreshAlignmentReq2code()
         }
         //=======================
         
@@ -7892,15 +7984,13 @@ const app = createApp({
                 await fetchIssues();
                 
                 //ElMessage.success(`"${alignment.name}" 审查完成！`);
-                switchToCodeBlockMode()
-                await forceRefresh()
+                await refreshAlignmentReq2code()
                 ElMessageBox.alert(`"${alignment.name}" 审查完成！`, '提示', {
                         confirmButtonText: '知道了',
                         type: 'success'
                     });
             } catch (error) {
-                switchToCodeBlockMode()
-                await forceRefresh()
+                await refreshAlignmentReq2code()
                 console.error('单独审查失败:', error);
 //                ElMessage.error(`审查失败: ${error.message}`);
                 ElMessageBox.alert(`审查失败: ${error.message}`, '提示', {
@@ -9872,8 +9962,15 @@ const app = createApp({
             const res = await axios.get('/login/current_user');
             if (res.data.code === 200) {
               isAdmin.value = res.data.data.role === 'admin';
-              // console.log(isAdmin.value)
-              // 或者 userInfo.role_id === 1 等，按你实际来
+              const savedModel = res.data.data.default_model_key || 'modelA';
+              selectModel.value = savedModel;
+              activeModel.value = savedModel;
+              try {
+                const res = await axios.post('/api/select-model', { model: savedModel, type: "init" });
+                modelList.value = res.data.data
+              } catch (e) {
+                // 静默失败，保留 UI 默认值
+              }
             }
           } catch (e) {
             // 静默失败
@@ -9971,6 +10068,104 @@ const app = createApp({
           fetchList();
         };
 
+        // 模型选择下拉框
+        const selectModel = ref('modelA')
+        const activeModel = ref('modelA')
+        const loadingModel = ref(false)
+        const modelList = ref([])
+
+        const onModelChange = async (value) => {
+            if (value === activeModel.value){
+                return
+            }
+
+            if (loadingModel.value) return
+
+            loadingModel.value = true
+            try {
+                const res = await axios.post('/api/select-model', { model: value });
+                modelList.value = res.data.data
+                activeModel.value = value;
+            } catch{
+                selectModel.value = activeModel.value;
+                ElMessage.error('设置模型失败');
+            } finally {
+                loadingModel.value = false;
+            }
+        };
+
+        // ********************操作日志弹窗********************
+        // 弹窗显隐
+        const logDialogVisible = ref(false);
+        // 表格数据 & 加载状态
+        const logLoading = ref(false);
+        const logList = ref([]);
+        const logTotal = ref(0);
+        // 分页参数
+        const logPage = ref(1);
+        const logPageSize = ref(10);
+        const logSortField = ref('created_at');
+        const logSortOrder = ref('desc');
+        // 筛选参数
+        const logOperationType = ref(null);
+        const logModelKey = ref(null);
+
+        const openLogDialog = () => {
+            logDialogVisible.value = true;
+            fetchLogList();
+
+            // 测试用
+            // feedbackListVisible.value = true;
+
+        };
+
+        const fetchLogList = async () => {
+            logLoading.value = true;
+            try {
+                const res = await axios.get('/api/user_log/user_operation_logs', { params: { page: logPage.value, page_size: logPageSize.value, sort_field: logSortField.value, sort_order: logSortOrder.value, operation_type: logOperationType.value, model_key: logModelKey.value } });
+                if (res.data.code === 200) {
+                    logList.value = res.data.data.list;
+                    logTotal.value = res.data.data.total;
+                }
+            } catch (err) {
+                ElMessage.error('获取操作日志失败');
+            } finally {
+                logLoading.value = false;
+            }
+        };
+
+
+        const handleLogSortChange = (column) => {
+            logSortField.value = column.prop;
+            // Element Plus 排序顺序：ascending / descending / null
+            if (column.order === 'ascending') {
+                logSortField.value = column.prop;
+                logSortOrder.value = 'asc';
+            } else if (column.order === 'descending') {
+                logSortField.value = column.prop;
+                logSortOrder.value = 'desc';
+            } else {
+                // 取消排序时恢复默认排序
+                logSortField.value = 'created_at';
+                logSortOrder.value = 'desc';
+            }
+            // 排序变化时回到第一页
+            logPage.value = 1;
+            fetchLogList();
+        };
+        
+        // 对话框关闭事件（可选，用于刷新其他数据）
+        const handleLogDialogClosed = () => {
+            // 例如刷新未读日志数量
+            // fetchLogSummary();
+        };
+  
+
+        const handleLogPageChange = (page) => {
+            logPage.value = page;
+            fetchLogList();
+        };
+        
         const fetchList = async () => {
           loading.value = true;
           try {
@@ -10012,6 +10207,12 @@ const app = createApp({
          * 暴露到模板
          ***********************/
         return {
+            // code文件右键菜单对齐功能
+            contextMenuVisible,
+            contextMenuX,
+            contextMenuY,
+            handleNodeContextmenu,
+            selectWholeFile,
             // 上传文件
             uploadTasks,
             uploadTaskState,
@@ -10036,6 +10237,26 @@ const app = createApp({
             fetchList,
             handleStatusChange,
             fetchPendingCount,
+            
+            // 大模型选择
+            onModelChange,
+            selectModel,
+            modelList,
+
+            // 操作日志
+            openLogDialog,
+            logDialogVisible,
+            logList,
+            logTotal,
+            logPage,
+            logPageSize,
+            logSortField,
+            logSortOrder,
+            logOperationType,
+            logModelKey,
+            fetchLogList,
+            handleLogSortChange,
+            handleLogPageChange,
 
             // 对齐视图/块视图匹配问题单变色
             blockHasIssue,
