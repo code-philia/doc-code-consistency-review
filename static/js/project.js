@@ -3168,6 +3168,7 @@ const app = createApp({
         const startUpload = (fileType, selectionMode, parseDocMethod) => {
           const input = document.createElement('input');
           input.type = 'file';
+		  input.multiple = true;
           if (selectionMode === 'folder') {
             input.multiple = true;
             input.webkitdirectory = true;

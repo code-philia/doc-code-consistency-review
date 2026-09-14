@@ -861,6 +861,7 @@ def align_requirement_to_project_task(self, abstract, params, user_id, model_typ
                 seed_related_code = query_related_code(
                     requirement_text,
                     all_code_blocks,
+                    model_type,
                     block_limit=50,
                     user_id=user_id,
                     project_path=project_path
