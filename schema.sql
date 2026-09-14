@@ -260,7 +260,8 @@ CREATE TABLE `user` (
   `password` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '密码',
   `ip` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'ip',
   `role` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '角色',
-  `department` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '"HQ"' COMMENT '部门 HQ-公司总部',
+  `department` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'HQ' COMMENT '部门 HQ-公司总部',
+  `default_model_key` varchar(100) DEFAULT 'modelA' COMMENT '用户默认选择的大模型',
   PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -307,3 +308,15 @@ CREATE TABLE `user_task_snapshot` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-07-31 14:14:19
+
+CREATE TABLE IF NOT EXISTS `user_operation_log` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `user_id` BIGINT UNSIGNED NOT NULL COMMENT '用户的ID，对应users.id',
+    `username` VARCHAR(50) NOT NULL COMMENT '用户名称，对应users.username',
+    `operation_type` VARCHAR(20) NOT NULL COMMENT '操作类型（直接存储名称，如“登录”“退出”等）',
+    `model_key` VARCHAR(50) NOT NULL COMMENT '用户使用的大模型，对应users.default_model_key',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_username_created` (`username`, `created_at`) COMMENT '按用户和时间查询的联合索引',
+    KEY `idx_created_at` (`created_at`) COMMENT '按时间排序查询索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户操作日志表';
