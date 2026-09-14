@@ -841,7 +841,7 @@ def parse_programming_rules(docx_path, debug=True):
     capturing_code = None 
     
     # 使用你提供的正则：匹配 R-1-1-1
-    rule_id_pattern = re.compile(r'(R-\d+-\d+-\d+([A-Z]?))') 
+    rule_id_pattern = re.compile(r'([RD]-\d+-\d+-\d+([A-Z]?))') 
     
     # 示例关键词只用于跳过示例段落，不保存任何示例代码。
     example_keys = [

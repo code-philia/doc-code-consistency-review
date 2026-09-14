@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import json
@@ -45,7 +46,7 @@ API_KEY = os.environ.get("API_KEY", "0")
 # MODEL_NAME = "/llm"
 
 # API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:6025/v1/")
-# MODEL_NAME = "qwen3.8-27b"
+# MODEL_NAME = "Qwen3.5-35B"
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://10.123.0.196:1025/v1")
 MODEL_NAME = "qwen3.6-27b"
@@ -55,6 +56,7 @@ EXTRA = 500
 MODEL_PATH = '/data02/models/Qwen3.6-27B'
 
 MAX_REQ = 3 # 最大重复次数
+
 
 def _safe_float(value, default=0.0):
     try:
@@ -195,10 +197,14 @@ def count_local_model_tokens(messages, model_path=MODEL_PATH):
     return len(encoded)
         
     
-def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=MAX_TOKENS, system_prompt=None):
+def query_llm(message, model_type=MODEL_NAME, history=None, temperature=0.1, top_p=0.9, max_tokens=MAX_TOKENS, system_prompt=None):
+    from .func_utils import get_model_data
+    model_data = get_model_data(model_type)
+    model_name = model_data['name']
+    model_url = model_data['url']
     client = OpenAI(
         api_key=API_KEY,
-        base_url=API_BASE_URL,
+        base_url=model_url,
     )
 
     messages = []
@@ -227,9 +233,9 @@ def query_llm(message, history=None, temperature=0.1, top_p=0.9, max_tokens=MAX_
     except Exception:
         #print(f"无法计算token数，直接估算")
         max_tokens =  MAX_TOKENS - 5000 - EXTRA
-    
+
     resp = client.chat.completions.create(
-        model=MODEL_NAME,
+        model=model_name,
         messages=messages,
         temperature=temperature,
         top_p=top_p,
@@ -266,10 +272,11 @@ def _split_prompt_for_chat(prompt: str):
     return "", prompt
 
 
-def query_alignment_llm(prompt, **kwargs):
+def query_alignment_llm(prompt, model_type, **kwargs):
     system_prompt, user_prompt = _split_prompt_for_chat(prompt)
     return query_llm(
         user_prompt,
+        model_type,
         system_prompt=system_prompt or None,
         **kwargs
     )
@@ -445,7 +452,7 @@ def _query_kb_items(
                         "distance": 0.0
                     })
                 continue
-
+                
             collection = rag_engine.get_collection(kb_type, kb_name)
             if not collection:
                 continue
@@ -468,7 +475,6 @@ def _query_kb_items(
 
     items.sort(key=lambda x: x.get("distance", 999.0))
     return items
-
 
 def _load_all_selected_rules(project_path: str) -> List[Dict[str, Any]]:
     """按项目选择读取全部编码规则，不做向量 Top-K 截断。"""
@@ -542,6 +548,7 @@ def _append_rule_appendix(prompt: str, rules: Optional[List[Any]]) -> str:
         + "\n\n".join(rule_blocks)
     )
 
+    
 
 def _format_align_references(items: List[Dict[str, Any]], title: str) -> str:
     if not items:
@@ -627,7 +634,7 @@ def parse_abstract_output(response):
     else:
         return []
 
-def query_codefile_from_abstract(requirement, file_abstract):
+def query_codefile_from_abstract(requirement, file_abstract, model_type):
     # 构造提示词
     template = CODEFILE_PROMPT_TEMPLATE
     prompt = template.format(
@@ -647,7 +654,7 @@ def query_codefile_from_abstract(requirement, file_abstract):
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_alignment_llm(prompt)
+        response = query_alignment_llm(prompt, model_type)
         llm_output = response.content
 
         # print("original llm output: ", llm_output)
@@ -699,7 +706,7 @@ def query_codefile_from_abstract(requirement, file_abstract):
     return file_list        
         
         
-def query_code_abstract(code_blocks):
+def query_code_abstract(code_blocks, model_type):
     """
     基于大模型，实现代码块的摘要
     
@@ -717,7 +724,7 @@ def query_code_abstract(code_blocks):
     )
 
     # 解析回复
-    response = query_llm(prompt)
+    response = query_llm(prompt, model_type)
     llm_output = response.content
     #print("original llm output: ", llm_output)
     #parsed_output = parse_abstract_output(llm_output)
@@ -726,7 +733,7 @@ def query_code_abstract(code_blocks):
     return llm_output        
         
 
-def query_codefile_abstract(code_abstracts):
+def query_codefile_abstract(code_abstracts, model_type):
     """
     基于大模型，实现代码文件的摘要
     
@@ -748,7 +755,8 @@ def query_codefile_abstract(code_abstracts):
     )
 
     # 解析回复
-    response = query_llm(prompt)
+    response = \
+        query_llm(prompt, model_type)
     llm_output = response.content
     #print("original llm output: ", llm_output)
     
@@ -759,6 +767,7 @@ def query_codefile_abstract(code_abstracts):
 def query_related_code_block(
     requirement,
     code_blocks,
+    model_type,
     icl_examples=None,
     user_id=None,
     project_path=None,
@@ -819,7 +828,7 @@ def query_related_code_block(
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_alignment_llm(prompt)
+        response = query_alignment_llm(prompt, model_type)
         llm_output = response.content
         #print("original llm response: ", response)
         #print("original llm output: ", llm_output)
@@ -836,6 +845,7 @@ def query_related_code_block(
 def query_related_code(
     requirement,
     code_blocks,
+    model_type,
     block_limit=None,
     icl_examples=None,
     user_id=None,
@@ -850,7 +860,8 @@ def query_related_code(
             res = query_related_code_block(
                 requirement,
                 c,
-                icl_examples,
+                model_type,
+                icl_examples=icl_examples,
                 user_id=user_id,
                 project_path=project_path,
                 reference_alignments=reference_alignments
@@ -891,7 +902,8 @@ def query_related_code(
         return query_related_code_block(
             requirement,
             code_blocks,
-            icl_examples,
+            model_type,
+            icl_examples=icl_examples,
             user_id=user_id,
             project_path=project_path,
             reference_alignments=reference_alignments
@@ -923,7 +935,7 @@ def _compact_code_blocks_for_rerank(code_blocks, max_code_chars=1200):
     return compacted
 
 
-def query_related_code_graph_rerank(requirement, seed_code_blocks, candidate_code_blocks):
+def query_related_code_graph_rerank(requirement, seed_code_blocks, candidate_code_blocks, model_type):
     if not candidate_code_blocks:
         return []
 
@@ -935,6 +947,7 @@ def query_related_code_graph_rerank(requirement, seed_code_blocks, candidate_cod
     for attempt in range(MAX_REQ):
         response = query_alignment_llm(
             prompt,
+            model_type,
             temperature=ALIGN_GRAPH_RERANK_TEMPERATURE,
             top_p=ALIGN_GRAPH_RERANK_TOP_P,
             max_tokens=ALIGN_GRAPH_RERANK_MAX_TOKENS,
@@ -957,6 +970,7 @@ def query_related_code_block_by_feedback(
     code_blocks,
     codeRanges,
     user_prompt,
+    model_type,
     user_id=None,
     project_path=None,
     reference_alignments=None
@@ -1015,7 +1029,7 @@ def query_related_code_block_by_feedback(
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_alignment_llm(prompt)
+        response = query_alignment_llm(prompt, model_type)
         llm_output = response.content
         #print("original llm output: ", llm_output)
         try:
@@ -1051,6 +1065,7 @@ def query_related_code_by_feedback(
                 c,
                 codeRanges,
                 user_prompt,
+                model_type,
                 user_id=user_id,
                 project_path=project_path,
                 reference_alignments=reference_alignments
@@ -1093,6 +1108,7 @@ def query_related_code_by_feedback(
             code_blocks,
             codeRanges,
             user_prompt,
+            model_type,
             user_id=user_id,
             project_path=project_path,
             reference_alignments=reference_alignments
@@ -1103,6 +1119,7 @@ def query_related_code_by_feedback(
 def query_related_requirement_block(
     code,
     req_blocks,
+    model_type,
     user_id=None,
     icl_examples=None,
     project_path=None,
@@ -1159,7 +1176,7 @@ def query_related_requirement_block(
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_alignment_llm(prompt)
+        response = query_alignment_llm(prompt, model_type)
         llm_output = response.content
 
         # print("original llm output: ", llm_output)
@@ -1178,6 +1195,7 @@ def query_related_requirement_block(
 def query_related_requirement(
     code,
     req_blocks,
+    model_type,
     block_limit=None,
     user_id=None,
     icl_examples=None,
@@ -1192,7 +1210,8 @@ def query_related_requirement(
             res = query_related_requirement_block(
                 code,
                 c,
-                user_id,
+                model_type,
+                user_id=user_id,
                 icl_examples=icl_examples,
                 project_path=project_path,
                 reference_alignments=reference_alignments
@@ -1228,7 +1247,8 @@ def query_related_requirement(
         return query_related_requirement_block(
             code,
             req_blocks,
-            user_id,
+            model_type,
+            user_id=user_id,
             icl_examples=icl_examples,
             project_path=project_path,
             reference_alignments=reference_alignments
@@ -1241,6 +1261,7 @@ def query_related_requirement_block_by_feedback(
     docRanges,
     req_blocks,
     user_prompt,
+    model_type,
     user_id=None,
     icl_examples=None,
     project_path=None,
@@ -1303,7 +1324,7 @@ def query_related_requirement_block_by_feedback(
     max_req = MAX_REQ
     parsed_output = ""
     for attempt in range(max_req):
-        response = query_alignment_llm(prompt)
+        response = query_alignment_llm(prompt, model_type)
         llm_output = response.content
         #print("original llm output: ", llm_output)
         try:
@@ -1323,6 +1344,7 @@ def query_related_requirement_by_feedback(
     docRanges,
     req_blocks,
     user_prompt,
+    model_type,
     block_limit=None,
     user_id=None,
     icl_examples=None,
@@ -1339,7 +1361,8 @@ def query_related_requirement_by_feedback(
                 docRanges,
                 c,
                 user_prompt,
-                user_id,
+                model_type,
+                user_id=user_id,
                 icl_examples=icl_examples,
                 project_path=project_path,
                 reference_alignments=reference_alignments
@@ -1377,7 +1400,8 @@ def query_related_requirement_by_feedback(
             docRanges,
             req_blocks,
             user_prompt,
-            user_id,
+            model_type,
+            user_id=user_id,
             icl_examples=icl_examples,
             project_path=project_path,
             reference_alignments=reference_alignments
@@ -1449,6 +1473,7 @@ def query_review_result_by_feedback(
     related_code,
     review_thought,
     user_prompt,
+    model_type,
     rules=None,
     issues=None,
     user_id=None,
@@ -1549,16 +1574,17 @@ def query_review_result_by_feedback(
         review_thought=review_thought,
         user_feedback=user_prompt
     )
-    # 规则放在最终 Prompt 末尾，避免插入主任务中间导致主提示词被稀释。
+    #print(prompt)
+	# 规则放在最终 Prompt 末尾，避免插入主任务中间导致主提示词被稀释。
     prompt = _append_rule_appendix(prompt, rules)
     # _debug_print_review_prompt(
-    #     stage="query_review_result_by_feedback",
-    #     template_key=original_template_key,
-    #     template_source=original_template_source,
-    #     prompt=prompt,
-    #     use_kbs_template=use_kbs_template,
-    #     is_code_only_review=is_code_only_review,
-    #     project_path=project_path
+        # stage="query_review_result_by_feedback",
+        # template_key=original_template_key,
+        # template_source=original_template_source,
+        # prompt=prompt,
+        # use_kbs_template=use_kbs_template,
+        # is_code_only_review=is_code_only_review,
+        # project_path=project_path
     # )
     
     # 4. 调用LLM
@@ -1571,7 +1597,7 @@ def query_review_result_by_feedback(
         max_req = MAX_REQ
         parsed_output = ""
         for attempt in range(max_req):
-            response = query_llm(prompt)
+            response = query_llm(prompt, model_type)
             try:
                 parsed_output = parse_review_output(response.content)
                 # print("parsed llm output: ", parsed_output)
@@ -1594,6 +1620,7 @@ def query_review_result_by_feedback(
 def query_review_result(
     requirement,
     related_code,
+    model_type,
     rules=None,
     issues=None,
     user_id=None,
@@ -1694,17 +1721,17 @@ def query_review_result(
         reference_issues=reference_issues,
         reference_reviews=reference_reviews
     )
-    # 规则放在最终 Prompt 末尾，避免插入主任务中间导致主提示词被稀释。
+	# 规则放在最终 Prompt 末尾，避免插入主任务中间导致主提示词被稀释。
     prompt = _append_rule_appendix(prompt, rules)
-    # _debug_print_review_prompt(
-    #     stage="query_review_result",
-    #     template_key=template_key,
-    #     template_source=template_source,
-    #     prompt=prompt,
-    #     use_kbs_template=use_kbs_template,
-    #     is_code_only_review=is_code_only_review,
-    #     prompt_type=prompt_type,
-    #     project_path=project_path
+	# _debug_print_review_prompt(
+        # stage="query_review_result",
+        # template_key=template_key,
+        # template_source=template_source,
+        # prompt=prompt,
+        # use_kbs_template=use_kbs_template,
+        # is_code_only_review=is_code_only_review,
+        # prompt_type=prompt_type,
+        # project_path=project_path
     # )
     
     # 4. 调用LLM
@@ -1717,7 +1744,7 @@ def query_review_result(
         max_req = MAX_REQ
         parsed_output = ""
         for attempt in range(max_req):
-            response = query_llm(prompt)
+            response = query_llm(prompt, model_type)
             try:
                 parsed_output = parse_review_output(response.content)
                 # print("parsed llm output: ", parsed_output)
@@ -1884,7 +1911,7 @@ def _safe_json_loads(text: str):
         return json.loads(repaired)
 
 # ================= 需求反生成 =================
-def query_generated_requirement(related_code, reference_requirement=""):
+def query_generated_requirement(related_code, model_type, reference_requirement=""):
     """
     根据相关代码生成需求
     
@@ -1913,7 +1940,7 @@ def query_generated_requirement(related_code, reference_requirement=""):
     )
     
     # 调用LLM
-    response = query_llm(prompt)
+    response = query_llm(prompt, model_type)
     return response.content
 
 
@@ -1949,7 +1976,7 @@ def _preview_text(text: str, limit: int = 200) -> str:
     return normalized[:limit] + '...'
 
 
-def query_flow_chart(code_content):
+def query_flow_chart(code_content, model_type):
     """根据代码内容生成Mermaid流程图"""
     system_instruction = (
         "你是Mermaid流程图生成器。"
@@ -1979,6 +2006,7 @@ graph TD
         prompt = primary_prompt if attempt == 1 else fallback_prompt
         response = query_llm(
             prompt,
+            model_type,
             history=[{"role": "system", "content": system_instruction}],
             temperature=0.05,
             top_p=0.8,
@@ -2000,7 +2028,7 @@ graph TD
     raise ValueError(" ; ".join(errors))
 
 
-def smart_parse_doc(text, type='rule'):
+def smart_parse_doc(text, model_type, type='rule'):
     """使用 LLM 对文档进行结构化提取"""
     prompt_template = RULE_EXTRACTION_PROMPT if type == 'rule' else ISSUE_EXTRACTION_PROMPT
     
@@ -2008,7 +2036,7 @@ def smart_parse_doc(text, type='rule'):
     prompt = prompt_template.format(text=text[:6000]) 
     
     try:
-        response = query_llm(prompt)
+        response = query_llm(prompt, model_type)
         parsed = parse_output(response.content)
         
         # 标准化输出键名

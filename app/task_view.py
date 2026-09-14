@@ -54,7 +54,8 @@ def get_progress(task_id):
             "task_id": task_id,
             "state": state,
             # "meta": task_result.info
-            "meta": meta
+            "meta": meta,
+            'message': '出错了' if state == 'FAILURE' else ''
         }
     # print(f'response============================{response}')
     return jsonify(response)

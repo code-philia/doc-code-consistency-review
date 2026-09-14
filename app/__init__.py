@@ -43,6 +43,9 @@ def create_app():
     from .feedback import feedback_bp
     app.register_blueprint(feedback_bp)
 
+    from .user_logs import logs_bp
+    app.register_blueprint(logs_bp)
+
     @app.teardown_appcontext
     def close_db(exception):
         db = g.pop('db', None)

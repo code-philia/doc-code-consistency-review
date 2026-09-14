@@ -28,6 +28,7 @@ from .db import (
     _default_code_block_name,
     _get_next_block_id
 )
+from .func_utils import record_user_operation, MODEL_CONFIG
 
 os.environ["OPENBLAS_NUM_THREADS"] = "128"
 os.environ["OMP_NUM_THREADS"]="128"
@@ -1344,7 +1345,7 @@ def do_upload_files_logic(project_path, file_type, files, parseDocMethod, task=N
                     _update_snapshot(task.request.id, state='PROCESSING',
                                      title=f'正在处理 {file.filename} ({i}/{len(files)})',
                                      current_progress=int(i / len(files) * 100))
-                    time.sleep(20)
+
                 # 保留包含中文的原始相对路径
                 relative_path = file.filename.replace('\\', '/')
 
@@ -1397,7 +1398,7 @@ def do_upload_files_logic(project_path, file_type, files, parseDocMethod, task=N
                     _update_snapshot(task.request.id, state='PROCESSING',
                                      title=f'正在处理 {filename} ({i}/{len(files)})',
                                      current_progress=int(i / len(files) * 100))
-                    time.sleep(20)
+
                 if filename.endswith(('.md', '.docx')):
                     doc_file_path = os.path.join(doc_repo_path, filename)
                     # print(doc_file_path)
@@ -2144,20 +2145,19 @@ def auto_markdown_split():
                         md_files.append(os.path.join(root, file))
             
             # 如果用户上传的不是markdown文件，就去格式转换后的文件夹中找对应的markdown文件
+            doc_repo_path = os.path.join(project_path, 'doc_repo_converted')
             if not md_files:
                 # 获取项目中格式转换后的文档文件
-                doc_repo_path = os.path.join(project_path, 'doc_repo_converted')
                 if not os.path.exists(doc_repo_path):
                     return jsonify({'status':'error', 'message': '文档目录不存在'})
 
-                # 查找所有markdown文件
-                md_files = []
-                for root, dirs, files in os.walk(doc_repo_path):
-                    for file in files:
-                        if file.lower().endswith('.md'):
-                            md_files.append(os.path.join(root, file))
-                if not md_files:
-                    return jsonify({'status':'error', 'message': '未找到Markdown文档'})
+            # 查找所有markdown文件
+            for root, dirs, files in os.walk(doc_repo_path):
+                for file in files:
+                    if file.lower().endswith('.md'):
+                        md_files.append(os.path.join(root, file))
+            if not md_files:
+                return jsonify({'status':'error', 'message': '未找到Markdown文档'})
 
             processed_count = 0
             req_blocks = []
@@ -2371,7 +2371,7 @@ def get_abstracts_from_sqlite(project_id):
         return pd.DataFrame()
 
 
-def generate_abstract(file_path):
+def generate_abstract(file_path, model_type):
     # 读取文件内容，保留原始行（包括空行）
     lines = []
     for line in read_source_file(file_path).splitlines():
@@ -2381,7 +2381,7 @@ def generate_abstract(file_path):
         if not is_code_comment:
             lines.append(l_line)
     # 调用 LLM 的代码文件摘要函数
-    return query_codefile_abstract(lines)
+    return query_codefile_abstract(lines, model_type)
 
 
 def save_abstract_to_db(project_path, file, codefile_abstract, project_id, user_id):
@@ -2448,7 +2448,7 @@ def abstract_code_from_project():
         project_path = request.args.get('projectPath')
         project_id = request.args.get('project_id')
         print('/api/get-code-abstract, project_id:', project_id)
-
+        model_type = getattr(current_user, 'default_model_key', None)
         if not project_path:
             return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
 
@@ -2517,7 +2517,7 @@ def abstract_code_from_project():
                 # 数据库没有该代码文件的摘要
                 else:
                     #file_path = os.path.join(root, file)
-                    codefile_abstract = generate_abstract(file_path)
+                    codefile_abstract = generate_abstract(file_path, model_type)
                     file_abstract[rel_path] = codefile_abstract
 
                     # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
@@ -2527,7 +2527,7 @@ def abstract_code_from_project():
             # 数据库里代码摘要这张表是空的，需要新生成
             else:
                 #file_path = os.path.join(root, file)
-                codefile_abstract = generate_abstract(file_path)
+                codefile_abstract = generate_abstract(file_path, model_type)
                 file_abstract[rel_path] = codefile_abstract
                 # save_abstract_to_db(project_path, file, codefile_abstract, project_id)
                 save_abstract_to_db(project_path, rel_path, codefile_abstract, project_id, current_user.user_id)
@@ -2556,7 +2556,7 @@ def abstract_code_from_project_post():
     abstract_length = data.get('abstract_length')
     all_align = data.get('all_align')
     user_id = current_user.user_id
-
+    model_type = getattr(current_user, 'default_model_key', None)
     if not project_path:
         return jsonify({'status': 'error', 'message': '缺少项目路径'}), 400
 
@@ -2564,14 +2564,14 @@ def abstract_code_from_project_post():
     if not os.path.exists(code_file_path):
         return jsonify({'status': 'success', 'data': []})
     from tasks import abstract_code_from_project_task, align_requirement_to_project_task
-    sig2 = align_requirement_to_project_task.s(data, user_id)
+    sig2 = align_requirement_to_project_task.s(data, user_id, model_type)
     sig2.freeze()
     task2_id = sig2.id
-    sig1 = abstract_code_from_project_task.s(data, code_file_path, user_id)
+    sig1 = abstract_code_from_project_task.s(data, code_file_path, user_id, model_type)
     sig1.freeze()
     task1_id = sig1.id
     chain(sig1, sig2).apply_async()
-
+    record_user_operation(4, current_user, logger, get_db)
     # 新增: 写入用户任务快照
     db = get_db()
     cursor = db.cursor()
@@ -2649,6 +2649,7 @@ def align_requirement_to_project_addprompt():
     userPrompt = data.get('userInputPrompt', [])
     project_id = data.get('project_id')
     user_id = getattr(current_user, 'user_id', None)
+    model_type = getattr(current_user, 'default_model_key', None)
     print('/api/align-requirement-to-project-addprompt, project_id', project_id)
     # abstract = get_project_abstract(project_id)
 
@@ -2669,7 +2670,7 @@ def align_requirement_to_project_addprompt():
     if len(all_files) > 1:
         # 基于需求，利用大模型检索代码摘要，先定位代码文件
         # 调用llm
-        file_name_list = query_codefile_from_abstract(requirement_text, file_abstract)
+        file_name_list = query_codefile_from_abstract(requirement_text, file_abstract, model_type)
         
         # 解析异常，返回空列表时
         # 过滤掉含有乱码的代码摘要（作为被定位的代码文件防止遗漏），重新调用大模型定位代码文件
@@ -2680,7 +2681,7 @@ def align_requirement_to_project_addprompt():
             # 代码摘要数量小于阈值时，可以直接调用
             if file_cnt <=FILE_MAX_LIMIT:
                 # 调用llm
-                file_name_list = query_codefile_from_abstract(requirement_text, filter_file_abstract)
+                file_name_list = query_codefile_from_abstract(requirement_text, filter_file_abstract, model_type)
                 #print(file_name_list)
             
             # 可能由于代码摘要过多，影响大模型分析理解而报错
@@ -2694,7 +2695,7 @@ def align_requirement_to_project_addprompt():
                     batch_file_abstract[key] = value
                     if file_cnt >= FILE_MAX_LIMIT:
                         file_cnt = 0
-                        batch_file_name_list = query_codefile_from_abstract(requirement_text, batch_file_abstract)
+                        batch_file_name_list = query_codefile_from_abstract(requirement_text, batch_file_abstract, model_type)
                         file_name_list += batch_file_name_list
             
             # 谨防遗漏，将有摘要是乱码的代码文件全部放入候选区
@@ -2757,7 +2758,8 @@ def align_requirement_to_project_addprompt():
                     reranked_code = query_related_code_graph_rerank(
                         requirement_text,
                         seed_blocks,
-                        candidate_blocks
+                        candidate_blocks,
+                        model_type
                     )
                     final_blocks = _match_related_items_to_code_blocks(reranked_code, candidate_blocks)
 
@@ -2791,11 +2793,11 @@ def generate_flowchart():
     try:
         data = request.get_json()
         code_content = data.get('codeContent')
-
+        model_type = getattr(current_user, 'default_model_key', None)
         if not code_content:
             return jsonify({"status": "error", "message": "Missing code content"}), 400
 
-        flowchart_code = query_flow_chart(code_content)
+        flowchart_code = query_flow_chart(code_content, model_type)
 
         return jsonify({
             "status": "success",
@@ -2861,6 +2863,7 @@ def generate_reverse_requirement():
         alignment_id = data.get('alignment_id')
         cache_only = bool(data.get('cacheOnly', False))
         force_regenerate = bool(data.get('forceRegenerate', False))
+        model_type = getattr(current_user, 'default_model_key', None)
 
         if not project_id or not alignment_id:
             return jsonify({"status": "error", "message": "Missing project_id or alignment_id"}), 400
@@ -2910,11 +2913,11 @@ def generate_reverse_requirement():
             })
 
         # 调用LLM生成需求，传入参考需求内容
-        generated_requirement = query_generated_requirement(code_blocks, requirement_content or "")
+        generated_requirement = query_generated_requirement(code_blocks, model_type, requirement_content or "")
 
         # 调用LLM生成流程图
         mermaid_code = query_flow_chart(code_content if isinstance(code_content, str) else
-                                       '\n\n'.join([block.get('content', '') for block in code_content]))
+                                       '\n\n'.join([block.get('content', '') for block in code_content]), model_type)
 
         # generated_requirement 是 LLM 返回的字符串
         # 关键步骤：处理流程图含有特殊字符无法渲染的问题
@@ -2989,6 +2992,7 @@ def reverse_requirements():
     project_id = data.get('project_id')
     selected_reverse = data.get('selected_reverse')
     user_id = current_user.user_id
+    model_type = getattr(current_user, 'default_model_key', None)
 
     # sql = "SELECT * FROM alignments WHERE project_id=%s"
     params = [int(project_id)]
@@ -3039,7 +3043,8 @@ def reverse_requirements():
     alignments = cursor.fetchall()
 
     from tasks import gen_requirement_task
-    task = gen_requirement_task.delay(alignments, int(row['total']), int(row['done']))
+    task = gen_requirement_task.delay(alignments, int(row['total']), int(row['done']), model_type)
+    record_user_operation(1, current_user, logger, get_db)
 
     # 先清理该项目旧的任务快照(防止残留)
     cursor.execute("DELETE FROM user_task_snapshot WHERE user_id = %s AND project_id = %s",
@@ -3079,7 +3084,8 @@ def review_alignment():
     prompt_type = data.get('promptType', '')
     reviewed_count = data.get('reviewedCount', '')
     total_review_count = data.get('totalReviewCount', '')
-    user_id = current_user.user_id
+    user_id = current_user.user_id  
+    model_type = getattr(current_user, 'default_model_key', None)
 
     has_requirement_files = isinstance(files, dict) and any(files.values())
     has_code_blocks = isinstance(code_blocks, list) and len(code_blocks) > 0
@@ -3087,8 +3093,8 @@ def review_alignment():
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
 
     from tasks import review_alignment_task
-    task = review_alignment_task.delay(project_path, project_id, user_id, files, prompt_type, reviewed_count)
-
+    task = review_alignment_task.delay(project_path, project_id, user_id, files, model_type, prompt_type, reviewed_count)
+    record_user_operation(2, current_user, logger, get_db)
     # 新增: 写入用户任务快照
     db = get_db()
     cursor = db.cursor()
@@ -3121,6 +3127,7 @@ def review_alignment_addprompt():
     userPrompt = data.get('userInputPrompt', [])
     project_id = data.get('project_id')
     prompt_type = data.get('promptType')
+    model_type = getattr(current_user, 'default_model_key', None)
 
     if not all([project_path, project_id, alignment]) and not prompt_type:
         return jsonify({"status": "error", "message": "Missing required parameters"}), 400
@@ -3188,6 +3195,7 @@ def review_alignment_addprompt():
         code_ranges,
         reviewThoughts,
         userPrompt,
+        model_type,
         rules=retrieved_rules,
         issues=retrieved_issues,
         user_id=current_user.user_id,
@@ -5426,12 +5434,13 @@ def align_code_to_requirements():
     y_align = data.get('y_align', '')
     all_align = data.get('all_align', '')
     user_id = current_user.user_id
-
+    model_type = getattr(current_user, 'default_model_key', None)
     if not project_path:
         return jsonify({"status": "error", "message": "缺少项目路径参数"}), 400
 
     from tasks import align_code_to_requirements_task
-    task = align_code_to_requirements_task.delay(project_path, code_blocks, project_id, current_user.user_id, y_align)
+    task = align_code_to_requirements_task.delay(project_path, code_blocks, project_id, current_user.user_id, y_align, model_type)
+    record_user_operation(3, current_user, logger, get_db)
     # 新增: 写入用户任务快照
     db = get_db()
     cursor = db.cursor()
@@ -5462,7 +5471,7 @@ def align_code_to_requirement():
         data = request.json
         code_ranges = data.get('codeRanges', [])
         project_path = data.get('projectPath', '')
-
+        model_type = getattr(current_user, 'default_model_key', None)
         if not code_ranges or not project_path:
              return jsonify({"status": "error", "message": "缺少代码内容或项目路径参数"}), 400
 
@@ -5491,6 +5500,7 @@ def align_code_to_requirement():
             related_reqs = query_related_requirement(
                 code_content,
                 all_doc_blocks,
+                model_type,
                 block_limit=50,
                 project_path=project_path
             )
@@ -5561,6 +5571,7 @@ def align_code_to_requirement():
         related_reqs = query_related_requirement(
             enhanced_query,
             all_doc_blocks,
+            model_type,
             block_limit=50,
             icl_examples=top_items,
             project_path=project_path
@@ -5590,7 +5601,7 @@ def align_code_to_requirement_addprompt():
         userPrompt = data.get('userInputPrompt', [])
         project_id = data.get('project_id')
         reqRanges_aligned = data.get('docRanges', [])
-
+        model_type = getattr(current_user, 'default_model_key', None)
         if not code_ranges or not project_path:
              return jsonify({"status": "error", "message": "缺少代码内容或项目路径参数"}), 400
 
@@ -5621,6 +5632,7 @@ def align_code_to_requirement_addprompt():
                 reqRanges_aligned,
                 all_doc_blocks,
                 userPrompt,
+                model_type,
                 block_limit=50,
                 project_path=project_path
             )
@@ -5691,6 +5703,7 @@ def align_code_to_requirement_addprompt():
         related_reqs = query_related_requirement(
             enhanced_query,
             all_doc_blocks,
+            model_type,
             block_limit=50,
             icl_examples=top_items,
             project_path=project_path
@@ -5736,7 +5749,7 @@ def list_annotation_files():
 @bp.route('/api/rag/build', methods=['POST'])
 @kb_perm_required(need="edit")
 def build_rag_db():
-
+    model_type = getattr(current_user, 'default_model_key', None)
     if request.content_type and 'multipart/form-data' in request.content_type:
         data = request.form
         uploaded_files = request.files.getlist('annotationFiles')
@@ -5894,7 +5907,7 @@ def build_rag_db():
                     raw_rules = parse_programming_rules(full_path)
                     if not raw_rules:
                         doc_text = read_docx_text(full_path)
-                        raw_rules = smart_parse_doc(doc_text, type='rule')
+                        raw_rules = smart_parse_doc(doc_text, model_type, type='rule')
                     if raw_rules:
                         # 编码规则使用 Markdown 保存，避免拆成向量条目后只能按相似度取样。
                         json_data = raw_rules
@@ -5904,14 +5917,14 @@ def build_rag_db():
                     raw_issues = parse_issue_reports(full_path)
                     if not raw_issues:
                         doc_text = read_docx_text(full_path)
-                        raw_issues = smart_parse_doc(doc_text, type='issue')
+                        raw_issues = smart_parse_doc(doc_text, model_type, type='issue')
                     if raw_issues:
                         json_data = format_issues_for_rag(raw_issues)
 
                 # 3. 对齐知识/其他
                 elif processing_type in ['other', 'align']:
                     doc_text = read_docx_text(full_path)
-                    raw_data = smart_parse_doc(doc_text, type='rule')
+                    raw_data = smart_parse_doc(doc_text, model_type, type='rule')
                     if raw_data:
                         json_data = format_rules_for_rag(raw_data)
                         
@@ -5934,7 +5947,7 @@ def build_rag_db():
                     raw_keys = parse_check_lists(full_path)
                     if not raw_keys:
                         doc_text = read_docx_text(full_path)
-                        raw_keys = smart_parse_doc(doc_text, type='issue')
+                        raw_keys = smart_parse_doc(doc_text, model_type, type='issue')
                     if raw_keys:
                         json_data = format_cases_for_rag(raw_keys)
                 
@@ -5952,7 +5965,7 @@ def build_rag_db():
             if not json_data:
                 results.append({"file": raw_annotation_file, "status": "error", "message": "文档解析失败"})
                 continue
-
+            
             normalized_source_name = re.sub(r'\s+', '_', source_file_name or os.path.basename(full_path))
             is_append = append_mode or (idx > 0)
 
@@ -5979,7 +5992,7 @@ def build_rag_db():
                         'message': result.get('message')
                     })
                 continue
-
+            
             temp_json = full_path + '.parsed.json'
             with open(temp_json, 'w', encoding='utf-8') as f:
                 json.dump(json_data, f, ensure_ascii=False, indent=2)
@@ -6034,7 +6047,6 @@ def add_items_to_kb():
 
     try:
         rag_engine.initialize()
-
         if rag_engine.is_rule_kb(kb_type):
             result = rag_engine.add_rules_markdown(
                 items,
@@ -6070,7 +6082,7 @@ def add_items_to_kb():
                 "message": f"入库完成！本次新增 {result.get('count', 0)} 条规则，当前库内总数: {result.get('total_count', 0)}",
                 "total_count": result.get("total_count", 0)
             })
-
+        
         col_info = rag_engine._get_or_create_collection(kb_type, kb_name)
         if not col_info:
             return jsonify({"status": "error", "message": f"知识库 {kb_name} 初始化失败"})
@@ -6466,9 +6478,9 @@ def preview_file():
     doc_type = request.form.get('doc_type')
     #parseMethod = request.form.get('parseMethod')
     use_server_file = request.form.get('use_server_file') == 'true'
-    
+    model_type = getattr(current_user, 'default_model_key', None)
     # 解析逻辑抽成函数
-    def do_parse(target_path):
+    def do_parse(target_path, model_type):
         # 调用解析逻辑
         preview_data = []
         
@@ -6479,7 +6491,7 @@ def preview_file():
                 if not rules:
                     # 兜底
                     text = read_docx_text(target_path)
-                    rules = smart_parse_doc(text, type='rule')
+                    rules = smart_parse_doc(text, model_type, type='rule')
 
                 # 格式化为前端预览
                 preview_data = rules
@@ -6489,7 +6501,7 @@ def preview_file():
                 issues = parse_issue_reports(target_path)
                 if not issues:
                     text = read_docx_text(target_path)
-                    issues = smart_parse_doc(text, type='issue')
+                    issues = smart_parse_doc(text, model_type, type='issue')
                 preview_data = issues
 
         elif doc_type == 'align': # 对齐知识解析
@@ -6517,7 +6529,7 @@ def preview_file():
                 keys = parse_check_lists(target_path)
                 if not keys:
                     text = read_docx_text(target_path)
-                    keys = smart_parse_doc(text, type='issue')
+                    keys = smart_parse_doc(text, model_type, type='issue')
                 preview_data = keys
         
         
@@ -6535,7 +6547,7 @@ def preview_file():
                 return jsonify({"status": "error", "message": "文件不存在"})
 
             # 调用解析，单文件直接返回
-            preview_data = do_parse(target_path)
+            preview_data = do_parse(target_path, model_type)
             return jsonify({"status": "success", "data": preview_data})
 
         else:
@@ -6559,7 +6571,7 @@ def preview_file():
                 
                 file.save(target_path)
 
-                preview_data = do_parse(target_path)
+                preview_data = do_parse(target_path, model_type)
                 all_results.append({
                     "filename": file.filename,
                     "preview_data": preview_data
@@ -7118,7 +7130,52 @@ def filter_non_abstract_files(file_abstract):
             cnt += 1
             
     return filter_non_file, filter_file_abstract, cnt
-    
+
+
+@bp.route('/api/select-model', methods=['POST'])
+@login_required
+def set_model():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"code": 400, "msg": "请求体不能为空"})
+
+        model_key = data.get("model")
+        if not model_key:
+            return jsonify({"code": 400, "msg": "model 参数为空"})
+
+        if model_key not in MODEL_CONFIG:
+            return jsonify({"code": 404, "msg": f"模型’{model_key}‘不存在"})
+
+        init_key = data.get("type")
+        # 设置大模型的操作
+        if not init_key:
+            record_user_operation(5, current_user, logger, get_db, model_key)
+
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(
+            'UPDATE user SET default_model_key=%s WHERE user_id=%s',
+            (model_key, current_user.user_id)
+        )
+        db.commit()
+        current_user.default_model_key = model_key
+
+        data = []
+        for model_value, model_data in MODEL_CONFIG.items():
+            temp_dict = {}
+            temp_dict["value"] = model_value
+            temp_dict["label"] = model_data["name"]
+            data.append(temp_dict)
+
+        return jsonify({
+            "code": 200,
+            "msg": "模型切换成功",
+            "data": data
+        })
+    except BaseException as e:
+        return jsonify(({"code": 500, "msg": f"服务器内部错误： {str(e)}"}))
+
 # if __name__ == '__main__':
 #     start_port = 5056
 #     available_port = find_available_port(start_port)

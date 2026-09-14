@@ -12,13 +12,14 @@ DEPARTMENT_NAMES = {
 
 
 class User(UserMixin):
-    def __init__(self, user_id, username, password, ip, name, role):
+    def __init__(self, user_id, username, password, ip, name, role, default_model_key='modelA'):
         self.user_id = user_id
         self.username = username
         self.password = password
         self.ip = ip
         self.name = name
         self.role = role
+        self.default_model_key = default_model_key or 'modelA'
 
     def get_id(self):
         """重写get_id方法，返回用户标识符"""
@@ -38,10 +39,13 @@ class User(UserMixin):
         """根据用户id从数据库获取用户实例"""
         db = get_db()
         c = db.cursor()
-        c.execute(f'select user_id, username, password, ip, name, role from user where user_id={user_id}')
+        c.execute(f'select user_id, username, password, ip, name, role, default_model_key from user where user_id={user_id}')
         row = c.fetchone()
         if row:
-            return User(row['user_id'], row['username'], row['password'], row['ip'], row['name'], row['role'])
+            return User(
+                row['user_id'], row['username'], row['password'], row['ip'],
+                row['name'], row['role'], row.get('default_model_key')
+            )
         return None
 
     @staticmethod
@@ -49,10 +53,13 @@ class User(UserMixin):
         """根据用户名获取用户实例"""
         db = get_db()
         c = db.cursor()
-        c.execute(f'select user_id, username, password, ip, name, role from user where username="{username}"')
+        c.execute(f'select user_id, username, password, ip, name, role, default_model_key from user where username="{username}"')
         row = c.fetchone()
         if row:
-            return User(row['user_id'], row['username'], row['password'], row['ip'], row['name'], row['role'])
+            return User(
+                row['user_id'], row['username'], row['password'], row['ip'],
+                row['name'], row['role'], row.get('default_model_key')
+            )
         return None
 
     @staticmethod
@@ -60,11 +67,14 @@ class User(UserMixin):
         """根据用户ip获取用户实例"""
         db = get_db()
         c = db.cursor()
-        c.execute(f'select user_id, username, password, ip, name, role from user where ip="{ip}"')
+        c.execute(f'select user_id, username, password, ip, name, role, default_model_key from user where ip="{ip}"')
         row = c.fetchone()
         # print('row', row)
         if row:
-            return User(row['user_id'], row['username'], row['password'], row['ip'], row['name'], row['role'])
+            return User(
+                row['user_id'], row['username'], row['password'], row['ip'],
+                row['name'], row['role'], row.get('default_model_key')
+            )
         return None
 
 
@@ -125,7 +135,8 @@ def get_current_user():
         'user_id': current_user.user_id,
         'username': current_user.username,
         'name': current_user.name,
-        'role': current_user.role
+        'role': current_user.role,
+        'default_model_key': getattr(current_user, 'default_model_key', 'modelA') or 'modelA'
     }
 
     return jsonify({'code': 200, 'data': data})
