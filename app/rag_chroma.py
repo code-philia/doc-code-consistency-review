@@ -93,6 +93,10 @@ class RAGEngine:
     def is_rule_kb(self, kb_type: str) -> bool:
         return (kb_type or "").strip() in self.RULE_KB_TYPES
 
+    @staticmethod
+    def _normalize_rule_kb_type(kb_type: str) -> str:
+        return "checklist" if (kb_type or "").strip() == "checklist" else "rule"
+
     def _get_rules_markdown_path(self, kb_name: str) -> str:
         return os.path.join(self._get_kb_path("rule", kb_name), self.RULE_MARKDOWN_FILE)
 
@@ -121,7 +125,20 @@ class RAGEngine:
         marker = re.search(r"(?://\s*)?\[?(?:违背|遵循)示例\]?\s*:?", text)
         return text[:marker.start()].strip() if marker else text
 
-    def _rule_record_from_item(self, item: Any, source_file: str = "", index: int = 0) -> Dict[str, Any]:
+    @staticmethod
+    def _clean_checklist_text(value: str) -> str:
+        """删除清单中的冗余标签和 HTML 注释，减少审查 Prompt 体积。"""
+        text = re.sub(r"<!--.*?-->", "", str(value or ""), flags=re.DOTALL)
+        text = text.replace("【问题描述】", "").replace("【简要说明】", "")
+        return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+    def _rule_record_from_item(
+        self,
+        item: Any,
+        source_file: str = "",
+        index: int = 0,
+        kb_type: str = "rule",
+    ) -> Dict[str, Any]:
         """将解析结果、标注 JSON 或手工条目统一为 Markdown 记录。"""
         meta: Dict[str, Any] = {}
         description = ""
@@ -163,9 +180,14 @@ class RAGEngine:
         source = self._normalize_rule_source(
             source_file or (meta.get("source_file") if isinstance(meta, dict) else "")
         )
+        normalized_type = self._normalize_rule_kb_type(kb_type)
+        if normalized_type == "checklist":
+            description = self._clean_checklist_text(description)
+        item_category = item.get("category") if isinstance(item, dict) else ""
+        default_category = "必查清单" if normalized_type == "checklist" else "编程规则"
         record_meta = {
             "id": rule_id,
-            "category": str(meta.get("category") or "编程规则"),
+            "category": str(item_category or meta.get("category") or default_category),
             "source_file": source,
         }
         return {
@@ -174,8 +196,9 @@ class RAGEngine:
             "meta": record_meta,
         }
 
-    def _serialize_rules_markdown(self, records: List[Dict[str, Any]]) -> str:
-        parts = ["# 编码规则"]
+    def _serialize_rules_markdown(self, records: List[Dict[str, Any]], kb_type: str = "rule") -> str:
+        is_checklist = self._normalize_rule_kb_type(kb_type) == "checklist"
+        parts = ["# 必查清单" if is_checklist else "# 编码规则"]
         for record in records:
             rule_id = str(record.get("id") or "rule").strip().replace("\n", " ")
             description = str(record.get("description") or "").strip()
@@ -183,13 +206,15 @@ class RAGEngine:
                 continue
             parts.append(f"## {rule_id}\n{description}")
 
-            meta = record.get("meta") or {}
-            compact_meta = {
-                "id": rule_id,
-                "category": str(meta.get("category") or "编程规则"),
-                "source_file": str(meta.get("source_file") or ""),
-            }
-            parts.append(f"<!-- rule-meta:{json.dumps(compact_meta, ensure_ascii=False, separators=(',', ':'))} -->")
+            # 清单 Markdown 不包含任何 HTML 注释；元数据统一保存在 rules.meta.json。
+            if not is_checklist:
+                meta = record.get("meta") or {}
+                compact_meta = {
+                    "id": rule_id,
+                    "category": str(meta.get("category") or "编程规则"),
+                    "source_file": str(meta.get("source_file") or ""),
+                }
+                parts.append(f"<!-- rule-meta:{json.dumps(compact_meta, ensure_ascii=False, separators=(',', ':'))} -->")
         return "\n\n".join(parts).rstrip() + "\n"
 
     def _parse_rules_markdown(self, text: str) -> List[Dict[str, Any]]:
@@ -264,12 +289,12 @@ class RAGEngine:
             print(f"[RAG] 读取规则元数据失败: {e}")
             return []
 
-    def _write_rules_markdown(self, kb_name: str, records: List[Dict[str, Any]]) -> None:
+    def _write_rules_markdown(self, kb_name: str, records: List[Dict[str, Any]], kb_type: str = "rule") -> None:
         path = self._get_rules_markdown_path(kb_name)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         temp_path = f"{path}.tmp"
         with open(temp_path, "w", encoding="utf-8") as f:
-            f.write(self._serialize_rules_markdown(records))
+            f.write(self._serialize_rules_markdown(records, kb_type=kb_type))
         os.replace(temp_path, path)
 
         metadata = {}
@@ -296,7 +321,7 @@ class RAGEngine:
         append: bool = False,
         source_file: str = "",
     ) -> Dict[str, Any]:
-        """将编码规则保存为 Markdown，不创建或修改 Chroma 向量集合。"""
+        """将编码规则或必查清单保存为 Markdown，不创建或修改 Chroma 向量集合。"""
         if isinstance(rules, dict):
             raw_items = rules.get("annotations", rules.get("rules", []))
             if not isinstance(raw_items, list):
@@ -308,11 +333,19 @@ class RAGEngine:
 
         existing = self._read_rules_markdown(kb_name) if append else []
         records = list(existing)
+        if self._normalize_rule_kb_type(kb_type) == "checklist":
+            for record in records:
+                record["description"] = self._clean_checklist_text(record.get("description", ""))
         existing_ids = {str(item.get("id")) for item in records}
         added = 0
 
         for idx, item in enumerate(raw_items):
-            record = self._rule_record_from_item(item, source_file=source_file, index=idx)
+            record = self._rule_record_from_item(
+                item,
+                source_file=source_file,
+                index=idx,
+                kb_type=kb_type,
+            )
             if not record["description"]:
                 continue
 
@@ -328,7 +361,7 @@ class RAGEngine:
             existing_ids.add(candidate_id)
             added += 1
 
-        self._write_rules_markdown(kb_name, records)
+        self._write_rules_markdown(kb_name, records, kb_type=kb_type)
         return {
             "status": "success",
             "message": f"成功保存 {added} 条规则到 Markdown",
@@ -356,9 +389,13 @@ class RAGEngine:
         return items
 
     def get_all_rule_items(self, kb_type: str, kb_name: str, limit: int = None) -> List[Dict[str, Any]]:
-        """读取全部规则；新库读 Markdown，旧库无 rules.md 时回退 Chroma。"""
+        """读取全部规则；编码规则旧库可回退 Chroma，必查清单只能读取 Markdown。"""
         if os.path.isfile(self._get_rules_markdown_path(kb_name)):
             return self._get_rule_items_from_markdown(kb_name, limit)
+
+        # 必查清单只允许使用 rules.md，缺失时也不能隐式创建 Chroma 数据库。
+        if self._normalize_rule_kb_type(kb_type) == "checklist":
+            return []
 
         col_info = self._get_or_create_collection(kb_type, kb_name)
         if not col_info:
@@ -384,6 +421,8 @@ class RAGEngine:
             return []
 
     def _get_or_create_collection(self, kb_type: str, kb_name: str):
+        if self._normalize_rule_kb_type(kb_type) == "checklist":
+            return None
         cache_key = f"{kb_type}|{kb_name}"
         if cache_key in self.collections:
             return self.collections[cache_key]
@@ -617,7 +656,7 @@ class RAGEngine:
             remaining_records = [record for record in records if str(record.get("id")) != str(item_id)]
             if len(remaining_records) == len(records):
                 return {"status": "error", "message": "条目不存在"}
-            self._write_rules_markdown(kb_name, remaining_records)
+            self._write_rules_markdown(kb_name, remaining_records, kb_type=kb_type)
             return {
                 "status": "success",
                 "message": "删除成功",
@@ -647,7 +686,7 @@ class RAGEngine:
             ]
             deleted = len(records) - len(remaining_records)
             if deleted:
-                self._write_rules_markdown(kb_name, remaining_records)
+                self._write_rules_markdown(kb_name, remaining_records, kb_type=kb_type)
             return {
                 "status": "success",
                 "message": "删除成功",
