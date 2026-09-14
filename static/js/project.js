@@ -757,11 +757,84 @@ const app = createApp({
         const rightSidebarMode = ref('alignment'); // 'alignment' | 'block'
         const blockType = ref('doc'); // 'doc' | 'code'
         const isRightSidebarControlsCollapsed = ref(false);
+        const batchSelectionMode = ref(false);
+        const batchDeleting = ref(false);
+        const selectedBatchAlignments = ref([]);
+        const selectedBatchBlocks = ref([]);
 
         // 计算属性：当前显示的块列表
         const displayedBlocks = computed(() => {
             return (blockType.value === 'doc' ? docBlocks.value : codeBlocks.value).filter(Boolean);
         });
+
+        const getBatchBlockKey = (block, type = blockType.value) => {
+            if (block?.id !== undefined && block?.id !== null && block?.id !== '') {
+                return `${type}:id:${block.id}`;
+            }
+            if (type === 'doc') {
+                return `doc:${block?.filename || block?.documentId || ''}:${block?.start}:${block?.end}`;
+            }
+            const lineRange = Array.isArray(block?.range) ? block.range : [block?.startLine, block?.endLine];
+            return `code:${block?.file || block?.filename || block?.documentId || ''}:${lineRange[0]}:${lineRange[1]}`;
+        };
+        const isBatchAlignmentSelected = alignment => selectedBatchAlignments.value.some(item => item.id === alignment.id);
+        const isBatchBlockSelected = block => selectedBatchBlocks.value.some(item => getBatchBlockKey(item) === getBatchBlockKey(block));
+        const allPageAlignmentsSelected = computed(() =>
+            sidebarAlignments.value.length > 0 && sidebarAlignments.value.every(isBatchAlignmentSelected)
+        );
+        const somePageAlignmentsSelected = computed(() =>
+            sidebarAlignments.value.some(isBatchAlignmentSelected) && !allPageAlignmentsSelected.value
+        );
+        const allPageBlocksSelected = computed(() =>
+            displayedBlocks.value.length > 0 && displayedBlocks.value.every(isBatchBlockSelected)
+        );
+        const somePageBlocksSelected = computed(() =>
+            displayedBlocks.value.some(isBatchBlockSelected) && !allPageBlocksSelected.value
+        );
+
+        const clearBatchSelection = () => {
+            selectedBatchAlignments.value = [];
+            selectedBatchBlocks.value = [];
+        };
+        const toggleBatchSelectionMode = () => {
+            batchSelectionMode.value = !batchSelectionMode.value;
+            clearBatchSelection();
+        };
+        const toggleBatchAlignment = alignment => {
+            const items = [...selectedBatchAlignments.value];
+            const index = items.findIndex(item => item.id === alignment.id);
+            if (index === -1) items.push(alignment);
+            else items.splice(index, 1);
+            selectedBatchAlignments.value = items;
+        };
+        const toggleBatchBlock = block => {
+            const key = getBatchBlockKey(block);
+            const items = [...selectedBatchBlocks.value];
+            const index = items.findIndex(item => getBatchBlockKey(item) === key);
+            if (index === -1) items.push(block);
+            else items.splice(index, 1);
+            selectedBatchBlocks.value = items;
+        };
+        const toggleSelectAllPageAlignments = () => {
+            const pageIds = new Set(sidebarAlignments.value.map(item => item.id));
+            if (allPageAlignmentsSelected.value) {
+                selectedBatchAlignments.value = selectedBatchAlignments.value.filter(item => !pageIds.has(item.id));
+                return;
+            }
+            const merged = new Map(selectedBatchAlignments.value.map(item => [item.id, item]));
+            sidebarAlignments.value.forEach(item => merged.set(item.id, item));
+            selectedBatchAlignments.value = [...merged.values()];
+        };
+        const toggleSelectAllPageBlocks = () => {
+            const pageKeys = new Set(displayedBlocks.value.map(item => getBatchBlockKey(item)));
+            if (allPageBlocksSelected.value) {
+                selectedBatchBlocks.value = selectedBatchBlocks.value.filter(item => !pageKeys.has(getBatchBlockKey(item)));
+                return;
+            }
+            const merged = new Map(selectedBatchBlocks.value.map(item => [getBatchBlockKey(item), item]));
+            displayedBlocks.value.forEach(item => merged.set(getBatchBlockKey(item), item));
+            selectedBatchBlocks.value = [...merged.values()];
+        };
         
         
         // 对左侧视图中，单个文件的删除
@@ -1246,6 +1319,96 @@ const app = createApp({
             } catch (error) {
                 console.error("删除块失败:", error);
                 ElMessage.error("删除失败: " + error.message);
+            }
+        };
+
+        const refreshAfterBatchDelete = async () => {
+            clearLinkedAll();
+            currentSelectedAlignmentId.value = null;
+            currentSelectedBlockIndex.value = -1;
+            await fetchAllAlignments();
+            await fetchAlignments();
+            await fetchAlignmentSidebarPage();
+            if (sidebarAlignmentItems.value.length === 0 && alignmentPage.value > 1) {
+                alignmentPage.value -= 1;
+                await fetchAlignmentSidebarPage();
+            }
+            await fetchSidebarBlocksPage(false);
+            const activeBlockPage = blockType.value === 'doc' ? docBlockPage : codeBlockPage;
+            if (displayedBlocks.value.length === 0 && activeBlockPage.value > 1) {
+                activeBlockPage.value -= 1;
+                await fetchSidebarBlocksPage(false);
+            }
+            if (selectedDocFile.value) await loadAndRenderDocBlocks(true);
+            if (selectedCodeFile.value) await loadAndRenderCodeBlocks(true);
+            await refreshStatsData({ silent: true });
+        };
+
+        const deleteSelectedAlignments = async () => {
+            const selected = [...selectedBatchAlignments.value];
+            if (!selected.length || batchDeleting.value) return;
+            try {
+                await ElMessageBox.confirm(
+                    `确定删除选中的 ${selected.length} 条对齐关系吗？关联的问题单也会一并删除。`,
+                    '批量删除对齐关系',
+                    {
+                        confirmButtonText: '删除',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
+                    }
+                );
+                batchDeleting.value = true;
+                const projectId = new URLSearchParams(window.location.search).get('project_id');
+                const response = await axios.post('/api/batch-delete-alignments', {
+                    projectPath: projectPath.value,
+                    project_id: projectId,
+                    alignmentIds: selected.map(item => item.id)
+                });
+                if (response.data.status !== 'success') throw new Error(response.data.message || '批量删除失败');
+                selectedBatchAlignments.value = [];
+                await refreshAfterBatchDelete();
+                ElMessage.success(response.data.message || `已删除 ${selected.length} 条对齐关系`);
+            } catch (error) {
+                if (error === 'cancel' || error === 'close') return;
+                ElMessage.error(`批量删除失败：${error.response?.data?.message || error.message}`);
+            } finally {
+                batchDeleting.value = false;
+            }
+        };
+
+        const deleteSelectedBlocks = async () => {
+            const selected = [...selectedBatchBlocks.value];
+            if (!selected.length || batchDeleting.value) return;
+            const typeLabel = blockType.value === 'doc' ? '需求块' : '代码块';
+            try {
+                await ElMessageBox.confirm(
+                    `确定删除选中的 ${selected.length} 个${typeLabel}吗？涉及的对齐关系会同步更新或删除。`,
+                    `批量删除${typeLabel}`,
+                    {
+                        confirmButtonText: '删除',
+                        cancelButtonText: '取消',
+                        type: 'warning',
+                        confirmButtonClass: 'el-button--danger'
+                    }
+                );
+                batchDeleting.value = true;
+                const projectId = new URLSearchParams(window.location.search).get('project_id');
+                const response = await axios.post('/api/batch-delete-blocks', {
+                    projectPath: projectPath.value,
+                    project_id: projectId,
+                    blockType: blockType.value,
+                    blocks: selected
+                });
+                if (response.data.status !== 'success') throw new Error(response.data.message || '批量删除失败');
+                selectedBatchBlocks.value = [];
+                await refreshAfterBatchDelete();
+                ElMessage.success(response.data.message || `已删除 ${selected.length} 个${typeLabel}`);
+            } catch (error) {
+                if (error === 'cancel' || error === 'close') return;
+                ElMessage.error(`批量删除失败：${error.response?.data?.message || error.message}`);
+            } finally {
+                batchDeleting.value = false;
             }
         };
 
@@ -1919,7 +2082,23 @@ const app = createApp({
                 await fetchFileContent(fileName, 'code');
             }
 
-            const candidatePages = getCodePageIndicesForRange(codeRange.start, codeRange.end);
+            // 兼容修复前导入的数据：旧记录只有行号，没有跳转所需的字符偏移。
+            let rangeStart = Number(codeRange.start);
+            let rangeEnd = Number(codeRange.end);
+            if (!Number.isFinite(rangeStart) || !Number.isFinite(rangeEnd) || rangeEnd <= rangeStart) {
+                const startLine = Number(codeRange.startLine ?? codeRange.range?.[0]);
+                const endLine = Number(codeRange.endLine ?? codeRange.range?.[1]);
+                if (Number.isFinite(startLine) && Number.isFinite(endLine)) {
+                    const rawContent = await ensureCurrentRawFileContent('code');
+                    const offsets = getOffsetsFromLineRange(rawContent, startLine, endLine);
+                    rangeStart = offsets.start;
+                    rangeEnd = offsets.end;
+                    codeRange.start = rangeStart;
+                    codeRange.end = rangeEnd;
+                }
+            }
+
+            const candidatePages = getCodePageIndicesForRange(rangeStart, rangeEnd);
             const currentIndex = currentCodePage.value - 1;
             const orderedPages = candidatePages.includes(currentIndex)
                 ? [currentIndex, ...candidatePages.filter(index => index !== currentIndex)]
@@ -3162,6 +3341,68 @@ const app = createApp({
               startUpload('doc', 'file', parseDocMethod.value);
           }
           dialogParseDocMethodVisible.value = false;
+        };
+
+        const uploadManualAlignmentFile = () => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          input.onchange = async (event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            if (!file.name.toLowerCase().endsWith('.docx')) {
+              ElMessage.warning('请选择 DOCX 格式的对齐文件');
+              return;
+            }
+
+            const loading = ElLoading.service({
+              lock: true,
+              text: '正在解析并匹配对齐关系…',
+              background: 'rgba(0, 0, 0, 0.45)'
+            });
+            try {
+              const formData = new FormData();
+              formData.append('file', file);
+              formData.append('projectPath', projectPath.value);
+              formData.append('project_id', new URLSearchParams(window.location.search).get('project_id') || '');
+              const response = await axios.post('/api/manual-alignments/import', formData, {
+                timeout: 120000
+              });
+              if (response.data.status !== 'success') {
+                ElMessage.error(response.data.message || '上传对齐文件失败');
+                return;
+              }
+
+              const summary = response.data.summary || {};
+              const unmatched = summary.unmatched_code_functions || [];
+              const summaryText = [
+                `生成 ${summary.generated_alignments || 0} 条对齐关系`,
+                `匹配需求块 ${summary.matched_requirement_blocks || 0} 个`,
+                `新建需求块 ${summary.created_requirement_blocks || 0} 个`,
+                `匹配入口函数 ${summary.matched_code_functions || 0} 个`
+              ].join('；');
+              if (unmatched.length > 0) {
+                ElMessage.warning({
+                  message: `${summaryText}。未匹配入口函数：${unmatched.join('、')}`,
+                  duration: 8000,
+                  showClose: true
+                });
+              } else {
+                ElMessage.success(summaryText);
+              }
+              await fetchAllAlignments();
+              await fetchAlignments();
+              await fetchAlignmentSidebarPage();
+              await fetchSidebarBlocksPage(true);
+              await refreshStatsData({ silent: true });
+            } catch (error) {
+              const message = error.response?.data?.message || error.message || '未知错误';
+              ElMessage.error(`上传对齐文件失败：${message}`);
+            } finally {
+              loading.close();
+            }
+          };
+          input.click();
         };
 
         // ================== startUpload：改成功分支和进度回调 ==================
@@ -4707,6 +4948,7 @@ const app = createApp({
         }, { deep: true });
 
         watch([viewMode, rightSidebarMode, blockType], async () => {
+            clearBatchSelection();
             currentSelectedBlockIndex.value = -1;
             if (rightSidebarMode.value === 'alignment') {
                 await fetchAlignmentSidebarPage();
@@ -5303,7 +5545,7 @@ const app = createApp({
         const navigateToSpecificBlock = async (alignment, type, index) => {
             // Ensure alignment is selected
             if (currentSelectedAlignmentId.value !== alignment.id) {
-                selectAlignment(alignment);
+                await selectAlignment(alignment);
             }
 
             if (type === 'doc') {
@@ -10440,6 +10682,7 @@ const app = createApp({
             dialogParseDocMethodVisible, 
             parseDocMethod,
             handleConfirmParseDocMethod,
+            uploadManualAlignmentFile,
 			
             // 需求分解功能
             startAutoSplit,
@@ -10589,6 +10832,23 @@ const app = createApp({
             isRightSidebarControlsCollapsed,
             blockType,
             displayedBlocks,
+            batchSelectionMode,
+            batchDeleting,
+            selectedBatchAlignments,
+            selectedBatchBlocks,
+            isBatchAlignmentSelected,
+            isBatchBlockSelected,
+            allPageAlignmentsSelected,
+            somePageAlignmentsSelected,
+            allPageBlocksSelected,
+            somePageBlocksSelected,
+            toggleBatchSelectionMode,
+            toggleBatchAlignment,
+            toggleBatchBlock,
+            toggleSelectAllPageAlignments,
+            toggleSelectAllPageBlocks,
+            deleteSelectedAlignments,
+            deleteSelectedBlocks,
             refreshBlocks,
             refreshBlocksAndAlignments,
             currentSelectedBlockIndex,

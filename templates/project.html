@@ -48,6 +48,7 @@
                     <div class="dropdown-item" @click="addFile('doc', 'folder')"><i class="fas fa-folder"></i> 添加需求文档 (文件夹)</div>
                     <div class="dropdown-item" @click="addFile('code', 'file')"><i class="fas fa-file-code"></i> 添加代码文件 (可多选)</div>
                     <div class="dropdown-item" @click="addFile('code', 'folder')"><i class="fas fa-folder"></i> 添加代码文件 (文件夹)</div>
+                    <div class="dropdown-item" @click="uploadManualAlignmentFile"><i class="fas fa-file-import"></i> 上传对齐文件</div>
                 </div>
 
                 <!-- 选择解析方式弹窗 -->
@@ -966,6 +967,25 @@
                                             >
                                                  取消选中
                                             </el-button>
+                                            <el-button @click="toggleBatchSelectionMode" size="small" text plain class="right-toolbar-btn">
+                                                ${ batchSelectionMode ? '退出批量' : '批量选择' }
+                                            </el-button>
+                                            <el-button
+                                                v-if="batchSelectionMode"
+                                                @click="toggleSelectAllPageAlignments"
+                                                size="small" text plain class="right-toolbar-btn"
+                                            >
+                                                ${ allPageAlignmentsSelected ? '取消本页全选' : '全选本页' }
+                                            </el-button>
+                                            <el-button
+                                                v-if="batchSelectionMode"
+                                                @click="deleteSelectedAlignments"
+                                                :disabled="selectedBatchAlignments.length === 0"
+                                                :loading="batchDeleting"
+                                                size="small" text plain type="danger" class="right-toolbar-btn"
+                                            >
+                                                删除选中（${ selectedBatchAlignments.length }）
+                                            </el-button>
                                             <el-button
                                                 @click="refreshAlignments"
                                                 size="small"
@@ -1005,6 +1025,25 @@
                                                 class="right-toolbar-btn"
                                             >
                                                  取消选中
+                                            </el-button>
+                                            <el-button @click="toggleBatchSelectionMode" size="small" text plain class="right-toolbar-btn">
+                                                ${ batchSelectionMode ? '退出批量' : '批量选择' }
+                                            </el-button>
+                                            <el-button
+                                                v-if="batchSelectionMode"
+                                                @click="toggleSelectAllPageBlocks"
+                                                size="small" text plain class="right-toolbar-btn"
+                                            >
+                                                ${ allPageBlocksSelected ? '取消本页全选' : '全选本页' }
+                                            </el-button>
+                                            <el-button
+                                                v-if="batchSelectionMode"
+                                                @click="deleteSelectedBlocks"
+                                                :disabled="selectedBatchBlocks.length === 0"
+                                                :loading="batchDeleting"
+                                                size="small" text plain type="danger" class="right-toolbar-btn"
+                                            >
+                                                删除选中（${ selectedBatchBlocks.length }）
                                             </el-button>
                                             <el-button
                                                 @click="refreshBlocksAndAlignments"
@@ -1073,10 +1112,17 @@
                                                  >
                                                     <div
                                                         class="alignment-list-item"
-                                                        :class="{ 'issue-bg': alignmentHasIssue(alignment) }"
-                                                        @click="handleAlignmentItemClick(alignment); toggleAlignmentExpansion(alignment.id)"
-                                                        @contextmenu.prevent="showContextMenu($event, alignment)"
+                                                        :class="{ 'issue-bg': alignmentHasIssue(alignment), 'selected': isBatchAlignmentSelected(alignment) }"
+                                                        @click="batchSelectionMode ? toggleBatchAlignment(alignment) : (handleAlignmentItemClick(alignment), toggleAlignmentExpansion(alignment.id))"
+                                                        @contextmenu.prevent="batchSelectionMode || showContextMenu($event, alignment)"
                                                     >
+                                                        <el-checkbox
+                                                            v-if="batchSelectionMode"
+                                                            class="batch-select-checkbox"
+                                                            :model-value="isBatchAlignmentSelected(alignment)"
+                                                            @click.stop
+                                                            @change="toggleBatchAlignment(alignment)"
+                                                        ></el-checkbox>
                                                         <el-tooltip effect="light" :content="alignment.name" placement="left">
                                                             <span class="alignment-title">${ alignment.name }</span>
                                                         </el-tooltip>
@@ -1181,12 +1227,21 @@
                                                    class="alignment-list-item block-list-item"
                                                    :class="{
                                                     'selected': currentSelectedBlockIndex === index,
-                                                    'issue-bg': blockHasIssue(block)
+                                                    'issue-bg': blockHasIssue(block),
+                                                    'batch-selection-active': batchSelectionMode,
+                                                    'batch-selected': isBatchBlockSelected(block)
                                                    }"
                                                    :id="'block-item-' + index"
-                                                   @click="handleBlockItemClick(block, index)"
-                                                   @contextmenu.prevent="handleBlockItemContextMenu($event, block, index, blockType)"
+                                                   @click="batchSelectionMode ? toggleBatchBlock(block) : handleBlockItemClick(block, index)"
+                                                   @contextmenu.prevent="batchSelectionMode || handleBlockItemContextMenu($event, block, index, blockType)"
                                                 >
+                                                   <el-checkbox
+                                                       v-if="batchSelectionMode"
+                                                       class="batch-select-checkbox batch-select-checkbox--block"
+                                                       :model-value="isBatchBlockSelected(block)"
+                                                       @click.stop
+                                                       @change="toggleBatchBlock(block)"
+                                                   ></el-checkbox>
                                                    <div class="block-item-title">
                                                        ${ getBlockDisplayName(block, blockType) }
                                                    </div>
@@ -1198,7 +1253,7 @@
                                                    </div>
 
                                                    <!-- Delete Button -->
-                                                   <div class="block-delete-btn" @click.stop>
+                                                   <div v-if="!batchSelectionMode" class="block-delete-btn" @click.stop>
                                                        <el-popconfirm
                                                            :title="'确认删除' + (blockType === 'doc' ? '需求' : '代码') + '块？\n内容：' + getBlockPreviewText(block, blockType)"
                                                            confirm-button-text="删除"

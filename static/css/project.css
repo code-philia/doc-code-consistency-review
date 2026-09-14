@@ -3893,6 +3893,23 @@
     border-left-color: #4b5563;
 }
 
+.right-toolbar-actions .el-button.el-button--danger.right-toolbar-btn.is-text.is-plain {
+    border-color: #fecaca;
+    background: #fff7f7;
+    color: #dc2626;
+}
+
+.right-toolbar-actions .el-button.el-button--danger.right-toolbar-btn.is-text.is-plain:hover {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.right-sidebar .batch-select-checkbox {
+    flex: 0 0 auto;
+    margin-right: 2px;
+}
+
 .right-sidebar .alignment-title {
     min-width: 0;
     max-width: none;
@@ -4009,6 +4026,25 @@
 .right-sidebar .block-list-item.selected {
     background: #eef3f8;
     border-left-color: #4b5563;
+}
+
+.right-sidebar .block-list-item.batch-selection-active {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "checkbox title"
+        "checkbox meta"
+        "checkbox preview"
+        "checkbox status";
+}
+
+.right-sidebar .block-list-item.batch-selected {
+    background: #eef3f8;
+    border-left-color: #4b5563;
+}
+
+.right-sidebar .batch-select-checkbox--block {
+    grid-area: checkbox;
+    align-self: center;
 }
 
 .block-item-title {
