@@ -3440,7 +3440,9 @@ const app = createApp({
         };
 
         const handleConfirmParseDocMethod = () => {
-          if (selectionModeTmp.value === 'folder') {
+          if (selectionModeTmp.value === 'manual-alignment') {
+              chooseManualAlignmentFile(parseDocMethod.value);
+          } else if (selectionModeTmp.value === 'folder') {
               startUpload('doc', 'folder', parseDocMethod.value);
           } else {
               startUpload('doc', 'file', parseDocMethod.value);
@@ -3448,7 +3450,50 @@ const app = createApp({
           dialogParseDocMethodVisible.value = false;
         };
         
-        const uploadManualAlignmentFile = () => {
+        const uploadManualAlignmentFile = async () => {
+          try {
+            const projectId = new URLSearchParams(window.location.search).get('project_id') || '';
+            const commonParams = {
+              projectPath: projectPath.value,
+              project_id: projectId,
+              page: 1,
+              page_size: 1
+            };
+            const [docResponse, codeResponse] = await Promise.all([
+              axios.get('/api/get-doc-blocks', { params: commonParams }),
+              axios.get('/api/get-code-blocks', { params: commonParams })
+            ]);
+            const missingParts = [];
+            if (Number(docResponse.data.total || 0) === 0) missingParts.push('需求分解');
+            if (Number(codeResponse.data.total || 0) === 0) missingParts.push('代码分解');
+            if (missingParts.length > 0) {
+              ElMessage.warning(`请先完成${missingParts.join('和')}，再上传对齐文件`);
+              return;
+            }
+          } catch (error) {
+            console.warn('上传对齐文件前置检查失败，将由服务端继续校验：', error);
+          }
+          try {
+            await ElMessageBox.confirm(
+              '上传文件解析成功后，将删除当前项目原有的全部对齐关系及其关联问题单，仅保留本次上传文件中解析出的对齐关系。是否继续？',
+              '替换现有对齐关系',
+              {
+                confirmButtonText: '继续上传',
+                cancelButtonText: '取消',
+                type: 'warning',
+                confirmButtonClass: 'el-button--danger'
+              }
+            );
+          } catch (error) {
+            if (error === 'cancel' || error === 'close') return;
+            ElMessage.error(`打开上传确认失败：${error.message || error}`);
+            return;
+          }
+          selectionModeTmp.value = 'manual-alignment';
+          dialogParseDocMethodVisible.value = true;
+        };
+
+        const chooseManualAlignmentFile = (manualParseDocMethod = 'default') => {
           const input = document.createElement('input');
           input.type = 'file';
           input.accept = '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -3469,6 +3514,8 @@ const app = createApp({
               formData.append('file', file);
               formData.append('projectPath', projectPath.value);
               formData.append('project_id', new URLSearchParams(window.location.search).get('project_id') || '');
+              formData.append('parseDocMethod', manualParseDocMethod);
+              formData.append('replaceExistingAlignments', 'true');
               const response = await axios.post('/api/manual-alignments/import', formData, {
                 timeout: 120000
               });
@@ -3477,28 +3524,36 @@ const app = createApp({
                 return;
               }
               const summary = response.data.summary || {};
-              const unmatched = summary.unmatched_code_functions || [];
               const summaryText = [
                 `生成 ${summary.generated_alignments || 0} 条对齐关系`,
+                `替换原有 ${summary.replaced_alignments || 0} 条对齐关系`,
                 `匹配需求块 ${summary.matched_requirement_blocks || 0} 个`,
                 `新建需求块 ${summary.created_requirement_blocks || 0} 个`,
                 `匹配入口函数 ${summary.matched_code_functions || 0} 个`
               ].join('；');
-              if (unmatched.length > 0) {
-                ElMessage.warning({
-                  message: `${summaryText}。未匹配入口函数：${unmatched.join('、')}`,
-                  duration: 8000,
-                  showClose: true
-                });
-              } else {
-                ElMessage.success(summaryText);
-              }
+              alignType.value = 'req2code';
+              viewMode.value = 'all';
+              alignmentPage.value = 1;
+              await fetchProjectMetadata();
               await fetchAllAlignments();
               await fetchAlignments();
               await fetchAlignmentSidebarPage();
               await fetchSidebarBlocksPage(true);
               await refreshStatsData({ silent: true });
+              ElMessage.success({
+                message: `对齐文件解析完成！${summaryText}`,
+                duration: 6000,
+                showClose: true
+              });
             } catch (error) {
+              if (error.response?.data?.code === 'DECOMPOSITION_REQUIRED') {
+                ElMessage.warning({
+                  message: error.response.data.message || '请先完成需求分解和代码分解，再上传对齐文件',
+                  duration: 6000,
+                  showClose: true
+                });
+                return;
+              }
               const message = error.response?.data?.message || error.message || '未知错误';
               ElMessage.error(`上传对齐文件失败：${message}`);
             } finally {

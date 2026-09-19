@@ -160,6 +160,68 @@ def parse_manual_alignment_docx(source: str | Path | BinaryIO) -> List[Dict[str,
     return parsed
 
 
+def parse_manual_alignment_text(source: str) -> List[Dict[str, Any]]:
+    """Parse converted Markdown so requirement content and offsets match the rendered document."""
+    full_text = str(source or "")
+    requirement_matches = list(REQUIREMENT_PATTERN.finditer(full_text))
+    headings = list(re.finditer(r"(?m)^\s{0,3}#{1,6}\s+(.+?)\s*$", full_text))
+    parsed: List[Dict[str, Any]] = []
+
+    for index, match in enumerate(requirement_matches):
+        search_end = requirement_matches[index + 1].start() if index + 1 < len(requirement_matches) else len(full_text)
+        entry_match = ENTRY_PATTERN.search(full_text, match.end(), search_end)
+        if not entry_match:
+            raise ValueError(f"第 {index + 1} 个需求块后未找到入口函数标记 @@@@@(...)@@@@@")
+
+        function_names = _parse_function_names(entry_match.group(1))
+        if not function_names:
+            raise ValueError(f"第 {index + 1} 个需求块的入口函数列表为空或格式无效")
+
+        raw_content = match.group(1)
+        leading = len(raw_content) - len(raw_content.lstrip())
+        trailing = len(raw_content) - len(raw_content.rstrip())
+        content_start = match.start(1) + leading
+        content_end = match.end(1) - trailing
+        content = full_text[content_start:content_end]
+        if not content:
+            raise ValueError(f"第 {index + 1} 个需求块内容为空")
+
+        inside_heading = next(
+            (heading for heading in headings if content_start <= heading.start() < content_end),
+            None,
+        )
+        preceding_heading = next(
+            (heading for heading in reversed(headings) if heading.end() <= match.start()),
+            None,
+        )
+        title_heading = inside_heading or preceding_heading
+        title = _clean_title_text(title_heading.group(1)) if title_heading else _fallback_title(content)
+        parsed.append({
+            "index": index + 1,
+            "title": title,
+            "content": content,
+            "start": content_start,
+            "end": content_end,
+            "function_names": function_names,
+        })
+
+    if not parsed:
+        raise ValueError("转换后的 Markdown 中未找到由 $$$$$ 和 &&&&& 包围的需求块")
+    return parsed
+
+
+def hide_manual_alignment_markers(source: str) -> str:
+    """Hide control markers without changing character offsets used by doc blocks."""
+    text = str(source or "")
+
+    def blank_match(match: re.Match) -> str:
+        return "".join("\n" if char == "\n" else " " for char in match.group(0))
+
+    text = text.replace(REQUIREMENT_START, " " * len(REQUIREMENT_START))
+    text = text.replace(REQUIREMENT_END, " " * len(REQUIREMENT_END))
+    return ENTRY_PATTERN.sub(blank_match, text)
+
+
 def _normalized_text(value: Any) -> str:
     text = unicodedata.normalize("NFKC", str(value or "")).casefold()
     return "".join(char for char in text if char.isalnum() or "\u4e00" <= char <= "\u9fff")

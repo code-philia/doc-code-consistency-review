@@ -265,8 +265,13 @@ class Converter:
         
         if self.parseDocMethod == 'enhanced':
             sub_text = self.parse_p_text_new(node).lstrip()
-        else: 
+        else:
             sub_text = self.parse_p_text(node).lstrip()
+
+        # 手动上传对齐文件使用 $$$$$ 标记需求起点。它包含奇数个 '$'，
+        # 若直接参与下面的公式配对判断，会被误认为跨段公式并吞掉后续内容。
+        manual_requirement_start_token = "__MANUAL_ALIGNMENT_REQUIREMENT_START__"
+        sub_text = sub_text.replace("$$$$$", manual_requirement_start_token)
         
         #sub_text = self.parse_p_text(node).lstrip()
         subtextsum = str(sub_text).count('$')
@@ -315,6 +320,8 @@ class Converter:
                         tempstr = int(col)*str(num)
                         afterinfo = "{array}{" + tempstr +"}"
                         sub_text = sub_text.replace(beforinfo,afterinfo)
+
+        sub_text = sub_text.replace(manual_requirement_start_token, "$$$$$")
 
         pOutlinelevel = self.get_first_element(node,'./pPr/outlineLvl')
         if pOutlinelevel is not None:

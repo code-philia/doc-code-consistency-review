@@ -64,6 +64,11 @@ from .agent import query_generated_requirement, query_related_code, query_relate
 from .agent import query_related_code_by_feedback, query_review_result_by_feedback, query_related_requirement_by_feedback
 from .rag_chroma import rag_engine
 from .doc_block import chunk_markdown
+from .doc_block_integrity import (
+    load_project_doc_metadata,
+    normalize_doc_block_type,
+    resolve_source_document_filename,
+)
 import random
 import string
 from datetime import datetime, timedelta
@@ -95,8 +100,10 @@ from .manual_alignment import (
     as_code_range,
     as_doc_range,
     find_best_requirement_block,
+    hide_manual_alignment_markers,
     match_code_blocks,
     parse_manual_alignment_docx,
+    parse_manual_alignment_text,
 )
 
 import logging
@@ -1803,7 +1810,10 @@ def _regularize_file_content(content, file_type):
     content = content.replace('\r\n', '\n').replace('\r', '\n')
     content = content.replace('\u200b', '')
     if file_type == 'doc':
-        content = re.sub(r'(?<=\S)\$\$(?=\S)', '$ $', content)
+        # Keep manual-alignment markers (`$$$$$`) intact.  Only regularize
+        # inline/display math delimiters that are exactly two dollar signs;
+        # the old lookaround also matched the middle two dollars of five.
+        content = re.sub(r'(?<!\$)\$\$(?!\$)', '$ $', content)
     return content
 
 
@@ -2052,7 +2062,7 @@ def requirement_decomposition():
                 req_block = {
                     'id': next_block_id,
                     'name':category,
-                    'type': category,
+                    'type': 'text',
                     'filename': doc_name,
                     'documentId': doc_name,
                     'content': doc_range.get('content'),
@@ -2136,7 +2146,7 @@ def auto_markdown_split():
                         req_block = {
                             'id': next_block_id,
                             'name':category,
-                            'type': category,
+                            'type': 'text',
                             'filename': doc_name,
                             'documentId': doc_name,
                             'content': doc_range.get('content'),
@@ -2181,6 +2191,8 @@ def auto_markdown_split():
             processed_count = 0
             req_blocks = []
 
+            source_doc_repo, source_doc_files = load_project_doc_metadata(project_path)
+
             # 处理每个markdown文件
             next_block_id = 1
             for md_file in md_files:
@@ -2188,7 +2200,9 @@ def auto_markdown_split():
                     md_content = f.read()
 
                 # 分解markdown内容
-                doc_name = os.path.basename(md_file)
+                doc_name = resolve_source_document_filename(
+                    md_file, source_doc_repo, source_doc_files
+                )
                 blocks = chunk_markdown(doc_name, md_content)
 
                 if not blocks:
@@ -2207,7 +2221,9 @@ def auto_markdown_split():
                     req_block = {
                         'id': next_block_id,
                         'name': chunk_name,
-                        'type': block_info.get('type') or chunk_name,
+                        'type': normalize_doc_block_type(
+                            block_info.get('type'), block_info.get('content') or ''
+                        ),
                         'filename': doc_name,
                         'documentId': doc_name,
                         'content': block_info['content'],
@@ -3631,6 +3647,8 @@ def import_manual_alignments():
     """解析人工标注 DOCX，并用静态算法匹配现有需求块和代码块后生成对齐关系。"""
     project_path = (request.form.get('projectPath') or '').strip()
     project_id = request.form.get('project_id')
+    parse_doc_method = (request.form.get('parseDocMethod') or 'default').strip()
+    replace_existing = (request.form.get('replaceExistingAlignments') or '').strip().lower() == 'true'
     uploaded_file = request.files.get('file')
 
     if not project_path or not os.path.isdir(project_path):
@@ -3639,6 +3657,10 @@ def import_manual_alignments():
         return jsonify({'status': 'error', 'message': '请选择要上传的 DOCX 文件'}), 400
     if not uploaded_file.filename.lower().endswith('.docx'):
         return jsonify({'status': 'error', 'message': '仅支持 .docx 文件'}), 400
+    if parse_doc_method not in ('default', 'enhanced'):
+        return jsonify({'status': 'error', 'message': '无效的文档解析方式'}), 400
+    if not replace_existing:
+        return jsonify({'status': 'error', 'message': '上传对齐文件前必须确认替换现有对齐关系'}), 400
 
     resolved_project_id = get_project_id_by_path(project_path)
     if not resolved_project_id:
@@ -3646,24 +3668,83 @@ def import_manual_alignments():
     if project_id and _safe_int(project_id, None) != int(resolved_project_id):
         return jsonify({'status': 'error', 'message': '项目路径与项目 ID 不匹配'}), 400
 
-    source_name = os.path.basename(uploaded_file.filename.replace('\\', '/')) or 'manual-alignment.docx'
+    # 手动对齐文件只负责把外部关系映射到已有的需求块和代码块，
+    # 未完成分解时不能可靠匹配，也不应创建孤立的对齐关系。
+    existing_doc_blocks = get_doc_blocks_by_project(project_path, resolved_project_id)
+    existing_code_blocks = get_code_blocks_by_project(project_path, resolved_project_id)
+    missing_parts = []
+    if not existing_doc_blocks:
+        missing_parts.append('需求分解')
+    if not existing_code_blocks:
+        missing_parts.append('代码分解')
+    if missing_parts:
+        return jsonify({
+            'status': 'error',
+            'code': 'DECOMPOSITION_REQUIRED',
+            'message': f"请先完成{'和'.join(missing_parts)}，再上传对齐文件",
+            'missing': missing_parts,
+        }), 409
+
+    source_name = os.path.basename(uploaded_file.filename.replace('\\', '/')).replace(' ', '_') or 'manual-alignment.docx'
     source_name = source_name[-255:]
     try:
         # 部分 WSGI 服务器暴露的 SpooledTemporaryFile 包装器没有 seekable()，
         # python-docx/zipfile 需要标准的可随机访问二进制流。
         uploaded_file.stream.seek(0)
-        parsed_records = parse_manual_alignment_docx(BytesIO(uploaded_file.stream.read()))
+        uploaded_bytes = uploaded_file.stream.read()
+        # 先用原始 DOCX 校验格式，再以转换后的 Markdown 作为内容和偏移量来源。
+        parse_manual_alignment_docx(BytesIO(uploaded_bytes))
     except (ValueError, OSError) as exc:
         return jsonify({'status': 'error', 'message': f'解析对齐文件失败：{exc}'}), 400
     except Exception as exc:
         logger.exception('解析手动对齐 DOCX 失败')
         return jsonify({'status': 'error', 'message': f'无法读取 DOCX 文件：{exc}'}), 400
 
+    try:
+        metadata_file = os.path.join(project_path, 'metadata.json')
+        with open(metadata_file, 'r', encoding='utf-8') as metadata_stream:
+            metadata = pyjson.load(metadata_stream)
+        doc_repo_path = metadata.get('doc_repo') or os.path.join(project_path, 'doc_repo')
+        os.makedirs(doc_repo_path, exist_ok=True)
+        source_path = os.path.join(doc_repo_path, source_name)
+        with open(source_path, 'wb') as source_stream:
+            source_stream.write(uploaded_bytes)
+
+        # 复用“添加需求文档”的转换器，保留公式、图片及 Markdown 结构。
+        # docToMd 当前以第一个点之前的内容作为输出目录及 Markdown 文件名。
+        source_prefix = source_name.split('.')[0]
+        converted_path = os.path.join(
+            project_path,
+            'doc_repo_converted',
+            source_prefix,
+            source_prefix + '.md',
+        )
+        previous_converted_mtime = os.stat(converted_path).st_mtime_ns if os.path.exists(converted_path) else None
+        convert_docfile_to_markdown(source_path, doc_repo_path, parse_doc_method)
+        converted_content = _read_text_file_with_fallback(converted_path)
+        if converted_content is None:
+            raise ValueError('DOCX 转 Markdown 后未生成可读取的文件')
+        if previous_converted_mtime is not None and os.stat(converted_path).st_mtime_ns == previous_converted_mtime:
+            raise ValueError('DOCX 转 Markdown 未更新输出文件')
+        converted_content = _regularize_file_content(converted_content, 'doc')
+        parsed_records = parse_manual_alignment_text(converted_content)
+        # 控制标记不应参与 Markdown/KaTeX 渲染；用等长空白替换以保持块偏移不变。
+        visible_content = hide_manual_alignment_markers(converted_content)
+        with open(converted_path, 'w', encoding='utf-8') as converted_stream:
+            converted_stream.write(visible_content)
+
+        metadata['doc_files'] = get_all_files_with_relative_paths(doc_repo_path, type='doc')
+        with open(metadata_file, 'w', encoding='utf-8') as metadata_stream:
+            pyjson.dump(metadata, metadata_stream, indent=4, ensure_ascii=False)
+    except Exception as exc:
+        logger.exception('手动对齐文件转换 Markdown 失败')
+        return jsonify({'status': 'error', 'message': f'DOCX 转 Markdown 失败：{exc}'}), 400
+
     db = get_db()
     cursor = db.cursor()
     try:
-        doc_blocks = get_doc_blocks_by_project(project_path, resolved_project_id)
-        code_blocks = get_code_blocks_by_project(project_path, resolved_project_id)
+        doc_blocks = existing_doc_blocks
+        code_blocks = existing_code_blocks
         cursor.execute(
             'SELECT id FROM doc_blocks WHERE project_id=%s FOR UPDATE',
             (resolved_project_id,)
@@ -3762,6 +3843,14 @@ def import_manual_alignments():
                 'code_block_count': len(code_ranges),
             })
 
+        # 仅在文档转换、标记解析、需求及代码匹配全部成功后替换旧数据。
+        # 删除与插入处于同一事务，后续写入失败时会整体回滚，保留原对齐关系。
+        cursor.execute('SELECT COUNT(*) AS total FROM alignments WHERE project_id=%s', (resolved_project_id,))
+        replaced_alignments = _safe_int((cursor.fetchone() or {}).get('total'))
+        cursor.execute('DELETE FROM issues WHERE project_id=%s', (resolved_project_id,))
+        deleted_issues = cursor.rowcount
+        cursor.execute('DELETE FROM alignments WHERE project_id=%s', (resolved_project_id,))
+
         cursor.executemany(
             '''
             INSERT INTO alignments(id, user_id, project_id, name, isReviewed, reviewThoughts,
@@ -3788,6 +3877,8 @@ def import_manual_alignments():
                 'created_requirement_blocks': created_doc_blocks,
                 'matched_code_functions': matched_code_functions,
                 'unmatched_code_functions': unmatched_code_functions,
+                'replaced_alignments': replaced_alignments,
+                'deleted_issues': deleted_issues,
             },
             'details': details,
         }), 200
@@ -5162,7 +5253,7 @@ def add_block():
             block_data['end'] = end
             block_data['content'] = content
             block_data['name'] = block_name
-            block_data['type'] = block_data.get('type') or block_data.get('name') or ''
+            block_data['type'] = normalize_doc_block_type(block_data.get('type'), content)
 
             cur.execute(
                 'INSERT INTO doc_blocks(project_id, id, name, filename, type, content, start, end, createdAt, updatedAt) '
