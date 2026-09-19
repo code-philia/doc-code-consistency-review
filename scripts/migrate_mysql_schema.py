@@ -67,6 +67,9 @@ TABLE_COLUMNS: dict[str, list[ColumnSpec]] = {
         ColumnSpec("reviewCode", "`reviewCode` text COMMENT '代码单独审查提示词'", after="reviewKbs"),
         ColumnSpec("reviewCodeKbs", "`reviewCodeKbs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '代码单独审查-知识库版'", after="reviewCode"),
     ],
+    "user": [
+        ColumnSpec("default_model_key", "`default_model_key` varchar(100) DEFAULT 'modelA' COMMENT '用户默认选择的大模型'", after="department"),
+    ],
 }
 
 TABLE_MODIFY_COLUMNS: dict[str, list[str]] = {

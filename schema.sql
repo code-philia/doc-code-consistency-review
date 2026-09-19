@@ -320,3 +320,6 @@ CREATE TABLE IF NOT EXISTS `user_operation_log` (
     KEY `idx_username_created` (`username`, `created_at`) COMMENT '按用户和时间查询的联合索引',
     KEY `idx_created_at` (`created_at`) COMMENT '按时间排序查询索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户操作日志表';
+
+
+-- ALTER TABLE `user` ADD COLUMN `default_model_key`  VARCHAR(100) DEFAULT 'modelA' COMMENT '用户默认选择的大模型key' AFTER `department`;
