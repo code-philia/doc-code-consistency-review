@@ -135,6 +135,9 @@ def delete_project():
         delete_ali = f"DELETE FROM alignments WHERE project_id IN ({placeholders})"
         delete_issues = f"DELETE FROM issues WHERE project_id IN ({placeholders})"
         delete_pro = f"DELETE FROM project WHERE project_id IN ({placeholders})"
+        delete_ali_rel = f"DELETE FROM alignment_relations WHERE project_id IN ({placeholders})"
+        delete_doc = f"DELETE FROM doc_blocks WHERE project_id IN ({placeholders})"
+        delete_code = f"DELETE FROM code_blocks WHERE project_id IN ({placeholders})"
         if current_user.role == "admin":
             condition = ""
         else:
@@ -145,6 +148,9 @@ def delete_project():
         c.execute(delete_ali, ids)
         c.execute(delete_issues, ids)
         c.execute(delete_pro, ids)
+        c.execute(delete_ali_rel, ids)
+        c.execute(delete_doc, ids)
+        c.execute(delete_code, ids)
 
         # 删除项目目录
         for folder_path in paths:

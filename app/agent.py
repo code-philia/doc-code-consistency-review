@@ -1059,6 +1059,7 @@ def query_related_code_by_feedback(
     code_blocks,
     codeRanges,
     user_prompt,
+    model_type,
     block_limit=None,
     user_id=None,
     project_path=None,

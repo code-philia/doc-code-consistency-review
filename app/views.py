@@ -28,7 +28,18 @@ from .db import (
     _default_code_block_name,
     _get_next_block_id
 )
-from .func_utils import record_user_operation, MODEL_CONFIG
+from .func_utils import (
+    record_user_operation,
+    MODEL_CONFIG,
+    get_alignments_by_project,
+    group_by_doc_filename,
+    render_doc,
+    extract_names_by_language,
+    get_elements_until_same,
+    check_node_level
+)
+
+
 
 os.environ["OPENBLAS_NUM_THREADS"] = "128"
 os.environ["OMP_NUM_THREADS"]="128"
@@ -79,6 +90,7 @@ from .call_graph import (
     resolve_called_functions_in_line_range,
     resolve_code_block_to_function,
 )
+
 from .manual_alignment import (
     as_code_range,
     as_doc_range,
@@ -2743,6 +2755,7 @@ def align_requirement_to_project_addprompt():
                 all_code_blocks,
                 codeRanges_aligned,
                 userPrompt,
+                model_type,
                 block_limit=50,
                 user_id=user_id,
                 project_path=project_path
@@ -3612,7 +3625,6 @@ def _line_ranges_overlap(a_start, a_end, b_start, b_end):
     except Exception:
         return False
 
-
 @bp.route('/api/manual-alignments/import', methods=['POST'])
 @login_required
 def import_manual_alignments():
@@ -3676,7 +3688,7 @@ def import_manual_alignments():
                 matched_doc = {
                     'id': next_doc_id,
                     'name': block_title,
-                    'type': block_title,
+                    'type': 'text',
                     'filename': source_name,
                     'documentId': source_name,
                     'content': record['content'],
@@ -3691,7 +3703,7 @@ def import_manual_alignments():
                         next_doc_id,
                         block_title,
                         source_name,
-                        block_title,
+                        'text',
                         record['content'],
                         record['start'],
                         record['end'],
@@ -3782,8 +3794,8 @@ def import_manual_alignments():
     except Exception as exc:
         db.rollback()
         logger.exception('导入手动对齐关系失败')
-        return jsonify({'status': 'error', 'message': f'生成对齐关系失败：{exc}'}), 500
-
+        return jsonify({'status': 'error', 'message': f'生成对齐关系失败：{exc}'}), 500        
+        
 @bp.route('/project/alignments', methods=['GET'])
 def get_alignments():
     #print("request.args:", request.args)
@@ -5441,7 +5453,6 @@ def delete_block():
         print(f"Error deleting block: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
 
-
 @bp.route('/api/batch-delete-alignments', methods=['POST'])
 @login_required
 def batch_delete_alignments():
@@ -5611,8 +5622,9 @@ def batch_delete_blocks():
         conn.rollback()
         logger.exception('批量删除块失败')
         return jsonify({'status': 'error', 'message': f'批量删除失败：{exc}'}), 500
+     
 
-
+     
 @bp.route('/api/clear-alignment-target', methods=['POST'])
 def clear_alignment_target():
     """清空单条对齐关系的目标侧块，用于删除对齐结果或重新对齐前准备"""
@@ -6989,53 +7001,232 @@ def get_alignments_from_sqlite(project_id):
         return pd.DataFrame()
 
 
-# ========== 导出结果：从SQLite读取数据，生成word文件 ==========
+# # ========== 导出结果：从SQLite读取数据，生成word文件 ==========
+# @bp.route('/project/export', methods=['GET'])
+# def export_project_results():
+#     """导出需求-代码匹配结果（从SQLite读取数据）"""
+#     # 1. 获取项目路径（用于定位project.db）
+#     project_path = request.args.get('path')
+#     project_id = request.args.get('project_id')
+#     secret_level = request.args.get('secret_level', 'internal')
+#     if not project_path or not os.path.isdir(project_path):
+#         return jsonify({"status": "error", "message": "无效的项目路径。"}), 400
+#
+#     # 2. 定位project.db文件（默认在项目路径根目录）
+#     # db_file = os.path.join(project_path, 'project.db')
+#     # if not os.path.exists(db_file):
+#         # return jsonify({"status": "error", "message": f"未找到数据库文件：{db_file}"}), 400
+#
+#     # 3. 从SQLite读取数据
+#     df = get_alignments_from_sqlite(project_id)
+#
+#
+#     #logger.info(df.loc[2, "GenMermaid"])
+#     #sys.exit()
+#
+#     if df.empty:
+#         return jsonify({"status": "warning", "message": "alignments表中暂无数据可导出"}), 200
+#
+#     # 4、处理数据
+#     # 遍历行索引
+#     total_num = 0
+#     for idx in df.index:
+#         doc_data = df.loc[idx, "docRanges"]
+#         code_data = df.loc[idx, "codeRanges"]
+#         doc_data = json.loads(doc_data) #从string转成list
+#         code_data = json.loads(code_data)
+#         total_num += 1
+#         temp = []
+#         for doc in doc_data:
+#             temp.append(doc['content'])
+#         df.loc[idx, "docRanges"] = temp
+#
+#         temp = []
+#         for code in code_data:
+#             temp.append(code['content'])
+#         df.loc[idx, "codeRanges"] = temp
+#
+#
+#     try:
+#         # 5. 生成并写入word文件
+#         template_path = os.path.join(os.path.dirname(__file__), '../templates', '需求表格.docx')
+#         # 创建临时目录存储文件
+#         temp_dir = os.path.join(os.path.dirname(__file__), 'temp_exports')
+#         if not os.path.exists(temp_dir):
+#             os.makedirs(temp_dir, exist_ok=True)
+#
+#         # 生成docx文件名
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         docx_filename = f"需求表格导出_{timestamp}.docx"
+#         docx_path = os.path.join(temp_dir, docx_filename)
+#
+#         # 检查是否提供了DOCX模板路径
+#         if template_path and os.path.exists(template_path):
+#             current_date = datetime.now().strftime("%Y%m%d")
+#             merged_doc = Document(template_path)
+#
+#             # 处理第一个测试项表格作为基础文档
+#             merged_doc = Document(template_path)
+#             export_prompt = SECRET_LEVEL_MAP[secret_level]
+#             p = merged_doc.paragraphs[0].insert_paragraph_before(export_prompt) if merged_doc.paragraphs \
+#                 else merged_doc.add_paragraph(export_prompt)
+#             p.alignment = 0
+#             run = p.runs[0]
+#             run.font.size = Pt(10)
+#             # run.font.color.rgb = RGBColor(128, 128, 128)
+#             number = 1 # 测试项编号
+#             category_id = 1 #章节号
+#
+#             replacements = {}
+#             # 小标题名称
+#             replacements["6.6.1 XXXX功能"] = "6.6." + str(number) + " " + df.loc[number, "name"] + "功能"
+#             # 测试项名称
+#             replacements["AAAAA功能"] = df.loc[number, "name"]
+#             # 测试项标识
+#             replacements["T_FUNC"] = "T_FUNC" + str(number)
+#             # 追踪关系
+#             # replacements["BBBBB"] = "需求说明：" + str(category_id)
+#             pattern = r'^(\d+(?:\.\d+)*)\s*' # 匹配以数字开头，由数字和点组成，后接可选空格的字符串
+#             match = re.match(pattern, df.loc[number, "name"])
+#             if match:
+#                 replacements["BBBBB"] = match.group(1)  # 返回编号，如 "3.2.1"
+#             else:
+#                 replacements["BBBBB"] = "需求说明：" + str(category_id)
+#
+#             # 需求描述
+#             replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
+#             # 生成需求
+#             replacements["DDDDD"] = df.loc[number, "GenReq"] if df.loc[number, "GenReq"] is not None else ""
+#             # 对齐代码
+#             replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
+#             replacements["EEEEE"] = replacements["EEEEE"] if replacements["EEEEE"] is not None else ""
+#             # 流程图
+#             replacements["FFFFF"] = df.loc[number, "GenMermaid"] if df.loc[number, "GenMermaid"] is not None else ""
+#
+#             # 替换第一个文档的占位符
+#             replace_text_in_docx(merged_doc, replacements, 'result')
+#             #logger.info(replacements)
+#             # 处理剩余的表单
+#             for i in range(1, total_num):
+#                 # 添加分页符
+#                 # merged_doc.add_page_break()
+#                 if number == 1:
+#                     number += 1
+#                     category_id += 1
+#
+#                 # 为每个表单加载新的模板并填充
+#                 temp_doc = Document(template_path)
+#
+#                 replacements = {}
+#                 # 小标题名称
+#                 replacements["6.6.1 XXXX功能"] = "6.6." + str(number) + " " + df.loc[number, "name"] + "功能"
+#                 # 测试项名称
+#                 replacements["AAAAA功能"] = df.loc[number, "name"]
+#                 # 测试项标识
+#                 replacements["T_FUNC"] = "T_FUNC" + str(number)
+#                 # 追踪关系
+#                 # replacements["BBBBB"] = "需求说明：" + str(category_id)
+#                 pattern = r'^(\d+(?:\.\d+)*)\s*' # 匹配以数字开头，由数字和点组成，后接可选空格的字符串
+#                 match = re.match(pattern, df.loc[number, "name"])
+#                 if match:
+#                     replacements["BBBBB"] = match.group(1)  # 返回编号，如 "3.2.1"
+#                 else:
+#                     replacements["BBBBB"] = "需求说明：" + str(category_id)
+#                 # 需求描述
+#                 replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
+#                 # 生成需求
+#                 replacements["DDDDD"] = df.loc[number, "GenReq"] if df.loc[number, "GenReq"] is not None else ""
+#                 # 对齐代码
+#                 replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
+#                 replacements["EEEEE"] = replacements["EEEEE"] if replacements["EEEEE"] is not None else ""
+#                 # 流程图
+#                 replacements["FFFFF"] = df.loc[number, "GenMermaid"] if df.loc[number, "GenMermaid"] is not None else ""
+#
+#                 number += 1
+#                 category_id += 1
+#
+#                 # 替换模板中的占位符
+#                 replace_text_in_docx(temp_doc, replacements, 'result')
+#
+#
+#                 # 直接拼接填充好的页面内容到合并文档
+#                 for element in temp_doc.element.body:
+#                     merged_doc.element.body.append(element)
+#                 #logger.info(i)
+#                 #logger.info(df.loc[number, "name"])
+#
+#             # 输出文档内容，debug用
+#             #for paragraph in temp_doc.paragraphs:
+#             #    logger.info(paragraph.text)
+#
+#             #for table in temp_doc.tables:
+#             #    for row in table.rows:
+#             #        for cell in row.cells:
+#             #            for paragraph in cell.paragraphs:
+#             #                logger.info(paragraph.text)
+#
+#             # 保存合并后的文档
+#             #merged_doc.save(docx_path)
+#             try:
+#                 merged_doc.save(docx_path)
+#                 logger.info(f"文档可以被导出：{docx_path}")
+#
+#             except Exception as e:
+#                 # 打印详细错误（方便排查）
+#                 logger.info(traceback.format_exc())
+#                 logger.info(f"导出结果失败：{str(e)}")
+#
+#
+#
+#             return send_file(
+#                 docx_path,
+#                 as_attachment=False,  # 配合前端自定义保存路径
+#                 download_name=docx_filename,
+#                 mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+#             )
+#
+#         else:
+#             # 使用excel格式导出（备用方案）
+#             # 重命名列（可选，让Excel列名更友好）
+#             df_renamed = df.rename(columns={
+#                 'name': '需求块名称',
+#                 'docRanges': '需求文档范围',
+#                 'codeRanges': '代码范围'
+#             })
+#             # 生成并写入文件
+#             output = BytesIO()
+#             writer = pd.ExcelWriter(output, engine='openpyxl')
+#             df_renamed.to_excel(writer, sheet_name='对齐结果', index=False)
+#             writer.close()
+#             output.seek(0)  # 关键：重置文件指针
+#
+#             # 返回Excel文件流
+#             return send_file(
+#                 output,
+#                 as_attachment=False,  # 配合前端自定义保存路径
+#                 download_name=f'对齐结果_${pd.Timestamp.now().strftime("%Y%m%d%H%M%S")}.xlsx',
+#                 mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+#             )
+#
+#
+#     except Exception as e:
+#         logger.info(traceback.format_exc())
+#         logger.info(f"导出结果失败：{e}")
+#         return jsonify({"status": "error", "message": f"导出失败: {str(e)}"}), 500
+
+
 @bp.route('/project/export', methods=['GET'])
 def export_project_results():
     """导出需求-代码匹配结果（从SQLite读取数据）"""
     # 1. 获取项目路径（用于定位project.db）
-    project_path = request.args.get('path')
-    project_id = request.args.get('project_id')
-    secret_level = request.args.get('secret_level')
-    if not project_path or not os.path.isdir(project_path):
-        return jsonify({"status": "error", "message": "无效的项目路径。"}), 400
-
-    # 2. 定位project.db文件（默认在项目路径根目录）
-    # db_file = os.path.join(project_path, 'project.db')
-    # if not os.path.exists(db_file):
-        # return jsonify({"status": "error", "message": f"未找到数据库文件：{db_file}"}), 400
-     
-    # 3. 从SQLite读取数据
-    df = get_alignments_from_sqlite(project_id)
-    
-
-    #logger.info(df.loc[2, "GenMermaid"])
-    #sys.exit()
-
-    if df.empty:
-        return jsonify({"status": "warning", "message": "alignments表中暂无数据可导出"}), 200
-
-    # 4、处理数据
-    # 遍历行索引
-    total_num = 0
-    for idx in df.index:
-        doc_data = df.loc[idx, "docRanges"]
-        code_data = df.loc[idx, "codeRanges"]
-        doc_data = json.loads(doc_data) #从string转成list
-        code_data = json.loads(code_data)
-        total_num += 1
-        temp = []
-        for doc in doc_data:
-            temp.append(doc['content'])
-        df.loc[idx, "docRanges"] = temp
-
-        temp = []
-        for code in code_data:
-            temp.append(code['content'])
-        df.loc[idx, "codeRanges"] = temp
-
-
     try:
+        project_path = request.args.get('path')
+        project_id = request.args.get('project_id')
+        secret_level = request.args.get('secret_level', 'internal')
+        if not project_path or not os.path.isdir(project_path):
+            return jsonify({"status": "error", "message": "无效的项目路径。"}), 400
+        export_prompt = SECRET_LEVEL_MAP[secret_level]
+
         # 5. 生成并写入word文件
         template_path = os.path.join(os.path.dirname(__file__), '../templates', '需求表格.docx')
         # 创建临时目录存储文件
@@ -7048,133 +7239,72 @@ def export_project_results():
         docx_filename = f"需求表格导出_{timestamp}.docx"
         docx_path = os.path.join(temp_dir, docx_filename)
 
-        # 检查是否提供了DOCX模板路径
         if template_path and os.path.exists(template_path):
-            current_date = datetime.now().strftime("%Y%m%d")
-            merged_doc = Document(template_path)
+            data = get_alignments_by_project(project_id)
+            result = group_by_doc_filename(data)
+            new_result = []
+            for table_title, table_list in result.items():
+                if table_title == "no_doc":
+                    continue
+                table_title_dict = {}
+                table_title_dict["table_title"] = table_title
+                new_result.append(table_title_dict)
+                rows_list = []
+                table_title_dict["rows"] = rows_list
+                for table_conent in table_list:
+                    name = table_conent.get('name')
+                    file = table_conent.get('code_filename')
+                    start_line = table_conent.get('start_line')
+                    end_line = table_conent.get('end_line')
+                    content = table_conent.get('content')
+                    if file:
+                        func_list = get_func_name_for_export_project_results(project_path, project_id, file, start_line, end_line, content)
+                    else:
+                        func_list = ['not found']
+                    rows_list.append({
+                        "source": name,
+                        "func": ",".join(func_list),
+                    })
+            context = {
+                "doc_title": export_prompt,
+                "tables": new_result,
+            }
 
-            # 处理第一个测试项表格作为基础文档
-            merged_doc = Document(template_path)
-            export_prompt = SECRET_LEVEL_MAP[secret_level]
-            p = merged_doc.paragraphs[0].insert_paragraph_before(export_prompt) if merged_doc.paragraphs \
-                else merged_doc.add_paragraph(export_prompt)
-            p.alignment = 0
-            run = p.runs[0]
-            run.font.size = Pt(10)
-            # run.font.color.rgb = RGBColor(128, 128, 128)
-            number = 1 # 测试项编号
-            category_id = 1 #章节号
-
-            replacements = {}
-            # 小标题名称
-            replacements["6.6.1 XXXX功能"] = "6.6." + str(number) + " " + df.loc[number, "name"] + "功能"
-            # 测试项名称
-            replacements["AAAAA功能"] = df.loc[number, "name"]
-            # 测试项标识
-            replacements["T_FUNC"] = "T_FUNC" + str(number)
-            # 追踪关系
-            # replacements["BBBBB"] = "需求说明：" + str(category_id)
-            pattern = r'^(\d+(?:\.\d+)*)\s*' # 匹配以数字开头，由数字和点组成，后接可选空格的字符串
-            match = re.match(pattern, df.loc[number, "name"])
-            if match:
-                replacements["BBBBB"] = match.group(1)  # 返回编号，如 "3.2.1"
-            else:
-                replacements["BBBBB"] = "需求说明：" + str(category_id)
-            
-            # 需求描述
-            replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
-            # 生成需求
-            replacements["DDDDD"] = df.loc[number, "GenReq"] if df.loc[number, "GenReq"] is not None else ""
-            # 对齐代码
-            replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
-            replacements["EEEEE"] = replacements["EEEEE"] if replacements["EEEEE"] is not None else ""
-            # 流程图
-            replacements["FFFFF"] = df.loc[number, "GenMermaid"] if df.loc[number, "GenMermaid"] is not None else ""
-
-            # 替换第一个文档的占位符
-            replace_text_in_docx(merged_doc, replacements, 'result')
-            #logger.info(replacements)
-            # 处理剩余的表单
-            for i in range(1, total_num):
-                # 添加分页符
-                # merged_doc.add_page_break()
-                if number == 1:
-                    number += 1
-                    category_id += 1
-
-                # 为每个表单加载新的模板并填充
-                temp_doc = Document(template_path)
-
-                replacements = {}
-                # 小标题名称
-                replacements["6.6.1 XXXX功能"] = "6.6." + str(number) + " " + df.loc[number, "name"] + "功能"
-                # 测试项名称
-                replacements["AAAAA功能"] = df.loc[number, "name"]
-                # 测试项标识
-                replacements["T_FUNC"] = "T_FUNC" + str(number)
-                # 追踪关系
-                # replacements["BBBBB"] = "需求说明：" + str(category_id)
-                pattern = r'^(\d+(?:\.\d+)*)\s*' # 匹配以数字开头，由数字和点组成，后接可选空格的字符串
-                match = re.match(pattern, df.loc[number, "name"])
-                if match:
-                    replacements["BBBBB"] = match.group(1)  # 返回编号，如 "3.2.1"
-                else:
-                    replacements["BBBBB"] = "需求说明：" + str(category_id)
-                # 需求描述
-                replacements["CCCCC"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "docRanges"]])
-                # 生成需求
-                replacements["DDDDD"] = df.loc[number, "GenReq"] if df.loc[number, "GenReq"] is not None else ""
-                # 对齐代码
-                replacements["EEEEE"] = "\n\n".join(["".join(sub_list) for sub_list in df.loc[number, "codeRanges"]])
-                replacements["EEEEE"] = replacements["EEEEE"] if replacements["EEEEE"] is not None else ""
-                # 流程图
-                replacements["FFFFF"] = df.loc[number, "GenMermaid"] if df.loc[number, "GenMermaid"] is not None else ""
-
-                number += 1
-                category_id += 1
-
-                # 替换模板中的占位符
-                replace_text_in_docx(temp_doc, replacements, 'result')
-
-
-                # 直接拼接填充好的页面内容到合并文档
-                for element in temp_doc.element.body:
-                    merged_doc.element.body.append(element)
-                #logger.info(i)
-                #logger.info(df.loc[number, "name"])
-
-            # 输出文档内容，debug用
-            #for paragraph in temp_doc.paragraphs:
-            #    logger.info(paragraph.text)
-
-            #for table in temp_doc.tables:
-            #    for row in table.rows:
-            #        for cell in row.cells:
-            #            for paragraph in cell.paragraphs:
-            #                logger.info(paragraph.text)
-
-            # 保存合并后的文档
-            #merged_doc.save(docx_path)
-            try:
-                merged_doc.save(docx_path)
-                logger.info(f"文档可以被导出：{docx_path}")
-                
-            except Exception as e:
-                # 打印详细错误（方便排查）
-                logger.info(traceback.format_exc())
-                logger.info(f"导出结果失败：{str(e)}")
-                
-
-
+            render_doc(context, template_path, docx_path)
+            logger.info(f"文档可以被导出：{docx_path}")
             return send_file(
                 docx_path,
                 as_attachment=False,  # 配合前端自定义保存路径
                 download_name=docx_filename,
                 mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             )
-
         else:
             # 使用excel格式导出（备用方案）
+
+            df = get_alignments_from_sqlite(project_id)
+
+            if df.empty:
+                return jsonify({"status": "warning", "message": "alignments表中暂无数据可导出"}), 200
+
+            # 4、处理数据
+            # 遍历行索引
+            total_num = 0
+            for idx in df.index:
+                doc_data = df.loc[idx, "docRanges"]
+                code_data = df.loc[idx, "codeRanges"]
+                doc_data = json.loads(doc_data)  # 从string转成list
+                code_data = json.loads(code_data)
+                total_num += 1
+                temp = []
+                for doc in doc_data:
+                    temp.append(doc['content'])
+                df.loc[idx, "docRanges"] = temp
+
+                temp = []
+                for code in code_data:
+                    temp.append(code['content'])
+                df.loc[idx, "codeRanges"] = temp
+
             # 重命名列（可选，让Excel列名更友好）
             df_renamed = df.rename(columns={
                 'name': '需求块名称',
@@ -7195,12 +7325,69 @@ def export_project_results():
                 download_name=f'对齐结果_${pd.Timestamp.now().strftime("%Y%m%d%H%M%S")}.xlsx',
                 mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
-
-
-    except Exception as e:
+    except BaseException as e:
         logger.info(traceback.format_exc())
         logger.info(f"导出结果失败：{e}")
         return jsonify({"status": "error", "message": f"导出失败: {str(e)}"}), 500
+
+# 结果导出专用 根据详情视图功能获取函数入口信息
+def get_func_name_for_export_project_results(project_path, project_id, file, start_line, end_line, content):
+    max_depth = max(1, min(_safe_int(3), 8))
+
+    resolved_project_id = resolve_project_id(project_path, project_id)
+    function_id = resolve_code_block_to_function(
+        project_path,
+        resolved_project_id,
+        file,
+        start_line,
+        end_line,
+    )
+
+    if not function_id:
+        return ["not found"]
+
+    preview = query_function_graph(
+        project_path,
+        function_id,
+        max_depth=max_depth,
+        direction="both",
+    )
+    mermaid_code = preview.get('mermaid_code')
+    # # 调用图中的入口函数
+    func_name = preview['center_function'].get('name')
+
+    # 解析后的所有函数
+    parse_func_list = []
+    for item in content:
+        tmp_content = item.get('content')
+        tmp_filename = item.get('filename')
+        language = Path(tmp_filename).suffix
+        parse_func_list.extend(extract_names_by_language(tmp_content, language))
+
+    func_list = []
+
+    # 没有关系图
+    if not func_name:
+        func_list = list(dict.fromkeys(parse_func_list))
+        return func_list if func_list else ["not found"]
+
+    # 解析后的函数为空
+    if not parse_func_list:
+        return [func_name]
+
+    result1 = check_node_level(mermaid_code, func_name, -1)
+    result2 = check_node_level(mermaid_code, func_name, 1)
+    # 如果 func_name 是 parse_func_list 中第一个元素的，且 func_name 是 init_func_list 的最后一个元素  （并列关系）
+    if func_name == parse_func_list[0] and result1:
+        func_list = list(dict.fromkeys(parse_func_list))
+    # 如果 func_name 是 parse_func_list 中第一个元素的，且 func_name 是 init_func_list 的第一个元素 （包含关系）
+    elif func_name == parse_func_list[0] and result2:
+        func_list = [parse_func_list[0]]
+    else:
+        func_list = get_elements_until_same(parse_func_list)
+
+    return func_list
+
 
 # ========== 将生成的临时word文件删除 ==========
 @bp.route('/project/delete-export-files', methods=['POST'])
