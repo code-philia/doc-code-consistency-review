@@ -1499,6 +1499,32 @@
 .doc-content-scroll,
 .markdown-content-rendered,
 .doc-content-rendered,
+.doc-content-editor {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #e5e6eb;
+    border-radius: 0;
+    background: #ffffff;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.doc-content-editor {
+    height: auto;
+    min-height: 80px;
+    overflow-y: hidden;
+    font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+    color: #1f2329;
+    resize: vertical;
+    outline: none;
+}
+
+.doc-content-editor:focus {
+    border-color: #3370ff;
+    box-shadow: 0 0 0 2px rgba(51, 112, 255, 0.15);
+}
+
 .review-thoughts-rendered {
     padding: 12px;
     border-radius: 4px;
@@ -1725,6 +1751,12 @@
     justify-content: space-between;
     align-items: center;
     font-size: 10px;
+}
+
+.code-file-line-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .code-file-info .file-name {
@@ -3893,23 +3925,6 @@
     border-left-color: #4b5563;
 }
 
-.right-toolbar-actions .el-button.el-button--danger.right-toolbar-btn.is-text.is-plain {
-    border-color: #fecaca;
-    background: #fff7f7;
-    color: #dc2626;
-}
-
-.right-toolbar-actions .el-button.el-button--danger.right-toolbar-btn.is-text.is-plain:hover {
-    border-color: #fca5a5;
-    background: #fef2f2;
-    color: #b91c1c;
-}
-
-.right-sidebar .batch-select-checkbox {
-    flex: 0 0 auto;
-    margin-right: 2px;
-}
-
 .right-sidebar .alignment-title {
     min-width: 0;
     max-width: none;
@@ -4026,25 +4041,6 @@
 .right-sidebar .block-list-item.selected {
     background: #eef3f8;
     border-left-color: #4b5563;
-}
-
-.right-sidebar .block-list-item.batch-selection-active {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-        "checkbox title"
-        "checkbox meta"
-        "checkbox preview"
-        "checkbox status";
-}
-
-.right-sidebar .block-list-item.batch-selected {
-    background: #eef3f8;
-    border-left-color: #4b5563;
-}
-
-.right-sidebar .batch-select-checkbox--block {
-    grid-area: checkbox;
-    align-self: center;
 }
 
 .block-item-title {
@@ -5601,6 +5597,140 @@
         justify-content: flex-start;
         width: 100%;
     }
+}
+
+
+/* 手动对齐 */
+.align-dialog-body { display: flex; gap: 12px; height: 60vh; }
+.align-panel {
+  flex: 1;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.align-panel-middle { flex: 0 0 26%; } /* 对齐区域窄一些 */
+.align-panel-title {
+  padding: 10px 12px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.align-panel-count { font-size: 12px; color: var(--el-text-color-secondary); font-weight: 400; }
+.align-panel-body { flex: 1; overflow-y: auto; padding: 8px 10px; }
+.align-panel-footer {
+  padding: 8px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+/* 需求块 */
+.req-item {
+  padding: 8px 10px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.req-item:hover { border-color: var(--el-color-primary-light-5); }
+.req-item.active { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
+.req-item-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.req-item-name { font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.req-item-meta { font-size: 12px; color: var(--el-text-color-secondary); }
+/* 对齐记录块 */
+.align-record-item {
+  padding: 8px 10px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.align-record-item:hover { border-color: var(--el-color-primary-light-5); }
+.align-record-item.active { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
+.align-record-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.align-record-head .align-record-name {
+  flex: 1;
+  margin-bottom: 0;
+}
+.align-record-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+.align-record-del {
+  font-size: 12px;
+  color: var(--el-color-danger);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.align-record-del: hover { opacity: .7; }
+.align-record-meta { font-size: 12px; color: var(--el-text-color-secondary); display: flex; gap: 10px; }
+/* 代码树节点 */
+.code-tree-node { display: flex; align-items: center; gap: 6px; flex: 1; overflow: hidden; }
+.code-tree-node .node-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.code-tree-node .node-range { font-size: 12px; color: var(--el-text-color-secondary); }
+
+/* 需求项上的详情入口 */
+.req-detail-btn {
+  color: var(--el-color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.req-detail-btn:hover { opacity: .7; }
+/* 详情弹窗 */
+.req-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 10px;
+}
+/* 添加代码到对齐关系弹窗 操作面板隐藏补丁 */
+/* 操作面板隐藏时：固定弹窗高度，调用图预览撑满 */
+.manual-align-dialog-body.op-panel-hidden {
+  height: 72vh;
+  display: flex;
+  flex-direction: column;
+}
+.manual-align-dialog-body.op-panel-hidden .manual-align-shell {
+  flex: 1;
+  min-height: 0;
+}
+.manual-align-dialog-body.op-panel-hidden .manual-align-sidebar,
+.manual-align-dialog-body.op-panel-hidden .manual-align-workbench {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.manual-align-dialog-body.op-panel-hidden .call-graph-preview-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.manual-align-dialog-body.op-panel-hidden .call-graph-preview-panel
+  > *:not(.call-graph-preview-header):not(.call-graph-preview-toolbar) {
+  flex: 1;
+  min-height: 0;
 }
 
 /* 代码文件右键菜单 */

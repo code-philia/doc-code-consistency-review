@@ -1,6 +1,8 @@
 /****************************
  * 全局状态与配置
  ****************************/
+// import flatten from "./thirdParty/katex/contrib/render-a11y-string.mjs";
+
 let activeView = 'alignmentView'; // 当前活动视图
 
 const { createApp, ref, onMounted, onUnmounted, onBeforeUnmount, computed, nextTick, watch, reactive } = Vue;
@@ -1321,7 +1323,7 @@ const app = createApp({
                 ElMessage.error("删除失败: " + error.message);
             }
         };
-
+        
         const refreshAfterBatchDelete = async () => {
             clearLinkedAll();
             currentSelectedAlignmentId.value = null;
@@ -1343,7 +1345,6 @@ const app = createApp({
             if (selectedCodeFile.value) await loadAndRenderCodeBlocks(true);
             await refreshStatsData({ silent: true });
         };
-
         const deleteSelectedAlignments = async () => {
             const selected = [...selectedBatchAlignments.value];
             if (!selected.length || batchDeleting.value) return;
@@ -1376,7 +1377,6 @@ const app = createApp({
                 batchDeleting.value = false;
             }
         };
-
         const deleteSelectedBlocks = async () => {
             const selected = [...selectedBatchBlocks.value];
             if (!selected.length || batchDeleting.value) return;
@@ -1411,7 +1411,7 @@ const app = createApp({
                 batchDeleting.value = false;
             }
         };
-
+        
         const fetchAlignments = async () => {
             if (!projectPath.value) return;
 
@@ -1644,7 +1644,112 @@ const app = createApp({
                 }
             });
         }
-        
+
+
+        const editorRefs = reactive({});
+        const editStates = reactive(new Map());
+
+
+        const getEditState = (index) => {
+            const key = selectedReviewAlignment.value.id + '_' + index;
+            if (!editStates.has(key)){
+                editStates.set(key, { isEditing: false, editingContent: ''});
+            }
+            return editStates.get(key);
+        };
+
+
+        const saveDocRangeContent = async (rangeItem, id, index) => {
+            const project_id = urlParams.get('project_id');
+            try {
+                // 1. 必须用 POST, 参数放 data 走 JSON 请求体(axios 会自动设置 Content-Type: application/json)
+                const response = await axios.post('/api/detail/updateRequirements', {
+                    project_id,
+                    file_name: rangeItem.filename,
+                    start: rangeItem.start,
+                    end: rangeItem.end,
+                    new_content: rangeItem.content,
+                    alignment_id: id,
+                    content_index: index,
+                });
+
+                // 2. 后端业务成功约定为 code === 200
+                if (response.data && response.data.code === 200) {
+                    ElMessage.success(`需求内容更新成功`);
+                    console.log('需求内容更新成功:', response.data.msg);
+                    return true;
+                }
+
+                // 3. 后端返回了非成功 code(理论上不会走到这里, 因为非 2xx 已被 axios 抛异常)
+                console.error('需求内容更新失败:', response.data && response.data.msg);
+                return false;
+            } catch (e) {
+                // 4. 400/404/500 等非 2xx 状态会走到这里, 错误信息在 e.response.data.msg
+                console.error('需求内容更新失败:', e.response ? e.response.data : e);
+                return false;
+            }
+        };
+
+
+        const toggleEdit = async (index, rangeItem) => {
+            const state = getEditState(index);
+            if (!state.isEditing) {
+                // 备份
+                state.backupCpntent = rangeItem.content;
+
+                state.editingContent = rangeItem.content;
+                state.isEditing = true;
+                nextTick(() => {
+                    const el =  editorRefs[index];
+                    if (el) {
+                        el.focus();
+                        autoResizeTextarea(index);
+                    }
+                });
+            } else {
+                if (state.editingContent !== rangeItem.content) {
+                    rangeItem.content = state.editingContent;
+                    await saveDocRangeContent(rangeItem, selectedReviewAlignment.value.id, index);
+                }
+                else {
+                    ElMessage.warning(`内容未发生变化, 请先编辑内容!`);
+                    console.log('内容未变化，未保存')
+                }
+                state.editingContent = '';
+                state.isEditing = false;
+            }
+        } ;
+
+
+        const handleRangeInput = (event, index) => {
+            getEditState(index).editingContent = event.target.value;
+            autoResizeTextarea(index);
+        };
+
+
+        // 切换对象的时候清空状态
+        watch(() => selectedReviewAlignment.value, () => {
+            editStates.clear();
+        });
+
+
+        const setEditorRef = (el, index) => {
+           if (el) {
+              editorRefs[index] = el;
+           } else {
+              delete editorRefs[index];
+           }
+        };
+
+
+        const autoResizeTextarea = (index) => {
+            const el = editorRefs[index];
+            if (!el || !el.style) return;
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px'
+        };
+
+
         const renderMarkdownWithLatex = (markdownContent) => {
             if (!markdownContent) return '';
             try {
@@ -3342,7 +3447,7 @@ const app = createApp({
           }
           dialogParseDocMethodVisible.value = false;
         };
-
+        
         const uploadManualAlignmentFile = () => {
           const input = document.createElement('input');
           input.type = 'file';
@@ -3354,7 +3459,6 @@ const app = createApp({
               ElMessage.warning('请选择 DOCX 格式的对齐文件');
               return;
             }
-
             const loading = ElLoading.service({
               lock: true,
               text: '正在解析并匹配对齐关系…',
@@ -3372,7 +3476,6 @@ const app = createApp({
                 ElMessage.error(response.data.message || '上传对齐文件失败');
                 return;
               }
-
               const summary = response.data.summary || {};
               const unmatched = summary.unmatched_code_functions || [];
               const summaryText = [
@@ -3409,7 +3512,7 @@ const app = createApp({
         const startUpload = (fileType, selectionMode, parseDocMethod) => {
           const input = document.createElement('input');
           input.type = 'file';
-		  input.multiple = true;
+          input.multiple = true;
           if (selectionMode === 'folder') {
             input.multiple = true;
             input.webkitdirectory = true;
@@ -5765,8 +5868,7 @@ const app = createApp({
             if (!direction) return;
             if (alignmentDirectionMode.value === 'auto') {
                 try {
-
-                    await doRestartAlignment(direction);
+                    await doStartAlignment(direction);
                 } catch (error) {
                     if (error !== 'cancel' && error !== 'close') {
                         ElMessage.error(`自动对齐失败: ${error.message}`);
@@ -5783,8 +5885,38 @@ const app = createApp({
                             type: 'warning'
                         }
                     );
-                await doRestartAlignment(direction);
+                await doStartAlignment(direction);
             }
+        };
+        
+        
+        const doStartAlignment = async (direction) => {
+            if (alignmentDirectionMode.value === 'auto') {
+                await fetchAlignments();
+                await startAutoAlignmentWithDirection(direction);
+            } else if (alignmentDirectionMode.value === 'restart') {
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const projectId = urlParams.get('project_id');
+                    const response = await axios.post('/api/clear-code-ranges', {
+                        projectPath: projectPath.value,
+                        project_id: projectId
+                    });
+
+                    if (response.data.status === 'success') {
+                        removeAllHighlights();
+                        await fetchAlignments();
+                        await startAutoAlignmentWithDirection(direction);
+                    } else {
+                        throw new Error(response.data.message || '清除代码范围失败');
+                    }
+                } catch (error) {
+                    console.error('重新对齐失败:', error);
+                    ElMessage.error(`重新对齐失败: ${error.message}`);
+                }
+            }
+
+
         };
 
         // 根据代码范围查找对应的对齐关系（返回第一个匹配的）
@@ -6240,6 +6372,26 @@ const app = createApp({
             }
         };
 
+        const FPGA_SUFFIXES = ['.v', '.vh', '.vhd', '.sv', '.vlog', '.svh'];
+
+        const isFpgaFile = (fileName) => {
+          if (!fileName || typeof fileName !== 'string') return false;
+          const lower = fileName.toLowerCase();
+          return FPGA_SUFFIXES.some(s => lower.endsWith(s))
+        }
+
+        // 取文件名
+        const getCodeSelectionFileName = (selection) => {
+          const block = currentCodeSelectionBlock.value;
+          const fromBlock = block && (block.file || block.filename);
+          if (typeof fromBlock === 'string' && fromBlock.trim()) return fromBlock.trim();
+          const fromSelection = selection && (selection.documentId || selection.filename || selection.file);
+          if (typeof fromSelection === 'string' && fromSelection.trim()) return fromSelection.trim();
+          console.log(selection)
+          console.log(block)
+          return '';
+        }
+
         const prepareCodeSelectionDialog = async (selection, sourceBlock = null) => {
             currentSelection.value = selection;
             resetManualAlignFromBlock();
@@ -6262,6 +6414,8 @@ const app = createApp({
             if (callGraphEnabled.value && currentCodeSelectionSupportsCallGraph.value) {
                 await refreshCallGraphPreview();
             }
+
+            callGraphEnabled.value = !isFpgaFile(getCodeSelectionFileName(selection))
         };
         
         // 处理代码选择
@@ -10439,6 +10593,414 @@ const app = createApp({
           }
         };
 
+        // ================= 手动对齐 =================
+        // project_id：改成你页面上实际的项目 id 变量，没有就固定 1
+        const alignProjectId = getProjectId();
+        // 项目路径：保存/修改时传给后端，用于计算 codeRanges 的 start/end 偏移
+        const alignProjectPath = new URLSearchParams(location.search).get('path') || '';
+        // 从手动对齐弹窗打开"添加代码到对齐关系"时，隐藏操作面板
+        const codeSelectionHideOpPanel = ref(false);
+
+        const alignDialogVisible = ref(false);
+        const alignSaving = ref(false);
+        const alignTreeRef = ref(null);
+
+        // ---- 左栏：需求块列表 ----
+        const alignReqList = ref([]);
+        const alignReqTotal = ref(0);
+        const alignReqPage = ref(1);
+        const alignReqLoading = ref(false);
+        const alignSelectedReqIds = ref([]); // 当前选中的需求块 id
+
+        // ---- 中栏：对齐记录列表 ----
+        const alignRecordList = ref([]);
+        const alignRecordTotal = ref(0);
+        const alignRecordPage = ref(1);
+        const alignRecordLoading = ref(false);
+        const activeAlignRecordId = ref(null); // 当前点击的对齐记录 id
+
+        // ---- 右栏：代码树 ----
+        const alignTreeLoading = ref(false);
+        const alignFileChildrenMap = reactive({}); // 文件 -> 子节点缓存
+
+        const openManualAlign = () => {
+          alignSelectedReqIds.value = [];
+          activeAlignRecordId.value = null;
+          alignReqPage.value = 1;
+          alignRecordPage.value = 1;
+          alignDialogVisible.value = true; // @open 里统一加载
+          alignOriginalCodeIds.value = [];
+        };
+
+        // 弹窗打开时加载需求列表 + 对齐记录（代码树 lazy 自动加载一级文件）
+        const loadAlignData = async () => {
+          await loadAlignmentList();
+          loadAlignReqList();
+        };
+
+        // ---- 接口1：需求块列表 ----
+        // locateDocId 可选：传了就带 doc_block_id 参数，后端返回其所在页（B 方案）
+        const loadAlignReqList = async (locateDocId) => {
+          alignReqLoading.value = true;
+          try {
+            const params = {
+              project_id: alignProjectId,
+              page: alignReqPage.value,
+              page_size: 20,
+            };
+            if (locateDocId != null) params.doc_block_id = locateDocId;
+            const res = await axios.get('/api/alignment/doc_blocks', { params });
+            if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+            const data = res.data.data;
+            alignReqList.value = (data.list || []).slice().sort((a, b) => {
+              const isEn = (n) => /^[A-Za-z]/.test((n || '').trim()) ? 0 : 1;
+              const g = isEn(a.name) - isEn(b.name);
+              if (g !== 0) return g;
+              return (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
+            });
+            alignReqTotal.value = data.total || 0;
+            alignReqPage.value = data.page; // 定位时后端返回的是实际页码，同步分页器
+          } catch (e) {
+            ElementPlus.ElMessage.error('加载需求块失败：' + e.message);
+          } finally {
+            alignReqLoading.value = false;
+          }
+        };
+
+        // ---- 新增接口：对齐记录列表 ----
+        const loadAlignmentList = async () => {
+          alignRecordLoading.value = true;
+          try {
+            const res = await axios.get('/api/alignment/alignments', {
+              params: { project_id: alignProjectId, page: alignRecordPage.value, page_size: 20 },
+            });
+            if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+            alignRecordList.value = res.data.data.list || [];
+            alignRecordTotal.value = res.data.data.total || 0;
+          } catch (e) {
+            ElementPlus.ElMessage.error('加载对齐记录失败：' + e.message);
+          } finally {
+            alignRecordLoading.value = false;
+          }
+        };
+
+        // ---- 接口3：拉取某文件下代码块（带缓存） ----
+        const fetchAlignFileBlocks = async (file) => {
+          if (alignFileChildrenMap[file]) return alignFileChildrenMap[file];
+          const res = await axios.get('/api/alignment/code_blocks', {
+            params: { project_id: alignProjectId, file, page: 1, page_size: 100 },
+          });
+          if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+          const nodes = (res.data.data.list || []).map(b => ({
+            id: b.id, // code_blocks.id，与 code_ids 对应
+            file,
+            label: b.name || `代码块 ${b.id}`,
+            type: b.type,
+            startLine: b.startLine,
+            endLine: b.endLine,
+            aligned: b.aligned,
+            isLeaf: true,
+          }));
+          alignFileChildrenMap[file] = nodes;
+          return nodes;
+        };
+
+        // ---- 接口2/3：代码树懒加载 ----
+        const loadAlignCodeNode = async (node, resolve) => {
+          if (node.level === 0) {
+            alignTreeLoading.value = true;
+            try {
+              const res = await axios.get('/api/alignment/code_files', {
+                params: { project_id: alignProjectId },
+              });
+              if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+              resolve((res.data.data || []).map(f => ({
+                id: 'file_' + f.file,
+                label: f.file,
+                count: f.count,
+                isFile: true,
+                file: f.file,
+              })));
+            } catch (e) {
+              ElementPlus.ElMessage.error('加载代码文件失败：' + e.message);
+              resolve([]);
+            } finally {
+              alignTreeLoading.value = false;
+            }
+            return;
+          }
+          if (node.data && node.data.isFile) {
+            try {
+              resolve(await fetchAlignFileBlocks(node.data.file));
+            } catch (e) {
+              ElementPlus.ElMessage.error('加载代码块失败：' + e.message);
+              resolve([]);
+            }
+            return;
+          }
+          resolve([]);
+        };
+        // 点需求快：修改模式下标记 需求变更了
+        const alignReqChanged = ref(false);
+        const alignOriginalCodeIds = ref([]); // 修改模式时的原始 code_ids
+        // ---- 点击需求块：仅单选（不再触发反选，需求与代码互不联动） ----
+        const handleAlignReqClick = (req) => {
+          alignSelectedReqIds.value = [req.id];
+          if (activeAlignRecordId.value) alignReqChanged.value = true;
+        };
+
+        // ---- 点击对齐块：同时反选需求块和代码块 ----
+        const handleAlignRecordClick = async (item) => {
+          // 再点一次当前激活的对齐块: 取消选中, 退回新增模式
+          if (activeAlignRecordId.value === item.id) {
+            activeAlignRecordId.value = null;
+            alignOriginalCodeIds.value = [];
+            alignSelectedReqIds.value = [];
+            alignTreeRef.value && alignTreeRef.value.setCheckedKeys([]);
+            return
+          }
+          alignReqChanged.value = false;  // 刚进修改模式，需求还没动
+
+          activeAlignRecordId.value = item.id;
+          const docIds = item.doc_block_ids || [];
+          alignSelectedReqIds.value = [...docIds];
+          alignOriginalCodeIds.value = [...(item.code_ids || [])];
+
+          // 定位跳页: 用第一个需求块定位到它所在页
+          // (多个需求块可能跨页，当前页的都会高亮， 不在的翻页后看不到高亮是正常的)
+          if (docIds.length) {
+            loadAlignReqList(docIds[0]);
+          }
+
+          // 1) 反选需求：带 doc_block_id 调接口1，后端返回所在页，同步分页并高亮
+          if (item.doc_block_id != null) {
+            loadAlignReqList(item.doc_block_id);
+          }
+
+          // 2) 反选代码树：locate 定位文件，展开 + 勾选
+          const tree = alignTreeRef.value;
+          if (!item.code_ids || !item.code_ids.length) {
+            tree && tree.setCheckedKeys([]);
+            return;
+          }
+          try {
+            const res = await axios.post('/api/alignment/locate', { code_ids: item.code_ids });
+            if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+            const locateMap = res.data.data || {}; // { 文件名: [code_id...] }
+            const files = Object.keys(locateMap);
+            if (!files.length) return;
+            // 未加载的文件先拉取子节点
+            for (const file of files) {
+              await fetchAlignFileBlocks(file);
+            }
+            // 展开文件节点（未加载过的节点展开时 lazy load 会命中缓存）
+            files.forEach(f => {
+              const node = tree.getNode('file_' + f);
+              if (node && !node.expanded) node.expand();
+            });
+            await nextTick();
+            await new Promise(r => setTimeout(r, 50)); // 等懒加载子节点挂载
+            tree.setCheckedKeys(files.flatMap(f => locateMap[f]));
+          } catch (e) {
+            ElementPlus.ElMessage.error('定位代码块失败：' + e.message);
+          }
+        };
+
+        // 清空树选中
+        const clearAlignSelection = () => {
+          activeAlignRecordId.value = null;
+          alignOriginalCodeIds.value = [];
+          alignTreeRef.value && alignTreeRef.value.setCheckedKeys([]);
+        };
+
+        // ---- 确定：保存对齐 ----
+        const confirmManualAlign = async () => {
+          const docIds = alignSelectedReqIds.value;
+          if (!docIds.length) {
+            ElementPlus.ElMessage.warning('请选择一个需求块');
+            return;
+          }
+
+          const checkedNodes = alignTreeRef.value.getCheckedNodes(false) || [];
+          const codeIdSet = new Set();
+          try {
+            for (const n of checkedNodes) {
+              if (n.isFile) {
+                const children = await fetchAlignFileBlocks(n.file); // 有缓存，未加载才发请求
+                children.forEach(c => codeIdSet.add(c.id));
+              } else if (n.isLeaf) {
+                codeIdSet.add(n.id);
+              }
+            }
+          } catch (e) {
+            ElementPlus.ElMessage.error('加载代码块失败: ' + e.message);
+            return;
+          }
+          const codeIds = [...codeIdSet];
+          if (!codeIds.length) {
+            ElementPlus.ElMessage.warning('请选择至少一个代码块');
+            return;
+          }
+
+
+          alignSaving.value = true;
+          try {
+            if (activeAlignRecordId.value) {
+              const codeChanged = JSON.stringify([...alignOriginalCodeIds.value].sort()) !== JSON.stringify([...codeIds].sort());
+
+              const payload = {
+                id: activeAlignRecordId.value,
+                project_id: alignProjectId,
+                path: alignProjectPath,
+                code_ids: codeIds,
+                code_changed: codeChanged
+              }
+              if (alignReqChanged.value) payload.doc_block_ids = docIds; // 变更了才带
+              // 修改已有对齐
+              const res = await axios.post('/api/alignment/update', payload);
+              if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+            } else {
+              // 新增对齐
+              const res = await axios.post('/api/alignment/save', {
+                project_id: alignProjectId,
+                path: alignProjectPath,
+                doc_block_id: docIds[0],
+                code_ids: codeIds,
+              });
+              if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+            }
+            ElementPlus.ElMessage.success(activeAlignRecordId.value ? '修改成功' : '对齐成功');
+            // alignDialogVisible.value = false;
+            await loadAlignmentList();
+          } catch (e) {
+            ElementPlus.ElMessage.error('操作失败：' + e.message);
+          } finally {
+            alignSaving.value = false;
+          }
+        };
+
+        const deleteAlignRecord = async (item) => {
+          try {
+            await ElementPlus.ElMessageBox.confirm('确认删除这条对齐记录吗？', '提示', { type: 'warning' });
+          } catch { return; } // 用户取消
+          try {
+            const res = await axios.post('/api/alignment/delete', {
+              id: item.id,
+              project_id: alignProjectId,
+            });
+            if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+            ElementPlus.ElMessage.success('删除成功');
+            if (activeAlignRecordId.value === item.id) {
+              activeAlignRecordId.value = null;
+              alignOriginalCodeIds.value = [];
+            }
+
+            loadAlignmentList();  // 刷新对齐列表
+            loadAlignReqList();   // 刷新需求列表状态
+          } catch (e) {
+            ElementPlus.ElMessage.error('删除失败：' + e.message);
+          }
+        };
+
+        // ================= 需求详情（Markdown 查看） =================
+        const reqDetailVisible = ref(false);
+        const reqDetailLoading = ref(false);
+        const reqDetailData = ref({});
+        const reqDetailHtml = ref('');
+
+        const openReqDetail = async (req) => {
+          reqDetailVisible.value = true;
+          reqDetailLoading.value = true;
+          reqDetailData.value = req; // 先用列表里的数据撑标题，content 拉回来再渲染
+          reqDetailHtml.value = '';
+          try {
+            const res = await axios.get('/api/alignment/doc_block_detail', {
+              params: { project_id: alignProjectId, doc_block_id: req.id },
+            });
+            if (res.data.code !== 0) throw new Error(res.data.msg || '接口返回异常');
+            reqDetailData.value = res.data.data;
+            // 渲染：复用项目现有的 renderMarkdownWithLatex（KaTeX 公式 + markdown-it，
+            // 同步返回 HTML，失败兜底返回原文）。
+            reqDetailHtml.value = renderMarkdownWithLatex(res.data.data.content || '（暂无内容）');
+          } catch (e) {
+            ElementPlus.ElMessage.error('加载需求详情失败：' + e.message);
+            reqDetailVisible.value = false;
+          } finally {
+            reqDetailLoading.value = false;
+          }
+        };
+
+        // ---- 从代码树打开"添加代码到对齐关系"弹窗 ----
+        // 选中方式：右栏代码树勾选——文件节点 = 整个文件；代码块 = 同文件内合并为连续区间。
+        // 构造与鼠标划选一致的 selectionPayload，之后复用现有 prepareCodeSelectionDialog，
+        // 弹窗内后续操作与划选 / 右键"选中整个文件"完全一致。
+
+        const openCodeSelectionFromAlignTree = async () => {
+          const tree = alignTreeRef.value;
+          if (!tree) return;
+          const checked = tree.getCheckedNodes(false) || []; // 含文件节点（勾选文件时子节点会级联全选）
+          if (!checked.length) {
+            ElementPlus.ElMessage.warning('请先勾选一个代码文件或文件下的代码块');
+            return;
+          }
+          const fileNodes = checked.filter(n => n.isFile);
+          const leafNodes = checked.filter(n => n.isLeaf);
+
+          // 限定同一文件（payload 是单文件单区间结构）
+          const files = [...new Set([...fileNodes.map(n => n.file), ...leafNodes.map(n => n.file)])];
+          if (files.length !== 1) {
+            ElementPlus.ElMessage.warning('一次只能选择一个文件内的代码块');
+            return;
+          }
+          const file = files[0];
+
+          try {
+            const content = await fetchWholeCodeContent(file);
+            if (!content.trim()) {
+              ElementPlus.ElMessage.warning('文件内容为空');
+              return;
+            }
+            const lineCount = content.endsWith('\n')
+              ? content.split('\n').length - 1
+              : content.split('\n').length;
+
+            let payload;
+            if (fileNodes.length) {
+              // 勾了文件节点 = 整个文件（口径与右键"选中整个文件"一致）
+              payload = {
+                type: 'code',
+                documentId: file, // 与现有弹窗的 documentId 口径（文件路径）保持一致
+                start: 0,
+                end: content.length,
+                startLine: 1,
+                endLine: lineCount,
+                content,
+              };
+            } else {
+              // 勾了若干代码块 = 合并为 min(startLine) ~ max(endLine) 的连续区间
+              const startLine = Math.min(...leafNodes.map(n => n.startLine));
+              const endLine = Math.max(...leafNodes.map(n => n.endLine));
+              const offsets = getOffsetsFromLineRange(content, startLine, endLine);
+              payload = {
+                type: 'code',
+                documentId: file,
+                start: offsets.start,
+                end: offsets.end,
+                startLine,
+                endLine,
+                content: content.slice(offsets.start, offsets.end),
+              };
+            }
+
+            // alignDialogVisible.value = false; // 关掉手动对齐弹窗，避免双层弹窗叠着
+            codeSelectionHideOpPanel.value = true; // 标记来源是手动对齐弹窗
+            await prepareCodeSelectionDialog(payload); // 页面已有函数，之后流程不变
+          } catch (e) {
+            console.error(e);
+            ElementPlus.ElMessage.error('打开对齐弹窗失败：' + e.message);
+          }
+        };
+
         // ========== 生命周期 ==========
         onMounted(async () => {
           resumeUploadTaskIfRunning()
@@ -10450,12 +11012,25 @@ const app = createApp({
          * 暴露到模板
          ***********************/
         return {
+
+            // 手动对齐
+            alignDialogVisible, alignSaving, alignTreeRef, alignReqList, alignReqTotal, alignReqPage, alignReqLoading,
+            alignSelectedReqIds, alignRecordList, alignRecordTotal, alignRecordPage, alignRecordLoading,
+            activeAlignRecordId, alignTreeLoading, openManualAlign, loadAlignData, loadAlignReqList, loadAlignmentList,
+            loadAlignCodeNode, handleAlignReqClick, handleAlignRecordClick, clearAlignSelection, confirmManualAlign,
+            deleteAlignRecord,
+            // 手动对齐-需求详情弹窗
+            reqDetailVisible, reqDetailLoading, reqDetailData, reqDetailHtml, openReqDetail,
+            // 手动对齐-查看代码调用图
+            fetchWholeCodeContent, openCodeSelectionFromAlignTree, codeSelectionHideOpPanel,
+
             // code文件右键菜单对齐功能
             contextMenuVisible,
             contextMenuX,
             contextMenuY,
             handleNodeContextmenu,
             selectWholeFile,
+
             // 上传文件
             uploadTasks,
             uploadTaskState,
@@ -10822,7 +11397,14 @@ const app = createApp({
             
             // Markdown渲染
             renderMarkdownWithLatex,
-            
+
+            //需求内容可编辑
+            toggleEdit,
+            handleRangeInput,
+            getEditState,
+            setEditorRef,
+
+
             // 筛选功能
             filteredAlignments,
             isFiltered,
@@ -10980,7 +11562,7 @@ const app = createApp({
 /****************************
  * 应用挂载
  ****************************/
-app.use(ElementPlus);
+app.use(ElementPlus, { locale: ElementPlus.zhCn});
 app.mount('#app');
 
 // 初始化默认视图

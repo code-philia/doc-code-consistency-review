@@ -1014,6 +1014,15 @@
                                             >
                                                  提示词设置
                                             </el-button>
+                                            <el-button
+                                              class="right-toolbar-btn"
+                                              plain
+                                              text
+                                              size="small"
+                                              @click="openManualAlign"
+                                            >
+                                              手动对齐
+                                            </el-button>
                                         </div>
                                        <div class="right-toolbar-actions right-toolbar-actions--block" v-if="rightSidebarMode === 'block'">
                                             <el-button
@@ -1031,22 +1040,22 @@
                                             </el-button>
                                             <el-button
                                                 v-if="batchSelectionMode"
-                                                @click="toggleSelectAllPageBlocks"
+                                                @click="toggleSelectAllPageAlignments"
                                                 size="small" text plain class="right-toolbar-btn"
                                             >
-                                                ${ allPageBlocksSelected ? '取消本页全选' : '全选本页' }
+                                                ${ allPageAlignmentsSelected ? '取消本页全选' : '全选本页' }
                                             </el-button>
                                             <el-button
                                                 v-if="batchSelectionMode"
-                                                @click="deleteSelectedBlocks"
-                                                :disabled="selectedBatchBlocks.length === 0"
+                                                @click="deleteSelectedAlignments"
+                                                :disabled="selectedBatchAlignments.length === 0"
                                                 :loading="batchDeleting"
                                                 size="small" text plain type="danger" class="right-toolbar-btn"
                                             >
-                                                删除选中（${ selectedBatchBlocks.length }）
+                                                删除选中（${ selectedBatchAlignments.length }）
                                             </el-button>
                                             <el-button
-                                                @click="refreshBlocksAndAlignments"
+                                                @click="refreshAlignments"
                                                 size="small"
                                                 text
                                                 plain
@@ -1073,6 +1082,15 @@
                                                 class="right-toolbar-btn"
                                             >
                                                  提示词设置
+                                            </el-button>
+                                            <el-button
+                                              class="right-toolbar-btn"
+                                              plain
+                                              text
+                                              size="small"
+                                              @click="openManualAlign"
+                                            >
+                                              手动对齐
                                             </el-button>
                                         </div>
                                     </div>
@@ -1927,7 +1945,7 @@
                         <el-button
                             v-if="reviewDialogSource !== 'issue'"
                             type="danger" size="small" @click="deleteDetailAndJumpNext">
-                            删除
+                            <i class="fas fa-trash-alt"></i>  删除
                         </el-button>
                         <el-divider direction="vertical"></el-divider>
                         <el-button-group class="review-dialog-nav">
@@ -1986,9 +2004,26 @@
 
                                 <div class="doc-file-info">
                                     <span class="file-name">${ range.filename }</span>
-                                    <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                                    <div class="code-file-line-button">
+                                        <span class="line-range">第 ${ range.startLine } - ${ range.endLine } 行</span>
+                                        <button class="action-btn" @click="toggleEdit(index, range)">
+                                            <i :class="getEditState(index).isEditing ? 'fas fa-save' : 'fas fa-edit'"></i>
+                                            ${ getEditState(index).isEditing ? '保存' : '编辑' }
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="doc-content-rendered" v-html="renderMarkdownWithLatex(range.content)"></div>
+
+                                <div v-if="!getEditState(index).isEditing"
+                                     class="doc-content-rendered"
+                                     v-html="renderMarkdownWithLatex(range.content)">
+                                </div>
+
+                                <textarea v-else
+                                          :ref="(el) => setEditorRef(el, index)"
+                                          class="doc-content-editor"
+                                          :value="getEditState(index).editingContent"
+                                          @input="handleRangeInput($event, index)">
+                                </textarea>
                             </div>
                         </div>
                                 </div>
@@ -2260,8 +2295,9 @@
             class="manual-align-dialog manual-align-dialog--code"
             :close-on-click-modal="false"
             @close="resetManualAlignFromBlock"
+            @closed="codeSelectionHideOpPanel = false"
         >
-            <div v-if="currentSelection" class="manual-align-dialog-body">
+            <div v-if="currentSelection" class="manual-align-dialog-body" :class="{ 'op-panel-hidden': codeSelectionHideOpPanel }">
                 <div class="manual-align-shell manual-align-shell--wide">
                     <div class="manual-align-sidebar">
                         <div class="manual-align-sidebar-panel">
@@ -2330,7 +2366,7 @@
                     </div>
 
                     <div class="manual-align-workbench">
-                        <div class="manual-align-operation-panel">
+                        <div class="manual-align-operation-panel" v-if="!codeSelectionHideOpPanel">
                             <el-tabs v-model="manualActionTab" class="manual-align-operation-tabs">
                                 <el-tab-pane v-if="hasExistingManualAlignments" label="添加到已有对齐关系" name="existing"></el-tab-pane>
                                 <el-tab-pane label="新建对齐关系" name="createAlignment"></el-tab-pane>
@@ -2889,6 +2925,147 @@
                     <pre style="background: #eee; padding: 10px; font-size: 12px; white-space: pre-wrap; word-break: break-word; border-radius: 4px; max-height: 400px; overflow-y: auto;">${ JSON.stringify(currentDetailItem.full_data, null, 2) }</pre>
                 </div>
             </div>
+        </el-dialog>
+
+        <!-- 手动对齐弹窗 -->
+        <el-dialog
+          v-model="alignDialogVisible"
+          title="手动对齐"
+          width="85%"
+          top="5vh"
+          :close-on-click-modal="false"
+          @open="loadAlignData"
+        >
+          <div class="align-dialog-body">
+
+            <div class="align-panel">
+              <div class="align-panel-title">
+                需求
+                <span class="align-panel-count">共 ${ alignReqTotal } 条</span>
+              </div>
+              <div class="align-panel-body" v-loading="alignReqLoading">
+                <template v-if="alignReqList.length">
+                  <div
+                    v-for="req in alignReqList"
+                    :key="req.id"
+                    class="req-item"
+                    :class="{ active: alignSelectedReqIds.includes(req.id) }"
+                    @click="handleAlignReqClick(req)"
+                  >
+                    <div class="req-item-head">
+                      <span class="req-item-name">${ req.name }</span>
+                      <i class="fas fa-eye req-detail-btn" title="查看详情" @click.stop="openReqDetail(req)"></i>
+                    </div>
+                    <div class="req-item-meta">
+                      <span>${ req.filename } : ${ req.start }-${ req.end }</span>
+                    </div>
+                  </div>
+                </template>
+                <el-empty v-else-if="!alignReqLoading" description="暂无需求块" :image-size="60" ></el-empty>
+              </div>
+              <div class="align-panel-footer">
+                <el-pagination
+                  v-model:current-page="alignReqPage"
+                  :page-size="20"
+                  :total="alignReqTotal"
+                  layout="prev, pager, next"
+                  small
+                  background
+                  @current-change="loadAlignReqList()"
+                ></el-pagination>
+              </div>
+            </div>
+
+            <div class="align-panel align-panel-middle">
+              <div class="align-panel-title">
+                对齐
+                <el-tag v-if="activeAlignRecordId" type="warning" size="small">修改中</el-tag>
+                <span v-else class="align-panel-count">共 ${ alignRecordTotal } 条</span>
+              </div>
+              <div class="align-panel-body" v-loading="alignRecordLoading">
+                <template v-if="alignRecordList.length">
+                  <div
+                    v-for="item in alignRecordList"
+                    :key="item.id"
+                    class="align-record-item"
+                    :class="{ active: activeAlignRecordId === item.id }"
+                    @click="handleAlignRecordClick(item)"
+                  >
+                    <div class="align-record-head">
+                        <span class="align-record-name">${ item.doc_block_name || '（未命名需求）' }</span>
+                        <el-tag v-if="item.is_alignment === 1" type="success" size="small">已对齐</el-tag>
+                        <el-tag v-else type="info" size="small">未对齐</el-tag>
+                        <i class="fas fa-trash-alt align-record-del" title="删除" @click.stop="deleteAlignRecord(item)"></i>
+                    </div>
+                    <div class="align-record-meta">
+                      <span>${ item.code_ids.length } 个代码块</span>
+                      <span v-if="item.align_type">${ item.align_type }</span>
+                    </div>
+                  </div>
+                </template>
+                <el-empty v-else-if="!alignRecordLoading" description="暂无对齐记录" :image-size="60" ></el-empty>
+              </div>
+              <div class="align-panel-footer">
+                <el-pagination
+                  v-model:current-page="alignRecordPage"
+                  :page-size="20"
+                  :total="alignRecordTotal"
+                  layout="prev, pager, next"
+                  small
+                  background
+                  @current-change="loadAlignmentList"
+                ></el-pagination>
+              </div>
+            </div>
+
+            <div class="align-panel">
+              <div class="align-panel-title">
+                代码
+                <span>
+                    <el-button size="small" text type="primary" @click="openCodeSelectionFromAlignTree">查看调用图</el-button>
+                    <el-button size="small" text @click="clearAlignSelection">清空选中</el-button>
+                </span>
+              </div>
+              <div class="align-panel-body" v-loading="alignTreeLoading">
+                <el-tree
+                  ref="alignTreeRef"
+                  :props="{ label: 'label', children: 'children', isLeaf: 'isLeaf' }"
+                  :load="loadAlignCodeNode"
+                  lazy
+                  show-checkbox
+                  node-key="id"
+                >
+                  <template #default="{ data }">
+                    <span class="code-tree-node">
+                      <span class="node-label">${ data.label }</span>
+                      <span v-if="data.isFile" class="node-range">（${ data.count } 个代码块）</span>
+                      <span v-else class="node-range">${ data.type || '' } L${ data.startLine }-${ data.endLine }</span>
+                    </span>
+                  </template>
+                </el-tree>
+              </div>
+            </div>
+
+          </div>
+
+          <template #footer>
+            <el-button @click="alignDialogVisible = false">取消</el-button>
+            <el-button type="primary" :loading="alignSaving" @click="confirmManualAlign">保存</el-button>
+          </template>
+        </el-dialog>
+        <!-- 手动对齐弹窗中的需求详情弹窗 -->
+        <el-dialog
+          v-model="reqDetailVisible"
+          :title="reqDetailData.name || '需求详情'"
+          width="60%"
+          top="8vh"
+          append-to-body
+        >
+          <div class="req-detail-meta">
+            <span>${ reqDetailData.filename } : ${ reqDetailData.start }-${ reqDetailData.end }</span>
+            <el-tag v-if="reqDetailData.type" size="small">${ reqDetailData.type }</el-tag>
+          </div>
+          <div class="doc-content-rendered" v-loading="reqDetailLoading" v-html="reqDetailHtml"></div>
         </el-dialog>
 
     </div>
