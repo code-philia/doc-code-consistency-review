@@ -5,6 +5,8 @@ import pymysql
 from flask import g
 from pymysql.cursors import DictCursor
 
+from .doc_block_integrity import normalize_doc_block_type
+
 
 DB_CONFIG = {
     'host': 'localhost',
@@ -116,7 +118,7 @@ def _format_doc_block_row(row):
     return {
         'id': _safe_int(row.get('id')),
         'name': name,
-        'type': row.get('type') or '',
+        'type': normalize_doc_block_type(row.get('type'), content),
         'filename': row.get('filename') or '',
         'documentId': row.get('filename') or '',
         'content': content,
@@ -367,7 +369,7 @@ def replace_doc_blocks(project_path, doc_blocks):
             _safe_int(block_id, idx),
             block.get('name') or _default_doc_block_name(block.get('content') or '', 24),
             block.get('filename') or block.get('documentId') or '',
-            block.get('type') or block.get('name') or '',
+            normalize_doc_block_type(block.get('type'), block.get('content') or ''),
             block.get('content') or '',
             _safe_int(block.get('start')),
             _safe_int(block.get('end'))
@@ -451,7 +453,7 @@ def append_missing_doc_blocks(project_path, doc_ranges, block_type=''):
             next_id,
             doc_range.get('name') or _default_doc_block_name(doc_range.get('content') or '', 24),
             filename,
-            block_type or doc_range.get('type') or '',
+            normalize_doc_block_type(block_type or doc_range.get('type'), doc_range.get('content') or ''),
             doc_range.get('content') or '',
             start,
             end
